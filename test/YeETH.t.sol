@@ -6,7 +6,7 @@ import {YeETH} from "../src/yeTokens/yeETH/YeETH.sol";
 import {ERC1967Proxy} from "@openzeppelin-contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {IMetaMorphoV1_1Factory} from "./interfaces/IMetaMorphoV1_1Factory.sol";
 import {ILxLyBridge} from "../src/etc/ILxLyBridge.sol";
-import {IWETH9} from "../src/yeTokens/yeETH/WETH9.sol";
+import {IWETH9} from "../src/yeTokens/yeETH/IWETH9.sol";
 
 contract yeETHTest is Test {
     YeETH public implementation;
