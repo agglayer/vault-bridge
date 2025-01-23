@@ -1,10 +1,14 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity 0.8.28;
 
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {OwnableUpgradeable} from "@openzeppelin-contracts-upgradeable/access/OwnableUpgradeable.sol";
+
+// TODO
+// - make upgradeable to enable potential future ETH staking plans
 
 /// @title zETH
-contract zETH is Ownable {
+/// @dev based on https://github.com/gnosis/canonical-weth/blob/master/contracts/WETH9.sol
+contract zETH is OwnableUpgradeable {
     string public name = "zETH";
     string public symbol = "ZETH";
     uint8 public decimals = 18;
@@ -18,7 +22,9 @@ contract zETH is Ownable {
     mapping(address => mapping(address => uint256)) public allowance;
 
     /// @notice Owner should be WETHNativeConverter.
-    constructor(address _owner) Ownable(_owner) {}
+    function initialize(address owner) public {
+        __Ownable_init(owner);
+    }
 
     receive() external payable {
         deposit();
