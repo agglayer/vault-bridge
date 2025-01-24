@@ -10,9 +10,9 @@ import {IWETH9} from "../etc/IWETH9.sol";
 /// @title ZETH
 /// @dev based on https://github.com/gnosis/canonical-weth/blob/master/contracts/WETH9.sol
 contract ZETH is OwnableUpgradeable {
-    string public name = "zETH";
-    string public symbol = "ZETH";
-    uint8 public decimals = 18;
+    string public name;
+    string public symbol;
+    uint8 public decimals;
 
     event Approval(address indexed src, address indexed guy, uint256 wad);
     event Transfer(address indexed src, address indexed dst, uint256 wad);
@@ -22,9 +22,17 @@ contract ZETH is OwnableUpgradeable {
     mapping(address => uint256) public balanceOf;
     mapping(address => mapping(address => uint256)) public allowance;
 
+    constructor() {
+        _disableInitializers();
+    }
+
     /// @notice Owner should be WETHNativeConverter.
-    function initialize(address owner) public {
+    function initialize(address owner) external initializer {
         __Ownable_init(owner);
+
+        name = "zETH";
+        symbol = "ZETH";
+        decimals = 18;
     }
 
     receive() external payable {
@@ -36,7 +44,7 @@ contract ZETH is OwnableUpgradeable {
         emit Deposit(msg.sender, msg.value);
     }
 
-    function withdraw(uint256 wad) public{
+    function withdraw(uint256 wad) public {
         require(balanceOf[msg.sender] >= wad);
         balanceOf[msg.sender] -= wad;
         payable(msg.sender).transfer(wad);
