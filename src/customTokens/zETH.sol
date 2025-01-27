@@ -35,6 +35,11 @@ contract ZETH is OwnableUpgradeable {
         decimals = 18;
     }
 
+    function bridgeBackingToLayerX(uint256 amount) external onlyOwner {
+        (bool success, ) = owner().call{value: amount}("");
+        require(success);
+    }
+
     receive() external payable {
         deposit();
     }
