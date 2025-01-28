@@ -7,16 +7,10 @@ import {IMetaMorpho} from "test/interfaces/IMetaMorpho.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
-// MOCKS
-contract YeUSDC is YieldExposedToken {
-    uint256 public constant TRANSFER_FEE = 10;
-
-    constructor() {
-        _disableInitializers();
-    }
-
+contract YieldExposedTokenHarness is YieldExposedToken {
     function initialize(
         address owner_,
         string calldata name_,
@@ -28,7 +22,6 @@ contract YeUSDC is YieldExposedToken {
         address lxlyBridge_,
         address migrationManager_
     ) external initializer {
-        // Initialize the base implementation.
         __YieldExposedToken_init(
             owner_,
             name_,
@@ -59,46 +52,51 @@ contract YeUSDC is YieldExposedToken {
         override
         returns (uint256)
     {
-        return minimumAssetsAfterTransferFee + TRANSFER_FEE;
+        return minimumAssetsAfterTransferFee;
     }
 }
 
 contract YieldExposedTokenTest is Test {
-    address internal constant LXLY_BRIDGE = 0x2a3DD3EB832aF982ec71669E178424b10Dca2EDe;
-    address internal constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
-    address internal constant USDC_VAULT = 0xBEEF01735c132Ada46AA9aA4c54623cAA92A64CB;
-    uint8 internal constant MINIMUM_RESERVE_PERCENTAGE = 10;
-    uint256 internal constant TRANSFER_FEE = 10;
-    uint32 internal constant NETWORK_ID_L1 = 0;
-    uint32 internal constant NETWORK_ID_L2 = 1;
-    uint8 internal constant LEAF_TYPE_ASSET = 0;
-    bytes32 internal constant PERMIT_TYPEHASH =
+    using SafeERC20 for IERC20;
+    using SafeERC20 for YieldExposedTokenHarness;
+
+    // constants
+    address constant LXLY_BRIDGE = 0x2a3DD3EB832aF982ec71669E178424b10Dca2EDe;
+    uint32 constant NETWORK_ID_L1 = 0;
+    uint32 constant NETWORK_ID_L2 = 1;
+    uint8 constant LEAF_TYPE_ASSET = 0;
+    bytes32 constant PERMIT_TYPEHASH =
         keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
-    bytes4 internal constant PERMIT_SIGNATURE = 0xd505accf;
-    string internal constant YEUSDC_VERSION = "1.0.0";
+    bytes4 constant PERMIT_SIGNATURE = 0xd505accf;
+    address internal constant TEST_TOKEN = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
+    address internal constant TEST_TOKEN_VAULT = 0xBEEF01735c132Ada46AA9aA4c54623cAA92A64CB;
 
-    uint256 internal mainnetFork;
-    YeUSDC internal yeUSDC;
-    IMetaMorpho internal usdcVault = IMetaMorpho(USDC_VAULT);
-    uint256 internal beforeInit;
+    uint256 stateBeforeInitialize;
+    uint256 mainnetFork;
+    IMetaMorpho yeTokenVault;
+    YieldExposedTokenHarness yeToken;
+    address yeTokenImplementation;
+    address asset;
 
-    // vault addresses
-    address internal allocator = makeAddr("allocator");
-    address internal curator = makeAddr("curator");
-
-    // initialization arguments
-    address internal migrationManager = makeAddr("migrationManager");
-    address internal owner = makeAddr("owner");
-    address internal recipient = makeAddr("recipient");
-    address internal yieldRecipient = makeAddr("yieldRecipient");
-    string internal name = "Yield Exposed USDC";
-    string internal symbol = "yeUSDC";
-    bytes internal yeUSDCMetaData = abi.encode(name, symbol, 6);
+    address migrationManager = makeAddr("migrationManager");
+    address recipient = makeAddr("recipient");
+    address owner = makeAddr("owner");
+    address yieldRecipient = makeAddr("yieldRecipient");
     uint256 senderPrivateKey = 0xBEEF;
-    address internal sender = vm.addr(senderPrivateKey);
+    address sender = vm.addr(senderPrivateKey);
 
+    // yeToken metadata
+    string version;
+    string name;
+    string symbol;
+    uint256 decimals;
+    uint8 minimumReservePercentage;
+    bytes yeTokenMetaData;
+
+    // error messages
     error EnforcedPause();
 
+    // events
     event BridgeEvent(
         uint8 leafType,
         uint32 originNetwork,
@@ -118,261 +116,263 @@ contract YieldExposedTokenTest is Test {
     event Paused(address account);
     event Unpaused(address account);
 
-    function setUp() public {
+    function setUp() public virtual {
         mainnetFork = vm.createSelectFork("mainnet_test", 21590932);
 
-        yeUSDC = new YeUSDC();
-        beforeInit = vm.snapshotState();
+        asset = TEST_TOKEN;
+        yeTokenVault = IMetaMorpho(TEST_TOKEN_VAULT);
+        version = "1.0.0";
+        name = "Yield Exposed USDC";
+        symbol = "yeUSDC";
+        decimals = 6;
+        yeTokenMetaData = abi.encode(name, symbol, decimals);
+        minimumReservePercentage = 10;
+
+        yeToken = new YieldExposedTokenHarness();
+        yeTokenImplementation = address(yeToken);
+        stateBeforeInitialize = vm.snapshotState();
         bytes memory initData = abi.encodeCall(
-            yeUSDC.initialize,
+            yeToken.initialize,
             (
                 owner,
                 name,
                 symbol,
-                USDC,
-                MINIMUM_RESERVE_PERCENTAGE,
-                address(usdcVault),
+                asset,
+                minimumReservePercentage,
+                address(yeTokenVault),
                 yieldRecipient,
                 LXLY_BRIDGE,
                 migrationManager
             )
         );
-        yeUSDC = YeUSDC(_proxify(address(yeUSDC), address(this), initData));
+        yeToken = YieldExposedTokenHarness(_proxify(address(yeTokenImplementation), address(this), initData));
 
-        vm.label(allocator, "Allocator");
-        vm.label(curator, "Curator");
-        vm.label(USDC, "usdc");
-        vm.label(address(usdcVault), "usdcVault");
-        vm.label(address(yeUSDC), "yeUSDC");
-        vm.label(LXLY_BRIDGE, "lxlyBridge");
-        vm.label(migrationManager, "migrationManager");
-        vm.label(owner, "owner");
-        vm.label(recipient, "recipient");
-        vm.label(sender, "sender");
-        vm.label(yieldRecipient, "yieldRecipient");
-        vm.label(address(this), "defaultAddress");
+        vm.label(address(yeTokenVault), "yeToken Vault");
+        vm.label(address(yeToken), "yeToken");
+        vm.label(address(yeTokenImplementation), "yeToken Implementation");
+        vm.label(address(this), "Default Address");
+        vm.label(asset, "Underlying Asset");
+        vm.label(migrationManager, "Migration Manager");
+        vm.label(owner, "Owner");
+        vm.label(recipient, "Recipient");
+        vm.label(sender, "Sender");
+        vm.label(yieldRecipient, "Yield Recipient");
+        vm.label(LXLY_BRIDGE, "Lxly Bridge");
     }
 
     function test_setup() public view {
-        assertEq(yeUSDC.owner(), owner);
-        assertEq(yeUSDC.name(), name);
-        assertEq(yeUSDC.symbol(), symbol);
-        assertEq(yeUSDC.decimals(), 6);
-        assertEq(yeUSDC.asset(), USDC);
-        assertEq(yeUSDC.minimumReservePercentage(), MINIMUM_RESERVE_PERCENTAGE);
-        assertEq(address(yeUSDC.yieldVault()), address(usdcVault));
-        assertEq(yeUSDC.yieldRecipient(), yieldRecipient);
-        assertEq(address(yeUSDC.lxlyBridge()), LXLY_BRIDGE);
-        assertEq(yeUSDC.migrationManager(), migrationManager);
-        assertEq(IERC20(USDC).allowance(address(yeUSDC), address(yeUSDC.yieldVault())), type(uint256).max);
-        assertEq(yeUSDC.allowance(address(yeUSDC), LXLY_BRIDGE), type(uint256).max);
+        assertEq(yeToken.owner(), owner);
+        assertEq(yeToken.name(), name);
+        assertEq(yeToken.symbol(), symbol);
+        assertEq(yeToken.decimals(), decimals);
+        assertEq(yeToken.asset(), asset);
+        assertEq(yeToken.minimumReservePercentage(), minimumReservePercentage);
+        assertEq(address(yeToken.yieldVault()), address(yeTokenVault));
+        assertEq(yeToken.yieldRecipient(), yieldRecipient);
+        assertEq(yeToken.migrationManager(), migrationManager);
+        assertEq(address(yeToken.lxlyBridge()), LXLY_BRIDGE);
+        assertEq(yeToken.allowance(address(yeToken), LXLY_BRIDGE), type(uint256).max);
+        assertEq(IERC20(asset).allowance(address(yeToken), address(yeToken.yieldVault())), type(uint256).max);
     }
 
-    function test_initialize() public {
-        uint256 totalInitParams = 9;
-        vm.revertToState(beforeInit);
+    function test_initialize() public virtual {
+        vm.revertToState(stateBeforeInitialize);
 
         bytes memory initData;
-        for (uint256 paramNum = 0; paramNum < totalInitParams; paramNum++) {
-            if (paramNum == 0) {
-                initData = abi.encodeCall(
-                    yeUSDC.initialize,
-                    (
-                        address(0),
-                        name,
-                        symbol,
-                        USDC,
-                        MINIMUM_RESERVE_PERCENTAGE,
-                        address(usdcVault),
-                        yieldRecipient,
-                        LXLY_BRIDGE,
-                        migrationManager
-                    )
-                );
-                vm.expectRevert("INVALID_OWNER");
-                yeUSDC = YeUSDC(_proxify(address(yeUSDC), address(this), initData));
-                vm.revertToState(beforeInit);
-            } else if (paramNum == 1) {
-                initData = abi.encodeCall(
-                    yeUSDC.initialize,
-                    (
-                        owner,
-                        "",
-                        symbol,
-                        USDC,
-                        MINIMUM_RESERVE_PERCENTAGE,
-                        address(usdcVault),
-                        yieldRecipient,
-                        LXLY_BRIDGE,
-                        migrationManager
-                    )
-                );
-                vm.expectRevert("INVALID_NAME");
-                yeUSDC = YeUSDC(_proxify(address(yeUSDC), address(this), initData));
-                vm.revertToState(beforeInit);
-            } else if (paramNum == 2) {
-                initData = abi.encodeCall(
-                    yeUSDC.initialize,
-                    (
-                        owner,
-                        name,
-                        "",
-                        USDC,
-                        MINIMUM_RESERVE_PERCENTAGE,
-                        address(usdcVault),
-                        yieldRecipient,
-                        LXLY_BRIDGE,
-                        migrationManager
-                    )
-                );
-                vm.expectRevert("INVALID_SYMBOL");
-                yeUSDC = YeUSDC(_proxify(address(yeUSDC), address(this), initData));
-                vm.revertToState(beforeInit);
-            } else if (paramNum == 3) {
-                initData = abi.encodeCall(
-                    yeUSDC.initialize,
-                    (
-                        owner,
-                        name,
-                        symbol,
-                        address(0),
-                        MINIMUM_RESERVE_PERCENTAGE,
-                        address(usdcVault),
-                        yieldRecipient,
-                        LXLY_BRIDGE,
-                        migrationManager
-                    )
-                );
-                vm.expectRevert("INVALID_UNDERLYING_TOKEN");
-                yeUSDC = YeUSDC(_proxify(address(yeUSDC), address(this), initData));
-                vm.revertToState(beforeInit);
-            } else if (paramNum == 4) {
-                initData = abi.encodeCall(
-                    yeUSDC.initialize,
-                    (owner, name, symbol, USDC, 101, address(usdcVault), yieldRecipient, LXLY_BRIDGE, migrationManager)
-                );
-                vm.expectRevert("INVALID_PERCENTAGE");
-                yeUSDC = YeUSDC(_proxify(address(yeUSDC), address(this), initData));
-                vm.revertToState(beforeInit);
-            } else if (paramNum == 5) {
-                initData = abi.encodeCall(
-                    yeUSDC.initialize,
-                    (
-                        owner,
-                        name,
-                        symbol,
-                        USDC,
-                        MINIMUM_RESERVE_PERCENTAGE,
-                        address(0),
-                        yieldRecipient,
-                        LXLY_BRIDGE,
-                        migrationManager
-                    )
-                );
-                vm.expectRevert("INVALID_VAULT");
-                yeUSDC = YeUSDC(_proxify(address(yeUSDC), address(this), initData));
-                vm.revertToState(beforeInit);
-            } else if (paramNum == 6) {
-                initData = abi.encodeCall(
-                    yeUSDC.initialize,
-                    (
-                        owner,
-                        name,
-                        symbol,
-                        USDC,
-                        MINIMUM_RESERVE_PERCENTAGE,
-                        address(usdcVault),
-                        address(0),
-                        LXLY_BRIDGE,
-                        migrationManager
-                    )
-                );
-                vm.expectRevert("INVALID_YIELD_RECIPIENT");
-                yeUSDC = YeUSDC(_proxify(address(yeUSDC), address(this), initData));
-                vm.revertToState(beforeInit);
-            } else if (paramNum == 7) {
-                initData = abi.encodeCall(
-                    yeUSDC.initialize,
-                    (
-                        owner,
-                        name,
-                        symbol,
-                        USDC,
-                        MINIMUM_RESERVE_PERCENTAGE,
-                        address(usdcVault),
-                        yieldRecipient,
-                        address(0),
-                        migrationManager
-                    )
-                );
-                vm.expectRevert("INVALID_LXLY_BRIDGE");
-                yeUSDC = YeUSDC(_proxify(address(yeUSDC), address(this), initData));
-                vm.revertToState(beforeInit);
-            } else {
-                initData = abi.encodeCall(
-                    yeUSDC.initialize,
-                    (
-                        owner,
-                        name,
-                        symbol,
-                        USDC,
-                        MINIMUM_RESERVE_PERCENTAGE,
-                        address(usdcVault),
-                        yieldRecipient,
-                        LXLY_BRIDGE,
-                        address(0)
-                    )
-                );
-                vm.expectRevert("INVALID_MIGRATION_MANAGER");
-                yeUSDC = YeUSDC(_proxify(address(yeUSDC), address(this), initData));
-                vm.revertToState(beforeInit);
-            }
-        }
+
+        initData = abi.encodeCall(
+            yeToken.initialize,
+            (
+                address(0),
+                name,
+                symbol,
+                asset,
+                minimumReservePercentage,
+                address(yeTokenVault),
+                yieldRecipient,
+                LXLY_BRIDGE,
+                migrationManager
+            )
+        );
+        vm.expectRevert("INVALID_OWNER");
+        yeToken = YieldExposedTokenHarness(_proxify(yeTokenImplementation, address(this), initData));
+        vm.revertToState(stateBeforeInitialize);
+
+        initData = abi.encodeCall(
+            yeToken.initialize,
+            (
+                owner,
+                "",
+                symbol,
+                asset,
+                minimumReservePercentage,
+                address(yeTokenVault),
+                yieldRecipient,
+                LXLY_BRIDGE,
+                migrationManager
+            )
+        );
+        vm.expectRevert("INVALID_NAME");
+        yeToken = YieldExposedTokenHarness(_proxify(yeTokenImplementation, address(this), initData));
+        vm.revertToState(stateBeforeInitialize);
+
+        initData = abi.encodeCall(
+            yeToken.initialize,
+            (
+                owner,
+                name,
+                "",
+                asset,
+                minimumReservePercentage,
+                address(yeTokenVault),
+                yieldRecipient,
+                LXLY_BRIDGE,
+                migrationManager
+            )
+        );
+        vm.expectRevert("INVALID_SYMBOL");
+        yeToken = YieldExposedTokenHarness(_proxify(yeTokenImplementation, address(this), initData));
+        vm.revertToState(stateBeforeInitialize);
+
+        initData = abi.encodeCall(
+            yeToken.initialize,
+            (
+                owner,
+                name,
+                symbol,
+                address(0),
+                minimumReservePercentage,
+                address(yeTokenVault),
+                yieldRecipient,
+                LXLY_BRIDGE,
+                migrationManager
+            )
+        );
+        vm.expectRevert("INVALID_UNDERLYING_TOKEN");
+        yeToken = YieldExposedTokenHarness(_proxify(yeTokenImplementation, address(this), initData));
+        vm.revertToState(stateBeforeInitialize);
+
+        initData = abi.encodeCall(
+            yeToken.initialize,
+            (owner, name, symbol, asset, 101, address(yeTokenVault), yieldRecipient, LXLY_BRIDGE, migrationManager)
+        );
+        vm.expectRevert("INVALID_PERCENTAGE");
+        yeToken = YieldExposedTokenHarness(_proxify(yeTokenImplementation, address(this), initData));
+        vm.revertToState(stateBeforeInitialize);
+
+        initData = abi.encodeCall(
+            yeToken.initialize,
+            (
+                owner,
+                name,
+                symbol,
+                asset,
+                minimumReservePercentage,
+                address(0),
+                yieldRecipient,
+                LXLY_BRIDGE,
+                migrationManager
+            )
+        );
+        vm.expectRevert("INVALID_VAULT");
+        yeToken = YieldExposedTokenHarness(_proxify(yeTokenImplementation, address(this), initData));
+        vm.revertToState(stateBeforeInitialize);
+
+        initData = abi.encodeCall(
+            yeToken.initialize,
+            (
+                owner,
+                name,
+                symbol,
+                asset,
+                minimumReservePercentage,
+                address(yeTokenVault),
+                address(0),
+                LXLY_BRIDGE,
+                migrationManager
+            )
+        );
+        vm.expectRevert("INVALID_YIELD_RECIPIENT");
+        yeToken = YieldExposedTokenHarness(_proxify(yeTokenImplementation, address(this), initData));
+        vm.revertToState(stateBeforeInitialize);
+
+        initData = abi.encodeCall(
+            yeToken.initialize,
+            (
+                owner,
+                name,
+                symbol,
+                asset,
+                minimumReservePercentage,
+                address(yeTokenVault),
+                yieldRecipient,
+                address(0),
+                migrationManager
+            )
+        );
+        vm.expectRevert("INVALID_LXLY_BRIDGE");
+        yeToken = YieldExposedTokenHarness(_proxify(yeTokenImplementation, address(this), initData));
+        vm.revertToState(stateBeforeInitialize);
+
+        initData = abi.encodeCall(
+            yeToken.initialize,
+            (
+                owner,
+                name,
+                symbol,
+                asset,
+                minimumReservePercentage,
+                address(yeTokenVault),
+                yieldRecipient,
+                LXLY_BRIDGE,
+                address(0)
+            )
+        );
+        vm.expectRevert("INVALID_MIGRATION_MANAGER");
+        yeToken = YieldExposedTokenHarness(_proxify(yeTokenImplementation, address(this), initData));
+        vm.revertToState(stateBeforeInitialize);
     }
 
     function test_deposit() public {
         uint256 amount = 100;
+        uint256 reserveAssets = (amount * minimumReservePercentage) / 100;
 
         vm.startPrank(owner);
-        yeUSDC.pause();
+        yeToken.pause();
         vm.expectRevert(EnforcedPause.selector);
-        yeUSDC.deposit(amount, recipient);
+        yeToken.deposit(amount, recipient);
 
-        yeUSDC.unpause();
+        yeToken.unpause();
         vm.stopPrank();
 
-        deal(USDC, sender, amount);
+        deal(asset, sender, amount);
 
         vm.startPrank(sender);
         vm.expectRevert("INVALID_AMOUNT");
-        yeUSDC.deposit(0, recipient);
+        yeToken.deposit(0, recipient);
 
         vm.expectRevert("INVALID_ADDRESS");
-        yeUSDC.deposit(amount, address(0));
+        yeToken.deposit(amount, address(0));
 
-        IERC20(USDC).approve(address(yeUSDC), amount);
+        uint256 sharesToBeMinted = yeToken.previewDeposit(amount);
+
+        IERC20(asset).forceApprove(address(yeToken), amount);
         vm.expectEmit();
-        emit Deposit(sender, recipient, amount, amount);
-        yeUSDC.deposit(amount, recipient);
+        emit Deposit(sender, recipient, amount, sharesToBeMinted);
+        yeToken.deposit(amount, recipient);
         vm.stopPrank();
 
-        uint256 reserveAssets = (amount * MINIMUM_RESERVE_PERCENTAGE) / 100;
-        uint256 stakedShares = usdcVault.convertToShares(amount - reserveAssets);
-        uint256 stakedAssets = usdcVault.convertToAssets(stakedShares);
-
-        assertEq(IERC20(USDC).balanceOf(address(yeUSDC)), reserveAssets);
-        assertEq(yeUSDC.balanceOf(recipient), amount); // shares minted to the recipient
-        assertEq(yeUSDC.reservedAssets(), reserveAssets);
-        assertEq(yeUSDC.stakedAssets(), stakedAssets);
-        assertEq(yeUSDC.totalAssets(), reserveAssets + stakedAssets);
+        assertEq(IERC20(asset).balanceOf(address(yeToken)), reserveAssets);
+        assertEq(yeToken.balanceOf(recipient), sharesToBeMinted); // shares minted to the recipient
     }
 
-    function test_depositWithPermit() public {
+    function test_depositWithPermit() public virtual {
         uint256 amount = 100;
+        uint256 reserveAssets = (amount * minimumReservePercentage) / 100;
 
-        deal(USDC, sender, amount);
+        deal(asset, sender, amount);
 
-        bytes32 domainSeparator = IERC20Permit(USDC).DOMAIN_SEPARATOR();
+        bytes32 domainSeparator = IERC20Permit(asset).DOMAIN_SEPARATOR();
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(
             senderPrivateKey,
@@ -382,78 +382,68 @@ contract YieldExposedTokenTest is Test {
                     domainSeparator, // remember to use the domain separator of the underlying token
                     keccak256(
                         abi.encode(
-                            PERMIT_TYPEHASH, sender, address(yeUSDC), amount, vm.getNonce(sender), block.timestamp
+                            PERMIT_TYPEHASH, sender, address(yeToken), amount, vm.getNonce(sender), block.timestamp
                         )
                     )
                 )
             )
         );
         bytes memory permitData =
-            abi.encodeWithSelector(PERMIT_SIGNATURE, sender, address(yeUSDC), amount, block.timestamp, v, r, s);
+            abi.encodeWithSelector(PERMIT_SIGNATURE, sender, address(yeToken), amount, block.timestamp, v, r, s);
+
+        uint256 sharesToBeMinted = yeToken.previewDeposit(amount);
 
         vm.startPrank(sender);
         vm.expectEmit();
-        emit Deposit(sender, recipient, amount, amount);
-        yeUSDC.depositWithPermit(amount, recipient, permitData);
+        emit Deposit(sender, recipient, amount, sharesToBeMinted);
+        yeToken.depositWithPermit(amount, recipient, permitData);
         vm.stopPrank();
 
-        uint256 reserveAssets = (amount * MINIMUM_RESERVE_PERCENTAGE) / 100;
-        uint256 stakedShares = usdcVault.convertToShares(amount - reserveAssets);
-        uint256 stakedAssets = usdcVault.convertToAssets(stakedShares);
-
-        assertEq(IERC20(USDC).balanceOf(address(yeUSDC)), reserveAssets);
-        assertEq(yeUSDC.balanceOf(recipient), amount); // shares minted to the recipient
-        assertEq(yeUSDC.reservedAssets(), reserveAssets);
-        assertEq(yeUSDC.stakedAssets(), stakedAssets);
-        assertEq(yeUSDC.totalAssets(), reserveAssets + stakedAssets);
+        assertEq(IERC20(asset).balanceOf(address(yeToken)), reserveAssets);
+        assertEq(yeToken.balanceOf(recipient), sharesToBeMinted); // shares minted to the recipient
     }
 
     function test_depositAndBridge() public {
         uint256 amount = 100;
+        uint256 reserveAssets = (amount * minimumReservePercentage) / 100;
 
         vm.startPrank(owner);
-        yeUSDC.pause();
+        yeToken.pause();
         vm.expectRevert(EnforcedPause.selector);
-        yeUSDC.depositAndBridge(amount, recipient, NETWORK_ID_L2, true);
+        yeToken.depositAndBridge(amount, recipient, NETWORK_ID_L2, true);
 
-        yeUSDC.unpause();
+        yeToken.unpause();
         vm.stopPrank();
 
-        deal(USDC, sender, amount);
+        deal(asset, sender, amount);
 
         vm.startPrank(sender);
-        IERC20(USDC).approve(address(yeUSDC), amount);
+        IERC20(asset).forceApprove(address(yeToken), amount);
         vm.expectEmit();
         emit BridgeEvent(
             LEAF_TYPE_ASSET,
             NETWORK_ID_L1,
-            address(yeUSDC),
+            address(yeToken),
             NETWORK_ID_L2,
             recipient,
             amount,
-            yeUSDCMetaData,
+            yeTokenMetaData,
             ILxLyBridge(LXLY_BRIDGE).depositCount()
         );
-        yeUSDC.depositAndBridge(amount, recipient, NETWORK_ID_L2, true);
+        yeToken.depositAndBridge(amount, recipient, NETWORK_ID_L2, true);
         vm.stopPrank();
 
-        uint256 reserveAssets = (amount * MINIMUM_RESERVE_PERCENTAGE) / 100;
-        uint256 stakedShares = usdcVault.convertToShares(amount - reserveAssets);
-        uint256 stakedAssets = usdcVault.convertToAssets(stakedShares);
-
-        assertEq(IERC20(USDC).balanceOf(address(yeUSDC)), reserveAssets);
-        assertEq(yeUSDC.balanceOf(LXLY_BRIDGE), amount); // shares locked on bridge
-        assertEq(yeUSDC.reservedAssets(), reserveAssets);
-        assertEq(yeUSDC.stakedAssets(), stakedAssets);
-        assertEq(yeUSDC.totalAssets(), reserveAssets + stakedAssets);
+        assertEq(IERC20(asset).balanceOf(address(yeToken)), reserveAssets);
+        assertEq(yeToken.balanceOf(LXLY_BRIDGE), amount); // shares locked on bridge
     }
 
-    function test_depositAndBridgePermit() public {
+    function test_depositAndBridgePermit() public virtual {
         uint256 amount = 100;
+        uint256 reserveAssets = (amount * minimumReservePercentage) / 100;
 
-        deal(USDC, sender, amount);
+        deal(asset, sender, amount);
 
-        bytes32 domainSeparator = IERC20Permit(USDC).DOMAIN_SEPARATOR();
+        bytes32 domainSeparator = IERC20Permit(asset).DOMAIN_SEPARATOR();
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(
             senderPrivateKey,
@@ -463,200 +453,190 @@ contract YieldExposedTokenTest is Test {
                     domainSeparator, // remember to use the domain separator of the underlying token
                     keccak256(
                         abi.encode(
-                            PERMIT_TYPEHASH, sender, address(yeUSDC), amount, vm.getNonce(sender), block.timestamp
+                            PERMIT_TYPEHASH, sender, address(yeToken), amount, vm.getNonce(sender), block.timestamp
                         )
                     )
                 )
             )
         );
         bytes memory permitData =
-            abi.encodeWithSelector(PERMIT_SIGNATURE, sender, address(yeUSDC), amount, block.timestamp, v, r, s);
+            abi.encodeWithSelector(PERMIT_SIGNATURE, sender, address(yeToken), amount, block.timestamp, v, r, s);
 
         vm.startPrank(sender);
         vm.expectEmit();
         emit BridgeEvent(
             LEAF_TYPE_ASSET,
             NETWORK_ID_L1,
-            address(yeUSDC),
+            address(yeToken),
             NETWORK_ID_L2,
             recipient,
             amount,
-            yeUSDCMetaData,
+            yeTokenMetaData,
             ILxLyBridge(LXLY_BRIDGE).depositCount()
         );
-        yeUSDC.depositAndBridgeWithPermit(amount, recipient, NETWORK_ID_L2, true, permitData);
+        yeToken.depositAndBridgeWithPermit(amount, recipient, NETWORK_ID_L2, true, permitData);
         vm.stopPrank();
 
-        uint256 reserveAssets = (amount * MINIMUM_RESERVE_PERCENTAGE) / 100;
-        uint256 stakedShares = usdcVault.convertToShares(amount - reserveAssets);
-        uint256 stakedAssets = usdcVault.convertToAssets(stakedShares);
-
-        assertEq(IERC20(USDC).balanceOf(address(yeUSDC)), reserveAssets);
-        assertEq(yeUSDC.balanceOf(LXLY_BRIDGE), amount); // shares locked on bridge
-        assertEq(yeUSDC.reservedAssets(), reserveAssets);
-        assertEq(yeUSDC.stakedAssets(), stakedAssets);
-        assertEq(yeUSDC.totalAssets(), reserveAssets + stakedAssets);
+        assertEq(IERC20(asset).balanceOf(address(yeToken)), reserveAssets);
+        assertEq(yeToken.balanceOf(LXLY_BRIDGE), amount); // shares locked on bridge
     }
 
-    function test_mint() public {
+    function test_mint() public virtual {
         uint256 amount = 100;
+        uint256 reserveAssets = (amount * minimumReservePercentage) / 100;
 
         vm.startPrank(owner);
-        yeUSDC.pause();
+        yeToken.pause();
         vm.expectRevert(EnforcedPause.selector);
-        yeUSDC.mint(amount, recipient);
+        yeToken.mint(amount, recipient);
 
-        yeUSDC.unpause();
+        yeToken.unpause();
         vm.stopPrank();
 
-        deal(USDC, sender, amount + TRANSFER_FEE);
+        deal(asset, sender, amount);
+        uint256 sharesToBeMinted = yeToken.previewMint(amount);
 
         vm.startPrank(sender);
-        IERC20(USDC).approve(address(yeUSDC), amount + TRANSFER_FEE);
-        yeUSDC.mint(amount, sender);
+        IERC20(asset).forceApprove(address(yeToken), amount);
+        yeToken.mint(amount, sender);
         vm.stopPrank();
 
-        uint256 reserveAssets = (amount * MINIMUM_RESERVE_PERCENTAGE) / 100;
-        uint256 stakedShares = usdcVault.convertToShares(amount - reserveAssets);
-        uint256 stakedAssets = usdcVault.convertToAssets(stakedShares);
-
-        assertEq(IERC20(USDC).balanceOf(address(yeUSDC)), reserveAssets);
-        assertEq(yeUSDC.balanceOf(sender), amount); // shares minted to the recipient
-        assertEq(yeUSDC.reservedAssets(), reserveAssets);
-        assertEq(yeUSDC.stakedAssets(), stakedAssets);
-        assertEq(yeUSDC.totalAssets(), reserveAssets + stakedAssets);
+        assertEq(IERC20(asset).balanceOf(address(yeToken)), reserveAssets);
+        assertEq(yeToken.balanceOf(sender), sharesToBeMinted); // shares minted to the recipient
     }
 
-    function test_withdraw() public {
-        uint256 initialAmount = 100;
-        uint256 reserveAmount = (initialAmount * MINIMUM_RESERVE_PERCENTAGE) / 100; // 10
+    function test_withdraw() public virtual {
+        uint256 amount = 100;
+        uint256 reserveAmount = (amount * minimumReservePercentage) / 100;
 
         vm.startPrank(owner);
-        yeUSDC.pause();
+        yeToken.pause();
         vm.expectRevert(EnforcedPause.selector);
-        yeUSDC.withdraw(initialAmount, recipient, owner);
-        yeUSDC.unpause();
+        yeToken.withdraw(amount, recipient, owner);
+        yeToken.unpause();
         vm.stopPrank();
 
-        deal(USDC, sender, initialAmount);
+        deal(asset, sender, amount);
 
         vm.startPrank(sender);
-        IERC20(USDC).approve(address(yeUSDC), initialAmount);
-        yeUSDC.deposit(initialAmount, sender);
-        assertEq(IERC20(USDC).balanceOf(sender), 0); // make sure sender has not deposited all USDC
-        assertEq(yeUSDC.balanceOf(sender), initialAmount); // sender gets 100 shares
+        IERC20(asset).forceApprove(address(yeToken), amount);
+        yeToken.deposit(amount, sender);
+        assertEq(IERC20(asset).balanceOf(sender), 0); // make sure sender has deposited all assets
+        assertEq(yeToken.balanceOf(sender), amount); // sender gets 100 shares
 
-        uint256 withdrawAmount = 110; // withdraw amount is greater than total assets (100)
         vm.expectRevert("AMOUNT_TOO_LARGE");
-        yeUSDC.withdraw(withdrawAmount, sender, sender);
+        yeToken.withdraw(amount + 1, sender, sender);
 
-        uint256 reserveWithdrawAmount = 5;
+        uint256 reserveWithdrawAmount = reserveAmount - 1;
         reserveAmount -= reserveWithdrawAmount;
-        yeUSDC.withdraw(reserveWithdrawAmount, sender, sender);
-        assertEq(IERC20(USDC).balanceOf(address(yeUSDC)), reserveAmount); // reserve assets reduced
-        assertEq(IERC20(USDC).balanceOf(sender), reserveWithdrawAmount); // assets returned to sender
-        assertEq(yeUSDC.balanceOf(sender), initialAmount - reserveWithdrawAmount); // shares reduced
+        yeToken.withdraw(reserveWithdrawAmount, sender, sender);
+        assertEq(IERC20(asset).balanceOf(address(yeToken)), reserveAmount); // reserve assets reduced
+        assertEq(IERC20(asset).balanceOf(sender), reserveWithdrawAmount); // assets returned to sender
+        assertEq(yeToken.balanceOf(sender), amount - reserveWithdrawAmount); // shares reduced
 
-        uint256 stakeWithdrawAmount = 10; // withdraw amount is greater than reserve amount (5)
-        yeUSDC.withdraw(stakeWithdrawAmount, sender, sender);
-        assertEq(IERC20(USDC).balanceOf(address(yeUSDC)), 0); // reserve assets remain same
-        assertEq(IERC20(USDC).balanceOf(sender), reserveWithdrawAmount + stakeWithdrawAmount); // assets returned to sender
-        assertEq(yeUSDC.balanceOf(sender), initialAmount - reserveWithdrawAmount - stakeWithdrawAmount); // shares reduced
+        uint256 stakeWithdrawAmount = reserveAmount + 2; // withdraw amount is greater than reserve amount
+        yeToken.withdraw(stakeWithdrawAmount, sender, sender);
+        assertEq(IERC20(asset).balanceOf(address(yeToken)), 0); // reserve assets remain same
+        assertEq(IERC20(asset).balanceOf(sender), reserveWithdrawAmount + stakeWithdrawAmount); // assets returned to sender
+        assertEq(yeToken.balanceOf(sender), amount - reserveWithdrawAmount - stakeWithdrawAmount); // shares reduced
         vm.stopPrank();
     }
 
     function test_replenishReserve() public {
         uint256 amount = 100;
-        uint256 reserveAmount = (amount * MINIMUM_RESERVE_PERCENTAGE) / 100; // 10
+        uint256 reserveAmount = (amount * minimumReservePercentage) / 100;
 
         vm.expectRevert("NO_NEED_TO_REBALANCE_RESERVE");
-        yeUSDC.replenishReserve();
+        yeToken.replenishReserve();
 
-        deal(USDC, sender, amount);
+        deal(asset, sender, amount);
         // create reserve
         vm.startPrank(sender);
-        IERC20(USDC).approve(address(yeUSDC), amount);
-        yeUSDC.deposit(amount, recipient);
+        IERC20(asset).forceApprove(address(yeToken), amount);
+        yeToken.deposit(amount, recipient);
         vm.stopPrank();
 
-        vm.prank(address(yeUSDC));
-        IERC20(USDC).transfer(address(0xdeed), reserveAmount - 5); // reduce reserve assets
+        vm.prank(address(yeToken));
+        IERC20(asset).safeTransfer(address(0xdeed), reserveAmount - 1); // reduce reserve assets
         vm.expectEmit();
         emit ReserveRebalanced(reserveAmount);
-        yeUSDC.replenishReserve();
-        assertEq(IERC20(USDC).balanceOf(address(yeUSDC)), reserveAmount);
+        yeToken.replenishReserve();
+        assertEq(IERC20(asset).balanceOf(address(yeToken)), reserveAmount);
     }
 
     function test_rebalanceReserve() public {
         uint256 amount = 100;
-        uint256 reserveAmount = (amount * MINIMUM_RESERVE_PERCENTAGE) / 100; // 10
+        uint256 reserveAmount = (amount * minimumReservePercentage) / 100;
 
-        deal(USDC, sender, amount);
+        deal(asset, sender, amount);
+
         // create reserve
         vm.startPrank(sender);
-        IERC20(USDC).approve(address(yeUSDC), amount);
-        yeUSDC.deposit(amount, recipient);
+        IERC20(asset).forceApprove(address(yeToken), amount);
+        yeToken.deposit(amount, recipient);
         vm.stopPrank();
+        vm.assertEq(IERC20(asset).balanceOf(address(yeToken)), reserveAmount);
 
-        deal(USDC, address(yeUSDC), amount); // add more assets to the reserve
+        deal(asset, address(yeToken), reserveAmount + amount); // add additional assets to the reserve on top of the reserve
+
         vm.expectRevert(); // only owner can rebalance reserve
-        yeUSDC.rebalanceReserve();
+        yeToken.rebalanceReserve();
 
         vm.expectEmit();
         emit ReserveRebalanced(reserveAmount);
         vm.prank(owner);
-        yeUSDC.rebalanceReserve();
-        assertEq(IERC20(USDC).balanceOf(address(yeUSDC)), reserveAmount);
+        yeToken.rebalanceReserve(); // deposits additional assets to the vault
+        assertEq(IERC20(asset).balanceOf(address(yeToken)), reserveAmount);
     }
 
     function test_collectYield() public {
         vm.expectRevert(); // only owner can claim yield
-        yeUSDC.collectYield();
+        yeToken.collectYield();
 
         vm.expectRevert("NO_YIELD"); // no reserved and staked assets
         vm.prank(owner);
-        yeUSDC.collectYield();
+        yeToken.collectYield();
 
         uint256 amount = 100;
 
-        // create reserve of 10 assets and 89 staked assets
-        deal(USDC, sender, amount + TRANSFER_FEE);
+        deal(asset, sender, amount);
         vm.startPrank(sender);
-        IERC20(USDC).approve(address(yeUSDC), amount + TRANSFER_FEE);
-        yeUSDC.mint(amount, sender);
+        IERC20(asset).forceApprove(address(yeToken), amount);
+        yeToken.mint(amount, sender);
         vm.stopPrank();
 
-        uint256 stakedShares = usdcVault.balanceOf(address(yeUSDC));
+        uint256 sharesBalanceBefore = yeTokenVault.balanceOf(address(yeToken));
         uint256 yieldAssets = 500;
-        uint256 yieldShares = usdcVault.convertToShares(yieldAssets);
-        uint256 expectedYield = usdcVault.convertToAssets(yieldShares);
+        uint256 yieldShares = yeTokenVault.convertToShares(yieldAssets);
 
-        deal(USDC_VAULT, address(yeUSDC), stakedShares + yieldShares);
+        deal(address(yeTokenVault), address(yeToken), sharesBalanceBefore + yieldShares); // add yield to the vault
+
+        uint256 expectedYieldAssets = yeToken.yield();
 
         vm.expectEmit();
-        emit YieldCollected(yieldRecipient, expectedYield);
+        emit YieldCollected(yieldRecipient, expectedYieldAssets);
         vm.prank(owner);
-        yeUSDC.collectYield();
+        yeToken.collectYield();
 
-        vm.assertEq(yeUSDC.balanceOf(yieldRecipient), expectedYield);
+        vm.assertEq(yeToken.balanceOf(yieldRecipient), expectedYieldAssets);
     }
 
     function test_setYieldRecipient_no_yield() public {
         address newRecipient = makeAddr("newRecipient");
         vm.expectRevert(); // only owner can claim yield
-        yeUSDC.setYieldRecipient(newRecipient);
+        yeToken.setYieldRecipient(newRecipient);
 
         vm.expectRevert("INVALID_YIELD_RECIPIENT");
         vm.prank(owner);
-        yeUSDC.setYieldRecipient(address(0));
+        yeToken.setYieldRecipient(address(0));
 
-        assertEq(yeUSDC.yieldRecipient(), yieldRecipient);
+        assertEq(yeToken.yieldRecipient(), yieldRecipient);
 
         vm.expectEmit();
         emit YieldRecipientChanged(newRecipient);
         vm.prank(owner);
-        yeUSDC.setYieldRecipient(newRecipient);
-        assertEq(yeUSDC.yieldRecipient(), newRecipient);
+        yeToken.setYieldRecipient(newRecipient);
+        assertEq(yeToken.yieldRecipient(), newRecipient);
     }
 
     function test_setYieldRecipient_with_yield() public {
@@ -664,105 +644,108 @@ contract YieldExposedTokenTest is Test {
         uint256 amount = 100;
 
         // generate yield
-        deal(USDC, sender, amount + TRANSFER_FEE);
+        deal(asset, sender, amount);
         vm.startPrank(sender);
-        IERC20(USDC).approve(address(yeUSDC), amount + TRANSFER_FEE);
-        yeUSDC.mint(amount, sender);
+        IERC20(asset).forceApprove(address(yeToken), amount);
+        yeToken.mint(amount, sender);
         vm.stopPrank();
 
-        uint256 stakedShares = usdcVault.balanceOf(address(yeUSDC));
+        uint256 sharesBalanceBefore = yeTokenVault.balanceOf(address(yeToken));
         uint256 yieldAssets = 500;
-        uint256 yieldShares = usdcVault.convertToShares(yieldAssets);
-        uint256 expectedYield = usdcVault.convertToAssets(yieldShares);
+        uint256 yieldShares = yeTokenVault.convertToShares(yieldAssets);
 
-        deal(USDC_VAULT, address(yeUSDC), stakedShares + yieldShares);
+        deal(address(yeTokenVault), address(yeToken), sharesBalanceBefore + yieldShares); // add yield to the vault
 
-        assertEq(yeUSDC.yieldRecipient(), yieldRecipient);
+        uint256 expectedYieldAssets = yeToken.yield();
+
+        assertEq(yeToken.yieldRecipient(), yieldRecipient);
 
         vm.expectEmit();
-        emit YieldCollected(yieldRecipient, expectedYield);
+        emit YieldCollected(yieldRecipient, expectedYieldAssets);
         vm.prank(owner);
-        yeUSDC.setYieldRecipient(newRecipient);
-        assertEq(yeUSDC.balanceOf(yieldRecipient), expectedYield); // yield collected to the old recipient
-        assertEq(yeUSDC.yieldRecipient(), newRecipient);
+        yeToken.setYieldRecipient(newRecipient);
+        assertEq(yeToken.balanceOf(yieldRecipient), expectedYieldAssets); // yield collected to the old recipient
+        assertEq(yeToken.yieldRecipient(), newRecipient);
     }
 
     function test_setMinimumReservePercentage_no_rebalance() public {
         uint8 percentage = 20;
         vm.expectRevert(); // only owner can set minimum reserve percentage
-        yeUSDC.setMinimumReservePercentage(percentage);
+        yeToken.setMinimumReservePercentage(percentage);
 
         vm.expectRevert("INVALID_PERCENTAGE");
         vm.prank(owner);
-        yeUSDC.setMinimumReservePercentage(101);
+        yeToken.setMinimumReservePercentage(101);
 
-        assertEq(yeUSDC.minimumReservePercentage(), MINIMUM_RESERVE_PERCENTAGE);
+        assertEq(yeToken.minimumReservePercentage(), minimumReservePercentage);
 
         vm.expectEmit();
         emit MinimumReservePercentageChanged(percentage);
         vm.prank(owner);
-        yeUSDC.setMinimumReservePercentage(percentage);
-        assertEq(yeUSDC.minimumReservePercentage(), percentage);
+        yeToken.setMinimumReservePercentage(percentage);
+        assertEq(yeToken.minimumReservePercentage(), percentage);
     }
 
     function test_setMinimumReservePercentage_with_rebalance() public {
         uint256 amount = 100;
         uint8 percentage = 20;
-        uint256 reserveAmount = (amount * MINIMUM_RESERVE_PERCENTAGE) / 100; // 10
+        uint256 reserveAmount = (amount * minimumReservePercentage) / 100;
 
-        deal(USDC, sender, amount);
+        deal(asset, sender, amount);
         // create reserve
         vm.startPrank(sender);
-        IERC20(USDC).approve(address(yeUSDC), amount);
-        yeUSDC.deposit(amount, recipient);
+        IERC20(asset).forceApprove(address(yeToken), amount);
+        yeToken.deposit(amount, recipient);
         vm.stopPrank();
+        assertEq(IERC20(asset).balanceOf(address(yeToken)), reserveAmount);
 
-        deal(USDC, address(yeUSDC), amount); // add more assets to the reserve
+        uint256 stakedAssetsBefore = yeToken.stakedAssets();
+
         vm.expectEmit();
-        emit ReserveRebalanced(reserveAmount * 2);
+        emit ReserveRebalanced((amount * percentage) / 100);
         vm.expectEmit();
         emit MinimumReservePercentageChanged(percentage);
         vm.prank(owner);
-        yeUSDC.setMinimumReservePercentage(percentage);
-        assertEq(yeUSDC.minimumReservePercentage(), percentage);
+        yeToken.setMinimumReservePercentage(percentage);
+        assertEq(yeToken.minimumReservePercentage(), percentage);
+        assertLt(yeToken.stakedAssets(), stakedAssetsBefore);
     }
 
     function testFuzz_setMinimumReservePercentage(uint8 percentage) public {
         vm.assume(percentage <= 100);
         vm.prank(owner);
-        yeUSDC.setMinimumReservePercentage(percentage);
-        assertEq(yeUSDC.minimumReservePercentage(), percentage);
+        yeToken.setMinimumReservePercentage(percentage);
+        assertEq(yeToken.minimumReservePercentage(), percentage);
     }
 
-    function test_redeem() public {
+    function test_redeem() public virtual {
         uint256 initialAmount = 100;
 
         vm.startPrank(owner);
-        yeUSDC.pause();
+        yeToken.pause();
         vm.expectRevert(EnforcedPause.selector);
-        yeUSDC.redeem(initialAmount, sender, sender);
-        yeUSDC.unpause();
+        yeToken.redeem(initialAmount, sender, sender);
+        yeToken.unpause();
         vm.stopPrank();
 
-        deal(USDC, sender, initialAmount);
+        deal(asset, sender, initialAmount);
 
-        // create reserve of 10 assets and 89 staked assets
         vm.startPrank(sender);
-        IERC20(USDC).approve(address(yeUSDC), initialAmount);
-        yeUSDC.deposit(initialAmount, sender);
-        assertEq(IERC20(USDC).balanceOf(sender), 0);
-        assertEq(yeUSDC.balanceOf(sender), initialAmount);
+        IERC20(asset).forceApprove(address(yeToken), initialAmount);
+        yeToken.deposit(initialAmount, sender);
+        assertEq(IERC20(asset).balanceOf(sender), 0);
+        assertEq(yeToken.balanceOf(sender), initialAmount);
 
         vm.expectRevert("AMOUNT_TOO_LARGE");
-        yeUSDC.redeem(1000, sender, sender); // redeem amount is greater than total assets (100)
+        yeToken.redeem(1000, sender, sender); // redeem amount is greater than total assets
 
         vm.expectRevert("INVALID_AMOUNT");
-        yeUSDC.redeem(0, sender, sender);
+        yeToken.redeem(0, sender, sender);
 
-        uint256 redeemAmount = yeUSDC.totalAssets();
+        uint256 redeemAmount = yeToken.totalAssets();
 
-        yeUSDC.redeem(redeemAmount, sender, sender); // redeem from both staked and reserved assets
-        assertEq(IERC20(USDC).balanceOf(sender), redeemAmount);
+        yeToken.redeem(redeemAmount, sender, sender); // redeem from both staked and reserved assets
+        assertEq(IERC20(asset).balanceOf(sender), redeemAmount);
         vm.stopPrank();
     }
 
@@ -771,43 +754,43 @@ contract YieldExposedTokenTest is Test {
         uint256 shares = 100;
 
         vm.startPrank(owner);
-        yeUSDC.pause();
+        yeToken.pause();
         vm.expectRevert(EnforcedPause.selector);
-        yeUSDC.completeMigration(NETWORK_ID_L2, shares, assets);
-        yeUSDC.unpause();
+        yeToken.completeMigration(NETWORK_ID_L2, shares, assets);
+        yeToken.unpause();
         vm.stopPrank();
 
         vm.expectRevert("UNAUTHORIZED");
-        yeUSDC.completeMigration(NETWORK_ID_L2, shares, assets);
+        yeToken.completeMigration(NETWORK_ID_L2, shares, assets);
 
         vm.expectRevert("INVALID_NETWORK_ID");
         vm.prank(migrationManager);
-        yeUSDC.completeMigration(NETWORK_ID_L1, shares, assets);
+        yeToken.completeMigration(NETWORK_ID_L1, shares, assets);
 
         vm.expectRevert("INVALID_AMOUNT");
         vm.prank(migrationManager);
-        yeUSDC.completeMigration(NETWORK_ID_L2, 0, assets);
+        yeToken.completeMigration(NETWORK_ID_L2, 0, assets);
 
-        deal(USDC, migrationManager, assets);
+        deal(asset, migrationManager, assets);
         vm.startPrank(migrationManager);
-        IERC20(USDC).approve(address(yeUSDC), assets);
+        IERC20(asset).forceApprove(address(yeToken), assets);
 
         vm.expectEmit();
         emit BridgeEvent(
             LEAF_TYPE_ASSET,
             NETWORK_ID_L1,
-            address(yeUSDC),
+            address(yeToken),
             NETWORK_ID_L2,
             address(0),
             shares,
-            yeUSDCMetaData,
+            yeTokenMetaData,
             ILxLyBridge(LXLY_BRIDGE).depositCount()
         );
         vm.expectEmit();
-        emit Deposit(migrationManager, address(yeUSDC), assets, shares);
+        emit Deposit(migrationManager, address(yeToken), assets, shares);
         vm.expectEmit();
         emit MigrationCompleted(NETWORK_ID_L2, shares, 0);
-        yeUSDC.completeMigration(NETWORK_ID_L2, shares, assets);
+        yeToken.completeMigration(NETWORK_ID_L2, shares, assets);
         vm.stopPrank();
     }
 
@@ -815,298 +798,305 @@ contract YieldExposedTokenTest is Test {
         uint256 assets = 100;
         uint256 shares = 110;
 
-        deal(USDC, migrationManager, assets);
+        deal(asset, migrationManager, assets);
 
         vm.startPrank(migrationManager);
-        IERC20(USDC).approve(address(yeUSDC), assets);
+        IERC20(asset).forceApprove(address(yeToken), assets);
 
         vm.expectRevert("INSUFFICIENT_YIELD_TO_COVER_FOR_DISCREPANCY");
-        yeUSDC.completeMigration(NETWORK_ID_L2, shares, assets);
+        yeToken.completeMigration(NETWORK_ID_L2, shares, assets);
         vm.stopPrank();
 
         // generate yield
-        uint256 stakedShares = 84403857686151;
-        deal(USDC, sender, assets + TRANSFER_FEE);
+        deal(asset, sender, assets);
         vm.startPrank(sender);
-        IERC20(USDC).approve(address(yeUSDC), assets + TRANSFER_FEE);
-        yeUSDC.mint(assets, sender);
+        IERC20(asset).forceApprove(address(yeToken), assets);
+        yeToken.mint(assets, sender);
         vm.stopPrank();
-        deal(USDC_VAULT, address(yeUSDC), stakedShares * 2);
+
+        uint256 sharesBalanceBefore = yeTokenVault.balanceOf(address(yeToken));
+        uint256 yieldAssets = 500;
+        uint256 yieldShares = yeTokenVault.convertToShares(yieldAssets);
+        deal(address(yeTokenVault), address(yeToken), sharesBalanceBefore + yieldShares);
 
         vm.expectEmit();
         emit BridgeEvent(
             LEAF_TYPE_ASSET,
             NETWORK_ID_L1,
-            address(yeUSDC),
+            address(yeToken),
             NETWORK_ID_L2,
             address(0),
             shares,
-            yeUSDCMetaData,
+            yeTokenMetaData,
             ILxLyBridge(LXLY_BRIDGE).depositCount()
         );
         vm.expectEmit();
-        emit Deposit(migrationManager, address(yeUSDC), assets, shares);
+        emit Deposit(migrationManager, address(yeToken), assets, shares);
         vm.expectEmit();
-        emit MigrationCompleted(NETWORK_ID_L2, shares, shares - assets); // 10 shares utilized for discrepancy
+        emit MigrationCompleted(NETWORK_ID_L2, shares, shares - assets);
         vm.prank(migrationManager);
-        yeUSDC.completeMigration(NETWORK_ID_L2, shares, assets);
+        yeToken.completeMigration(NETWORK_ID_L2, shares, assets);
     }
 
     function test_maxDeposit() public {
-        assertEq(yeUSDC.maxDeposit(address(0)), type(uint256).max);
+        assertEq(yeToken.maxDeposit(address(0)), type(uint256).max);
 
         vm.prank(owner);
-        yeUSDC.pause();
-        assertEq(yeUSDC.maxDeposit(address(0)), 0);
+        yeToken.pause();
+        assertEq(yeToken.maxDeposit(address(0)), 0);
     }
 
     function test_previewDeposit() public {
+        uint256 amount = 100;
         vm.startPrank(owner);
-        yeUSDC.pause();
+        yeToken.pause();
         vm.expectRevert(EnforcedPause.selector);
-        yeUSDC.previewDeposit(100);
-        yeUSDC.unpause();
+        yeToken.previewDeposit(amount);
+        yeToken.unpause();
         vm.stopPrank();
 
         vm.expectRevert("INVALID_AMOUNT");
-        yeUSDC.previewDeposit(0);
+        yeToken.previewDeposit(0);
 
-        yeUSDC.previewDeposit(100);
-        vm.assertEq(yeUSDC.previewDeposit(100), 100);
+        vm.assertEq(yeToken.previewDeposit(amount), amount);
     }
 
-    function test_maxMint() public {
-        assertEq(yeUSDC.maxMint(address(0)), type(uint256).max);
+    function test_maxMint() public virtual {
+        assertEq(yeToken.maxMint(address(0)), type(uint256).max);
 
         vm.prank(owner);
-        yeUSDC.pause();
-        assertEq(yeUSDC.maxMint(address(0)), 0);
+        yeToken.pause();
+        assertEq(yeToken.maxMint(address(0)), 0);
     }
 
-    function test_previewMint() public {
+    function test_previewMint() public virtual {
+        uint256 amount = 100;
         vm.startPrank(owner);
-        yeUSDC.pause();
+        yeToken.pause();
         vm.expectRevert(EnforcedPause.selector);
-        yeUSDC.previewMint(100);
-        yeUSDC.unpause();
+        yeToken.previewMint(amount);
+        yeToken.unpause();
         vm.stopPrank();
 
         vm.expectRevert("INVALID_AMOUNT");
-        yeUSDC.previewMint(0);
+        yeToken.previewMint(0);
 
-        yeUSDC.previewMint(100);
-        vm.assertEq(yeUSDC.previewMint(100), 110);
+        vm.assertEq(yeToken.previewMint(amount), amount);
     }
 
-    function test_maxWithdraw() public {
-        vm.startPrank(owner);
-        yeUSDC.pause();
-        vm.assertEq(yeUSDC.maxWithdraw(address(0)), 0);
-        yeUSDC.unpause();
-        vm.stopPrank();
-
-        assertEq(yeUSDC.maxWithdraw(address(0)), 0); // 0 if no shares
-
+    function test_maxWithdraw() public virtual {
         uint256 amount = 100;
-        deal(USDC, sender, amount);
-        vm.startPrank(sender);
-        IERC20(USDC).approve(address(yeUSDC), amount);
-        yeUSDC.deposit(amount, sender);
+        vm.startPrank(owner);
+        yeToken.pause();
+        vm.assertEq(yeToken.maxWithdraw(address(0)), 0);
+        yeToken.unpause();
         vm.stopPrank();
 
-        assertEq(yeUSDC.maxWithdraw(sender), yeUSDC.totalAssets());
+        assertEq(yeToken.maxWithdraw(address(0)), 0); // 0 if no shares
+
+        deal(asset, sender, amount);
+        vm.startPrank(sender);
+        IERC20(asset).forceApprove(address(yeToken), amount);
+        yeToken.deposit(amount, sender);
+        vm.stopPrank();
+
+        assertEq(yeToken.maxWithdraw(sender), yeToken.totalAssets());
     }
 
-    function test_previewWithdraw() public {
+    function test_previewWithdraw() public virtual {
+        uint256 amount = 100;
+        uint256 reserveAmount = (amount * minimumReservePercentage) / 100;
+
         vm.startPrank(owner);
-        yeUSDC.pause();
+        yeToken.pause();
         vm.expectRevert(EnforcedPause.selector);
-        yeUSDC.previewWithdraw(100);
-        yeUSDC.unpause();
+        yeToken.previewWithdraw(amount);
+        yeToken.unpause();
         vm.stopPrank();
 
         vm.expectRevert("INVALID_AMOUNT");
-        yeUSDC.previewWithdraw(0);
+        yeToken.previewWithdraw(0);
 
-        // create reserve of 10 assets
-        uint256 amount = 100;
-        deal(USDC, sender, amount);
+        deal(asset, sender, amount);
         vm.startPrank(sender);
-        IERC20(USDC).approve(address(yeUSDC), amount);
-        yeUSDC.deposit(amount, sender);
+        IERC20(asset).forceApprove(address(yeToken), amount);
+        yeToken.deposit(amount, sender);
         vm.stopPrank();
 
         vm.expectRevert("AMOUNT_TOO_LARGE");
-        yeUSDC.previewWithdraw(110);
+        yeToken.previewWithdraw(amount + 1);
 
-        vm.assertEq(yeUSDC.previewWithdraw(10), 10); // reserve assets
-        vm.assertEq(yeUSDC.previewWithdraw(99), 99); // reserve + staked assets
+        uint256 stakedAmount = yeTokenVault.convertToAssets(yeTokenVault.balanceOf(address(yeToken)));
+
+        vm.assertEq(yeToken.previewWithdraw(reserveAmount), yeToken.reservedAssets()); // reserve assets
+        vm.assertEq(yeToken.previewWithdraw(reserveAmount + stakedAmount), yeToken.totalAssets()); // reserve + staked assets
     }
 
-    function test_maxRedeem() public {
+    function test_maxRedeem() public virtual {
         vm.startPrank(owner);
-        yeUSDC.pause();
-        vm.assertEq(yeUSDC.maxRedeem(sender), 0);
-        yeUSDC.unpause();
+        yeToken.pause();
+        vm.assertEq(yeToken.maxRedeem(sender), 0);
+        yeToken.unpause();
         vm.stopPrank();
 
-        assertEq(yeUSDC.maxRedeem(sender), 0); // 0 if no shares
+        assertEq(yeToken.maxRedeem(sender), 0); // 0 if no shares
 
-        // create reserve of 10 assets and 89 staked assets
         uint256 amount = 100;
-        deal(USDC, sender, amount);
+        deal(asset, sender, amount);
         vm.startPrank(sender);
-        IERC20(USDC).approve(address(yeUSDC), amount);
-        yeUSDC.deposit(amount, sender);
+        IERC20(asset).forceApprove(address(yeToken), amount);
+        yeToken.deposit(amount, sender);
         vm.stopPrank();
 
-        assertEq(yeUSDC.maxRedeem(sender), yeUSDC.totalAssets());
+        assertEq(yeToken.maxRedeem(sender), yeToken.totalAssets());
     }
 
-    function test_previewRedeem() public {
+    function test_previewRedeem() public virtual {
+        uint256 amount = 100;
+        uint256 reserveAmount = (amount * minimumReservePercentage) / 100;
         vm.startPrank(owner);
-        yeUSDC.pause();
+        yeToken.pause();
         vm.expectRevert(EnforcedPause.selector);
-        yeUSDC.previewRedeem(100);
-        yeUSDC.unpause();
+        yeToken.previewRedeem(amount);
+        yeToken.unpause();
         vm.stopPrank();
 
         vm.expectRevert("INVALID_AMOUNT");
-        yeUSDC.previewRedeem(0);
+        yeToken.previewRedeem(0);
 
-        // create reserve of 10 assets and 89 staked assets
-        uint256 amount = 100;
-        deal(USDC, sender, amount);
+        deal(asset, sender, amount);
         vm.startPrank(sender);
-        IERC20(USDC).approve(address(yeUSDC), amount);
-        yeUSDC.deposit(amount, sender);
+        IERC20(asset).forceApprove(address(yeToken), amount);
+        yeToken.deposit(amount, sender);
         vm.stopPrank();
 
         vm.expectRevert("AMOUNT_TOO_LARGE");
-        yeUSDC.previewRedeem(110);
+        yeToken.previewRedeem(amount + 1);
 
-        vm.assertEq(yeUSDC.previewRedeem(10), 10); // reserve assets
-        vm.assertEq(yeUSDC.previewRedeem(99), 99); // reserve + staked assets
+        uint256 stakedAmount = yeTokenVault.convertToAssets(yeTokenVault.balanceOf(address(yeToken)));
+
+        vm.assertEq(yeToken.previewRedeem(reserveAmount), yeToken.reservedAssets()); // reserve assets
+        vm.assertEq(yeToken.previewRedeem(reserveAmount + stakedAmount), yeToken.totalAssets()); // reserve + staked assets
     }
 
     function test_reservePercentage() public {
-        // create reserve of 10 assets
         uint256 amount = 100;
-        deal(USDC, sender, amount);
+        deal(asset, sender, amount);
         vm.startPrank(sender);
-        IERC20(USDC).approve(address(yeUSDC), amount);
-        yeUSDC.deposit(amount, sender);
+        IERC20(asset).forceApprove(address(yeToken), amount);
+        yeToken.deposit(amount, sender);
         vm.stopPrank();
 
-        assertEq(yeUSDC.reservePercentage(), MINIMUM_RESERVE_PERCENTAGE);
+        assertEq(yeToken.reservePercentage(), minimumReservePercentage);
     }
 
     function test_pause_unpause() public {
         vm.expectRevert();
-        yeUSDC.pause();
+        yeToken.pause();
 
         vm.expectRevert();
-        yeUSDC.unpause();
+        yeToken.unpause();
 
         vm.startPrank(owner);
         vm.expectEmit();
         emit Paused(owner);
-        yeUSDC.pause();
+        yeToken.pause();
 
         vm.expectEmit();
         emit Unpaused(owner);
-        yeUSDC.unpause();
+        yeToken.unpause();
         vm.stopPrank();
     }
 
     function test_version() public view {
-        assertEq(yeUSDC.version(), YEUSDC_VERSION);
+        assertEq(yeToken.version(), version);
     }
 
-    //TODO: test claimAndWithdraw
+    // //TODO: test claimAndWithdraw
 
     function test_approve() public {
-        assertTrue(yeUSDC.approve(address(0xBEEF), 1e18));
+        assertTrue(yeToken.approve(address(0xBEEF), 1e18));
 
-        assertEq(yeUSDC.allowance(address(this), address(0xBEEF)), 1e18);
+        assertEq(yeToken.allowance(address(this), address(0xBEEF)), 1e18);
     }
 
-    function test_transfer() public {
-        deal(address(yeUSDC), address(this), 1e18);
+    // ERC20 tests
+    function test_transfer() public virtual {
+        deal(address(yeToken), address(this), 1e18);
 
-        assertTrue(yeUSDC.transfer(address(0xBEEF), 1e18));
+        assertTrue(yeToken.transfer(address(0xBEEF), 1e18));
 
-        assertEq(yeUSDC.balanceOf(address(this)), 0);
-        assertEq(yeUSDC.balanceOf(address(0xBEEF)), 1e18);
+        assertEq(yeToken.balanceOf(address(this)), 0);
+        assertEq(yeToken.balanceOf(address(0xBEEF)), 1e18);
     }
 
-    function test_transferFrom() public {
+    function test_transferFrom() public virtual {
         address from = address(0xABCD);
-        deal(address(yeUSDC), from, 1e18);
+        deal(address(yeToken), from, 1e18);
 
         vm.prank(from);
-        yeUSDC.approve(address(this), 1e18);
+        yeToken.forceApprove(address(this), 1e18);
 
-        assertTrue(yeUSDC.transferFrom(from, address(0xBEEF), 1e18));
+        assertTrue(yeToken.transferFrom(from, address(0xBEEF), 1e18));
 
-        assertEq(yeUSDC.allowance(from, address(this)), 0);
+        assertEq(yeToken.allowance(from, address(this)), 0);
 
-        assertEq(yeUSDC.balanceOf(from), 0);
-        assertEq(yeUSDC.balanceOf(address(0xBEEF)), 1e18);
+        assertEq(yeToken.balanceOf(from), 0);
+        assertEq(yeToken.balanceOf(address(0xBEEF)), 1e18);
     }
 
-    function test_infiniteApproveTransferFrom() public {
+    function test_infiniteApproveTransferFrom() public virtual {
         address from = address(0xABCD);
-        deal(address(yeUSDC), from, 1e18);
+        deal(address(yeToken), from, 1e18);
 
         vm.prank(from);
-        yeUSDC.approve(address(this), type(uint256).max);
+        yeToken.forceApprove(address(this), type(uint256).max);
 
-        assertTrue(yeUSDC.transferFrom(from, address(0xBEEF), 1e18));
+        assertTrue(yeToken.transferFrom(from, address(0xBEEF), 1e18));
 
-        assertEq(yeUSDC.allowance(from, address(this)), type(uint256).max);
+        assertEq(yeToken.allowance(from, address(this)), type(uint256).max);
 
-        assertEq(yeUSDC.balanceOf(from), 0);
-        assertEq(yeUSDC.balanceOf(address(0xBEEF)), 1e18);
+        assertEq(yeToken.balanceOf(from), 0);
+        assertEq(yeToken.balanceOf(address(0xBEEF)), 1e18);
     }
 
     function test_failTransferInsufficientBalance() public {
-        deal(address(yeUSDC), address(this), 0.9e18);
+        deal(address(yeToken), address(this), 0.9e18);
         vm.expectRevert();
-        yeUSDC.transfer(address(0xBEEF), 1e18);
+        yeToken.transfer(address(0xBEEF), 1e18);
     }
 
-    function test_failTransferFromInsufficientAllowance() public {
+    function test_failTransferFromInsufficientAllowance() public virtual {
         address from = address(0xABCD);
 
-        deal(address(yeUSDC), address(this), 1e18);
+        deal(address(yeToken), address(this), 1e18);
 
         vm.prank(from);
-        yeUSDC.approve(address(this), 0.9e18);
+        yeToken.forceApprove(address(this), 0.9e18);
 
         vm.expectRevert();
-        yeUSDC.transferFrom(from, address(0xBEEF), 1e18);
+        yeToken.transferFrom(from, address(0xBEEF), 1e18);
     }
 
-    function test_failTransferFromInsufficientBalance() public {
+    function test_failTransferFromInsufficientBalance() public virtual {
         address from = address(0xABCD);
 
-        deal(address(yeUSDC), address(this), 0.9e18);
+        deal(address(yeToken), address(this), 0.9e18);
 
         vm.prank(from);
-        yeUSDC.approve(address(this), 1e18);
+        yeToken.forceApprove(address(this), 1e18);
 
         vm.expectRevert();
-        yeUSDC.transferFrom(from, address(0xBEEF), 1e18);
+        yeToken.transferFrom(from, address(0xBEEF), 1e18);
     }
 
-    function test_permit() public {
+    function test_permit() public virtual {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(
             senderPrivateKey,
             keccak256(
                 abi.encodePacked(
                     "\x19\x01",
-                    yeUSDC.DOMAIN_SEPARATOR(),
+                    yeToken.DOMAIN_SEPARATOR(),
                     keccak256(
                         abi.encode(PERMIT_TYPEHASH, sender, address(0xCAFE), 1e18, vm.getNonce(sender), block.timestamp)
                     )
@@ -1115,10 +1105,10 @@ contract YieldExposedTokenTest is Test {
         );
 
         vm.prank(sender);
-        yeUSDC.permit(sender, address(0xCAFE), 1e18, block.timestamp, v, r, s);
+        yeToken.permit(sender, address(0xCAFE), 1e18, block.timestamp, v, r, s);
 
-        assertEq(yeUSDC.allowance(sender, address(0xCAFE)), 1e18);
-        assertEq(yeUSDC.nonces(sender), 1);
+        assertEq(yeToken.allowance(sender, address(0xCAFE)), 1e18);
+        assertEq(yeToken.nonces(sender), 1);
     }
 
     function _proxify(address logic, address admin, bytes memory initData) internal returns (address proxy) {
