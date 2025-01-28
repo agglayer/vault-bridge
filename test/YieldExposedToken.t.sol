@@ -9,6 +9,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import {ILxLyBridge as _ILxLyBridge} from "test/interfaces/ILxLyBridge.sol";
 
 contract YieldExposedTokenHarness is YieldExposedToken {
     function initialize(
@@ -112,7 +113,13 @@ contract YieldExposedTokenTest is Test {
     event YieldCollected(address indexed yieldRecipient, uint256 yeTokenAmount);
     event YieldRecipientChanged(address indexed yieldRecipient);
     event MinimumReservePercentageChanged(uint8 minimumReservePercentage);
-    event MigrationCompleted(uint32 indexed destinationNetworkId, uint256 indexed shares, uint256 utilizedYield);
+    event MigrationCompleted(
+        uint32 indexed destinationNetworkId,
+        uint256 indexed shares,
+        uint256 assetsBeforeTransferFee,
+        uint256 assets,
+        uint256 usedYield
+    );
     event Paused(address account);
     event Unpaused(address account);
 
@@ -428,7 +435,7 @@ contract YieldExposedTokenTest is Test {
             recipient,
             amount,
             yeTokenMetaData,
-            ILxLyBridge(LXLY_BRIDGE).depositCount()
+            _ILxLyBridge(LXLY_BRIDGE).depositCount()
         );
         yeToken.depositAndBridge(amount, recipient, NETWORK_ID_L2, true);
         vm.stopPrank();
@@ -472,7 +479,7 @@ contract YieldExposedTokenTest is Test {
             recipient,
             amount,
             yeTokenMetaData,
-            ILxLyBridge(LXLY_BRIDGE).depositCount()
+            _ILxLyBridge(LXLY_BRIDGE).depositCount()
         );
         yeToken.depositAndBridgeWithPermit(amount, recipient, NETWORK_ID_L2, true, permitData);
         vm.stopPrank();
@@ -624,18 +631,18 @@ contract YieldExposedTokenTest is Test {
     function test_setYieldRecipient_no_yield() public {
         address newRecipient = makeAddr("newRecipient");
         vm.expectRevert(); // only owner can claim yield
-        yeToken.setYieldRecipient(newRecipient);
+        yeToken.changeYieldRecipient(newRecipient);
 
         vm.expectRevert("INVALID_YIELD_RECIPIENT");
         vm.prank(owner);
-        yeToken.setYieldRecipient(address(0));
+        yeToken.changeYieldRecipient(address(0));
 
         assertEq(yeToken.yieldRecipient(), yieldRecipient);
 
         vm.expectEmit();
         emit YieldRecipientChanged(newRecipient);
         vm.prank(owner);
-        yeToken.setYieldRecipient(newRecipient);
+        yeToken.changeYieldRecipient(newRecipient);
         assertEq(yeToken.yieldRecipient(), newRecipient);
     }
 
@@ -663,7 +670,7 @@ contract YieldExposedTokenTest is Test {
         vm.expectEmit();
         emit YieldCollected(yieldRecipient, expectedYieldAssets);
         vm.prank(owner);
-        yeToken.setYieldRecipient(newRecipient);
+        yeToken.changeYieldRecipient(newRecipient);
         assertEq(yeToken.balanceOf(yieldRecipient), expectedYieldAssets); // yield collected to the old recipient
         assertEq(yeToken.yieldRecipient(), newRecipient);
     }
@@ -671,18 +678,18 @@ contract YieldExposedTokenTest is Test {
     function test_setMinimumReservePercentage_no_rebalance() public {
         uint8 percentage = 20;
         vm.expectRevert(); // only owner can set minimum reserve percentage
-        yeToken.setMinimumReservePercentage(percentage);
+        yeToken.changeMinimumReservePercentage(percentage);
 
         vm.expectRevert("INVALID_PERCENTAGE");
         vm.prank(owner);
-        yeToken.setMinimumReservePercentage(101);
+        yeToken.changeMinimumReservePercentage(101);
 
         assertEq(yeToken.minimumReservePercentage(), minimumReservePercentage);
 
         vm.expectEmit();
         emit MinimumReservePercentageChanged(percentage);
         vm.prank(owner);
-        yeToken.setMinimumReservePercentage(percentage);
+        yeToken.changeMinimumReservePercentage(percentage);
         assertEq(yeToken.minimumReservePercentage(), percentage);
     }
 
@@ -706,7 +713,7 @@ contract YieldExposedTokenTest is Test {
         vm.expectEmit();
         emit MinimumReservePercentageChanged(percentage);
         vm.prank(owner);
-        yeToken.setMinimumReservePercentage(percentage);
+        yeToken.changeMinimumReservePercentage(percentage);
         assertEq(yeToken.minimumReservePercentage(), percentage);
         assertLt(yeToken.stakedAssets(), stakedAssetsBefore);
     }
@@ -714,7 +721,7 @@ contract YieldExposedTokenTest is Test {
     function testFuzz_setMinimumReservePercentage(uint8 percentage) public {
         vm.assume(percentage <= 100);
         vm.prank(owner);
-        yeToken.setMinimumReservePercentage(percentage);
+        yeToken.changeMinimumReservePercentage(percentage);
         assertEq(yeToken.minimumReservePercentage(), percentage);
     }
 
@@ -784,12 +791,12 @@ contract YieldExposedTokenTest is Test {
             address(0),
             shares,
             yeTokenMetaData,
-            ILxLyBridge(LXLY_BRIDGE).depositCount()
+            _ILxLyBridge(LXLY_BRIDGE).depositCount()
         );
         vm.expectEmit();
         emit Deposit(migrationManager, address(yeToken), assets, shares);
         vm.expectEmit();
-        emit MigrationCompleted(NETWORK_ID_L2, shares, 0);
+        emit MigrationCompleted(NETWORK_ID_L2, shares, assets, assets, 0);
         yeToken.completeMigration(NETWORK_ID_L2, shares, assets);
         vm.stopPrank();
     }
@@ -828,12 +835,12 @@ contract YieldExposedTokenTest is Test {
             address(0),
             shares,
             yeTokenMetaData,
-            ILxLyBridge(LXLY_BRIDGE).depositCount()
+            _ILxLyBridge(LXLY_BRIDGE).depositCount()
         );
         vm.expectEmit();
         emit Deposit(migrationManager, address(yeToken), assets, shares);
         vm.expectEmit();
-        emit MigrationCompleted(NETWORK_ID_L2, shares, shares - assets);
+        emit MigrationCompleted(NETWORK_ID_L2, shares, assets, assets, shares - assets);
         vm.prank(migrationManager);
         yeToken.completeMigration(NETWORK_ID_L2, shares, assets);
     }

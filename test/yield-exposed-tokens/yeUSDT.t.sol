@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity ^0.8.28;
 
-import {YeUSDT} from "src/yeTokens/yeUSDT/YeUSDT.sol";
+import {YeUSDT} from "src/yield-exposed-tokens/yeUSDT/YeUSDT.sol";
 import {YieldExposedToken} from "src/YieldExposedToken.sol";
 
 import {IMetaMorpho} from "test/interfaces/IMetaMorpho.sol";
@@ -98,7 +98,7 @@ contract YeUSDTTest is YieldExposedTokenTest {
 
     function test_assetBeforeTransferFee() public {
         YeUSDTHarness yeUSDT = new YeUSDTHarness();
-        uint256 state = vm.snapshot();
+        uint256 state = vm.snapshotState();
         vm.store(address(yeUSDT), YEUSDT_STORAGE_CACHED_BASIS_POINT_RATE, bytes32(uint256(1000)));
         vm.store(address(yeUSDT), YEUSDT_STORAGE_CACHED_MAXIMUM_FEE, bytes32(uint256(5)));
         assertEq(yeUSDT.exposeAssetsBeforeTransferFee(95), 100);

@@ -22,6 +22,7 @@ contract USDCNativeConverter is NativeConverter {
         address customToken_,
         address underlyingToken_,
         uint256 nonMigratableBackingPercentage_,
+        uint256 minimumBackingAfterMigration_,
         address lxlyBridge_,
         uint32 layerXNetworkId_,
         address migrationManager_
@@ -33,6 +34,7 @@ contract USDCNativeConverter is NativeConverter {
             customToken_,
             underlyingToken_,
             nonMigratableBackingPercentage_,
+            minimumBackingAfterMigration_,
             lxlyBridge_,
             layerXNetworkId_,
             migrationManager_
@@ -61,6 +63,8 @@ contract NativeConverterTest is Test {
         keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
     bytes4 internal constant PERMIT_SIGNATURE = 0xd505accf;
     uint256 internal constant NON_MIGRATABLE_BACKING_PERCENTAGE = 10;
+    uint256 internal constant MINIMUM_BACKING_AFTER_MIGRATION = 5;
+    bytes internal constant WUSDC_METADATA = abi.encode("Wrapped USDC", "wUSDC", 18);
 
     MockERC20MintableBurnable internal uSDCe;
     MockERC20 internal wUSDC;
@@ -97,6 +101,7 @@ contract NativeConverterTest is Test {
                 address(uSDCe),
                 address(wUSDC),
                 NON_MIGRATABLE_BACKING_PERCENTAGE,
+                MINIMUM_BACKING_AFTER_MIGRATION,
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
                 migrationManager
@@ -140,6 +145,7 @@ contract NativeConverterTest is Test {
                         address(uSDCe),
                         address(wUSDC),
                         NON_MIGRATABLE_BACKING_PERCENTAGE,
+                        MINIMUM_BACKING_AFTER_MIGRATION,
                         LXLY_BRIDGE,
                         NETWORK_ID_L1,
                         migrationManager
@@ -157,6 +163,7 @@ contract NativeConverterTest is Test {
                         address(0),
                         address(wUSDC),
                         NON_MIGRATABLE_BACKING_PERCENTAGE,
+                        MINIMUM_BACKING_AFTER_MIGRATION,
                         LXLY_BRIDGE,
                         NETWORK_ID_L1,
                         migrationManager
@@ -174,6 +181,7 @@ contract NativeConverterTest is Test {
                         address(uSDCe),
                         address(0),
                         NON_MIGRATABLE_BACKING_PERCENTAGE,
+                        MINIMUM_BACKING_AFTER_MIGRATION,
                         LXLY_BRIDGE,
                         NETWORK_ID_L1,
                         migrationManager
@@ -191,6 +199,7 @@ contract NativeConverterTest is Test {
                         address(uSDCe),
                         address(wUSDC),
                         101,
+                        MINIMUM_BACKING_AFTER_MIGRATION,
                         LXLY_BRIDGE,
                         NETWORK_ID_L1,
                         migrationManager
@@ -208,6 +217,7 @@ contract NativeConverterTest is Test {
                         address(uSDCe),
                         address(wUSDC),
                         NON_MIGRATABLE_BACKING_PERCENTAGE,
+                        MINIMUM_BACKING_AFTER_MIGRATION,
                         address(0),
                         NETWORK_ID_L1,
                         migrationManager
@@ -225,6 +235,7 @@ contract NativeConverterTest is Test {
                         address(uSDCe),
                         address(wUSDC),
                         NON_MIGRATABLE_BACKING_PERCENTAGE,
+                        MINIMUM_BACKING_AFTER_MIGRATION,
                         LXLY_BRIDGE,
                         NETWORK_ID_L1,
                         address(0)
@@ -247,6 +258,7 @@ contract NativeConverterTest is Test {
                 address(dummyToken),
                 address(wUSDC),
                 NON_MIGRATABLE_BACKING_PERCENTAGE,
+                MINIMUM_BACKING_AFTER_MIGRATION,
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
                 migrationManager
@@ -267,6 +279,7 @@ contract NativeConverterTest is Test {
                 address(uSDCe),
                 address(dummyToken),
                 NON_MIGRATABLE_BACKING_PERCENTAGE,
+                MINIMUM_BACKING_AFTER_MIGRATION,
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
                 migrationManager
@@ -388,6 +401,205 @@ contract NativeConverterTest is Test {
 
         deal(address(uSDCe), sender, amount); // mint additional shares
         assertLe(uSDCNativeConverter.maxDeconvert(sender), backingOnLayerY); // sender has more shares than the backing on layer Y
+    }
+
+    function test_simulateDeconvertWithForce() public {
+        uint256 amount = 100;
+
+        vm.startPrank(sender);
+        vm.expectRevert("INVALID_AMOUNT");
+        uSDCNativeConverter.exposeSimulateDeconvertWithForce(0);
+
+        deal(address(uSDCe), sender, amount); // mint shares
+
+        // create backing on layer Y
+        uint256 backingOnLayerY = 0;
+        deal(address(wUSDC), owner, amount);
+        vm.startPrank(owner);
+        wUSDC.approve(address(uSDCNativeConverter), amount);
+        backingOnLayerY += uSDCNativeConverter.convert(amount, recipient);
+        vm.stopPrank();
+
+        vm.startPrank(sender);
+        vm.expectRevert("AMOUNT_TOO_LARGE");
+        uSDCNativeConverter.exposeSimulateDeconvertWithForce(amount + 1);
+
+        assertEq(uSDCNativeConverter.exposeSimulateDeconvertWithForce(amount), backingOnLayerY);
+    }
+
+    function test_deconvert() public {
+        uint256 amount = 100;
+
+        vm.startPrank(owner);
+        uSDCNativeConverter.pause();
+        vm.expectRevert(EnforcedPause.selector);
+        uSDCNativeConverter.deconvert(amount, recipient);
+        uSDCNativeConverter.unpause();
+        vm.stopPrank();
+
+        vm.startPrank(sender);
+        vm.expectRevert("INVALID_AMOUNT");
+        uSDCNativeConverter.deconvert(0, recipient);
+
+        vm.expectRevert("INVALID_ADDRESS");
+        uSDCNativeConverter.deconvert(amount, address(0));
+
+        vm.expectRevert("AMOUNT_TOO_LARGE");
+        uSDCNativeConverter.deconvert(amount, recipient); // no backing on layer Y
+
+        // create backing on layer Y
+        uint256 backingOnLayerY = 0;
+        deal(address(wUSDC), owner, amount);
+        vm.startPrank(owner);
+        wUSDC.approve(address(uSDCNativeConverter), amount);
+        backingOnLayerY = uSDCNativeConverter.convert(amount, recipient);
+        vm.stopPrank();
+
+        vm.startPrank(sender);
+        vm.expectRevert("ERC20: subtraction underflow");
+        uSDCNativeConverter.deconvert(amount, recipient); // sender has 0 shares
+
+        deal(address(uSDCe), sender, amount); // mint shares
+
+        uint256 returnedAssets = uSDCNativeConverter.deconvert(amount, recipient);
+        vm.stopPrank();
+
+        assertEq(returnedAssets, backingOnLayerY);
+        assertEq(wUSDC.balanceOf(recipient), amount);
+        assertEq(wUSDC.balanceOf(address(uSDCNativeConverter)), 0);
+        assertEq(uSDCe.balanceOf(sender), 0);
+        assertEq(uSDCNativeConverter.backingOnLayerY(), 0);
+    }
+
+    function test_deconvertAndBridge() public {
+        uint256 amount = 100;
+
+        vm.startPrank(owner);
+        uSDCNativeConverter.pause();
+        vm.expectRevert(EnforcedPause.selector);
+        uSDCNativeConverter.deconvertAndBridge(amount, NETWORK_ID_L1, recipient, true);
+        uSDCNativeConverter.unpause();
+        vm.stopPrank();
+
+        vm.startPrank(sender);
+        vm.expectRevert("INVALID_NETWORK");
+        uSDCNativeConverter.deconvertAndBridge(amount, NETWORK_ID_L2, recipient, true);
+
+        // create backing on layer Y
+        uint256 backingOnLayerY = 0;
+        deal(address(wUSDC), owner, amount);
+        vm.startPrank(owner);
+        wUSDC.approve(address(uSDCNativeConverter), amount);
+        backingOnLayerY = uSDCNativeConverter.convert(amount, recipient);
+        vm.stopPrank();
+
+        deal(address(uSDCe), sender, amount); // mint shares
+
+        vm.startPrank(sender);
+        vm.expectEmit();
+        emit BridgeEvent(
+            LEAF_TYPE_ASSET, NETWORK_ID_L2, address(wUSDC), NETWORK_ID_L1, recipient, amount, WUSDC_METADATA, 55413
+        );
+        uint256 returnedAssets = uSDCNativeConverter.deconvertAndBridge(amount, NETWORK_ID_L1, recipient, true);
+
+        assertEq(returnedAssets, backingOnLayerY);
+        assertEq(wUSDC.balanceOf(address(uSDCNativeConverter)), 0);
+        assertEq(uSDCe.balanceOf(sender), 0);
+        assertEq(uSDCNativeConverter.backingOnLayerY(), 0);
+    }
+
+    function test_migrateBackingToLayerX() public {
+        vm.startPrank(owner);
+        uSDCNativeConverter.pause();
+        vm.expectRevert(EnforcedPause.selector);
+        uSDCNativeConverter.migrateBackingToLayerX();
+        uSDCNativeConverter.unpause();
+        vm.stopPrank();
+
+        vm.expectRevert("INVALID_AMOUNT");
+        uSDCNativeConverter.migrateBackingToLayerX(); // try with 0 backing
+
+        // create backing on layer Y
+        uint256 amount = 100;
+        uint256 backingOnLayerY = 0;
+        deal(address(wUSDC), owner, amount);
+        vm.startPrank(owner);
+        wUSDC.approve(address(uSDCNativeConverter), amount);
+        backingOnLayerY = uSDCNativeConverter.convert(amount, recipient);
+        vm.stopPrank();
+
+        uint256 amountToMigrate = amount - (backingOnLayerY * NON_MIGRATABLE_BACKING_PERCENTAGE) / 100;
+
+        vm.expectEmit();
+        emit BridgeEvent(
+            LEAF_TYPE_ASSET,
+            NETWORK_ID_L2,
+            address(wUSDC),
+            NETWORK_ID_L1,
+            migrationManager,
+            amountToMigrate,
+            WUSDC_METADATA,
+            55413
+        );
+        vm.expectEmit();
+        emit BridgeEvent(
+            LEAF_TYPE_MESSAGE,
+            NETWORK_ID_L2,
+            address(uSDCNativeConverter),
+            NETWORK_ID_L1,
+            migrationManager,
+            0,
+            abi.encode(CrossNetworkInstruction.COMPLETE_MIGRATION, amountToMigrate, amountToMigrate),
+            55414
+        );
+        vm.expectEmit();
+        emit MigrationStarted(address(this), amountToMigrate, amountToMigrate);
+        uSDCNativeConverter.migrateBackingToLayerX();
+        assertEq(wUSDC.balanceOf(address(uSDCNativeConverter)), backingOnLayerY - amountToMigrate);
+
+        // mint extra shares
+        uSDCe.mint(sender, 1000);
+
+        vm.expectRevert("INVALID_AMOUNT");
+        uSDCNativeConverter.migrateBackingToLayerX(); // backing is less than the non migratable backing percentage
+
+        // Try to migrate as the owner with a specific amount
+        vm.expectRevert(); // only owner can call this function
+        uSDCNativeConverter.migrateBackingToLayerX(amount);
+
+        vm.startPrank(owner);
+        vm.expectRevert("INVALID_AMOUNT");
+        uSDCNativeConverter.migrateBackingToLayerX(0);
+
+        uint256 currentBacking = uSDCNativeConverter.backingOnLayerY();
+
+        vm.expectRevert("AMOUNT_TOO_LARGE");
+        uSDCNativeConverter.migrateBackingToLayerX(currentBacking + 1);
+    }
+
+    function test_setNonMigratableBackingPercentage() public {
+        vm.expectRevert(); // only owner can call this function
+        uSDCNativeConverter.changeNonMigratableBackingPercentage(0);
+
+        vm.startPrank(owner);
+        uSDCNativeConverter.pause();
+        vm.expectRevert(EnforcedPause.selector);
+        uSDCNativeConverter.changeNonMigratableBackingPercentage(0);
+        uSDCNativeConverter.unpause();
+
+        vm.expectRevert("INVALID_BACKING_PERCENTAGE");
+        uSDCNativeConverter.changeNonMigratableBackingPercentage(101);
+
+        vm.expectEmit();
+        emit NonMigratableBackingPercentageChanged(20);
+        uSDCNativeConverter.changeNonMigratableBackingPercentage(20);
+        vm.stopPrank();
+
+        assertEq(uSDCNativeConverter.nonMigratableBackingPercentage(), 20);
+    }
+
+    function test_version() public view {
+        assertEq(uSDCNativeConverter.version(), NATIVE_CONVERTER_VERSION);
     }
 
     function _proxify(address logic, address admin, bytes memory initData) internal returns (address proxy) {
