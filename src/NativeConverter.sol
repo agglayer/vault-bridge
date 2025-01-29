@@ -454,7 +454,10 @@ abstract contract NativeConverter is
 
         // Bridge a message to yeToken on Layer X to complete the migration.
         $.lxlyBridge.bridgeMessage(
-            $.layerXLxlyId, $.yeToken, true, abi.encode(CrossNetworkInstruction.COMPLETE_MIGRATION, shares, assets)
+            $.layerXLxlyId,
+            $.yeToken,
+            true,
+            abi.encode(CrossNetworkInstruction.COMPLETE_MIGRATION, abi.encode(shares, assets))
         );
 
         // Emit the event.

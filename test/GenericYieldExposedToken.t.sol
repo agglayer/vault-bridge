@@ -1143,8 +1143,6 @@ contract GenericYieldExposedTokenTest is Test {
         assertEq(yeToken.version(), version);
     }
 
-    // //TODO: test claimAndWithdraw
-
     function test_approve() public {
         assertTrue(yeToken.approve(address(0xBEEF), 1e18));
 

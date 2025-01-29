@@ -1,5 +1,6 @@
 {
   "devDependencies": {
-    "@types/bun": "^1.1.6"
+    "@types/bun": "^1.1.6",
+    "@0xpolygonhermez/zkevm-commonjs": "github:0xPolygonHermez/zkevm-commonjs#main"
   }
 }

@@ -24,6 +24,19 @@ interface ILxLyBridge {
         uint256 amount,
         bytes calldata metadata
     ) external;
+    function claimMessage(
+        bytes32[32] calldata smtProofLocalExitRoot,
+        bytes32[32] calldata smtProofRollupExitRoot,
+        uint256 globalIndex,
+        bytes32 mainnetExitRoot,
+        bytes32 rollupExitRoot,
+        uint32 originNetwork,
+        address originAddress,
+        uint32 destinationNetwork,
+        address destinationAddress,
+        uint256 amount,
+        bytes calldata metadata
+    ) external;
     function bridgeMessage(
         uint32 destinationNetwork,
         address destinationAddress,

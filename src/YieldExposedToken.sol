@@ -624,7 +624,7 @@ abstract contract YieldExposedToken is
             originNetwork,
             originTokenAddress,
             destinationNetwork,
-            address(this),
+            destinationAddress,
             amount,
             metadata
         );

@@ -65,6 +65,12 @@ forge build
 
 #### Test
 
+Install dependencies:
+```
+npm i
+```
+
+Run tests:
 ```
 forge test
 ```

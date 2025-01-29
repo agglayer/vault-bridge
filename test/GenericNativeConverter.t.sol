@@ -639,7 +639,9 @@ contract GenericNativeConverterTest is Test {
             NETWORK_ID_L1,
             yeToken,
             0,
-            abi.encode(NativeConverter.CrossNetworkInstruction.COMPLETE_MIGRATION, amountToMigrate, amountToMigrate),
+            abi.encode(
+                NativeConverter.CrossNetworkInstruction.COMPLETE_MIGRATION, abi.encode(amountToMigrate, amountToMigrate)
+            ),
             55414
         );
         vm.expectEmit();
@@ -752,7 +754,9 @@ contract GenericNativeConverterTest is Test {
             NETWORK_ID_L1,
             yeToken,
             0,
-            abi.encode(NativeConverter.CrossNetworkInstruction.COMPLETE_MIGRATION, amountToMigrate, amountToMigrate),
+            abi.encode(
+                NativeConverter.CrossNetworkInstruction.COMPLETE_MIGRATION, abi.encode(amountToMigrate, amountToMigrate)
+            ),
             55414
         );
         vm.expectEmit();
