@@ -5,7 +5,7 @@ import {YeUSDT} from "src/yield-exposed-tokens/yeUSDT/YeUSDT.sol";
 import {YieldExposedToken} from "src/YieldExposedToken.sol";
 
 import {IMetaMorpho} from "test/interfaces/IMetaMorpho.sol";
-import {YieldExposedTokenTest, YieldExposedTokenHarness, console} from "test/YieldExposedToken.t.sol";
+import {GenericYieldExposedTokenTest, GenericYeToken, console} from "test/GenericYieldExposedToken.t.sol";
 
 contract YeUSDTHarness is YeUSDT {
     function exposeAssetsAfterTransferFee(uint256 assetsBeforeTransferFee) public view returns (uint256) {
@@ -17,7 +17,7 @@ contract YeUSDTHarness is YeUSDT {
     }
 }
 
-contract YeUSDTTest is YieldExposedTokenTest {
+contract YeUSDTTest is GenericYieldExposedTokenTest {
     address internal constant USDT = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
     address internal constant USDT_VAULT = 0xbEef047a543E45807105E51A8BBEFCc5950fcfBa;
     bytes32 internal constant YEUSDT_STORAGE_CACHED_BASIS_POINT_RATE =
@@ -37,7 +37,7 @@ contract YeUSDTTest is YieldExposedTokenTest {
         yeTokenMetaData = abi.encode(name, symbol, decimals);
         minimumReservePercentage = 10;
 
-        yeToken = YieldExposedTokenHarness(address(new YeUSDT()));
+        yeToken = GenericYeToken(address(new YeUSDT()));
         yeTokenImplementation = address(yeToken);
         stateBeforeInitialize = vm.snapshotState();
         bytes memory initData = abi.encodeCall(
@@ -54,7 +54,7 @@ contract YeUSDTTest is YieldExposedTokenTest {
                 migrationManager
             )
         );
-        yeToken = YieldExposedTokenHarness(_proxify(address(yeToken), address(this), initData));
+        yeToken = GenericYeToken(_proxify(address(yeToken), address(this), initData));
 
         vm.label(address(yeTokenVault), "USDT Vault");
         vm.label(address(yeToken), "yeUSDT");

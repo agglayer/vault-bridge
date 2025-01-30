@@ -2,64 +2,19 @@
 pragma solidity ^0.8.28;
 
 import "forge-std/Test.sol";
-import "src/YieldExposedToken.sol";
-import {IMetaMorpho} from "test/interfaces/IMetaMorpho.sol";
+
+import {GenericYeToken} from "src/yield-exposed-tokens/GenericYeToken.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import {IMetaMorpho} from "test/interfaces/IMetaMorpho.sol";
 import {ILxLyBridge as _ILxLyBridge} from "test/interfaces/ILxLyBridge.sol";
 
-contract YieldExposedTokenHarness is YieldExposedToken {
-    function initialize(
-        address owner_,
-        string calldata name_,
-        string calldata symbol_,
-        address underlyingToken_,
-        uint8 minimumReservePercentage_,
-        address yieldVault_,
-        address yieldRecipient_,
-        address lxlyBridge_,
-        address migrationManager_
-    ) external initializer {
-        __YieldExposedToken_init(
-            owner_,
-            name_,
-            symbol_,
-            underlyingToken_,
-            minimumReservePercentage_,
-            yieldVault_,
-            yieldRecipient_,
-            lxlyBridge_,
-            migrationManager_
-        );
-    }
-
-    function _assetsAfterTransferFee(uint256 assetsBeforeTransferFee)
-        internal
-        view
-        virtual
-        override
-        returns (uint256)
-    {
-        return assetsBeforeTransferFee;
-    }
-
-    function _assetsBeforeTransferFee(uint256 minimumAssetsAfterTransferFee)
-        internal
-        view
-        virtual
-        override
-        returns (uint256)
-    {
-        return minimumAssetsAfterTransferFee;
-    }
-}
-
-contract YieldExposedTokenTest is Test {
+contract GenericYieldExposedTokenTest is Test {
     using SafeERC20 for IERC20;
-    using SafeERC20 for YieldExposedTokenHarness;
+    using SafeERC20 for GenericYeToken;
 
     // constants
     address constant LXLY_BRIDGE = 0x2a3DD3EB832aF982ec71669E178424b10Dca2EDe;
@@ -75,7 +30,7 @@ contract YieldExposedTokenTest is Test {
     uint256 stateBeforeInitialize;
     uint256 mainnetFork;
     IMetaMorpho yeTokenVault;
-    YieldExposedTokenHarness yeToken;
+    GenericYeToken yeToken;
     address yeTokenImplementation;
     address asset;
 
@@ -135,7 +90,7 @@ contract YieldExposedTokenTest is Test {
         yeTokenMetaData = abi.encode(name, symbol, decimals);
         minimumReservePercentage = 10;
 
-        yeToken = new YieldExposedTokenHarness();
+        yeToken = new GenericYeToken();
         yeTokenImplementation = address(yeToken);
         stateBeforeInitialize = vm.snapshotState();
         bytes memory initData = abi.encodeCall(
@@ -152,7 +107,7 @@ contract YieldExposedTokenTest is Test {
                 migrationManager
             )
         );
-        yeToken = YieldExposedTokenHarness(_proxify(address(yeTokenImplementation), address(this), initData));
+        yeToken = GenericYeToken(_proxify(address(yeTokenImplementation), address(this), initData));
 
         vm.label(address(yeTokenVault), "yeToken Vault");
         vm.label(address(yeToken), "yeToken");
@@ -202,7 +157,7 @@ contract YieldExposedTokenTest is Test {
             )
         );
         vm.expectRevert("INVALID_OWNER");
-        yeToken = YieldExposedTokenHarness(_proxify(yeTokenImplementation, address(this), initData));
+        yeToken = GenericYeToken(_proxify(yeTokenImplementation, address(this), initData));
         vm.revertToState(stateBeforeInitialize);
 
         initData = abi.encodeCall(
@@ -220,7 +175,7 @@ contract YieldExposedTokenTest is Test {
             )
         );
         vm.expectRevert("INVALID_NAME");
-        yeToken = YieldExposedTokenHarness(_proxify(yeTokenImplementation, address(this), initData));
+        yeToken = GenericYeToken(_proxify(yeTokenImplementation, address(this), initData));
         vm.revertToState(stateBeforeInitialize);
 
         initData = abi.encodeCall(
@@ -238,7 +193,7 @@ contract YieldExposedTokenTest is Test {
             )
         );
         vm.expectRevert("INVALID_SYMBOL");
-        yeToken = YieldExposedTokenHarness(_proxify(yeTokenImplementation, address(this), initData));
+        yeToken = GenericYeToken(_proxify(yeTokenImplementation, address(this), initData));
         vm.revertToState(stateBeforeInitialize);
 
         initData = abi.encodeCall(
@@ -256,7 +211,7 @@ contract YieldExposedTokenTest is Test {
             )
         );
         vm.expectRevert("INVALID_UNDERLYING_TOKEN");
-        yeToken = YieldExposedTokenHarness(_proxify(yeTokenImplementation, address(this), initData));
+        yeToken = GenericYeToken(_proxify(yeTokenImplementation, address(this), initData));
         vm.revertToState(stateBeforeInitialize);
 
         initData = abi.encodeCall(
@@ -264,7 +219,7 @@ contract YieldExposedTokenTest is Test {
             (owner, name, symbol, asset, 101, address(yeTokenVault), yieldRecipient, LXLY_BRIDGE, migrationManager)
         );
         vm.expectRevert("INVALID_PERCENTAGE");
-        yeToken = YieldExposedTokenHarness(_proxify(yeTokenImplementation, address(this), initData));
+        yeToken = GenericYeToken(_proxify(yeTokenImplementation, address(this), initData));
         vm.revertToState(stateBeforeInitialize);
 
         initData = abi.encodeCall(
@@ -282,7 +237,7 @@ contract YieldExposedTokenTest is Test {
             )
         );
         vm.expectRevert("INVALID_VAULT");
-        yeToken = YieldExposedTokenHarness(_proxify(yeTokenImplementation, address(this), initData));
+        yeToken = GenericYeToken(_proxify(yeTokenImplementation, address(this), initData));
         vm.revertToState(stateBeforeInitialize);
 
         initData = abi.encodeCall(
@@ -300,7 +255,7 @@ contract YieldExposedTokenTest is Test {
             )
         );
         vm.expectRevert("INVALID_YIELD_RECIPIENT");
-        yeToken = YieldExposedTokenHarness(_proxify(yeTokenImplementation, address(this), initData));
+        yeToken = GenericYeToken(_proxify(yeTokenImplementation, address(this), initData));
         vm.revertToState(stateBeforeInitialize);
 
         initData = abi.encodeCall(
@@ -318,7 +273,7 @@ contract YieldExposedTokenTest is Test {
             )
         );
         vm.expectRevert("INVALID_LXLY_BRIDGE");
-        yeToken = YieldExposedTokenHarness(_proxify(yeTokenImplementation, address(this), initData));
+        yeToken = GenericYeToken(_proxify(yeTokenImplementation, address(this), initData));
         vm.revertToState(stateBeforeInitialize);
 
         initData = abi.encodeCall(
@@ -336,7 +291,7 @@ contract YieldExposedTokenTest is Test {
             )
         );
         vm.expectRevert("INVALID_MIGRATION_MANAGER");
-        yeToken = YieldExposedTokenHarness(_proxify(yeTokenImplementation, address(this), initData));
+        yeToken = GenericYeToken(_proxify(yeTokenImplementation, address(this), initData));
         vm.revertToState(stateBeforeInitialize);
     }
 
