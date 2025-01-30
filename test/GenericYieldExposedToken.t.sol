@@ -586,18 +586,18 @@ contract GenericYieldExposedTokenTest is Test {
     function test_setYieldRecipient_no_yield() public {
         address newRecipient = makeAddr("newRecipient");
         vm.expectRevert(); // only owner can claim yield
-        yeToken.changeYieldRecipient(newRecipient);
+        yeToken.setYieldRecipient(newRecipient);
 
         vm.expectRevert("INVALID_YIELD_RECIPIENT");
         vm.prank(owner);
-        yeToken.changeYieldRecipient(address(0));
+        yeToken.setYieldRecipient(address(0));
 
         assertEq(yeToken.yieldRecipient(), yieldRecipient);
 
         vm.expectEmit();
         emit YieldRecipientChanged(newRecipient);
         vm.prank(owner);
-        yeToken.changeYieldRecipient(newRecipient);
+        yeToken.setYieldRecipient(newRecipient);
         assertEq(yeToken.yieldRecipient(), newRecipient);
     }
 
@@ -625,7 +625,7 @@ contract GenericYieldExposedTokenTest is Test {
         vm.expectEmit();
         emit YieldCollected(yieldRecipient, expectedYieldAssets);
         vm.prank(owner);
-        yeToken.changeYieldRecipient(newRecipient);
+        yeToken.setYieldRecipient(newRecipient);
         assertEq(yeToken.balanceOf(yieldRecipient), expectedYieldAssets); // yield collected to the old recipient
         assertEq(yeToken.yieldRecipient(), newRecipient);
     }
@@ -633,18 +633,18 @@ contract GenericYieldExposedTokenTest is Test {
     function test_setMinimumReservePercentage_no_rebalance() public {
         uint8 percentage = 20;
         vm.expectRevert(); // only owner can set minimum reserve percentage
-        yeToken.changeMinimumReservePercentage(percentage);
+        yeToken.setMinimumReservePercentage(percentage);
 
         vm.expectRevert("INVALID_PERCENTAGE");
         vm.prank(owner);
-        yeToken.changeMinimumReservePercentage(101);
+        yeToken.setMinimumReservePercentage(101);
 
         assertEq(yeToken.minimumReservePercentage(), minimumReservePercentage);
 
         vm.expectEmit();
         emit MinimumReservePercentageChanged(percentage);
         vm.prank(owner);
-        yeToken.changeMinimumReservePercentage(percentage);
+        yeToken.setMinimumReservePercentage(percentage);
         assertEq(yeToken.minimumReservePercentage(), percentage);
     }
 
@@ -668,7 +668,7 @@ contract GenericYieldExposedTokenTest is Test {
         vm.expectEmit();
         emit MinimumReservePercentageChanged(percentage);
         vm.prank(owner);
-        yeToken.changeMinimumReservePercentage(percentage);
+        yeToken.setMinimumReservePercentage(percentage);
         assertEq(yeToken.minimumReservePercentage(), percentage);
         assertLt(yeToken.stakedAssets(), stakedAssetsBefore);
     }
@@ -676,7 +676,7 @@ contract GenericYieldExposedTokenTest is Test {
     function testFuzz_setMinimumReservePercentage(uint8 percentage) public {
         vm.assume(percentage <= 100);
         vm.prank(owner);
-        yeToken.changeMinimumReservePercentage(percentage);
+        yeToken.setMinimumReservePercentage(percentage);
         assertEq(yeToken.minimumReservePercentage(), percentage);
     }
 
