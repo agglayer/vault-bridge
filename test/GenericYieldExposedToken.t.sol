@@ -26,6 +26,9 @@ contract GenericYieldExposedTokenTest is Test {
     bytes4 constant PERMIT_SIGNATURE = 0xd505accf;
     address internal constant TEST_TOKEN = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
     address internal constant TEST_TOKEN_VAULT = 0xBEEF01735c132Ada46AA9aA4c54623cAA92A64CB;
+    uint256 constant DUMMY_AMOUNT = 100 ether;
+    uint256 constant DUMMY_YIELD_ASSETS = 500 ether;
+    uint256 constant MAX_MINIMUM_RESERVE_PERCENTAGE = 1e18;
 
     uint256 stateBeforeInitialize;
     uint256 mainnetFork;
@@ -46,11 +49,34 @@ contract GenericYieldExposedTokenTest is Test {
     string name;
     string symbol;
     uint256 decimals;
-    uint8 minimumReservePercentage;
+    uint256 minimumReservePercentage;
     bytes yeTokenMetaData;
 
     // error messages
     error EnforcedPause();
+    error InvalidOwner();
+    error InvalidName();
+    error InvalidSymbol();
+    error InvalidUnderlyingToken();
+    error InvalidMinimumReservePercentage();
+    error InvalidYieldVault();
+    error InvalidYieldRecipient();
+    error InvalidLxLyBridge();
+    error InvalidMigrationManager();
+    error InvalidAssets();
+    error InvalidDestinationNetworkId();
+    error InvalidReceiver();
+    error InvalidPermitData();
+    error InvalidShares();
+    error IncorrectAmountOfSharesMinted(uint256 mintedShares, uint256 requiredShares);
+    error AssetsTooLarge(uint256 availableAssets, uint256 requestedAssets);
+    error IncorrectAmountOfSharesRedeemed(uint256 redeemedShares, uint256 requiredShares);
+    error CannotRebalanceReserve();
+    error NoNeedToReplenishReserve();
+    error Unauthorized();
+    error NoYield();
+    error InvalidOriginNetworkId();
+    error CannotCompleteMigration(uint256 requiredAssets, uint256 receivedAssets, uint256 availableYield);
 
     // events
     event BridgeEvent(
@@ -66,8 +92,8 @@ contract GenericYieldExposedTokenTest is Test {
     event Deposit(address indexed sender, address indexed owner, uint256 assets, uint256 shares);
     event ReserveRebalanced(uint256 reservedAssets);
     event YieldCollected(address indexed yieldRecipient, uint256 yeTokenAmount);
-    event YieldRecipientChanged(address indexed yieldRecipient);
-    event MinimumReservePercentageChanged(uint8 minimumReservePercentage);
+    event YieldRecipientSet(address indexed yieldRecipient);
+    event MinimumReservePercentageSet(uint256 minimumReservePercentage);
     event MigrationCompleted(
         uint32 indexed destinationNetworkId,
         uint256 indexed shares,
@@ -88,7 +114,7 @@ contract GenericYieldExposedTokenTest is Test {
         symbol = "yeUSDC";
         decimals = 6;
         yeTokenMetaData = abi.encode(name, symbol, decimals);
-        minimumReservePercentage = 10;
+        minimumReservePercentage = 1e17;
 
         yeToken = new GenericYeToken();
         yeTokenImplementation = address(yeToken);
@@ -156,7 +182,7 @@ contract GenericYieldExposedTokenTest is Test {
                 migrationManager
             )
         );
-        vm.expectRevert("INVALID_OWNER");
+        vm.expectRevert(InvalidOwner.selector);
         yeToken = GenericYeToken(_proxify(yeTokenImplementation, address(this), initData));
         vm.revertToState(stateBeforeInitialize);
 
@@ -174,7 +200,7 @@ contract GenericYieldExposedTokenTest is Test {
                 migrationManager
             )
         );
-        vm.expectRevert("INVALID_NAME");
+        vm.expectRevert(InvalidName.selector);
         yeToken = GenericYeToken(_proxify(yeTokenImplementation, address(this), initData));
         vm.revertToState(stateBeforeInitialize);
 
@@ -192,7 +218,7 @@ contract GenericYieldExposedTokenTest is Test {
                 migrationManager
             )
         );
-        vm.expectRevert("INVALID_SYMBOL");
+        vm.expectRevert(InvalidSymbol.selector);
         yeToken = GenericYeToken(_proxify(yeTokenImplementation, address(this), initData));
         vm.revertToState(stateBeforeInitialize);
 
@@ -210,15 +236,15 @@ contract GenericYieldExposedTokenTest is Test {
                 migrationManager
             )
         );
-        vm.expectRevert("INVALID_UNDERLYING_TOKEN");
+        vm.expectRevert(InvalidUnderlyingToken.selector);
         yeToken = GenericYeToken(_proxify(yeTokenImplementation, address(this), initData));
         vm.revertToState(stateBeforeInitialize);
 
         initData = abi.encodeCall(
             yeToken.initialize,
-            (owner, name, symbol, asset, 101, address(yeTokenVault), yieldRecipient, LXLY_BRIDGE, migrationManager)
+            (owner, name, symbol, asset, 1e19, address(yeTokenVault), yieldRecipient, LXLY_BRIDGE, migrationManager)
         );
-        vm.expectRevert("INVALID_PERCENTAGE");
+        vm.expectRevert(InvalidMinimumReservePercentage.selector);
         yeToken = GenericYeToken(_proxify(yeTokenImplementation, address(this), initData));
         vm.revertToState(stateBeforeInitialize);
 
@@ -236,7 +262,7 @@ contract GenericYieldExposedTokenTest is Test {
                 migrationManager
             )
         );
-        vm.expectRevert("INVALID_VAULT");
+        vm.expectRevert(InvalidYieldVault.selector);
         yeToken = GenericYeToken(_proxify(yeTokenImplementation, address(this), initData));
         vm.revertToState(stateBeforeInitialize);
 
@@ -254,7 +280,7 @@ contract GenericYieldExposedTokenTest is Test {
                 migrationManager
             )
         );
-        vm.expectRevert("INVALID_YIELD_RECIPIENT");
+        vm.expectRevert(InvalidYieldRecipient.selector);
         yeToken = GenericYeToken(_proxify(yeTokenImplementation, address(this), initData));
         vm.revertToState(stateBeforeInitialize);
 
@@ -272,7 +298,7 @@ contract GenericYieldExposedTokenTest is Test {
                 migrationManager
             )
         );
-        vm.expectRevert("INVALID_LXLY_BRIDGE");
+        vm.expectRevert(InvalidLxLyBridge.selector);
         yeToken = GenericYeToken(_proxify(yeTokenImplementation, address(this), initData));
         vm.revertToState(stateBeforeInitialize);
 
@@ -290,49 +316,53 @@ contract GenericYieldExposedTokenTest is Test {
                 address(0)
             )
         );
-        vm.expectRevert("INVALID_MIGRATION_MANAGER");
+        vm.expectRevert(InvalidMigrationManager.selector);
         yeToken = GenericYeToken(_proxify(yeTokenImplementation, address(this), initData));
         vm.revertToState(stateBeforeInitialize);
     }
 
     function test_deposit() public {
-        uint256 amount = 100;
-        uint256 reserveAssets = (amount * minimumReservePercentage) / 100;
+        uint256 vaultMaxDeposit = yeTokenVault.maxDeposit(address(yeToken));
+        uint256 reserveAssets = (DUMMY_AMOUNT * minimumReservePercentage) / MAX_MINIMUM_RESERVE_PERCENTAGE;
 
         vm.startPrank(owner);
         yeToken.pause();
         vm.expectRevert(EnforcedPause.selector);
-        yeToken.deposit(amount, recipient);
+        yeToken.deposit(DUMMY_AMOUNT, recipient);
 
         yeToken.unpause();
         vm.stopPrank();
 
-        deal(asset, sender, amount);
+        deal(asset, sender, DUMMY_AMOUNT);
 
         vm.startPrank(sender);
-        vm.expectRevert("INVALID_AMOUNT");
+        vm.expectRevert(InvalidAssets.selector);
         yeToken.deposit(0, recipient);
 
-        vm.expectRevert("INVALID_ADDRESS");
-        yeToken.deposit(amount, address(0));
+        vm.expectRevert(InvalidReceiver.selector);
+        yeToken.deposit(DUMMY_AMOUNT, address(0));
 
-        uint256 sharesToBeMinted = yeToken.previewDeposit(amount);
+        uint256 sharesToBeMinted = yeToken.previewDeposit(DUMMY_AMOUNT);
 
-        IERC20(asset).forceApprove(address(yeToken), amount);
+        IERC20(asset).forceApprove(address(yeToken), DUMMY_AMOUNT);
         vm.expectEmit();
-        emit Deposit(sender, recipient, amount, sharesToBeMinted);
-        yeToken.deposit(amount, recipient);
+        emit Deposit(sender, recipient, DUMMY_AMOUNT, sharesToBeMinted);
+        yeToken.deposit(DUMMY_AMOUNT, recipient);
         vm.stopPrank();
 
-        assertEq(IERC20(asset).balanceOf(address(yeToken)), reserveAssets);
+        uint256 assetsToDeposit = DUMMY_AMOUNT - reserveAssets;
+        uint256 assetsToDepositMax = (assetsToDeposit > vaultMaxDeposit) ? vaultMaxDeposit : assetsToDeposit;
+        uint256 reserveAssetsAfterDeposit = DUMMY_AMOUNT - assetsToDepositMax;
+
+        assertEq(IERC20(asset).balanceOf(address(yeToken)), reserveAssetsAfterDeposit); // reserve assets increased
         assertEq(yeToken.balanceOf(recipient), sharesToBeMinted); // shares minted to the recipient
     }
 
     function test_depositWithPermit() public virtual {
-        uint256 amount = 100;
-        uint256 reserveAssets = (amount * minimumReservePercentage) / 100;
+        uint256 vaultMaxDeposit = yeTokenVault.maxDeposit(address(yeToken));
+        uint256 reserveAssets = (DUMMY_AMOUNT * minimumReservePercentage) / MAX_MINIMUM_RESERVE_PERCENTAGE;
 
-        deal(asset, sender, amount);
+        deal(asset, sender, DUMMY_AMOUNT);
 
         bytes32 domainSeparator = IERC20Permit(asset).DOMAIN_SEPARATOR();
 
@@ -344,43 +374,52 @@ contract GenericYieldExposedTokenTest is Test {
                     domainSeparator, // remember to use the domain separator of the underlying token
                     keccak256(
                         abi.encode(
-                            PERMIT_TYPEHASH, sender, address(yeToken), amount, vm.getNonce(sender), block.timestamp
+                            PERMIT_TYPEHASH,
+                            sender,
+                            address(yeToken),
+                            DUMMY_AMOUNT,
+                            vm.getNonce(sender),
+                            block.timestamp
                         )
                     )
                 )
             )
         );
         bytes memory permitData =
-            abi.encodeWithSelector(PERMIT_SIGNATURE, sender, address(yeToken), amount, block.timestamp, v, r, s);
+            abi.encodeWithSelector(PERMIT_SIGNATURE, sender, address(yeToken), DUMMY_AMOUNT, block.timestamp, v, r, s);
 
-        uint256 sharesToBeMinted = yeToken.previewDeposit(amount);
+        uint256 sharesToBeMinted = yeToken.previewDeposit(DUMMY_AMOUNT);
 
         vm.startPrank(sender);
         vm.expectEmit();
-        emit Deposit(sender, recipient, amount, sharesToBeMinted);
-        yeToken.depositWithPermit(amount, recipient, permitData);
+        emit Deposit(sender, recipient, DUMMY_AMOUNT, sharesToBeMinted);
+        yeToken.depositWithPermit(DUMMY_AMOUNT, recipient, permitData);
         vm.stopPrank();
 
-        assertEq(IERC20(asset).balanceOf(address(yeToken)), reserveAssets);
+        uint256 assetsToDeposit = DUMMY_AMOUNT - reserveAssets;
+        uint256 assetsToDepositMax = (assetsToDeposit > vaultMaxDeposit) ? vaultMaxDeposit : assetsToDeposit;
+        uint256 reserveAssetsAfterDeposit = DUMMY_AMOUNT - assetsToDepositMax;
+
+        assertEq(IERC20(asset).balanceOf(address(yeToken)), reserveAssetsAfterDeposit); // reserve assets increased
         assertEq(yeToken.balanceOf(recipient), sharesToBeMinted); // shares minted to the recipient
     }
 
     function test_depositAndBridge() public {
-        uint256 amount = 100;
-        uint256 reserveAssets = (amount * minimumReservePercentage) / 100;
+        uint256 vaultMaxDeposit = yeTokenVault.maxDeposit(address(yeToken));
+        uint256 reserveAssets = (DUMMY_AMOUNT * minimumReservePercentage) / MAX_MINIMUM_RESERVE_PERCENTAGE;
 
         vm.startPrank(owner);
         yeToken.pause();
         vm.expectRevert(EnforcedPause.selector);
-        yeToken.depositAndBridge(amount, recipient, NETWORK_ID_L2, true);
+        yeToken.depositAndBridge(DUMMY_AMOUNT, recipient, NETWORK_ID_L2, true);
 
         yeToken.unpause();
         vm.stopPrank();
 
-        deal(asset, sender, amount);
+        deal(asset, sender, DUMMY_AMOUNT);
 
         vm.startPrank(sender);
-        IERC20(asset).forceApprove(address(yeToken), amount);
+        IERC20(asset).forceApprove(address(yeToken), DUMMY_AMOUNT);
         vm.expectEmit();
         emit BridgeEvent(
             LEAF_TYPE_ASSET,
@@ -388,22 +427,26 @@ contract GenericYieldExposedTokenTest is Test {
             address(yeToken),
             NETWORK_ID_L2,
             recipient,
-            amount,
+            DUMMY_AMOUNT,
             yeTokenMetaData,
             _ILxLyBridge(LXLY_BRIDGE).depositCount()
         );
-        yeToken.depositAndBridge(amount, recipient, NETWORK_ID_L2, true);
+        yeToken.depositAndBridge(DUMMY_AMOUNT, recipient, NETWORK_ID_L2, true);
         vm.stopPrank();
 
-        assertEq(IERC20(asset).balanceOf(address(yeToken)), reserveAssets);
-        assertEq(yeToken.balanceOf(LXLY_BRIDGE), amount); // shares locked on bridge
+        uint256 assetsToDeposit = DUMMY_AMOUNT - reserveAssets;
+        uint256 assetsToDepositMax = (assetsToDeposit > vaultMaxDeposit) ? vaultMaxDeposit : assetsToDeposit;
+        uint256 reserveAssetsAfterDeposit = DUMMY_AMOUNT - assetsToDepositMax;
+
+        assertEq(IERC20(asset).balanceOf(address(yeToken)), reserveAssetsAfterDeposit); // reserve assets increased
+        assertEq(yeToken.balanceOf(LXLY_BRIDGE), DUMMY_AMOUNT); // shares locked on bridge
     }
 
     function test_depositAndBridgePermit() public virtual {
-        uint256 amount = 100;
-        uint256 reserveAssets = (amount * minimumReservePercentage) / 100;
+        uint256 vaultMaxDeposit = yeTokenVault.maxDeposit(address(yeToken));
+        uint256 reserveAssets = (DUMMY_AMOUNT * minimumReservePercentage) / MAX_MINIMUM_RESERVE_PERCENTAGE;
 
-        deal(asset, sender, amount);
+        deal(asset, sender, DUMMY_AMOUNT);
 
         bytes32 domainSeparator = IERC20Permit(asset).DOMAIN_SEPARATOR();
 
@@ -415,14 +458,19 @@ contract GenericYieldExposedTokenTest is Test {
                     domainSeparator, // remember to use the domain separator of the underlying token
                     keccak256(
                         abi.encode(
-                            PERMIT_TYPEHASH, sender, address(yeToken), amount, vm.getNonce(sender), block.timestamp
+                            PERMIT_TYPEHASH,
+                            sender,
+                            address(yeToken),
+                            DUMMY_AMOUNT,
+                            vm.getNonce(sender),
+                            block.timestamp
                         )
                     )
                 )
             )
         );
         bytes memory permitData =
-            abi.encodeWithSelector(PERMIT_SIGNATURE, sender, address(yeToken), amount, block.timestamp, v, r, s);
+            abi.encodeWithSelector(PERMIT_SIGNATURE, sender, address(yeToken), DUMMY_AMOUNT, block.timestamp, v, r, s);
 
         vm.startPrank(sender);
         vm.expectEmit();
@@ -432,90 +480,101 @@ contract GenericYieldExposedTokenTest is Test {
             address(yeToken),
             NETWORK_ID_L2,
             recipient,
-            amount,
+            DUMMY_AMOUNT,
             yeTokenMetaData,
             _ILxLyBridge(LXLY_BRIDGE).depositCount()
         );
-        yeToken.depositAndBridgeWithPermit(amount, recipient, NETWORK_ID_L2, true, permitData);
+        yeToken.depositAndBridgeWithPermit(DUMMY_AMOUNT, recipient, NETWORK_ID_L2, true, permitData);
         vm.stopPrank();
 
-        assertEq(IERC20(asset).balanceOf(address(yeToken)), reserveAssets);
-        assertEq(yeToken.balanceOf(LXLY_BRIDGE), amount); // shares locked on bridge
+        uint256 assetsToDeposit = DUMMY_AMOUNT - reserveAssets;
+        uint256 assetsToDepositMax = (assetsToDeposit > vaultMaxDeposit) ? vaultMaxDeposit : assetsToDeposit;
+        uint256 reserveAssetsAfterDeposit = DUMMY_AMOUNT - assetsToDepositMax;
+
+        assertEq(IERC20(asset).balanceOf(address(yeToken)), reserveAssetsAfterDeposit);
+        assertEq(yeToken.balanceOf(LXLY_BRIDGE), DUMMY_AMOUNT); // shares locked on bridge
     }
 
     function test_mint() public virtual {
-        uint256 amount = 100;
-        uint256 reserveAssets = (amount * minimumReservePercentage) / 100;
+        uint256 vaultMaxDeposit = yeTokenVault.maxDeposit(address(yeToken));
+        uint256 reserveAssets = (DUMMY_AMOUNT * minimumReservePercentage) / MAX_MINIMUM_RESERVE_PERCENTAGE;
 
         vm.startPrank(owner);
         yeToken.pause();
         vm.expectRevert(EnforcedPause.selector);
-        yeToken.mint(amount, recipient);
+        yeToken.mint(DUMMY_AMOUNT, recipient);
 
         yeToken.unpause();
         vm.stopPrank();
 
-        deal(asset, sender, amount);
-        uint256 sharesToBeMinted = yeToken.previewMint(amount);
+        deal(asset, sender, DUMMY_AMOUNT);
+        uint256 sharesToBeMinted = yeToken.previewMint(DUMMY_AMOUNT);
 
         vm.startPrank(sender);
-        IERC20(asset).forceApprove(address(yeToken), amount);
-        yeToken.mint(amount, sender);
+        IERC20(asset).forceApprove(address(yeToken), DUMMY_AMOUNT);
+        yeToken.mint(DUMMY_AMOUNT, sender);
         vm.stopPrank();
 
-        assertEq(IERC20(asset).balanceOf(address(yeToken)), reserveAssets);
+        uint256 assetsToDeposit = DUMMY_AMOUNT - reserveAssets;
+        uint256 assetsToDepositMax = (assetsToDeposit > vaultMaxDeposit) ? vaultMaxDeposit : assetsToDeposit;
+        uint256 reserveAssetsAfterDeposit = DUMMY_AMOUNT - assetsToDepositMax;
+
+        assertEq(IERC20(asset).balanceOf(address(yeToken)), reserveAssetsAfterDeposit);
         assertEq(yeToken.balanceOf(sender), sharesToBeMinted); // shares minted to the recipient
     }
 
     function test_withdraw() public virtual {
-        uint256 amount = 100;
-        uint256 reserveAmount = (amount * minimumReservePercentage) / 100;
+        uint256 vaultMaxDeposit = yeTokenVault.maxDeposit(address(yeToken));
+        uint256 reserveAmount = (DUMMY_AMOUNT * minimumReservePercentage) / MAX_MINIMUM_RESERVE_PERCENTAGE;
 
         vm.startPrank(owner);
         yeToken.pause();
         vm.expectRevert(EnforcedPause.selector);
-        yeToken.withdraw(amount, recipient, owner);
+        yeToken.withdraw(DUMMY_AMOUNT, recipient, owner);
         yeToken.unpause();
         vm.stopPrank();
 
-        deal(asset, sender, amount);
+        deal(asset, sender, DUMMY_AMOUNT);
 
         vm.startPrank(sender);
-        IERC20(asset).forceApprove(address(yeToken), amount);
-        yeToken.deposit(amount, sender);
+        IERC20(asset).forceApprove(address(yeToken), DUMMY_AMOUNT);
+        yeToken.deposit(DUMMY_AMOUNT, sender);
         assertEq(IERC20(asset).balanceOf(sender), 0); // make sure sender has deposited all assets
-        assertEq(yeToken.balanceOf(sender), amount); // sender gets 100 shares
+        assertEq(yeToken.balanceOf(sender), DUMMY_AMOUNT); // sender gets 100 shares
 
-        vm.expectRevert("AMOUNT_TOO_LARGE");
-        yeToken.withdraw(amount + 1, sender, sender);
+        vm.expectRevert(abi.encodeWithSelector(AssetsTooLarge.selector, yeToken.totalAssets(), DUMMY_AMOUNT + 1));
+        yeToken.withdraw(DUMMY_AMOUNT + 1, sender, sender);
 
-        uint256 reserveWithdrawAmount = reserveAmount - 1;
-        reserveAmount -= reserveWithdrawAmount;
+        uint256 assetsToDeposit = DUMMY_AMOUNT - reserveAmount;
+        uint256 assetsToDepositMax = (assetsToDeposit > vaultMaxDeposit) ? vaultMaxDeposit : assetsToDeposit;
+        uint256 reserveAssetsAfterDeposit = DUMMY_AMOUNT - assetsToDepositMax;
+
+        uint256 reserveWithdrawAmount = reserveAssetsAfterDeposit * 90 / 100; // withdraw 90% of reserve assets
+        uint256 reserveAfterWithdraw = reserveAssetsAfterDeposit - reserveWithdrawAmount;
         yeToken.withdraw(reserveWithdrawAmount, sender, sender);
-        assertEq(IERC20(asset).balanceOf(address(yeToken)), reserveAmount); // reserve assets reduced
+        assertEq(IERC20(asset).balanceOf(address(yeToken)), reserveAfterWithdraw); // reserve assets reduced
         assertEq(IERC20(asset).balanceOf(sender), reserveWithdrawAmount); // assets returned to sender
-        assertEq(yeToken.balanceOf(sender), amount - reserveWithdrawAmount); // shares reduced
+        assertEq(yeToken.balanceOf(sender), DUMMY_AMOUNT - reserveWithdrawAmount); // shares reduced
 
-        uint256 stakeWithdrawAmount = reserveAmount + 2; // withdraw amount is greater than reserve amount
+        uint256 stakeWithdrawAmount = reserveAfterWithdraw + ((assetsToDepositMax * 20) / 100); // withdraw amount is greater than reserve amount
         yeToken.withdraw(stakeWithdrawAmount, sender, sender);
         assertEq(IERC20(asset).balanceOf(address(yeToken)), 0); // reserve assets remain same
         assertEq(IERC20(asset).balanceOf(sender), reserveWithdrawAmount + stakeWithdrawAmount); // assets returned to sender
-        assertEq(yeToken.balanceOf(sender), amount - reserveWithdrawAmount - stakeWithdrawAmount); // shares reduced
+        assertEq(yeToken.balanceOf(sender), DUMMY_AMOUNT - reserveWithdrawAmount - stakeWithdrawAmount); // shares reduced
         vm.stopPrank();
     }
 
     function test_replenishReserve() public {
-        uint256 amount = 100;
-        uint256 reserveAmount = (amount * minimumReservePercentage) / 100;
+        uint256 reserveAmount = (DUMMY_AMOUNT * minimumReservePercentage) / MAX_MINIMUM_RESERVE_PERCENTAGE;
 
-        vm.expectRevert("NO_NEED_TO_REBALANCE_RESERVE");
+        vm.expectRevert(NoNeedToReplenishReserve.selector);
         yeToken.replenishReserve();
 
-        deal(asset, sender, amount);
+        deal(asset, sender, DUMMY_AMOUNT);
         // create reserve
         vm.startPrank(sender);
-        IERC20(asset).forceApprove(address(yeToken), amount);
-        yeToken.deposit(amount, recipient);
+        IERC20(asset).forceApprove(address(yeToken), DUMMY_AMOUNT);
+        yeToken.deposit(DUMMY_AMOUNT, recipient);
         vm.stopPrank();
 
         vm.prank(address(yeToken));
@@ -527,49 +586,51 @@ contract GenericYieldExposedTokenTest is Test {
     }
 
     function test_rebalanceReserve() public {
-        uint256 amount = 100;
-        uint256 reserveAmount = (amount * minimumReservePercentage) / 100;
+        uint256 vaultMaxDeposit = yeTokenVault.maxDeposit(address(yeToken));
+        uint256 reserveAmount = (DUMMY_AMOUNT * minimumReservePercentage) / MAX_MINIMUM_RESERVE_PERCENTAGE;
 
-        deal(asset, sender, amount);
+        deal(asset, sender, DUMMY_AMOUNT);
 
         // create reserve
         vm.startPrank(sender);
-        IERC20(asset).forceApprove(address(yeToken), amount);
-        yeToken.deposit(amount, recipient);
+        IERC20(asset).forceApprove(address(yeToken), DUMMY_AMOUNT);
+        yeToken.deposit(DUMMY_AMOUNT, recipient);
         vm.stopPrank();
-        vm.assertEq(IERC20(asset).balanceOf(address(yeToken)), reserveAmount);
 
-        deal(asset, address(yeToken), reserveAmount + amount); // add additional assets to the reserve on top of the reserve
+        uint256 assetsToDeposit = DUMMY_AMOUNT - reserveAmount;
+        uint256 assetsToDepositMax = (assetsToDeposit > vaultMaxDeposit) ? vaultMaxDeposit : assetsToDeposit;
+        uint256 reserveAssetsAfterDeposit = DUMMY_AMOUNT - assetsToDepositMax;
+
+        vm.assertEq(IERC20(asset).balanceOf(address(yeToken)), reserveAssetsAfterDeposit);
+
+        deal(asset, address(yeToken), reserveAssetsAfterDeposit + DUMMY_AMOUNT); // add additional assets to the reserve on top of the reserve
 
         vm.expectRevert(); // only owner can rebalance reserve
         yeToken.rebalanceReserve();
 
         vm.expectEmit();
-        emit ReserveRebalanced(reserveAmount);
+        emit ReserveRebalanced(reserveAssetsAfterDeposit);
         vm.prank(owner);
         yeToken.rebalanceReserve(); // deposits additional assets to the vault
-        assertEq(IERC20(asset).balanceOf(address(yeToken)), reserveAmount);
+        assertEq(IERC20(asset).balanceOf(address(yeToken)), reserveAssetsAfterDeposit);
     }
 
     function test_collectYield() public {
         vm.expectRevert(); // only owner can claim yield
         yeToken.collectYield();
 
-        vm.expectRevert("NO_YIELD"); // no reserved and staked assets
+        vm.expectRevert(NoYield.selector); // no reserved and staked assets
         vm.prank(owner);
         yeToken.collectYield();
 
-        uint256 amount = 100;
-
-        deal(asset, sender, amount);
+        deal(asset, sender, DUMMY_AMOUNT);
         vm.startPrank(sender);
-        IERC20(asset).forceApprove(address(yeToken), amount);
-        yeToken.mint(amount, sender);
+        IERC20(asset).forceApprove(address(yeToken), DUMMY_AMOUNT);
+        yeToken.mint(DUMMY_AMOUNT, sender);
         vm.stopPrank();
 
         uint256 sharesBalanceBefore = yeTokenVault.balanceOf(address(yeToken));
-        uint256 yieldAssets = 500;
-        uint256 yieldShares = yeTokenVault.convertToShares(yieldAssets);
+        uint256 yieldShares = yeTokenVault.convertToShares(DUMMY_YIELD_ASSETS);
 
         deal(address(yeTokenVault), address(yeToken), sharesBalanceBefore + yieldShares); // add yield to the vault
 
@@ -588,14 +649,14 @@ contract GenericYieldExposedTokenTest is Test {
         vm.expectRevert(); // only owner can claim yield
         yeToken.setYieldRecipient(newRecipient);
 
-        vm.expectRevert("INVALID_YIELD_RECIPIENT");
+        vm.expectRevert(InvalidYieldRecipient.selector);
         vm.prank(owner);
         yeToken.setYieldRecipient(address(0));
 
         assertEq(yeToken.yieldRecipient(), yieldRecipient);
 
         vm.expectEmit();
-        emit YieldRecipientChanged(newRecipient);
+        emit YieldRecipientSet(newRecipient);
         vm.prank(owner);
         yeToken.setYieldRecipient(newRecipient);
         assertEq(yeToken.yieldRecipient(), newRecipient);
@@ -603,18 +664,16 @@ contract GenericYieldExposedTokenTest is Test {
 
     function test_setYieldRecipient_with_yield() public {
         address newRecipient = makeAddr("newRecipient");
-        uint256 amount = 100;
 
         // generate yield
-        deal(asset, sender, amount);
+        deal(asset, sender, DUMMY_AMOUNT);
         vm.startPrank(sender);
-        IERC20(asset).forceApprove(address(yeToken), amount);
-        yeToken.mint(amount, sender);
+        IERC20(asset).forceApprove(address(yeToken), DUMMY_AMOUNT);
+        yeToken.mint(DUMMY_AMOUNT, sender);
         vm.stopPrank();
 
         uint256 sharesBalanceBefore = yeTokenVault.balanceOf(address(yeToken));
-        uint256 yieldAssets = 500;
-        uint256 yieldShares = yeTokenVault.convertToShares(yieldAssets);
+        uint256 yieldShares = yeTokenVault.convertToShares(DUMMY_YIELD_ASSETS);
 
         deal(address(yeTokenVault), address(yeToken), sharesBalanceBefore + yieldShares); // add yield to the vault
 
@@ -631,77 +690,74 @@ contract GenericYieldExposedTokenTest is Test {
     }
 
     function test_setMinimumReservePercentage_no_rebalance() public {
-        uint8 percentage = 20;
+        uint256 percentage = 2e17;
         vm.expectRevert(); // only owner can set minimum reserve percentage
         yeToken.setMinimumReservePercentage(percentage);
 
-        vm.expectRevert("INVALID_PERCENTAGE");
+        vm.expectRevert(InvalidMinimumReservePercentage.selector);
         vm.prank(owner);
-        yeToken.setMinimumReservePercentage(101);
+        yeToken.setMinimumReservePercentage(1e19);
 
         assertEq(yeToken.minimumReservePercentage(), minimumReservePercentage);
 
         vm.expectEmit();
-        emit MinimumReservePercentageChanged(percentage);
+        emit MinimumReservePercentageSet(percentage);
         vm.prank(owner);
         yeToken.setMinimumReservePercentage(percentage);
         assertEq(yeToken.minimumReservePercentage(), percentage);
     }
 
     function test_setMinimumReservePercentage_with_rebalance() public {
-        uint256 amount = 100;
-        uint8 percentage = 20;
-        uint256 reserveAmount = (amount * minimumReservePercentage) / 100;
+        uint256 percentage = 2e17;
+        uint256 reserveAmount = (DUMMY_AMOUNT * minimumReservePercentage) / MAX_MINIMUM_RESERVE_PERCENTAGE;
 
-        deal(asset, sender, amount);
+        deal(asset, sender, DUMMY_AMOUNT);
         // create reserve
         vm.startPrank(sender);
-        IERC20(asset).forceApprove(address(yeToken), amount);
-        yeToken.deposit(amount, recipient);
+        IERC20(asset).forceApprove(address(yeToken), DUMMY_AMOUNT);
+        yeToken.deposit(DUMMY_AMOUNT, recipient);
         vm.stopPrank();
         assertEq(IERC20(asset).balanceOf(address(yeToken)), reserveAmount);
 
         uint256 stakedAssetsBefore = yeToken.stakedAssets();
 
         vm.expectEmit();
-        emit ReserveRebalanced((amount * percentage) / 100);
+        emit ReserveRebalanced((DUMMY_AMOUNT * percentage) / MAX_MINIMUM_RESERVE_PERCENTAGE);
         vm.expectEmit();
-        emit MinimumReservePercentageChanged(percentage);
+        emit MinimumReservePercentageSet(percentage);
         vm.prank(owner);
         yeToken.setMinimumReservePercentage(percentage);
         assertEq(yeToken.minimumReservePercentage(), percentage);
         assertLt(yeToken.stakedAssets(), stakedAssetsBefore);
     }
 
-    function testFuzz_setMinimumReservePercentage(uint8 percentage) public {
-        vm.assume(percentage <= 100);
+    function testFuzz_setMinimumReservePercentage(uint256 percentage) public {
+        vm.assume(percentage <= MAX_MINIMUM_RESERVE_PERCENTAGE);
         vm.prank(owner);
         yeToken.setMinimumReservePercentage(percentage);
         assertEq(yeToken.minimumReservePercentage(), percentage);
     }
 
     function test_redeem() public virtual {
-        uint256 initialAmount = 100;
-
         vm.startPrank(owner);
         yeToken.pause();
         vm.expectRevert(EnforcedPause.selector);
-        yeToken.redeem(initialAmount, sender, sender);
+        yeToken.redeem(DUMMY_AMOUNT, sender, sender);
         yeToken.unpause();
         vm.stopPrank();
 
-        deal(asset, sender, initialAmount);
+        deal(asset, sender, DUMMY_AMOUNT);
 
         vm.startPrank(sender);
-        IERC20(asset).forceApprove(address(yeToken), initialAmount);
-        yeToken.deposit(initialAmount, sender);
+        IERC20(asset).forceApprove(address(yeToken), DUMMY_AMOUNT);
+        yeToken.deposit(DUMMY_AMOUNT, sender);
         assertEq(IERC20(asset).balanceOf(sender), 0);
-        assertEq(yeToken.balanceOf(sender), initialAmount);
+        assertEq(yeToken.balanceOf(sender), DUMMY_AMOUNT);
 
-        vm.expectRevert("AMOUNT_TOO_LARGE");
-        yeToken.redeem(1000, sender, sender); // redeem amount is greater than total assets
+        vm.expectRevert(abi.encodeWithSelector(AssetsTooLarge.selector, yeToken.totalAssets(), 1000 ether));
+        yeToken.redeem(1000 ether, sender, sender); // redeem amount is greater than total assets
 
-        vm.expectRevert("INVALID_AMOUNT");
+        vm.expectRevert(InvalidShares.selector);
         yeToken.redeem(0, sender, sender);
 
         uint256 redeemAmount = yeToken.totalAssets();
@@ -712,30 +768,29 @@ contract GenericYieldExposedTokenTest is Test {
     }
 
     function test_completeMigration_no_discrepancy() public {
-        uint256 assets = 100;
-        uint256 shares = 100;
+        uint256 shares = 100 ether;
 
         vm.startPrank(owner);
         yeToken.pause();
         vm.expectRevert(EnforcedPause.selector);
-        yeToken.completeMigration(NETWORK_ID_L2, shares, assets);
+        yeToken.completeMigration(NETWORK_ID_L2, shares, DUMMY_AMOUNT);
         yeToken.unpause();
         vm.stopPrank();
 
-        vm.expectRevert("UNAUTHORIZED");
-        yeToken.completeMigration(NETWORK_ID_L2, shares, assets);
+        vm.expectRevert(Unauthorized.selector);
+        yeToken.completeMigration(NETWORK_ID_L2, shares, DUMMY_AMOUNT);
 
-        vm.expectRevert("INVALID_NETWORK_ID");
+        vm.expectRevert(InvalidOriginNetworkId.selector);
         vm.prank(migrationManager);
-        yeToken.completeMigration(NETWORK_ID_L1, shares, assets);
+        yeToken.completeMigration(NETWORK_ID_L1, shares, DUMMY_AMOUNT);
 
-        vm.expectRevert("INVALID_AMOUNT");
+        vm.expectRevert(InvalidShares.selector);
         vm.prank(migrationManager);
-        yeToken.completeMigration(NETWORK_ID_L2, 0, assets);
+        yeToken.completeMigration(NETWORK_ID_L2, 0, DUMMY_AMOUNT);
 
-        deal(asset, migrationManager, assets);
+        deal(asset, migrationManager, DUMMY_AMOUNT);
         vm.startPrank(migrationManager);
-        IERC20(asset).forceApprove(address(yeToken), assets);
+        IERC20(asset).forceApprove(address(yeToken), DUMMY_AMOUNT);
 
         vm.expectEmit();
         emit BridgeEvent(
@@ -749,36 +804,34 @@ contract GenericYieldExposedTokenTest is Test {
             _ILxLyBridge(LXLY_BRIDGE).depositCount()
         );
         vm.expectEmit();
-        emit Deposit(migrationManager, address(yeToken), assets, shares);
+        emit Deposit(migrationManager, address(yeToken), DUMMY_AMOUNT, shares);
         vm.expectEmit();
-        emit MigrationCompleted(NETWORK_ID_L2, shares, assets, assets, 0);
-        yeToken.completeMigration(NETWORK_ID_L2, shares, assets);
+        emit MigrationCompleted(NETWORK_ID_L2, shares, DUMMY_AMOUNT, DUMMY_AMOUNT, 0);
+        yeToken.completeMigration(NETWORK_ID_L2, shares, DUMMY_AMOUNT);
         vm.stopPrank();
     }
 
     function test_completeMigration_with_discrepancy() public {
-        uint256 assets = 100;
-        uint256 shares = 110;
+        uint256 shares = 110 ether;
 
-        deal(asset, migrationManager, assets);
+        deal(asset, migrationManager, DUMMY_AMOUNT);
 
         vm.startPrank(migrationManager);
-        IERC20(asset).forceApprove(address(yeToken), assets);
+        IERC20(asset).forceApprove(address(yeToken), DUMMY_AMOUNT);
 
-        vm.expectRevert("INSUFFICIENT_YIELD_TO_COVER_FOR_DISCREPANCY");
-        yeToken.completeMigration(NETWORK_ID_L2, shares, assets);
+        vm.expectRevert(abi.encodeWithSelector(CannotCompleteMigration.selector, shares, DUMMY_AMOUNT, 0));
+        yeToken.completeMigration(NETWORK_ID_L2, shares, DUMMY_AMOUNT);
         vm.stopPrank();
 
         // generate yield
-        deal(asset, sender, assets);
+        deal(asset, sender, DUMMY_AMOUNT);
         vm.startPrank(sender);
-        IERC20(asset).forceApprove(address(yeToken), assets);
-        yeToken.mint(assets, sender);
+        IERC20(asset).forceApprove(address(yeToken), DUMMY_AMOUNT);
+        yeToken.mint(DUMMY_AMOUNT, sender);
         vm.stopPrank();
 
         uint256 sharesBalanceBefore = yeTokenVault.balanceOf(address(yeToken));
-        uint256 yieldAssets = 500;
-        uint256 yieldShares = yeTokenVault.convertToShares(yieldAssets);
+        uint256 yieldShares = yeTokenVault.convertToShares(DUMMY_YIELD_ASSETS);
         deal(address(yeTokenVault), address(yeToken), sharesBalanceBefore + yieldShares);
 
         vm.expectEmit();
@@ -793,11 +846,11 @@ contract GenericYieldExposedTokenTest is Test {
             _ILxLyBridge(LXLY_BRIDGE).depositCount()
         );
         vm.expectEmit();
-        emit Deposit(migrationManager, address(yeToken), assets, shares);
+        emit Deposit(migrationManager, address(yeToken), DUMMY_AMOUNT, shares);
         vm.expectEmit();
-        emit MigrationCompleted(NETWORK_ID_L2, shares, assets, assets, shares - assets);
+        emit MigrationCompleted(NETWORK_ID_L2, shares, DUMMY_AMOUNT, DUMMY_AMOUNT, shares - DUMMY_AMOUNT);
         vm.prank(migrationManager);
-        yeToken.completeMigration(NETWORK_ID_L2, shares, assets);
+        yeToken.completeMigration(NETWORK_ID_L2, shares, DUMMY_AMOUNT);
     }
 
     function test_maxDeposit() public {
@@ -809,18 +862,17 @@ contract GenericYieldExposedTokenTest is Test {
     }
 
     function test_previewDeposit() public {
-        uint256 amount = 100;
         vm.startPrank(owner);
         yeToken.pause();
         vm.expectRevert(EnforcedPause.selector);
-        yeToken.previewDeposit(amount);
+        yeToken.previewDeposit(DUMMY_AMOUNT);
         yeToken.unpause();
         vm.stopPrank();
 
-        vm.expectRevert("INVALID_AMOUNT");
+        vm.expectRevert(InvalidAssets.selector);
         yeToken.previewDeposit(0);
 
-        vm.assertEq(yeToken.previewDeposit(amount), amount);
+        vm.assertEq(yeToken.previewDeposit(DUMMY_AMOUNT), DUMMY_AMOUNT);
     }
 
     function test_maxMint() public virtual {
@@ -832,22 +884,20 @@ contract GenericYieldExposedTokenTest is Test {
     }
 
     function test_previewMint() public virtual {
-        uint256 amount = 100;
         vm.startPrank(owner);
         yeToken.pause();
         vm.expectRevert(EnforcedPause.selector);
-        yeToken.previewMint(amount);
+        yeToken.previewMint(DUMMY_AMOUNT);
         yeToken.unpause();
         vm.stopPrank();
 
-        vm.expectRevert("INVALID_AMOUNT");
+        vm.expectRevert(InvalidShares.selector);
         yeToken.previewMint(0);
 
-        vm.assertEq(yeToken.previewMint(amount), amount);
+        vm.assertEq(yeToken.previewMint(DUMMY_AMOUNT), DUMMY_AMOUNT);
     }
 
     function test_maxWithdraw() public virtual {
-        uint256 amount = 100;
         vm.startPrank(owner);
         yeToken.pause();
         vm.assertEq(yeToken.maxWithdraw(address(0)), 0);
@@ -856,37 +906,36 @@ contract GenericYieldExposedTokenTest is Test {
 
         assertEq(yeToken.maxWithdraw(address(0)), 0); // 0 if no shares
 
-        deal(asset, sender, amount);
+        deal(asset, sender, DUMMY_AMOUNT);
         vm.startPrank(sender);
-        IERC20(asset).forceApprove(address(yeToken), amount);
-        yeToken.deposit(amount, sender);
+        IERC20(asset).forceApprove(address(yeToken), DUMMY_AMOUNT);
+        yeToken.deposit(DUMMY_AMOUNT, sender);
         vm.stopPrank();
 
         assertEq(yeToken.maxWithdraw(sender), yeToken.totalAssets());
     }
 
     function test_previewWithdraw() public virtual {
-        uint256 amount = 100;
-        uint256 reserveAmount = (amount * minimumReservePercentage) / 100;
+        uint256 reserveAmount = (DUMMY_AMOUNT * minimumReservePercentage) / MAX_MINIMUM_RESERVE_PERCENTAGE;
 
         vm.startPrank(owner);
         yeToken.pause();
         vm.expectRevert(EnforcedPause.selector);
-        yeToken.previewWithdraw(amount);
+        yeToken.previewWithdraw(DUMMY_AMOUNT);
         yeToken.unpause();
         vm.stopPrank();
 
-        vm.expectRevert("INVALID_AMOUNT");
+        vm.expectRevert(InvalidAssets.selector);
         yeToken.previewWithdraw(0);
 
-        deal(asset, sender, amount);
+        deal(asset, sender, DUMMY_AMOUNT);
         vm.startPrank(sender);
-        IERC20(asset).forceApprove(address(yeToken), amount);
-        yeToken.deposit(amount, sender);
+        IERC20(asset).forceApprove(address(yeToken), DUMMY_AMOUNT);
+        yeToken.deposit(DUMMY_AMOUNT, sender);
         vm.stopPrank();
 
-        vm.expectRevert("AMOUNT_TOO_LARGE");
-        yeToken.previewWithdraw(amount + 1);
+        vm.expectRevert(abi.encodeWithSelector(AssetsTooLarge.selector, yeToken.totalAssets(), DUMMY_AMOUNT + 1));
+        yeToken.previewWithdraw(DUMMY_AMOUNT + 1);
 
         uint256 stakedAmount = yeTokenVault.convertToAssets(yeTokenVault.balanceOf(address(yeToken)));
 
@@ -903,37 +952,35 @@ contract GenericYieldExposedTokenTest is Test {
 
         assertEq(yeToken.maxRedeem(sender), 0); // 0 if no shares
 
-        uint256 amount = 100;
-        deal(asset, sender, amount);
+        deal(asset, sender, DUMMY_AMOUNT);
         vm.startPrank(sender);
-        IERC20(asset).forceApprove(address(yeToken), amount);
-        yeToken.deposit(amount, sender);
+        IERC20(asset).forceApprove(address(yeToken), DUMMY_AMOUNT);
+        yeToken.deposit(DUMMY_AMOUNT, sender);
         vm.stopPrank();
 
         assertEq(yeToken.maxRedeem(sender), yeToken.totalAssets());
     }
 
     function test_previewRedeem() public virtual {
-        uint256 amount = 100;
-        uint256 reserveAmount = (amount * minimumReservePercentage) / 100;
+        uint256 reserveAmount = (DUMMY_AMOUNT * minimumReservePercentage) / MAX_MINIMUM_RESERVE_PERCENTAGE;
         vm.startPrank(owner);
         yeToken.pause();
         vm.expectRevert(EnforcedPause.selector);
-        yeToken.previewRedeem(amount);
+        yeToken.previewRedeem(DUMMY_AMOUNT);
         yeToken.unpause();
         vm.stopPrank();
 
-        vm.expectRevert("INVALID_AMOUNT");
+        vm.expectRevert(InvalidShares.selector);
         yeToken.previewRedeem(0);
 
-        deal(asset, sender, amount);
+        deal(asset, sender, DUMMY_AMOUNT);
         vm.startPrank(sender);
-        IERC20(asset).forceApprove(address(yeToken), amount);
-        yeToken.deposit(amount, sender);
+        IERC20(asset).forceApprove(address(yeToken), DUMMY_AMOUNT);
+        yeToken.deposit(DUMMY_AMOUNT, sender);
         vm.stopPrank();
 
-        vm.expectRevert("AMOUNT_TOO_LARGE");
-        yeToken.previewRedeem(amount + 1);
+        vm.expectRevert(abi.encodeWithSelector(AssetsTooLarge.selector, yeToken.totalAssets(), DUMMY_AMOUNT + 1));
+        yeToken.previewRedeem(DUMMY_AMOUNT + 1);
 
         uint256 stakedAmount = yeTokenVault.convertToAssets(yeTokenVault.balanceOf(address(yeToken)));
 
@@ -942,11 +989,10 @@ contract GenericYieldExposedTokenTest is Test {
     }
 
     function test_reservePercentage() public {
-        uint256 amount = 100;
-        deal(asset, sender, amount);
+        deal(asset, sender, DUMMY_AMOUNT);
         vm.startPrank(sender);
-        IERC20(asset).forceApprove(address(yeToken), amount);
-        yeToken.deposit(amount, sender);
+        IERC20(asset).forceApprove(address(yeToken), DUMMY_AMOUNT);
+        yeToken.deposit(DUMMY_AMOUNT, sender);
         vm.stopPrank();
 
         assertEq(yeToken.reservePercentage(), minimumReservePercentage);
