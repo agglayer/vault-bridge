@@ -19,11 +19,13 @@ contract YeUSDTHarness is YeUSDT {
 
 contract YeUSDTTest is GenericYieldExposedTokenTest {
     address internal constant USDT = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
-    address internal constant USDT_VAULT = 0xbEef047a543E45807105E51A8BBEFCc5950fcfBa;
+    address internal constant USDT_VAULT = 0x8CB3649114051cA5119141a34C200D65dc0Faa73;
     bytes32 internal constant YEUSDT_STORAGE_CACHED_BASIS_POINT_RATE =
         0x8ee293a165ac3d78d3724b0faed67bcdb8e52fa45b6e98021a6acfdf2696c100;
     bytes32 internal constant YEUSDT_STORAGE_CACHED_MAXIMUM_FEE =
         0x8ee293a165ac3d78d3724b0faed67bcdb8e52fa45b6e98021a6acfdf2696c101;
+
+    YeUSDTHarness yeUSDT;
 
     function setUp() public override {
         mainnetFork = vm.createSelectFork("mainnet_test", 21590932);
@@ -35,9 +37,9 @@ contract YeUSDTTest is GenericYieldExposedTokenTest {
         symbol = "yeUSDT";
         decimals = 6;
         yeTokenMetaData = abi.encode(name, symbol, decimals);
-        minimumReservePercentage = 10;
+        minimumReservePercentage = 1e17;
 
-        yeToken = GenericYeToken(address(new YeUSDT()));
+        yeToken = GenericYeToken(address(new YeUSDTHarness()));
         yeTokenImplementation = address(yeToken);
         stateBeforeInitialize = vm.snapshotState();
         bytes memory initData = abi.encodeCall(
@@ -55,6 +57,7 @@ contract YeUSDTTest is GenericYieldExposedTokenTest {
             )
         );
         yeToken = GenericYeToken(_proxify(address(yeToken), address(this), initData));
+        yeUSDT = YeUSDTHarness(address(yeToken));
 
         vm.label(address(yeTokenVault), "USDT Vault");
         vm.label(address(yeToken), "yeUSDT");
@@ -77,19 +80,17 @@ contract YeUSDTTest is GenericYieldExposedTokenTest {
     }
 
     function test_recacheUsdtTransferFeeParameters() public {
-        YeUSDT yeUSDT = YeUSDT(address(yeToken));
         yeUSDT.recacheUsdtTransferFeeParameters();
         assertEq(yeUSDT.cachedBasisPointsRate(), 0);
         assertEq(yeUSDT.cachedMaximumFee(), 0);
 
-        vm.store(address(yeToken), YEUSDT_STORAGE_CACHED_BASIS_POINT_RATE, bytes32(uint256(100)));
-        vm.store(address(yeToken), YEUSDT_STORAGE_CACHED_MAXIMUM_FEE, bytes32(uint256(100)));
+        vm.store(address(yeUSDT), YEUSDT_STORAGE_CACHED_BASIS_POINT_RATE, bytes32(uint256(100)));
+        vm.store(address(yeUSDT), YEUSDT_STORAGE_CACHED_MAXIMUM_FEE, bytes32(uint256(100)));
         assertEq(yeUSDT.cachedBasisPointsRate(), 100);
         assertEq(yeUSDT.cachedMaximumFee(), 100);
     }
 
     function test_assetsAfterTransferFee() public {
-        YeUSDTHarness yeUSDT = new YeUSDTHarness();
         vm.store(address(yeUSDT), YEUSDT_STORAGE_CACHED_BASIS_POINT_RATE, bytes32(uint256(1000)));
         vm.store(address(yeUSDT), YEUSDT_STORAGE_CACHED_MAXIMUM_FEE, bytes32(uint256(5)));
         assertEq(yeUSDT.cachedBasisPointsRate(), 1000);
@@ -97,7 +98,6 @@ contract YeUSDTTest is GenericYieldExposedTokenTest {
     }
 
     function test_assetBeforeTransferFee() public {
-        YeUSDTHarness yeUSDT = new YeUSDTHarness();
         uint256 state = vm.snapshotState();
         vm.store(address(yeUSDT), YEUSDT_STORAGE_CACHED_BASIS_POINT_RATE, bytes32(uint256(1000)));
         vm.store(address(yeUSDT), YEUSDT_STORAGE_CACHED_MAXIMUM_FEE, bytes32(uint256(5)));
