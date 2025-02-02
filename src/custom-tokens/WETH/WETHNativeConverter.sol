@@ -21,6 +21,7 @@ contract WETHNativeConverter is NativeConverter {
         address customToken_,
         address wrappedUnderlyingToken_,
         uint256 nonMigratableBackingPercentage_,
+        uint256 minimumBackingAfterMigration_,
         address lxlyBridge_,
         uint32 layerXNetworkId_,
         address migrationManager_
@@ -32,6 +33,7 @@ contract WETHNativeConverter is NativeConverter {
             customToken_,
             wrappedUnderlyingToken_,
             nonMigratableBackingPercentage_,
+            minimumBackingAfterMigration_,
             lxlyBridge_,
             layerXNetworkId_,
             migrationManager_
@@ -45,7 +47,6 @@ contract WETHNativeConverter is NativeConverter {
     }
 
     function _migrateGasBackingToLayerX(uint256 amount) internal {
-
         // Check the input.
         require(amount > 0, "INVALID_AMOUNT");
         require(amount <= address(zETH).balance, "AMOUNT_TOO_LARGE");
@@ -69,5 +70,9 @@ contract WETHNativeConverter is NativeConverter {
 
         // Emit the event.
         emit MigrationStarted(msg.sender, amountOfCustomToken, amount);
+    }
+
+    function version() external pure virtual returns (string memory) {
+        return "1.0.0";
     }
 }
