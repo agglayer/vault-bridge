@@ -8,13 +8,13 @@ import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC2
 
 import {MockERC20} from "forge-std/mocks/MockERC20.sol";
 import {MockERC20MintableBurnable} from "./GenericNativeConverter.t.sol";
-import {ZETH} from "../src/customTokens/zETH.sol";
+import {ZETH} from "../src/custom-tokens/WETH/zETH.sol";
 
 import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
 import {GenericNativeConverterTest} from "./GenericNativeConverter.t.sol";
-import {WETHNativeConverter} from "../src/yeTokens/yeETH/WETHNativeConverter.sol";
-import {GenericNativeConverter} from "../src/yeTokens/GenericNativeConverter.sol";
+import {WETHNativeConverter} from "../src/custom-tokens/WETH/WETHNativeConverter.sol";
+import {GenericNativeConverter} from "../src/custom-tokens/GenericNativeConverter.sol";
 
 contract ZETHNativeConverterTest is Test, GenericNativeConverterTest {
     MockERC20 internal wWETH;
