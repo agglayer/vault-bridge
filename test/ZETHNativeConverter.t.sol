@@ -60,7 +60,7 @@ contract ZETHNativeConverterTest is Test, GenericNativeConverterTest {
             address(new TransparentUpgradeableProxy(address(nativeConverter), address(this), initData))
         );
 
-        // giving control over custom token to NativeConverter   
+        // giving control over custom token to NativeConverter
         zETH.transferOwnership(address(nativeConverter));
 
         vm.label(address(zETH), "zETH");

@@ -31,6 +31,7 @@ contract GenericNativeConverterTest is Test {
         keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
     bytes4 internal constant PERMIT_SIGNATURE = 0xd505accf;
     uint256 internal constant NON_MIGRATABLE_BACKING_PERCENTAGE = 10;
+    uint256 internal constant MINIMUM_BACKING_AFTER_MIGRATION = 5;
 
     MockERC20MintableBurnable internal customToken;
     MockERC20 internal underlyingToken;
@@ -76,6 +77,7 @@ contract GenericNativeConverterTest is Test {
                         address(customToken),
                         address(underlyingToken),
                         NON_MIGRATABLE_BACKING_PERCENTAGE,
+                        MINIMUM_BACKING_AFTER_MIGRATION,
                         LXLY_BRIDGE,
                         NETWORK_ID_L1,
                         migrationManager
@@ -93,6 +95,7 @@ contract GenericNativeConverterTest is Test {
                         address(0),
                         address(customToken),
                         NON_MIGRATABLE_BACKING_PERCENTAGE,
+                        MINIMUM_BACKING_AFTER_MIGRATION,
                         LXLY_BRIDGE,
                         NETWORK_ID_L1,
                         migrationManager
@@ -110,6 +113,7 @@ contract GenericNativeConverterTest is Test {
                         address(underlyingToken),
                         address(0),
                         NON_MIGRATABLE_BACKING_PERCENTAGE,
+                        MINIMUM_BACKING_AFTER_MIGRATION,
                         LXLY_BRIDGE,
                         NETWORK_ID_L1,
                         migrationManager
@@ -127,6 +131,7 @@ contract GenericNativeConverterTest is Test {
                         address(underlyingToken),
                         address(customToken),
                         101,
+                        MINIMUM_BACKING_AFTER_MIGRATION,
                         LXLY_BRIDGE,
                         NETWORK_ID_L1,
                         migrationManager
@@ -144,6 +149,7 @@ contract GenericNativeConverterTest is Test {
                         address(underlyingToken),
                         address(customToken),
                         NON_MIGRATABLE_BACKING_PERCENTAGE,
+                        MINIMUM_BACKING_AFTER_MIGRATION,
                         address(0),
                         NETWORK_ID_L1,
                         migrationManager
@@ -161,6 +167,7 @@ contract GenericNativeConverterTest is Test {
                         address(underlyingToken),
                         address(customToken),
                         NON_MIGRATABLE_BACKING_PERCENTAGE,
+                        MINIMUM_BACKING_AFTER_MIGRATION,
                         LXLY_BRIDGE,
                         NETWORK_ID_L1,
                         address(0)
@@ -183,6 +190,7 @@ contract GenericNativeConverterTest is Test {
                 address(dummyToken),
                 address(customToken),
                 NON_MIGRATABLE_BACKING_PERCENTAGE,
+                MINIMUM_BACKING_AFTER_MIGRATION,
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
                 migrationManager
@@ -203,6 +211,7 @@ contract GenericNativeConverterTest is Test {
                 address(underlyingToken),
                 address(dummyToken),
                 NON_MIGRATABLE_BACKING_PERCENTAGE,
+                MINIMUM_BACKING_AFTER_MIGRATION,
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
                 migrationManager
@@ -250,19 +259,19 @@ contract GenericNativeConverterTest is Test {
         vm.startPrank(owner);
         nativeConverter.pause();
         vm.expectRevert(EnforcedPause.selector);
-        nativeConverter.convertWithPermit(amount, recipient, "");
+        nativeConverter.convertWithPermit(amount, "", recipient);
         nativeConverter.unpause();
         vm.stopPrank();
 
         vm.startPrank(sender);
         vm.expectRevert("INVALID_AMOUNT");
-        nativeConverter.convertWithPermit(0, recipient, "");
+        nativeConverter.convertWithPermit(0, "", recipient);
 
         vm.expectRevert("INVALID_ADDRESS");
-        nativeConverter.convertWithPermit(amount, address(0), "");
+        nativeConverter.convertWithPermit(amount, "", address(0));
 
         vm.expectRevert("ERC20: subtraction underflow");
-        nativeConverter.convertWithPermit(amount, recipient, "");
+        nativeConverter.convertWithPermit(amount, "", recipient);
 
         deal(address(underlyingToken), sender, amount);
 
@@ -287,7 +296,7 @@ contract GenericNativeConverterTest is Test {
         );
         bytes memory permitData =
             abi.encodeWithSelector(PERMIT_SIGNATURE, sender, address(nativeConverter), amount, block.timestamp, v, r, s);
-        nativeConverter.convertWithPermit(amount, recipient, permitData);
+        nativeConverter.convertWithPermit(amount, permitData, recipient);
 
         assertEq(underlyingToken.balanceOf(sender), 0);
         assertEq(underlyingToken.balanceOf(address(nativeConverter)), amount);
