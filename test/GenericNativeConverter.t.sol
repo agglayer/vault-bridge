@@ -52,7 +52,7 @@ contract GenericNativeConverterTest is Test {
     event NonMigratableBackingPercentageChanged(uint256 nonMigratableBackingPercentage);
 
     function test_setup() public view {
-        assertEq(nativeConverter.layerXNetworkId(), NETWORK_ID_L1);
+        assertEq(nativeConverter.layerXLxlyId(), NETWORK_ID_L1);
         assertEq(nativeConverter.migrationManager(), migrationManager);
         assertEq(nativeConverter.nonMigratableBackingPercentage(), NON_MIGRATABLE_BACKING_PERCENTAGE);
         assertEq(nativeConverter.owner(), owner);
