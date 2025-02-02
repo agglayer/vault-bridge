@@ -116,7 +116,7 @@ contract NativeConverterTest is Test {
     }
 
     function test_setup() public view {
-        assertEq(uSDCNativeConverter.layerXNetworkId(), NETWORK_ID_L1);
+        assertEq(uSDCNativeConverter.layerXLxlyId(), NETWORK_ID_L1);
         assertEq(uSDCNativeConverter.migrationManager(), migrationManager);
         assertEq(uSDCNativeConverter.nonMigratableBackingPercentage(), NON_MIGRATABLE_BACKING_PERCENTAGE);
         assertEq(uSDCNativeConverter.owner(), owner);
