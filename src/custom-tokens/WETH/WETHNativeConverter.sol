@@ -55,10 +55,8 @@ contract WETHNativeConverter is NativeConverter {
         uint256 amountOfCustomToken = _convertToShares(amount);
 
         // Taking lxlyBridge's gas balance here
-        uint256 previousBalance = address(lxlyBridge()).balance;
         zETH.bridgeBackingToLayerX(amount);
         lxlyBridge().bridgeAsset{value: amount}(layerXLxlyId(), migrationManager(), amount, address(0), true, "");
-        amount = address(lxlyBridge()).balance - previousBalance;
 
         // Bridge a message to Migration Manager on Layer X to complete the migration.
         lxlyBridge().bridgeMessage(
