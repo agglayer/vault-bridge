@@ -2,7 +2,7 @@
 pragma solidity 0.8.28;
 
 import {NativeConverter} from "../../NativeConverter.sol";
-import {ZETH} from "../../customTokens/zETH.sol";
+import {ZETH} from "./zETH.sol";
 
 /// @title WETH Native Converter
 /// @dev No customization is required.

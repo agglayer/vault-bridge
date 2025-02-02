@@ -4,6 +4,7 @@ pragma solidity 0.8.28;
 import {YieldExposedToken} from "../../YieldExposedToken.sol";
 import {IWETH9} from "../../etc/IWETH9.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
+import {IVersioned} from "../../etc/IVersioned.sol";
 
 /// @title Yield Exposed gas token
 contract YeETH is YieldExposedToken {
@@ -80,24 +81,17 @@ contract YeETH is YieldExposedToken {
     }
 
     /// @dev yeETH does not have a transfer fee.
-    function _assetsAfterTransferFee(uint256 assetsBeforeTransferFee)
-        internal
-        view
-        virtual
-        override
-        returns (uint256)
-    {
+    function _assetsAfterTransferFee(uint256 assetsBeforeTransferFee) internal pure override returns (uint256) {
         return assetsBeforeTransferFee;
     }
 
     /// @dev yeETH does not have a transfer fee.
-    function _assetsBeforeTransferFee(uint256 minimumAssetsAfterTransferFee)
-        internal
-        view
-        virtual
-        override
-        returns (uint256)
-    {
+    function _assetsBeforeTransferFee(uint256 minimumAssetsAfterTransferFee) internal pure override returns (uint256) {
         return minimumAssetsAfterTransferFee;
+    }
+
+    /// @inheritdoc IVersioned
+    function version() external pure override returns (string memory) {
+        return "1.0.0";
     }
 }
