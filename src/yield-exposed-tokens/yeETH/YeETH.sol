@@ -63,7 +63,8 @@ contract YeETH is YieldExposedToken {
         // Mint yeToken to the receiver.
         uint256 mintedShares;
         (mintedShares, assets) =
-            _deposit(_assetsBeforeTransferFee(convertToAssets(shares)), lxlyId(), receiver, false, shares);
+            // msg.value is used as assets value, if it exceeds shares value, WETH will be refunded
+            _deposit(msg.value, lxlyId(), receiver, false, shares);
 
         // Check the output.
         require(mintedShares == shares, "COULD_NOT_MINT_SHARES");
@@ -72,8 +73,9 @@ contract YeETH is YieldExposedToken {
     function _receiveUnderlyingToken(address, uint256 assets) internal override returns (uint256) {
         IWETH9 weth = IWETH9(address(underlyingToken()));
 
-        if (msg.value == assets) {
-            weth.deposit{value: assets}();
+        if (msg.value >= assets) {
+            // deposit everything, excess funds will be refunded in WETH
+            weth.deposit{value: msg.value}();
         } else {
             weth.transferFrom(msg.sender, address(this), assets);
         }

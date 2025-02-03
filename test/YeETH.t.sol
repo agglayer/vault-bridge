@@ -3,6 +3,7 @@ pragma solidity 0.8.28;
 
 import {Test, console2} from "forge-std/Test.sol";
 import {YeETH} from "../src/yield-exposed-tokens/yeETH/yeETH.sol";
+import {YieldExposedToken} from "../src/YieldExposedToken.sol";
 import {ERC1967Proxy} from "@openzeppelin-contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {IMetaMorphoV1_1Factory} from "./interfaces/IMetaMorphoV1_1Factory.sol";
 import {ILxLyBridge} from "../src/etc/ILxLyBridge.sol";
@@ -105,8 +106,13 @@ contract yeETHTest is Test {
         vm.assume(amount > 0 && amount < 100 ether);
         vm.deal(address(this), amount + 1 ether);
 
+        uint256 initialBalance = IWETH9(WETH).balanceOf(address(this));
+
         // sending a bit more to test refund func
         yeETH.mintWithGasToken{value: amount + 1 ether}(amount, address(this));
+
+        // check refund
+        assertEq(IWETH9(WETH).balanceOf(address(this)), initialBalance + 1 ether);
 
         assertEq(yeETH.balanceOf(address(this)), amount); // shares minted to the sender
         assertApproxEqAbs(yeETH.totalAssets(), amount, 2); // allow for rounding
@@ -125,7 +131,7 @@ contract yeETHTest is Test {
         assertEq(yeETH.balanceOf(address(this)), shares); // sender gets 100 shares
 
         uint256 withdrawAmount = 110; // withdraw amount is greater than total assets (100)
-        vm.expectRevert("AMOUNT_TOO_LARGE");
+        vm.expectRevert(abi.encodeWithSelector(YieldExposedToken.AssetsTooLarge.selector, 99, 110));
         yeETH.withdraw(withdrawAmount, address(this), address(this));
 
         uint256 initialBalance = IWETH9(WETH).balanceOf(address(this));
