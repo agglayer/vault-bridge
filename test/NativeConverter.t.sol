@@ -62,9 +62,11 @@ contract NativeConverterTest is Test {
     bytes32 internal constant PERMIT_TYPEHASH =
         keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
     bytes4 internal constant PERMIT_SIGNATURE = 0xd505accf;
-    uint256 internal constant NON_MIGRATABLE_BACKING_PERCENTAGE = 10;
+    uint256 internal constant NON_MIGRATABLE_BACKING_PERCENTAGE = 1e17;
     uint256 internal constant MINIMUM_BACKING_AFTER_MIGRATION = 5;
     bytes internal constant WUSDC_METADATA = abi.encode("Wrapped USDC", "wUSDC", 18);
+    uint256 constant MAX_NON_MIGRATABLE_BACKING_PERCENTAGE = 1e18;
+    uint256 constant DUMMY_AMOUNT = 100 ether;
 
     MockERC20MintableBurnable internal uSDCe;
     MockERC20 internal wUSDC;
@@ -82,7 +84,33 @@ contract NativeConverterTest is Test {
 
     error EnforcedPause();
 
-    event NonMigratableBackingPercentageChanged(uint256 nonMigratableBackingPercentage);
+    event BridgeEvent(
+        uint8 leafType,
+        uint32 originNetwork,
+        address originAddress,
+        uint32 destinationNetwork,
+        address destinationAddress,
+        uint256 amount,
+        bytes metadata,
+        uint32 depositCount
+    );
+    event NonMigratableBackingPercentageSet(uint256 nonMigratableBackingPercentage);
+    event MigrationStarted(address indexed sender, uint256 indexed customTokenAmount, uint256 backingAmount);
+
+    error InvalidOwner();
+    error InvalidCustomToken();
+    error InvalidUnderlyingToken();
+    error InvalidNonMigratableBackingPercentage();
+    error InvalidLxLyBridge();
+    error InvalidMigrationManager();
+    error NonMatchingCustomTokenDecimals(uint8 customTokenDecimals, uint8 originalUnderlyingTokenDecimals);
+    error NonMatchingUnderlyingTokenDecimals(uint8 underlyingTokenDecimals, uint8 originalUnderlyingTokenDecimals);
+    error InvalidAssets();
+    error InvalidReceiver();
+    error InvalidPermitData();
+    error InvalidShares();
+    error AssetsTooLarge(uint256 availableAssets, uint256 requestedAssets);
+    error InvalidDestinationNetworkId();
 
     function setUp() public {
         zkevmFork = vm.createSelectFork("polygon_zkevm", 19164969);
@@ -131,121 +159,116 @@ contract NativeConverterTest is Test {
     }
 
     function test_initialize() public {
-        uint256 totalInitParams = 6;
         vm.revertToState(beforeInit);
 
         bytes memory initData;
-        for (uint256 paramNum = 0; paramNum < totalInitParams; paramNum++) {
-            if (paramNum == 0) {
-                initData = abi.encodeCall(
-                    uSDCNativeConverter.initialize,
-                    (
-                        address(0),
-                        ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
-                        address(uSDCe),
-                        address(wUSDC),
-                        NON_MIGRATABLE_BACKING_PERCENTAGE,
-                        MINIMUM_BACKING_AFTER_MIGRATION,
-                        LXLY_BRIDGE,
-                        NETWORK_ID_L1,
-                        migrationManager
-                    )
-                );
-                vm.expectRevert("INVALID_OWNER");
-                USDCNativeConverter(_proxify(address(uSDCNativeConverter), address(this), initData));
-                vm.revertToState(beforeInit);
-            } else if (paramNum == 1) {
-                initData = abi.encodeCall(
-                    uSDCNativeConverter.initialize,
-                    (
-                        owner,
-                        ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
-                        address(0),
-                        address(wUSDC),
-                        NON_MIGRATABLE_BACKING_PERCENTAGE,
-                        MINIMUM_BACKING_AFTER_MIGRATION,
-                        LXLY_BRIDGE,
-                        NETWORK_ID_L1,
-                        migrationManager
-                    )
-                );
-                vm.expectRevert("INVALID_CUSTOM_TOKEN");
-                USDCNativeConverter(_proxify(address(uSDCNativeConverter), address(this), initData));
-                vm.revertToState(beforeInit);
-            } else if (paramNum == 2) {
-                initData = abi.encodeCall(
-                    uSDCNativeConverter.initialize,
-                    (
-                        owner,
-                        ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
-                        address(uSDCe),
-                        address(0),
-                        NON_MIGRATABLE_BACKING_PERCENTAGE,
-                        MINIMUM_BACKING_AFTER_MIGRATION,
-                        LXLY_BRIDGE,
-                        NETWORK_ID_L1,
-                        migrationManager
-                    )
-                );
-                vm.expectRevert("INVALID_UNDERLYING_TOKEN");
-                USDCNativeConverter(_proxify(address(uSDCNativeConverter), address(this), initData));
-                vm.revertToState(beforeInit);
-            } else if (paramNum == 3) {
-                initData = abi.encodeCall(
-                    uSDCNativeConverter.initialize,
-                    (
-                        owner,
-                        ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
-                        address(uSDCe),
-                        address(wUSDC),
-                        101,
-                        MINIMUM_BACKING_AFTER_MIGRATION,
-                        LXLY_BRIDGE,
-                        NETWORK_ID_L1,
-                        migrationManager
-                    )
-                );
-                vm.expectRevert("INVALID_MINIMUM_BACKING_PERCENTAGE");
-                USDCNativeConverter(_proxify(address(uSDCNativeConverter), address(this), initData));
-                vm.revertToState(beforeInit);
-            } else if (paramNum == 4) {
-                initData = abi.encodeCall(
-                    uSDCNativeConverter.initialize,
-                    (
-                        owner,
-                        ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
-                        address(uSDCe),
-                        address(wUSDC),
-                        NON_MIGRATABLE_BACKING_PERCENTAGE,
-                        MINIMUM_BACKING_AFTER_MIGRATION,
-                        address(0),
-                        NETWORK_ID_L1,
-                        migrationManager
-                    )
-                );
-                vm.expectRevert("INVALID_BRIDGE");
-                USDCNativeConverter(_proxify(address(uSDCNativeConverter), address(this), initData));
-                vm.revertToState(beforeInit);
-            } else if (paramNum == 5) {
-                initData = abi.encodeCall(
-                    uSDCNativeConverter.initialize,
-                    (
-                        owner,
-                        ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
-                        address(uSDCe),
-                        address(wUSDC),
-                        NON_MIGRATABLE_BACKING_PERCENTAGE,
-                        MINIMUM_BACKING_AFTER_MIGRATION,
-                        LXLY_BRIDGE,
-                        NETWORK_ID_L1,
-                        address(0)
-                    )
-                );
-                vm.expectRevert("INVALID_MIGRATION_MANAGER");
-                USDCNativeConverter(_proxify(address(uSDCNativeConverter), address(this), initData));
-                vm.revertToState(beforeInit);
-            }
-        }
+        initData = abi.encodeCall(
+            uSDCNativeConverter.initialize,
+            (
+                address(0),
+                ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
+                address(uSDCe),
+                address(wUSDC),
+                NON_MIGRATABLE_BACKING_PERCENTAGE,
+                MINIMUM_BACKING_AFTER_MIGRATION,
+                LXLY_BRIDGE,
+                NETWORK_ID_L1,
+                migrationManager
+            )
+        );
+        vm.expectRevert(InvalidOwner.selector);
+        USDCNativeConverter(_proxify(address(uSDCNativeConverter), address(this), initData));
+        vm.revertToState(beforeInit);
+
+        initData = abi.encodeCall(
+            uSDCNativeConverter.initialize,
+            (
+                owner,
+                ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
+                address(0),
+                address(wUSDC),
+                NON_MIGRATABLE_BACKING_PERCENTAGE,
+                MINIMUM_BACKING_AFTER_MIGRATION,
+                LXLY_BRIDGE,
+                NETWORK_ID_L1,
+                migrationManager
+            )
+        );
+        vm.expectRevert(InvalidCustomToken.selector);
+        USDCNativeConverter(_proxify(address(uSDCNativeConverter), address(this), initData));
+        vm.revertToState(beforeInit);
+
+        initData = abi.encodeCall(
+            uSDCNativeConverter.initialize,
+            (
+                owner,
+                ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
+                address(uSDCe),
+                address(0),
+                NON_MIGRATABLE_BACKING_PERCENTAGE,
+                MINIMUM_BACKING_AFTER_MIGRATION,
+                LXLY_BRIDGE,
+                NETWORK_ID_L1,
+                migrationManager
+            )
+        );
+        vm.expectRevert(InvalidUnderlyingToken.selector);
+        USDCNativeConverter(_proxify(address(uSDCNativeConverter), address(this), initData));
+        vm.revertToState(beforeInit);
+
+        initData = abi.encodeCall(
+            uSDCNativeConverter.initialize,
+            (
+                owner,
+                ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
+                address(uSDCe),
+                address(wUSDC),
+                MAX_NON_MIGRATABLE_BACKING_PERCENTAGE + 1,
+                MINIMUM_BACKING_AFTER_MIGRATION,
+                LXLY_BRIDGE,
+                NETWORK_ID_L1,
+                migrationManager
+            )
+        );
+        vm.expectRevert(InvalidNonMigratableBackingPercentage.selector);
+        USDCNativeConverter(_proxify(address(uSDCNativeConverter), address(this), initData));
+        vm.revertToState(beforeInit);
+
+        initData = abi.encodeCall(
+            uSDCNativeConverter.initialize,
+            (
+                owner,
+                ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
+                address(uSDCe),
+                address(wUSDC),
+                NON_MIGRATABLE_BACKING_PERCENTAGE,
+                MINIMUM_BACKING_AFTER_MIGRATION,
+                address(0),
+                NETWORK_ID_L1,
+                migrationManager
+            )
+        );
+        vm.expectRevert(InvalidLxLyBridge.selector);
+        USDCNativeConverter(_proxify(address(uSDCNativeConverter), address(this), initData));
+        vm.revertToState(beforeInit);
+
+        initData = abi.encodeCall(
+            uSDCNativeConverter.initialize,
+            (
+                owner,
+                ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
+                address(uSDCe),
+                address(wUSDC),
+                NON_MIGRATABLE_BACKING_PERCENTAGE,
+                MINIMUM_BACKING_AFTER_MIGRATION,
+                LXLY_BRIDGE,
+                NETWORK_ID_L1,
+                address(0)
+            )
+        );
+        vm.expectRevert(InvalidMigrationManager.selector);
+        USDCNativeConverter(_proxify(address(uSDCNativeConverter), address(this), initData));
+        vm.revertToState(beforeInit);
 
         MockERC20 dummyToken = new MockERC20();
         dummyToken.initialize("Dummy Token", "DT", 6);
@@ -264,7 +287,7 @@ contract NativeConverterTest is Test {
                 migrationManager
             )
         );
-        vm.expectRevert("INVALID_CUSTOM_TOKEN_DECIMALS");
+        vm.expectRevert(abi.encodeWithSelector(NonMatchingCustomTokenDecimals.selector, 6, 18));
         USDCNativeConverter(_proxify(address(uSDCNativeConverter), address(this), initData));
         vm.revertToState(beforeInit);
 
@@ -285,63 +308,49 @@ contract NativeConverterTest is Test {
                 migrationManager
             )
         );
-        vm.expectRevert("INVALID_UNDERLYING_TOKEN_DECIMALS");
+        vm.expectRevert(abi.encodeWithSelector(NonMatchingUnderlyingTokenDecimals.selector, 6, 18));
         USDCNativeConverter(_proxify(address(uSDCNativeConverter), address(this), initData));
     }
 
     function test_convert() public {
-        uint256 amount = 100;
-
         vm.startPrank(owner);
         uSDCNativeConverter.pause();
         vm.expectRevert(EnforcedPause.selector);
-        uSDCNativeConverter.convert(amount, recipient);
+        uSDCNativeConverter.convert(DUMMY_AMOUNT, recipient);
         uSDCNativeConverter.unpause();
         vm.stopPrank();
 
         vm.startPrank(sender);
-        vm.expectRevert("INVALID_AMOUNT");
+        vm.expectRevert(InvalidAssets.selector);
         uSDCNativeConverter.convert(0, recipient);
 
-        vm.expectRevert("INVALID_ADDRESS");
-        uSDCNativeConverter.convert(amount, address(0));
+        vm.expectRevert(InvalidReceiver.selector);
+        uSDCNativeConverter.convert(DUMMY_AMOUNT, address(0));
 
         deal(address(wUSDC), sender, amount);
 
         vm.expectRevert("ERC20: subtraction underflow");
-        uSDCNativeConverter.convert(amount, recipient);
+        uSDCNativeConverter.convert(DUMMY_AMOUNT, recipient);
 
-        wUSDC.approve(address(uSDCNativeConverter), amount);
-        uSDCNativeConverter.convert(amount, recipient);
+        deal(address(wUSDC), sender, DUMMY_AMOUNT);
+
+        wUSDC.approve(address(uSDCNativeConverter), DUMMY_AMOUNT);
+        uSDCNativeConverter.convert(DUMMY_AMOUNT, recipient);
 
         assertEq(wUSDC.balanceOf(sender), 0);
-        assertEq(wUSDC.balanceOf(address(uSDCNativeConverter)), amount);
-        assertEq(uSDCe.balanceOf(recipient), amount);
-        assertEq(uSDCNativeConverter.backingOnLayerY(), amount);
+        assertEq(wUSDC.balanceOf(address(uSDCNativeConverter)), DUMMY_AMOUNT);
+        assertEq(uSDCe.balanceOf(recipient), DUMMY_AMOUNT);
+        assertEq(uSDCNativeConverter.backingOnLayerY(), DUMMY_AMOUNT);
         vm.stopPrank();
     }
 
     function test_convertWithPermit() public {
-        uint256 amount = 100;
-
         vm.startPrank(owner);
         uSDCNativeConverter.pause();
         vm.expectRevert(EnforcedPause.selector);
-        uSDCNativeConverter.convertWithPermit(amount, recipient, "");
+        uSDCNativeConverter.convertWithPermit(DUMMY_AMOUNT, "", recipient);
         uSDCNativeConverter.unpause();
         vm.stopPrank();
-
-        vm.startPrank(sender);
-        vm.expectRevert("INVALID_AMOUNT");
-        uSDCNativeConverter.convertWithPermit(0, recipient, "");
-
-        vm.expectRevert("INVALID_ADDRESS");
-        uSDCNativeConverter.convertWithPermit(amount, address(0), "");
-
-        vm.expectRevert("ERC20: subtraction underflow");
-        uSDCNativeConverter.convertWithPermit(amount, recipient, "");
-
-        deal(address(wUSDC), sender, amount);
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(
             senderPrivateKey,
@@ -354,7 +363,7 @@ contract NativeConverterTest is Test {
                             PERMIT_TYPEHASH,
                             sender,
                             address(uSDCNativeConverter),
-                            amount,
+                            DUMMY_AMOUNT,
                             vm.getNonce(sender),
                             block.timestamp
                         )
@@ -363,20 +372,34 @@ contract NativeConverterTest is Test {
             )
         );
         bytes memory permitData = abi.encodeWithSelector(
-            PERMIT_SIGNATURE, sender, address(uSDCNativeConverter), amount, block.timestamp, v, r, s
+            PERMIT_SIGNATURE, sender, address(uSDCNativeConverter), DUMMY_AMOUNT, block.timestamp, v, r, s
         );
-        uSDCNativeConverter.convertWithPermit(amount, recipient, permitData);
+
+        vm.startPrank(sender);
+        vm.expectRevert(InvalidPermitData.selector);
+        uSDCNativeConverter.convertWithPermit(0, "", recipient);
+
+        vm.expectRevert(InvalidAssets.selector);
+        uSDCNativeConverter.convertWithPermit(0, permitData, recipient);
+
+        vm.expectRevert(InvalidReceiver.selector);
+        uSDCNativeConverter.convertWithPermit(DUMMY_AMOUNT, permitData, address(0));
+
+        vm.expectRevert("ERC20: subtraction underflow");
+        uSDCNativeConverter.convertWithPermit(DUMMY_AMOUNT, permitData, recipient);
+
+        deal(address(wUSDC), sender, DUMMY_AMOUNT);
+
+        uSDCNativeConverter.convertWithPermit(DUMMY_AMOUNT, permitData, recipient);
 
         assertEq(wUSDC.balanceOf(sender), 0);
-        assertEq(wUSDC.balanceOf(address(uSDCNativeConverter)), amount);
-        assertEq(uSDCe.balanceOf(recipient), amount);
-        assertEq(uSDCNativeConverter.backingOnLayerY(), amount);
+        assertEq(wUSDC.balanceOf(address(uSDCNativeConverter)), DUMMY_AMOUNT);
+        assertEq(uSDCe.balanceOf(recipient), DUMMY_AMOUNT);
+        assertEq(uSDCNativeConverter.backingOnLayerY(), DUMMY_AMOUNT);
         vm.stopPrank();
     }
 
     function test_maxDeconvert() public {
-        uint256 amount = 100;
-
         vm.startPrank(owner);
         uSDCNativeConverter.pause();
         vm.assertEq(uSDCNativeConverter.maxDeconvert(sender), 0);
@@ -384,123 +407,124 @@ contract NativeConverterTest is Test {
 
         vm.assertEq(uSDCNativeConverter.maxDeconvert(sender), 0); // owner has 0 shares
 
-        deal(address(uSDCe), sender, amount); // mint shares
+        deal(address(uSDCe), sender, DUMMY_AMOUNT); // mint shares
 
         uint256 backingOnLayerY = 0;
         assertEq(uSDCNativeConverter.maxDeconvert(sender), backingOnLayerY);
 
         // create backing on layer Y
-        deal(address(wUSDC), owner, amount);
+        deal(address(wUSDC), owner, DUMMY_AMOUNT);
 
-        wUSDC.approve(address(uSDCNativeConverter), amount);
-        backingOnLayerY += uSDCNativeConverter.convert(amount, recipient);
+        wUSDC.approve(address(uSDCNativeConverter), DUMMY_AMOUNT);
+        backingOnLayerY += uSDCNativeConverter.convert(DUMMY_AMOUNT, recipient);
         vm.stopPrank();
 
-        deal(address(uSDCe), sender, amount); // mint shares
+        deal(address(uSDCe), sender, DUMMY_AMOUNT); // mint shares
         assertEq(uSDCNativeConverter.maxDeconvert(sender), backingOnLayerY);
 
-        deal(address(uSDCe), sender, amount); // mint additional shares
+        deal(address(uSDCe), sender, DUMMY_AMOUNT); // mint additional shares
         assertLe(uSDCNativeConverter.maxDeconvert(sender), backingOnLayerY); // sender has more shares than the backing on layer Y
     }
 
     function test_simulateDeconvertWithForce() public {
-        uint256 amount = 100;
-
         vm.startPrank(sender);
-        vm.expectRevert("INVALID_AMOUNT");
+        vm.expectRevert(InvalidShares.selector);
         uSDCNativeConverter.exposeSimulateDeconvertWithForce(0);
 
-        deal(address(uSDCe), sender, amount); // mint shares
+        deal(address(uSDCe), sender, DUMMY_AMOUNT); // mint shares
 
         // create backing on layer Y
         uint256 backingOnLayerY = 0;
-        deal(address(wUSDC), owner, amount);
+        deal(address(wUSDC), owner, DUMMY_AMOUNT);
         vm.startPrank(owner);
-        wUSDC.approve(address(uSDCNativeConverter), amount);
-        backingOnLayerY += uSDCNativeConverter.convert(amount, recipient);
+        wUSDC.approve(address(uSDCNativeConverter), DUMMY_AMOUNT);
+        backingOnLayerY += uSDCNativeConverter.convert(DUMMY_AMOUNT, recipient);
         vm.stopPrank();
 
         vm.startPrank(sender);
-        vm.expectRevert("AMOUNT_TOO_LARGE");
-        uSDCNativeConverter.exposeSimulateDeconvertWithForce(amount + 1);
+        vm.expectRevert(abi.encodeWithSelector(AssetsTooLarge.selector, DUMMY_AMOUNT, DUMMY_AMOUNT + 1));
+        uSDCNativeConverter.exposeSimulateDeconvertWithForce(DUMMY_AMOUNT + 1);
 
-        assertEq(uSDCNativeConverter.exposeSimulateDeconvertWithForce(amount), backingOnLayerY);
+        assertEq(uSDCNativeConverter.exposeSimulateDeconvertWithForce(DUMMY_AMOUNT), backingOnLayerY);
     }
 
     function test_deconvert() public {
-        uint256 amount = 100;
-
         vm.startPrank(owner);
         uSDCNativeConverter.pause();
         vm.expectRevert(EnforcedPause.selector);
-        uSDCNativeConverter.deconvert(amount, recipient);
+        uSDCNativeConverter.deconvert(DUMMY_AMOUNT, recipient);
         uSDCNativeConverter.unpause();
         vm.stopPrank();
 
         vm.startPrank(sender);
-        vm.expectRevert("INVALID_AMOUNT");
+        vm.expectRevert(InvalidShares.selector);
         uSDCNativeConverter.deconvert(0, recipient);
 
-        vm.expectRevert("INVALID_ADDRESS");
-        uSDCNativeConverter.deconvert(amount, address(0));
+        vm.expectRevert(InvalidReceiver.selector);
+        uSDCNativeConverter.deconvert(DUMMY_AMOUNT, address(0));
 
-        vm.expectRevert("AMOUNT_TOO_LARGE");
-        uSDCNativeConverter.deconvert(amount, recipient); // no backing on layer Y
+        vm.expectRevert(abi.encodeWithSelector(AssetsTooLarge.selector, 0, DUMMY_AMOUNT));
+        uSDCNativeConverter.deconvert(DUMMY_AMOUNT, recipient); // no backing on layer Y
 
         // create backing on layer Y
         uint256 backingOnLayerY = 0;
-        deal(address(wUSDC), owner, amount);
+        deal(address(wUSDC), owner, DUMMY_AMOUNT);
         vm.startPrank(owner);
-        wUSDC.approve(address(uSDCNativeConverter), amount);
-        backingOnLayerY = uSDCNativeConverter.convert(amount, recipient);
+        wUSDC.approve(address(uSDCNativeConverter), DUMMY_AMOUNT);
+        backingOnLayerY = uSDCNativeConverter.convert(DUMMY_AMOUNT, recipient);
         vm.stopPrank();
 
         vm.startPrank(sender);
         vm.expectRevert("ERC20: subtraction underflow");
-        uSDCNativeConverter.deconvert(amount, recipient); // sender has 0 shares
+        uSDCNativeConverter.deconvert(DUMMY_AMOUNT, recipient); // sender has 0 shares
 
-        deal(address(uSDCe), sender, amount); // mint shares
+        deal(address(uSDCe), sender, DUMMY_AMOUNT); // mint shares
 
-        uint256 returnedAssets = uSDCNativeConverter.deconvert(amount, recipient);
+        uint256 returnedAssets = uSDCNativeConverter.deconvert(DUMMY_AMOUNT, recipient);
         vm.stopPrank();
 
         assertEq(returnedAssets, backingOnLayerY);
-        assertEq(wUSDC.balanceOf(recipient), amount);
+        assertEq(wUSDC.balanceOf(recipient), DUMMY_AMOUNT);
         assertEq(wUSDC.balanceOf(address(uSDCNativeConverter)), 0);
         assertEq(uSDCe.balanceOf(sender), 0);
         assertEq(uSDCNativeConverter.backingOnLayerY(), 0);
     }
 
     function test_deconvertAndBridge() public {
-        uint256 amount = 100;
-
         vm.startPrank(owner);
         uSDCNativeConverter.pause();
         vm.expectRevert(EnforcedPause.selector);
-        uSDCNativeConverter.deconvertAndBridge(amount, NETWORK_ID_L1, recipient, true);
+        uSDCNativeConverter.deconvertAndBridge(DUMMY_AMOUNT, NETWORK_ID_L1, recipient, true);
         uSDCNativeConverter.unpause();
         vm.stopPrank();
 
         vm.startPrank(sender);
-        vm.expectRevert("INVALID_NETWORK");
-        uSDCNativeConverter.deconvertAndBridge(amount, NETWORK_ID_L2, recipient, true);
+        vm.expectRevert(InvalidDestinationNetworkId.selector);
+        uSDCNativeConverter.deconvertAndBridge(DUMMY_AMOUNT, NETWORK_ID_L2, recipient, true);
 
         // create backing on layer Y
         uint256 backingOnLayerY = 0;
-        deal(address(wUSDC), owner, amount);
+        deal(address(wUSDC), owner, DUMMY_AMOUNT);
         vm.startPrank(owner);
-        wUSDC.approve(address(uSDCNativeConverter), amount);
-        backingOnLayerY = uSDCNativeConverter.convert(amount, recipient);
+        wUSDC.approve(address(uSDCNativeConverter), DUMMY_AMOUNT);
+        backingOnLayerY = uSDCNativeConverter.convert(DUMMY_AMOUNT, recipient);
         vm.stopPrank();
 
-        deal(address(uSDCe), sender, amount); // mint shares
+        deal(address(uSDCe), sender, DUMMY_AMOUNT); // mint shares
 
         vm.startPrank(sender);
         vm.expectEmit();
         emit BridgeEvent(
-            LEAF_TYPE_ASSET, NETWORK_ID_L2, address(wUSDC), NETWORK_ID_L1, recipient, amount, WUSDC_METADATA, 55413
+            LEAF_TYPE_ASSET,
+            NETWORK_ID_L2,
+            address(wUSDC),
+            NETWORK_ID_L1,
+            recipient,
+            DUMMY_AMOUNT,
+            WUSDC_METADATA,
+            55413
         );
-        uint256 returnedAssets = uSDCNativeConverter.deconvertAndBridge(amount, NETWORK_ID_L1, recipient, true);
+        uint256 returnedAssets = uSDCNativeConverter.deconvertAndBridge(DUMMY_AMOUNT, NETWORK_ID_L1, recipient, true);
 
         assertEq(returnedAssets, backingOnLayerY);
         assertEq(wUSDC.balanceOf(address(uSDCNativeConverter)), 0);
@@ -516,19 +540,20 @@ contract NativeConverterTest is Test {
         uSDCNativeConverter.unpause();
         vm.stopPrank();
 
-        vm.expectRevert("INVALID_AMOUNT");
+        vm.expectRevert(InvalidAssets.selector);
         uSDCNativeConverter.migrateBackingToLayerX(); // try with 0 backing
 
         // create backing on layer Y
-        uint256 amount = 100;
+
         uint256 backingOnLayerY = 0;
-        deal(address(wUSDC), owner, amount);
+        deal(address(wUSDC), owner, DUMMY_AMOUNT);
         vm.startPrank(owner);
-        wUSDC.approve(address(uSDCNativeConverter), amount);
-        backingOnLayerY = uSDCNativeConverter.convert(amount, recipient);
+        wUSDC.approve(address(uSDCNativeConverter), DUMMY_AMOUNT);
+        backingOnLayerY = uSDCNativeConverter.convert(DUMMY_AMOUNT, recipient);
         vm.stopPrank();
 
-        uint256 amountToMigrate = amount - (backingOnLayerY * NON_MIGRATABLE_BACKING_PERCENTAGE) / 100;
+        uint256 amountToMigrate =
+            DUMMY_AMOUNT - (backingOnLayerY * NON_MIGRATABLE_BACKING_PERCENTAGE) / MAX_NON_MIGRATABLE_BACKING_PERCENTAGE;
 
         vm.expectEmit();
         emit BridgeEvent(
@@ -557,45 +582,44 @@ contract NativeConverterTest is Test {
         uSDCNativeConverter.migrateBackingToLayerX();
         assertEq(wUSDC.balanceOf(address(uSDCNativeConverter)), backingOnLayerY - amountToMigrate);
 
-        // mint extra shares
-        uSDCe.mint(sender, 1000);
-
-        vm.expectRevert("INVALID_AMOUNT");
+        vm.expectRevert(InvalidAssets.selector);
         uSDCNativeConverter.migrateBackingToLayerX(); // backing is less than the non migratable backing percentage
 
         // Try to migrate as the owner with a specific amount
         vm.expectRevert(); // only owner can call this function
-        uSDCNativeConverter.migrateBackingToLayerX(amount);
+        uSDCNativeConverter.migrateBackingToLayerX(DUMMY_AMOUNT);
 
         vm.startPrank(owner);
-        vm.expectRevert("INVALID_AMOUNT");
+        vm.expectRevert(InvalidAssets.selector);
         uSDCNativeConverter.migrateBackingToLayerX(0);
 
         uint256 currentBacking = uSDCNativeConverter.backingOnLayerY();
 
-        vm.expectRevert("AMOUNT_TOO_LARGE");
+        vm.expectRevert(abi.encodeWithSelector(AssetsTooLarge.selector, currentBacking, currentBacking + 1));
         uSDCNativeConverter.migrateBackingToLayerX(currentBacking + 1);
     }
 
     function test_setNonMigratableBackingPercentage() public {
+        uint256 newPercentage = 2e17;
+
         vm.expectRevert(); // only owner can call this function
-        uSDCNativeConverter.changeNonMigratableBackingPercentage(0);
+        uSDCNativeConverter.setNonMigratableBackingPercentage(0);
 
         vm.startPrank(owner);
         uSDCNativeConverter.pause();
         vm.expectRevert(EnforcedPause.selector);
-        uSDCNativeConverter.changeNonMigratableBackingPercentage(0);
+        uSDCNativeConverter.setNonMigratableBackingPercentage(0);
         uSDCNativeConverter.unpause();
 
-        vm.expectRevert("INVALID_BACKING_PERCENTAGE");
-        uSDCNativeConverter.changeNonMigratableBackingPercentage(101);
+        vm.expectRevert(InvalidNonMigratableBackingPercentage.selector);
+        uSDCNativeConverter.setNonMigratableBackingPercentage(MAX_NON_MIGRATABLE_BACKING_PERCENTAGE + 1);
 
         vm.expectEmit();
-        emit NonMigratableBackingPercentageChanged(20);
-        uSDCNativeConverter.changeNonMigratableBackingPercentage(20);
+        emit NonMigratableBackingPercentageSet(newPercentage);
+        uSDCNativeConverter.setNonMigratableBackingPercentage(newPercentage);
         vm.stopPrank();
 
-        assertEq(uSDCNativeConverter.nonMigratableBackingPercentage(), 20);
+        assertEq(uSDCNativeConverter.nonMigratableBackingPercentage(), newPercentage);
     }
 
     function test_version() public view {
