@@ -82,12 +82,12 @@ contract YeETH is YieldExposedToken {
         return assets;
     }
 
-    /// @dev yeETH does not have a transfer fee.
+    /// @dev WETH does not have a transfer fee.
     function _assetsAfterTransferFee(uint256 assetsBeforeTransferFee) internal pure override returns (uint256) {
         return assetsBeforeTransferFee;
     }
 
-    /// @dev yeETH does not have a transfer fee.
+    /// @dev WETH does not have a transfer fee.
     function _assetsBeforeTransferFee(uint256 minimumAssetsAfterTransferFee) internal pure override returns (uint256) {
         return minimumAssetsAfterTransferFee;
     }

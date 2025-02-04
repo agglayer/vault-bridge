@@ -3,6 +3,7 @@ pragma solidity 0.8.28;
 
 import {CustomToken} from "../../CustomToken.sol";
 import {IWETH9} from "../../etc/IWETH9.sol";
+import {IVersioned} from "../../etc/IVersioned.sol";
 
 // TODO
 // - make upgradeable to enable potential future ETH staking plans
@@ -51,6 +52,7 @@ contract ZETH is CustomToken {
         emit Withdrawal(msg.sender, value);
     }
 
+    /// @inheritdoc IVersioned
     function version() public pure returns (string memory) {
         return "1.0.0";
     }
