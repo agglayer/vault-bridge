@@ -3,6 +3,7 @@ pragma solidity 0.8.28;
 
 import {NativeConverter} from "../../NativeConverter.sol";
 import {ZETH} from "./zETH.sol";
+import {IVersioned} from "../../etc/IVersioned.sol";
 
 /// @title WETH Native Converter
 /// @dev No customization is required.
@@ -42,11 +43,14 @@ contract WETHNativeConverter is NativeConverter {
         zETH = ZETH(zETH_);
     }
 
+    /// @dev This special function allows the NativeConverter owner to migrate the gas backing of the zETH custom token
+    /// @dev It simply takes the amount of gas token from the zETH contract
+    /// @dev and performs the migration using a special CrossNetworkInstruction called WRAP_COIN_AND_COMPLETE_MIGRATION
+    /// @dev It instructs the MigrationManager on Layer X to first wrap the gas token and then deposit it to complete the migration.
+    /// @notice It is known that this can lead to zETH not being able to perform withdrawals, because of a lack of gas backing.
+    /// @notice However, this is acceptable, because zETH is a yield-exposed token so its backing should actually be staked.
+    /// @notice Users can still bridge zETH back to Layer X to receive WETH or ETH.
     function migrateGasBackingToLayerX(uint256 amount) external whenNotPaused onlyOwner {
-        _migrateGasBackingToLayerX(amount);
-    }
-
-    function _migrateGasBackingToLayerX(uint256 amount) internal {
         // Check the input.
         require(amount > 0, "INVALID_AMOUNT");
         require(amount <= address(zETH).balance, "AMOUNT_TOO_LARGE");
@@ -70,6 +74,7 @@ contract WETHNativeConverter is NativeConverter {
         emit MigrationStarted(msg.sender, amountOfCustomToken, amount);
     }
 
+    /// @inheritdoc IVersioned
     function version() external pure virtual returns (string memory) {
         return "1.0.0";
     }

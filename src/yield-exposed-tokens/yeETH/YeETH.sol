@@ -63,8 +63,8 @@ contract YeETH is YieldExposedToken {
         // Mint yeToken to the receiver.
         uint256 mintedShares;
         (mintedShares, assets) =
-            // msg.value is used as assets value, if it exceeds shares value, WETH will be refunded
-            _deposit(msg.value, lxlyId(), receiver, false, shares);
+        // msg.value is used as assets value, if it exceeds shares value, WETH will be refunded
+         _deposit(msg.value, lxlyId(), receiver, false, shares);
 
         // Check the output.
         require(mintedShares == shares, "COULD_NOT_MINT_SHARES");
