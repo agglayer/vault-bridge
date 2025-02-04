@@ -484,7 +484,7 @@ contract GenericYieldExposedTokenTest is Test {
             yeTokenMetaData,
             _ILxLyBridge(LXLY_BRIDGE).depositCount()
         );
-        yeToken.depositAndBridgeWithPermit(DUMMY_AMOUNT, recipient, NETWORK_ID_L2, true, permitData);
+        yeToken.depositWithPermitAndBridge(DUMMY_AMOUNT, recipient, NETWORK_ID_L2, true, permitData);
         vm.stopPrank();
 
         uint256 assetsToDeposit = DUMMY_AMOUNT - reserveAssets;
@@ -549,7 +549,7 @@ contract GenericYieldExposedTokenTest is Test {
         uint256 assetsToDepositMax = (assetsToDeposit > vaultMaxDeposit) ? vaultMaxDeposit : assetsToDeposit;
         uint256 reserveAssetsAfterDeposit = DUMMY_AMOUNT - assetsToDepositMax;
 
-        uint256 reserveWithdrawAmount = reserveAssetsAfterDeposit * 90 / 100; // withdraw 90% of reserve assets
+        uint256 reserveWithdrawAmount = (reserveAssetsAfterDeposit * 90) / 100; // withdraw 90% of reserve assets
         uint256 reserveAfterWithdraw = reserveAssetsAfterDeposit - reserveWithdrawAmount;
         yeToken.withdraw(reserveWithdrawAmount, sender, sender);
         assertEq(IERC20(asset).balanceOf(address(yeToken)), reserveAfterWithdraw); // reserve assets reduced
@@ -565,17 +565,27 @@ contract GenericYieldExposedTokenTest is Test {
     }
 
     function test_replenishReserve() public {
-        uint256 reserveAmount = (DUMMY_AMOUNT * minimumReservePercentage) / MAX_MINIMUM_RESERVE_PERCENTAGE;
+        uint256 vaultMaxDeposit = yeTokenVault.maxDeposit(address(yeToken));
+        uint256 userDepositAmount = DUMMY_AMOUNT;
+
+        if (userDepositAmount > vaultMaxDeposit) {
+            userDepositAmount = vaultMaxDeposit;
+        }
 
         vm.expectRevert(NoNeedToReplenishReserve.selector);
         yeToken.replenishReserve();
 
-        deal(asset, sender, DUMMY_AMOUNT);
         // create reserve
+        deal(asset, sender, userDepositAmount);
+
         vm.startPrank(sender);
-        IERC20(asset).forceApprove(address(yeToken), DUMMY_AMOUNT);
-        yeToken.deposit(DUMMY_AMOUNT, recipient);
+
+        IERC20(asset).forceApprove(address(yeToken), userDepositAmount);
+        yeToken.deposit(userDepositAmount, recipient);
+
         vm.stopPrank();
+
+        uint256 reserveAmount = (userDepositAmount * minimumReservePercentage) / MAX_MINIMUM_RESERVE_PERCENTAGE;
 
         vm.prank(address(yeToken));
         IERC20(asset).safeTransfer(address(0xdeed), reserveAmount - 1); // reduce reserve assets
@@ -586,33 +596,73 @@ contract GenericYieldExposedTokenTest is Test {
     }
 
     function test_rebalanceReserve() public {
-        uint256 vaultMaxDeposit = yeTokenVault.maxDeposit(address(yeToken));
-        uint256 reserveAmount = (DUMMY_AMOUNT * minimumReservePercentage) / MAX_MINIMUM_RESERVE_PERCENTAGE;
-
-        deal(asset, sender, DUMMY_AMOUNT);
-
-        // create reserve
-        vm.startPrank(sender);
-        IERC20(asset).forceApprove(address(yeToken), DUMMY_AMOUNT);
-        yeToken.deposit(DUMMY_AMOUNT, recipient);
-        vm.stopPrank();
-
-        uint256 assetsToDeposit = DUMMY_AMOUNT - reserveAmount;
-        uint256 assetsToDepositMax = (assetsToDeposit > vaultMaxDeposit) ? vaultMaxDeposit : assetsToDeposit;
-        uint256 reserveAssetsAfterDeposit = DUMMY_AMOUNT - assetsToDepositMax;
-
-        vm.assertEq(IERC20(asset).balanceOf(address(yeToken)), reserveAssetsAfterDeposit);
-
-        deal(asset, address(yeToken), reserveAssetsAfterDeposit + DUMMY_AMOUNT); // add additional assets to the reserve on top of the reserve
-
         vm.expectRevert(); // only owner can rebalance reserve
         yeToken.rebalanceReserve();
 
-        vm.expectEmit();
-        emit ReserveRebalanced(reserveAssetsAfterDeposit);
-        vm.prank(owner);
-        yeToken.rebalanceReserve(); // deposits additional assets to the vault
-        assertEq(IERC20(asset).balanceOf(address(yeToken)), reserveAssetsAfterDeposit);
+        uint256 vaultMaxDeposit = yeTokenVault.maxDeposit(address(yeToken));
+        uint256 userDepositAmount = DUMMY_AMOUNT;
+        uint256 totalSupply;
+        deal(asset, sender, DUMMY_AMOUNT); // fund the sender
+
+        if (userDepositAmount > vaultMaxDeposit) {
+            userDepositAmount = vaultMaxDeposit / 2; // deposit half of the max deposit limit
+            uint256 reserveAmount = (userDepositAmount) * minimumReservePercentage / MAX_MINIMUM_RESERVE_PERCENTAGE;
+
+            // create reserve
+            vm.startPrank(sender);
+
+            IERC20(asset).forceApprove(address(yeToken), DUMMY_AMOUNT);
+            yeToken.deposit(userDepositAmount, recipient);
+            totalSupply += userDepositAmount;
+            assertEq(yeToken.reservedAssets(), reserveAmount);
+
+            uint256 stakedAssetsBefore = yeToken.stakedAssets();
+
+            // offset the reserve by minting more shares
+            userDepositAmount = userDepositAmount / 2; // deposit half of the new max deposit limit
+            uint256 reservedAmountAfter =
+                (userDepositAmount * minimumReservePercentage) / MAX_MINIMUM_RESERVE_PERCENTAGE;
+            yeToken.mint(userDepositAmount, sender);
+            totalSupply += userDepositAmount;
+            assertEq(yeToken.reservedAssets(), reserveAmount + reservedAmountAfter);
+
+            vm.stopPrank();
+
+            uint256 finalReserveAmount = totalSupply * minimumReservePercentage / MAX_MINIMUM_RESERVE_PERCENTAGE;
+            vm.prank(owner);
+            vm.expectEmit();
+            emit ReserveRebalanced(finalReserveAmount);
+            yeToken.rebalanceReserve();
+
+            assertEq(yeToken.reservedAssets(), finalReserveAmount);
+            assertGt(yeToken.stakedAssets(), stakedAssetsBefore);
+        } else {
+            uint256 reserveAmount = (userDepositAmount * minimumReservePercentage) / MAX_MINIMUM_RESERVE_PERCENTAGE;
+
+            vm.startPrank(sender);
+
+            IERC20(asset).forceApprove(address(yeToken), DUMMY_AMOUNT);
+            yeToken.deposit(userDepositAmount, recipient);
+            totalSupply += userDepositAmount;
+            assertEq(yeToken.reservedAssets(), reserveAmount);
+
+            uint256 stakedAssetsBefore = yeToken.stakedAssets();
+            uint256 reservedAssetsBefore = yeToken.reservedAssets();
+
+            // offset the reserve by adding more shares
+            deal(asset, address(yeToken), reservedAssetsBefore + DUMMY_AMOUNT);
+
+            vm.stopPrank();
+
+            uint256 finalReserveAmount = totalSupply * minimumReservePercentage / MAX_MINIMUM_RESERVE_PERCENTAGE;
+            vm.prank(owner);
+            vm.expectEmit();
+            emit ReserveRebalanced(finalReserveAmount);
+            yeToken.rebalanceReserve();
+
+            assertEq(yeToken.reservedAssets(), finalReserveAmount);
+            assertGt(yeToken.stakedAssets(), stakedAssetsBefore);
+        }
     }
 
     function test_collectYield() public {
@@ -698,7 +748,7 @@ contract GenericYieldExposedTokenTest is Test {
         vm.prank(owner);
         yeToken.setMinimumReservePercentage(1e19);
 
-        assertEq(yeToken.minimumReservePercentage(), minimumReservePercentage);
+        assertEq(yeToken.minimumReservePercentage(), minimumReservePercentage); // sanity check
 
         vm.expectEmit();
         emit MinimumReservePercentageSet(percentage);
@@ -708,26 +758,39 @@ contract GenericYieldExposedTokenTest is Test {
     }
 
     function test_setMinimumReservePercentage_with_rebalance() public {
-        uint256 percentage = 2e17;
-        uint256 reserveAmount = (DUMMY_AMOUNT * minimumReservePercentage) / MAX_MINIMUM_RESERVE_PERCENTAGE;
+        uint256 newPercentage = 2e17;
+        uint256 maxVaultDeposit = yeTokenVault.maxDeposit(address(yeToken));
+        uint256 userDepositAmount = DUMMY_AMOUNT;
 
-        deal(asset, sender, DUMMY_AMOUNT);
+        if (userDepositAmount > maxVaultDeposit) {
+            userDepositAmount = maxVaultDeposit / 2;
+        }
+
         // create reserve
-        vm.startPrank(sender);
-        IERC20(asset).forceApprove(address(yeToken), DUMMY_AMOUNT);
-        yeToken.deposit(DUMMY_AMOUNT, recipient);
-        vm.stopPrank();
-        assertEq(IERC20(asset).balanceOf(address(yeToken)), reserveAmount);
+        deal(asset, sender, userDepositAmount);
 
+        vm.startPrank(sender);
+
+        IERC20(asset).forceApprove(address(yeToken), userDepositAmount);
+        yeToken.deposit(userDepositAmount, recipient);
+
+        vm.stopPrank();
+
+        uint256 reserveAmount = (userDepositAmount * minimumReservePercentage) / MAX_MINIMUM_RESERVE_PERCENTAGE;
+        assertEq(yeToken.reservedAssets(), reserveAmount);
+
+        uint256 finalReserveAmount = (userDepositAmount * newPercentage) / MAX_MINIMUM_RESERVE_PERCENTAGE;
         uint256 stakedAssetsBefore = yeToken.stakedAssets();
 
         vm.expectEmit();
-        emit ReserveRebalanced((DUMMY_AMOUNT * percentage) / MAX_MINIMUM_RESERVE_PERCENTAGE);
+        emit ReserveRebalanced(finalReserveAmount);
         vm.expectEmit();
-        emit MinimumReservePercentageSet(percentage);
+        emit MinimumReservePercentageSet(newPercentage);
         vm.prank(owner);
-        yeToken.setMinimumReservePercentage(percentage);
-        assertEq(yeToken.minimumReservePercentage(), percentage);
+        yeToken.setMinimumReservePercentage(newPercentage);
+
+        assertEq(yeToken.minimumReservePercentage(), newPercentage);
+        assertEq(yeToken.reservedAssets(), finalReserveAmount);
         assertLt(yeToken.stakedAssets(), stakedAssetsBefore);
     }
 
@@ -916,6 +979,7 @@ contract GenericYieldExposedTokenTest is Test {
     }
 
     function test_previewWithdraw() public virtual {
+        uint256 vaultMaxDeposit = yeTokenVault.maxDeposit(address(yeToken));
         uint256 reserveAmount = (DUMMY_AMOUNT * minimumReservePercentage) / MAX_MINIMUM_RESERVE_PERCENTAGE;
 
         vm.startPrank(owner);
@@ -938,9 +1002,12 @@ contract GenericYieldExposedTokenTest is Test {
         yeToken.previewWithdraw(DUMMY_AMOUNT + 1);
 
         uint256 stakedAmount = yeTokenVault.convertToAssets(yeTokenVault.balanceOf(address(yeToken)));
+        uint256 assetsToDeposit = DUMMY_AMOUNT - reserveAmount;
+        uint256 assetsToDepositMax = (assetsToDeposit > vaultMaxDeposit) ? vaultMaxDeposit : assetsToDeposit;
+        uint256 reserveAssetsAfterDeposit = DUMMY_AMOUNT - assetsToDepositMax;
 
-        vm.assertEq(yeToken.previewWithdraw(reserveAmount), yeToken.reservedAssets()); // reserve assets
-        vm.assertEq(yeToken.previewWithdraw(reserveAmount + stakedAmount), yeToken.totalAssets()); // reserve + staked assets
+        vm.assertEq(yeToken.previewWithdraw(reserveAssetsAfterDeposit), yeToken.reservedAssets()); // reserve assets
+        vm.assertEq(yeToken.previewWithdraw(reserveAssetsAfterDeposit + stakedAmount), yeToken.totalAssets()); // reserve + staked assets
     }
 
     function test_maxRedeem() public virtual {
@@ -962,7 +1029,9 @@ contract GenericYieldExposedTokenTest is Test {
     }
 
     function test_previewRedeem() public virtual {
+        uint256 vaultMaxDeposit = yeTokenVault.maxDeposit(address(yeToken));
         uint256 reserveAmount = (DUMMY_AMOUNT * minimumReservePercentage) / MAX_MINIMUM_RESERVE_PERCENTAGE;
+
         vm.startPrank(owner);
         yeToken.pause();
         vm.expectRevert(EnforcedPause.selector);
@@ -983,19 +1052,32 @@ contract GenericYieldExposedTokenTest is Test {
         yeToken.previewRedeem(DUMMY_AMOUNT + 1);
 
         uint256 stakedAmount = yeTokenVault.convertToAssets(yeTokenVault.balanceOf(address(yeToken)));
+        uint256 assetsToDeposit = DUMMY_AMOUNT - reserveAmount;
+        uint256 assetsToDepositMax = (assetsToDeposit > vaultMaxDeposit) ? vaultMaxDeposit : assetsToDeposit;
+        uint256 reserveAssetsAfterDeposit = DUMMY_AMOUNT - assetsToDepositMax;
 
-        vm.assertEq(yeToken.previewRedeem(reserveAmount), yeToken.reservedAssets()); // reserve assets
-        vm.assertEq(yeToken.previewRedeem(reserveAmount + stakedAmount), yeToken.totalAssets()); // reserve + staked assets
+        vm.assertEq(yeToken.previewRedeem(reserveAssetsAfterDeposit), yeToken.reservedAssets()); // reserve assets
+        vm.assertEq(yeToken.previewRedeem(reserveAssetsAfterDeposit + stakedAmount), yeToken.totalAssets()); // reserve + staked assets
     }
 
     function test_reservePercentage() public {
+        uint256 vaultMaxDeposit = yeTokenVault.maxDeposit(address(yeToken));
+        uint256 reserveAmount = (DUMMY_AMOUNT * minimumReservePercentage) / MAX_MINIMUM_RESERVE_PERCENTAGE;
+
         deal(asset, sender, DUMMY_AMOUNT);
         vm.startPrank(sender);
         IERC20(asset).forceApprove(address(yeToken), DUMMY_AMOUNT);
         yeToken.deposit(DUMMY_AMOUNT, sender);
         vm.stopPrank();
 
-        assertEq(yeToken.reservePercentage(), minimumReservePercentage);
+        uint256 assetsToDeposit = DUMMY_AMOUNT - reserveAmount;
+        uint256 assetsToDepositMax = (assetsToDeposit > vaultMaxDeposit) ? vaultMaxDeposit : assetsToDeposit;
+        uint256 reserveAssetsAfterDeposit = DUMMY_AMOUNT - assetsToDepositMax;
+
+        uint256 expectedPercentage =
+            (reserveAssetsAfterDeposit * MAX_MINIMUM_RESERVE_PERCENTAGE) / yeToken.totalSupply();
+
+        assertEq(yeToken.reservePercentage(), expectedPercentage);
     }
 
     function test_pause_unpause() public {
