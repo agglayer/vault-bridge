@@ -20,7 +20,7 @@ contract yeETHTest is Test {
     address constant WETH_METAMORPHO = 0x78Fc2c2eD1A4cDb5402365934aE5648aDAd094d0;
     address constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     address constant LXLY_BRIDGE = 0x2a3DD3EB832aF982ec71669E178424b10Dca2EDe;
-    uint8 constant MINIMUM_RESERVE_PERCENTAGE = 10;
+    uint256 constant MINIMUM_RESERVE_PERCENTAGE = 1e17;
     uint32 constant ZKEVM_NETWORK_ID = 1; // zkEVM
 
     function setUp() public {
@@ -117,13 +117,13 @@ contract yeETHTest is Test {
         assertEq(yeETH.balanceOf(address(this)), amount); // shares minted to the sender
         assertApproxEqAbs(yeETH.totalAssets(), amount, 2); // allow for rounding
 
-        uint256 reserveAmount = (amount * MINIMUM_RESERVE_PERCENTAGE) / 100;
+        uint256 reserveAmount = (amount * MINIMUM_RESERVE_PERCENTAGE) / 1e18;
         assertApproxEqAbs(yeETH.reservedAssets(), reserveAmount, 2); // allow for rounding
     }
 
     function test_withdraw() public {
         uint256 initialAmount = 100;
-        uint256 reserveAmount = (initialAmount * MINIMUM_RESERVE_PERCENTAGE) / 100; // 10
+        uint256 reserveAmount = (initialAmount * MINIMUM_RESERVE_PERCENTAGE) / 1e18; // 10
 
         // Deposit ETH
         vm.deal(address(this), initialAmount);
