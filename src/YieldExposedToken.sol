@@ -351,7 +351,7 @@ abstract contract YieldExposedToken is
 
         // Calculate the amount to reserve.
         // @note Check rounding.
-        uint256 assetsToReserve = (assets * $.minimumReservePercentage) / 100;
+        uint256 assetsToReserve = (assets * $.minimumReservePercentage) / 1e18;
 
         // Calculate the amount to deposit into the yield vault.
         uint256 assetsToDeposit = assets - assetsToReserve;
