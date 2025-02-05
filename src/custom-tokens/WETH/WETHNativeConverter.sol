@@ -11,6 +11,10 @@ import {IVersioned} from "../../etc/IVersioned.sol";
 contract WETHNativeConverter is NativeConverter {
     ZETH zETH;
 
+    enum CustomCrossNetworkInstruction {
+        WRAP_COIN_AND_COMPLETE_MIGRATION
+    }
+
     constructor() {
         _disableInitializers();
     }
@@ -60,14 +64,14 @@ contract WETHNativeConverter is NativeConverter {
 
         // Taking lxlyBridge's gas balance here
         zETH.bridgeBackingToLayerX(amount);
-        lxlyBridge().bridgeAsset{value: amount}(layerXLxlyId(), migrationManager(), amount, address(0), true, "");
+        lxlyBridge().bridgeAsset{value: amount}(layerXLxlyId(), address(zETH), amount, address(0), true, "");
 
         // Bridge a message to Migration Manager on Layer X to complete the migration.
         lxlyBridge().bridgeMessage(
             layerXLxlyId(),
-            migrationManager(),
+            address(zETH),
             true,
-            abi.encode(CrossNetworkInstruction.WRAP_COIN_AND_COMPLETE_MIGRATION, amountOfCustomToken, amount)
+            abi.encode(CrossNetworkInstruction.CUSTOM, CustomCrossNetworkInstruction.WRAP_COIN_AND_COMPLETE_MIGRATION, amountOfCustomToken, amount)
         );
 
         // Emit the event.
