@@ -8,6 +8,10 @@ import {IVersioned} from "../../etc/IVersioned.sol";
 
 /// @title Yield Exposed gas token
 contract YeETH is YieldExposedToken {
+    enum CustomCrossNetworkInstruction {
+        WRAP_COIN_AND_COMPLETE_MIGRATION
+    }
+
     constructor() {
         _disableInitializers();
     }
@@ -80,6 +84,31 @@ contract YeETH is YieldExposedToken {
             weth.transferFrom(msg.sender, address(this), assets);
         }
         return assets;
+    }
+
+    function _dispatchCustomCrossNetworkInstruction(
+        address originAddress,
+        uint32 originNetwork,
+        bytes memory customData
+    ) internal override returns (bool) {
+        IWETH9 weth = IWETH9(address(underlyingToken()));
+
+        (CustomCrossNetworkInstruction instruction, bytes memory instructionData) =
+            abi.decode(customData, (CustomCrossNetworkInstruction, bytes));
+
+        if (instruction == CustomCrossNetworkInstruction.WRAP_COIN_AND_COMPLETE_MIGRATION) {
+            require(originAddress == nativeConverter(), Unauthorized());
+
+            (uint256 shares, uint256 assets) = abi.decode(instructionData, (uint256, uint256));
+
+            weth.deposit{value: msg.value}();
+
+            _completeMigration(originNetwork, shares, assets);
+
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /// @dev WETH does not have a transfer fee.
