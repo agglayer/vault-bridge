@@ -6,10 +6,10 @@ import {ZETH} from "./zETH.sol";
 import {IVersioned} from "../../etc/IVersioned.sol";
 
 /// @title WETH Native Converter
-/// @dev No customization is required.
-/// @dev This contract does not need to be deployed. You can point WETHNativeConverter proxy to GenericNativeConverter instead.
 contract WETHNativeConverter is NativeConverter {
     ZETH zETH;
+
+    error AmountTooLarge();
 
     enum CustomCrossNetworkInstruction {
         WRAP_COIN_AND_COMPLETE_MIGRATION
@@ -56,20 +56,19 @@ contract WETHNativeConverter is NativeConverter {
     /// @notice Users can still bridge zETH back to Layer X to receive WETH or ETH.
     function migrateGasBackingToLayerX(uint256 amount) external whenNotPaused onlyOwner {
         // Check the input.
-        require(amount > 0, "INVALID_AMOUNT");
-        require(amount <= address(zETH).balance, "AMOUNT_TOO_LARGE");
+        require(amount <= address(zETH).balance, AmountTooLarge());
 
         // Precalculate the amount of the custom token for which backing is being migrated.
         uint256 amountOfCustomToken = _convertToShares(amount);
 
         // Taking lxlyBridge's gas balance here
         zETH.bridgeBackingToLayerX(amount);
-        lxlyBridge().bridgeAsset{value: amount}(layerXLxlyId(), address(zETH), amount, address(0), true, "");
+        lxlyBridge().bridgeAsset{value: amount}(layerXLxlyId(), address(yeToken()), amount, address(0), true, "");
 
         // Bridge a message to Migration Manager on Layer X to complete the migration.
         lxlyBridge().bridgeMessage(
             layerXLxlyId(),
-            address(zETH),
+            address(yeToken()),
             true,
             abi.encode(
                 CrossNetworkInstruction.CUSTOM,

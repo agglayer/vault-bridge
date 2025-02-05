@@ -101,7 +101,8 @@ contract YeETH is YieldExposedToken {
 
             (uint256 shares, uint256 assets) = abi.decode(instructionData, (uint256, uint256));
 
-            weth.deposit{value: msg.value}();
+            // deposit ETH assets into WETH
+            weth.deposit{value: assets}();
 
             _completeMigration(originNetwork, shares, assets);
 
