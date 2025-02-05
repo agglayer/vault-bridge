@@ -71,7 +71,12 @@ contract WETHNativeConverter is NativeConverter {
             layerXLxlyId(),
             address(zETH),
             true,
-            abi.encode(CrossNetworkInstruction.CUSTOM, CustomCrossNetworkInstruction.WRAP_COIN_AND_COMPLETE_MIGRATION, amountOfCustomToken, amount)
+            abi.encode(
+                CrossNetworkInstruction.CUSTOM,
+                CustomCrossNetworkInstruction.WRAP_COIN_AND_COMPLETE_MIGRATION,
+                amountOfCustomToken,
+                amount
+            )
         );
 
         // Emit the event.
