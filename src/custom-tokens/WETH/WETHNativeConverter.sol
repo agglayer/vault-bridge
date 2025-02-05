@@ -29,7 +29,7 @@ contract WETHNativeConverter is NativeConverter {
         uint256 minimumBackingAfterMigration_,
         address lxlyBridge_,
         uint32 layerXNetworkId_,
-        address migrationManager_
+        address yeToken_
     ) external initializer {
         // Initialize the base implementation.
         __NativeConverter_init(
@@ -41,7 +41,7 @@ contract WETHNativeConverter is NativeConverter {
             minimumBackingAfterMigration_,
             lxlyBridge_,
             layerXNetworkId_,
-            migrationManager_
+            yeToken_
         );
 
         zETH = ZETH(zETH_);
@@ -50,7 +50,7 @@ contract WETHNativeConverter is NativeConverter {
     /// @dev This special function allows the NativeConverter owner to migrate the gas backing of the zETH custom token
     /// @dev It simply takes the amount of gas token from the zETH contract
     /// @dev and performs the migration using a special CrossNetworkInstruction called WRAP_COIN_AND_COMPLETE_MIGRATION
-    /// @dev It instructs the MigrationManager on Layer X to first wrap the gas token and then deposit it to complete the migration.
+    /// @dev It instructs yeETH on Layer X to first wrap the gas token and then deposit it to complete the migration.
     /// @notice It is known that this can lead to zETH not being able to perform withdrawals, because of a lack of gas backing.
     /// @notice However, this is acceptable, because zETH is a yield-exposed token so its backing should actually be staked.
     /// @notice Users can still bridge zETH back to Layer X to receive WETH or ETH.
