@@ -19,6 +19,7 @@ import {GenericNativeConverter} from "../src/custom-tokens/GenericNativeConverte
 contract ZETHNativeConverterTest is Test, GenericNativeConverterTest {
     MockERC20 internal wWETH;
     ZETH internal zETH;
+    address internal yeETH = makeAddr("yeETH");
 
     WETHNativeConverter internal zETHConverter;
 
@@ -29,36 +30,44 @@ contract ZETHNativeConverterTest is Test, GenericNativeConverterTest {
         wWETH = new MockERC20();
         wWETH.initialize("Wrapped WETH", "wWETH", 18);
         zETH = new ZETH();
-        bytes memory initData = abi.encodeCall(ZETH.initialize, (address(this)));
+        address calculatedNativeConverterAddr = vm.computeCreateAddress(address(this), vm.getNonce(address(this)) + 2);
+        vm.etch(LXLY_BRIDGE, SOVEREIGN_BRIDGE_BYTECODE);
+        bytes memory initData = abi.encodeCall(
+            ZETH.initialize, (address(this), "zETH", "zETH", 18, LXLY_BRIDGE, calculatedNativeConverterAddr)
+        );
         zETH = ZETH(payable(address(new TransparentUpgradeableProxy(address(zETH), address(this), initData))));
 
         // assign addresses for generic testing
         customToken = MockERC20MintableBurnable(address(zETH));
         underlyingToken = MockERC20(address(wWETH));
+        yeToken = yeETH;
+
+        underlyingTokenMetadata = abi.encode("Wrapped WETH", "wWETH", 18);
 
         // Deploy and initialize converter
-        nativeConverter = new WETHNativeConverter();
+        nativeConverter = GenericNativeConverter(address(new WETHNativeConverter()));
 
         /// important to assign customToken, underlyingToken, and nativeConverter
         /// before the snapshot, so test_initialize will work
         beforeInit = vm.snapshotState();
 
         initData = abi.encodeCall(
-            GenericNativeConverter.initialize,
+            WETHNativeConverter.initialize,
             (
+                payable(address(zETH)),
                 owner,
                 18, // decimals
                 address(zETH), // custom token
                 address(wWETH), // wrapped underlying token
                 NON_MIGRATABLE_BACKING_PERCENTAGE,
+                MINIMUM_BACKING_AFTER_MIGRATION,
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
-                migrationManager
+                yeETH
             )
         );
-        nativeConverter = WETHNativeConverter(
-            address(new TransparentUpgradeableProxy(address(nativeConverter), address(this), initData))
-        );
+        nativeConverter = GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
+        assertEq(address(nativeConverter), calculatedNativeConverterAddr);
 
         // giving control over custom token to NativeConverter
         zETH.transferOwnership(address(nativeConverter));
@@ -66,11 +75,174 @@ contract ZETHNativeConverterTest is Test, GenericNativeConverterTest {
         vm.label(address(zETH), "zETH");
         vm.label(address(this), "testerAddress");
         vm.label(LXLY_BRIDGE, "lxlyBridge");
-        vm.label(migrationManager, "migrationManager");
+        vm.label(yeToken, "yeToken");
         vm.label(owner, "owner");
         vm.label(recipient, "recipient");
         vm.label(sender, "sender");
         vm.label(address(nativeConverter), "WETHNativeConverter");
         vm.label(address(wWETH), "wWETH");
+    }
+
+    function test_initialize() public override {
+        vm.revertToState(beforeInit);
+
+        bytes memory initData;
+
+        initData = abi.encodeCall(
+            WETHNativeConverter.initialize,
+            (
+                payable(address(zETH)),
+                address(0),
+                ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
+                address(customToken),
+                address(underlyingToken),
+                NON_MIGRATABLE_BACKING_PERCENTAGE,
+                MINIMUM_BACKING_AFTER_MIGRATION,
+                LXLY_BRIDGE,
+                NETWORK_ID_L1,
+                yeToken
+            )
+        );
+        vm.expectRevert(InvalidOwner.selector);
+        GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
+        vm.revertToState(beforeInit);
+
+        initData = abi.encodeCall(
+            WETHNativeConverter.initialize,
+            (
+                payable(address(zETH)),
+                owner,
+                ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
+                address(0),
+                address(underlyingToken),
+                NON_MIGRATABLE_BACKING_PERCENTAGE,
+                MINIMUM_BACKING_AFTER_MIGRATION,
+                LXLY_BRIDGE,
+                NETWORK_ID_L1,
+                yeToken
+            )
+        );
+        vm.expectRevert(InvalidCustomToken.selector);
+        GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
+        vm.revertToState(beforeInit);
+
+        initData = abi.encodeCall(
+            WETHNativeConverter.initialize,
+            (
+                payable(address(zETH)),
+                owner,
+                ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
+                address(customToken),
+                address(0),
+                NON_MIGRATABLE_BACKING_PERCENTAGE,
+                MINIMUM_BACKING_AFTER_MIGRATION,
+                LXLY_BRIDGE,
+                NETWORK_ID_L1,
+                yeToken
+            )
+        );
+        vm.expectRevert(InvalidUnderlyingToken.selector);
+        GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
+        vm.revertToState(beforeInit);
+
+        initData = abi.encodeCall(
+            WETHNativeConverter.initialize,
+            (
+                payable(address(zETH)),
+                owner,
+                ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
+                address(customToken),
+                address(underlyingToken),
+                MAX_NON_MIGRATABLE_BACKING_PERCENTAGE + 1,
+                MINIMUM_BACKING_AFTER_MIGRATION,
+                LXLY_BRIDGE,
+                NETWORK_ID_L1,
+                yeToken
+            )
+        );
+        vm.expectRevert(InvalidNonMigratableBackingPercentage.selector);
+        GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
+        vm.revertToState(beforeInit);
+
+        initData = abi.encodeCall(
+            WETHNativeConverter.initialize,
+            (
+                payable(address(zETH)),
+                owner,
+                ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
+                address(customToken),
+                address(underlyingToken),
+                NON_MIGRATABLE_BACKING_PERCENTAGE,
+                MINIMUM_BACKING_AFTER_MIGRATION,
+                address(0),
+                NETWORK_ID_L1,
+                yeToken
+            )
+        );
+        vm.expectRevert(InvalidLxLyBridge.selector);
+        GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
+        vm.revertToState(beforeInit);
+
+        initData = abi.encodeCall(
+            WETHNativeConverter.initialize,
+            (
+                payable(address(zETH)),
+                owner,
+                ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
+                address(customToken),
+                address(underlyingToken),
+                NON_MIGRATABLE_BACKING_PERCENTAGE,
+                MINIMUM_BACKING_AFTER_MIGRATION,
+                LXLY_BRIDGE,
+                NETWORK_ID_L1,
+                address(0)
+            )
+        );
+        vm.expectRevert(InvalidYeToken.selector);
+        GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
+        vm.revertToState(beforeInit);
+
+        MockERC20 dummyToken = new MockERC20();
+        dummyToken.initialize("Dummy Token", "DT", 6);
+
+        initData = abi.encodeCall(
+            WETHNativeConverter.initialize,
+            (
+                payable(address(zETH)),
+                owner,
+                ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
+                address(dummyToken),
+                address(underlyingToken),
+                NON_MIGRATABLE_BACKING_PERCENTAGE,
+                MINIMUM_BACKING_AFTER_MIGRATION,
+                LXLY_BRIDGE,
+                NETWORK_ID_L1,
+                yeToken
+            )
+        );
+        vm.expectRevert(abi.encodeWithSelector(NonMatchingCustomTokenDecimals.selector, 6, 18));
+        GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
+        vm.revertToState(beforeInit);
+
+        dummyToken = new MockERC20(); // have to deploy again because of revert
+        dummyToken.initialize("Dummy Token", "DT", 6);
+
+        initData = abi.encodeCall(
+            WETHNativeConverter.initialize,
+            (
+                payable(address(zETH)),
+                owner,
+                ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
+                address(customToken),
+                address(dummyToken),
+                NON_MIGRATABLE_BACKING_PERCENTAGE,
+                MINIMUM_BACKING_AFTER_MIGRATION,
+                LXLY_BRIDGE,
+                NETWORK_ID_L1,
+                yeToken
+            )
+        );
+        vm.expectRevert(abi.encodeWithSelector(NonMatchingUnderlyingTokenDecimals.selector, 6, 18));
+        GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
     }
 }
