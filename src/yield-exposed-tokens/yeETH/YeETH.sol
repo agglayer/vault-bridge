@@ -90,7 +90,7 @@ contract YeETH is YieldExposedToken {
         address originAddress,
         uint32 originNetwork,
         bytes memory customData
-    ) internal override returns (bool) {
+    ) internal override {
         IWETH9 weth = IWETH9(address(underlyingToken()));
 
         (CustomCrossNetworkInstruction instruction, bytes memory instructionData) =
@@ -105,10 +105,6 @@ contract YeETH is YieldExposedToken {
             weth.deposit{value: assets}();
 
             _completeMigration(originNetwork, shares, assets);
-
-            return true;
-        } else {
-            return false;
         }
     }
 

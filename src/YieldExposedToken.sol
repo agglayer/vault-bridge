@@ -92,9 +92,9 @@ abstract contract YieldExposedToken is
     error NoNeedToReplenishReserve();
     error Unauthorized();
     error NoYield();
-    error InvalidCrossNetworkInstruction(CrossNetworkInstruction instruction);
     error InvalidOriginNetworkId();
     error CannotCompleteMigration(uint256 requiredAssets, uint256 receivedAssets, uint256 availableYield);
+    error CustomCrossNetworkInstructionNotSupported();
 
     // Events.
     event ReserveRebalanced(uint256 reservedAssets);
@@ -951,11 +951,9 @@ abstract contract YieldExposedToken is
         }
         // Custom.
         else if (instruction == CrossNetworkInstruction.CUSTOM) {
-            // Try to dispatch.
-            bool dispatched = _dispatchCustomCrossNetworkInstruction(originAddress, originNetwork, instructionData);
-
-            // Revert if not dispatched.
-            require(dispatched, InvalidCrossNetworkInstruction(instruction));
+            // Unsupported by default; the transaction will revert.
+            // Please refer to `_dispatchCustomCrossNetworkInstruction` for more information.
+            _dispatchCustomCrossNetworkInstruction(originAddress, originNetwork, instructionData);
         }
     }
 
@@ -1105,13 +1103,13 @@ abstract contract YieldExposedToken is
 
     /// @notice Dispatches a custom cross-network instruction.
     /// @dev This function can be overridden to add custom cross-network instructions.
+    /// @dev IMPORTANT: This function MUST revert if the custom cross-network instruction is not supported.
     /// @param customData The data that was appended to the `CUSTOM` cross-network instruction.
-    /// @return dispatched Whether the instruction was dispatched. Returning `false` will revert cause the transaction to revert.
     function _dispatchCustomCrossNetworkInstruction(
         address originAddress,
         uint32 originNetwork,
         bytes memory customData
-    ) internal virtual returns (bool dispatched) {
+    ) internal virtual {
         // Silence the compiler.
         {
             originAddress;
@@ -1120,7 +1118,7 @@ abstract contract YieldExposedToken is
         }
 
         // `CUSTOM` cross-network instruction are not supported by default.
-        return false;
+        revert CustomCrossNetworkInstructionNotSupported();
     }
 
     /// @notice Accounts for the transfer fee of the underlying token.
