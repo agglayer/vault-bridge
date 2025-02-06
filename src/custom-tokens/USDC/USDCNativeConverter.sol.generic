@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity 0.8.28;
 
-/// @dev Main functionality.
+// Main functionality.
 import {GenericNativeConverter} from "../GenericNativeConverter.sol";
 
 /// @title USDC Native Converter

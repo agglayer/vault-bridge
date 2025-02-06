@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity 0.8.28;
 
-/// @dev Main functionality.
+// Main functionality.
 import {CustomToken} from "../CustomToken.sol";
 
-/// @dev Other functionality.
+// Other functionality.
 import {IVersioned} from "../etc/IVersioned.sol";
 
 /// @title Generic Custom Token
