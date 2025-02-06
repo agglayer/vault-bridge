@@ -9,11 +9,9 @@ import {IVersioned} from "../../etc/IVersioned.sol";
 
 /// @title Yield Exposed USDT
 contract YeUSDT is YieldExposedToken {
-    /**
-     * @dev Storage of the Yield Exposed USDT contract.
-     * @dev It's implemented on a custom ERC-7201 namespace to reduce the risk of storage collisions when using with upgradeable contracts.
-     * @custom:storage-location erc7201:0xpolygon.storage.YeUSDT
-     */
+    /// @dev Storage of the Yield Exposed USDT contract.
+    /// @dev It's implemented on a custom ERC-7201 namespace to reduce the risk of storage collisions when using with upgradeable contracts.
+    /// @custom:storage-location erc7201:0xpolygon.storage.YeUSDT
     struct YeUSDTStorage {
         uint256 cachedBasisPointsRate;
         uint256 cachedMaximumFee;
@@ -74,9 +72,7 @@ contract YeUSDT is YieldExposedToken {
         return $.cachedMaximumFee;
     }
 
-    /**
-     * @dev Returns a pointer to the ERC-7201 storage namespace.
-     */
+    /// @dev Returns a pointer to the ERC-7201 storage namespace.
     function _getYeUSDTStorage() private pure returns (YeUSDTStorage storage $) {
         assembly {
             $.slot := _YEUSDT_STORAGE

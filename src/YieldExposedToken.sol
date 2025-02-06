@@ -47,11 +47,9 @@ abstract contract YieldExposedToken is
         CUSTOM
     }
 
-    /**
-     * @dev Storage of the Yield Exposed Token contract.
-     * @dev It's implemented on a custom ERC-7201 namespace to reduce the risk of storage collisions when using with upgradeable contracts.
-     * @custom:storage-location erc7201:0xpolygon.storage.YieldExposedToken
-     */
+    /// @dev Storage of the Yield Exposed Token contract.
+    /// @dev It's implemented on a custom ERC-7201 namespace to reduce the risk of storage collisions when using with upgradeable contracts.
+    /// @custom:storage-location erc7201:0xpolygon.storage.YieldExposedToken
     struct YieldExposedTokenStorage {
         IERC20 underlyingToken;
         uint8 decimals;
@@ -236,9 +234,7 @@ abstract contract YieldExposedToken is
         return $.nativeConverter;
     }
 
-    /**
-     * @dev Returns a pointer to the ERC-7201 storage namespace.
-     */
+    /// @dev Returns a pointer to the ERC-7201 storage namespace.
     function _getYieldExposedTokenStorage() private pure returns (YieldExposedTokenStorage storage $) {
         assembly {
             $.slot := _YIELD_EXPOSED_TOKEN_STORAGE
@@ -785,8 +781,7 @@ abstract contract YieldExposedToken is
         uint256 minimumReserve = convertToAssets((totalSupply()) * $.minimumReservePercentage) / 100;
 
         // Check if the reserve is below, above, or at the minimum threshold.
-        //
-        // Below.
+        /* Below. */
         if ($.reservedAssets < minimumReserve) {
             // Calculate how much to withdraw.
             uint256 shortfall = minimumReserve - $.reservedAssets;
@@ -811,7 +806,7 @@ abstract contract YieldExposedToken is
                 revert CannotRebalanceReserve();
             }
         }
-        // Above.
+        /* Above */
         else if ($.reservedAssets > minimumReserve && allowRebalanceDown) {
             // Calculate how much to deposit.
             uint256 excess = $.reservedAssets - minimumReserve;
@@ -836,7 +831,7 @@ abstract contract YieldExposedToken is
                 revert CannotRebalanceReserve();
             }
         }
-        // At.
+        /* At. */
         else if (force) {
             revert NoNeedToReplenishReserve();
         }
@@ -937,8 +932,7 @@ abstract contract YieldExposedToken is
             abi.decode(data, (CrossNetworkInstruction, bytes));
 
         // Dispatch.
-        //
-        // Complete migration.
+        /* Complete migration. */
         if (instruction == CrossNetworkInstruction.COMPLETE_MIGRATION) {
             // Check the input.
             require(originAddress == $.nativeConverter, Unauthorized());
@@ -949,7 +943,7 @@ abstract contract YieldExposedToken is
             // Complete the migration.
             _completeMigration(originNetwork, shares, assets);
         }
-        // Custom.
+        /* Custom. */
         else if (instruction == CrossNetworkInstruction.CUSTOM) {
             // Unsupported by default; the transaction will revert.
             // Please refer to `_dispatchCustomCrossNetworkInstruction` for more information.

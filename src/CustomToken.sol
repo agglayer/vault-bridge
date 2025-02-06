@@ -22,11 +22,9 @@ abstract contract CustomToken is
     ERC20PermitUpgradeable,
     IVersioned
 {
-    /**
-     * @dev Storage of the Custom Token contract.
-     * @dev It's implemented on a custom ERC-7201 namespace to reduce the risk of storage collisions when using with upgradeable contracts.
-     * @custom:storage-location erc7201:0xpolygon.storage.CustomToken
-     */
+    /// @dev Storage of the Custom Token contract.
+    /// @dev It's implemented on a custom ERC-7201 namespace to reduce the risk of storage collisions when using with upgradeable contracts.
+    /// @custom:storage-location erc7201:0xpolygon.storage.CustomToken
     struct CustomTokenStorage {
         uint8 decimals;
         address lxlyBridge;
@@ -110,9 +108,7 @@ abstract contract CustomToken is
         return $.nativeConverter;
     }
 
-    /**
-     * @dev Returns a pointer to the ERC-7201 storage namespace.
-     */
+    /// @dev Returns a pointer to the ERC-7201 storage namespace.
     function _getCustomTokenStorage() private pure returns (CustomTokenStorage storage $) {
         assembly {
             $.slot := _CUSTOM_TOKEN_STORAGE
