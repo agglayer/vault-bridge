@@ -5,14 +5,14 @@ import {YeUSDT} from "src/yield-exposed-tokens/yeUSDT/YeUSDT.sol";
 import {YieldExposedToken} from "src/YieldExposedToken.sol";
 
 import {IMetaMorpho} from "test/interfaces/IMetaMorpho.sol";
-import {GenericYieldExposedTokenTest, GenericYeToken, console} from "test/GenericYieldExposedToken.t.sol";
+import {GenericYieldExposedTokenTest, GenericYeToken} from "test/GenericYieldExposedToken.t.sol";
 
 contract YeUSDTHarness is YeUSDT {
-    function exposeAssetsAfterTransferFee(uint256 assetsBeforeTransferFee) public view returns (uint256) {
+    function exposed_assetsAfterTransferFee(uint256 assetsBeforeTransferFee) public view returns (uint256) {
         return _assetsAfterTransferFee(assetsBeforeTransferFee);
     }
 
-    function exposeAssetsBeforeTransferFee(uint256 assetsAfterTransferFee) public view returns (uint256) {
+    function exposed_assetsBeforeTransferFee(uint256 assetsAfterTransferFee) public view returns (uint256) {
         return _assetsBeforeTransferFee(assetsAfterTransferFee);
     }
 }
@@ -37,7 +37,7 @@ contract YeUSDTTest is GenericYieldExposedTokenTest {
         symbol = "yeUSDT";
         decimals = 6;
         yeTokenMetaData = abi.encode(name, symbol, decimals);
-        minimumReservePercentage = 1e17;
+        minimumReservePercentage = 10;
 
         yeToken = GenericYeToken(address(new YeUSDTHarness()));
         yeTokenImplementation = address(yeToken);
@@ -53,7 +53,7 @@ contract YeUSDTTest is GenericYieldExposedTokenTest {
                 address(yeTokenVault),
                 yieldRecipient,
                 LXLY_BRIDGE,
-                migrationManager
+                nativeConverter
             )
         );
         yeToken = GenericYeToken(_proxify(address(yeToken), address(this), initData));
@@ -64,7 +64,7 @@ contract YeUSDTTest is GenericYieldExposedTokenTest {
         vm.label(address(yeTokenImplementation), "yeUSDT Implementation");
         vm.label(address(this), "Default Address");
         vm.label(asset, "Underlying Asset");
-        vm.label(migrationManager, "Migration Manager");
+        vm.label(nativeConverter, "Native Converter");
         vm.label(owner, "Owner");
         vm.label(recipient, "Recipient");
         vm.label(sender, "Sender");
@@ -94,18 +94,18 @@ contract YeUSDTTest is GenericYieldExposedTokenTest {
         vm.store(address(yeUSDT), YEUSDT_STORAGE_CACHED_BASIS_POINT_RATE, bytes32(uint256(1000)));
         vm.store(address(yeUSDT), YEUSDT_STORAGE_CACHED_MAXIMUM_FEE, bytes32(uint256(5)));
         assertEq(yeUSDT.cachedBasisPointsRate(), 1000);
-        assertEq(yeUSDT.exposeAssetsAfterTransferFee(100), 95);
+        assertEq(yeUSDT.exposed_assetsAfterTransferFee(100), 95);
     }
 
     function test_assetBeforeTransferFee() public {
         uint256 state = vm.snapshotState();
         vm.store(address(yeUSDT), YEUSDT_STORAGE_CACHED_BASIS_POINT_RATE, bytes32(uint256(1000)));
         vm.store(address(yeUSDT), YEUSDT_STORAGE_CACHED_MAXIMUM_FEE, bytes32(uint256(5)));
-        assertEq(yeUSDT.exposeAssetsBeforeTransferFee(95), 100);
+        assertEq(yeUSDT.exposed_assetsBeforeTransferFee(95), 100);
 
         vm.revertToState(state);
         vm.store(address(yeUSDT), YEUSDT_STORAGE_CACHED_BASIS_POINT_RATE, bytes32(uint256(250)));
         vm.store(address(yeUSDT), YEUSDT_STORAGE_CACHED_MAXIMUM_FEE, bytes32(uint256(5)));
-        assertEq(yeUSDT.exposeAssetsBeforeTransferFee(95), 97);
+        assertEq(yeUSDT.exposed_assetsBeforeTransferFee(95), 97);
     }
 }

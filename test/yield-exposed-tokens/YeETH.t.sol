@@ -1,55 +1,76 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.28;
 
-import {Test, console2} from "forge-std/Test.sol";
-import {YeETH} from "../src/yield-exposed-tokens/yeETH/YeETH.sol";
-import {YieldExposedToken} from "../src/YieldExposedToken.sol";
-import {ERC1967Proxy} from "@openzeppelin-contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import {IMetaMorphoV1_1Factory} from "./interfaces/IMetaMorphoV1_1Factory.sol";
-import {ILxLyBridge} from "../src/etc/ILxLyBridge.sol";
-import {IWETH9} from "../src/etc/IWETH9.sol";
+import {YeETH} from "src/yield-exposed-tokens/yeETH/YeETH.sol";
+import {YieldExposedToken} from "src/YieldExposedToken.sol";
+import {ILxLyBridge} from "src/etc/ILxLyBridge.sol";
+import {IWETH9} from "src/etc/IWETH9.sol";
+import {GenericYieldExposedTokenTest, GenericYeToken} from "test/GenericYieldExposedToken.t.sol";
+import {IMetaMorpho} from "test/interfaces/IMetaMorpho.sol";
 
-contract yeETHTest is Test {
-    YeETH public implementation;
+contract YeETHTest is GenericYieldExposedTokenTest {
     YeETH public yeETH;
-    uint256 mainnetFork;
-    uint256 zkevmFork;
     address public morphoVault;
 
-    // address constant METAMORPHO_FACTORY = 0x1897A8997241C1cD4bD0698647e4EB7213535c24;
     address constant WETH_METAMORPHO = 0x78Fc2c2eD1A4cDb5402365934aE5648aDAd094d0;
     address constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-    address constant LXLY_BRIDGE = 0x2a3DD3EB832aF982ec71669E178424b10Dca2EDe;
-    uint256 constant MINIMUM_RESERVE_PERCENTAGE = 1e17;
     uint32 constant ZKEVM_NETWORK_ID = 1; // zkEVM
 
-    function setUp() public {
+    function setUp() public override {
         mainnetFork = vm.createSelectFork("mainnet_test", 21590932);
 
+        asset = WETH;
+        yeTokenVault = IMetaMorpho(WETH_METAMORPHO);
+        version = "1.0.0";
+        name = "Yield Exposed ETH";
+        symbol = "yeETH";
+        decimals = 18;
+        yeTokenMetaData = abi.encode(name, symbol, decimals);
+        minimumReservePercentage = 10;
+
         // Deploy implementation
-        implementation = new YeETH();
+        yeToken = GenericYeToken(address(new YeETH()));
+        yeTokenImplementation = address(yeToken);
+        stateBeforeInitialize = vm.snapshotState();
 
         // prepare calldata
         bytes memory initData = abi.encodeCall(
             yeETH.initialize,
             (
-                address(this), // owner
-                "Yield Exposed ETH", // name
-                "yeETH", // symbol
-                WETH, // underlying token
-                MINIMUM_RESERVE_PERCENTAGE,
-                WETH_METAMORPHO, // Use our deployed Morpho vault
-                makeAddr("yield"), // mock yield recipient
+                owner, // owner
+                name, // name
+                symbol, // symbol
+                asset, // underlying token
+                minimumReservePercentage,
+                address(yeTokenVault), // Use our deployed Morpho vault
+                yieldRecipient, // mock yield recipient
                 LXLY_BRIDGE,
-                makeAddr("migration") // mock migration manager
+                nativeConverter // mock migration manager
             )
         );
 
         // deploy proxy and initialize implementation
-        ERC1967Proxy proxyContract = new ERC1967Proxy(address(implementation), initData);
+        yeToken = GenericYeToken(_proxify(address(yeTokenImplementation), address(this), initData));
+        yeETH = YeETH(address(yeToken));
 
-        // Get the proxy instance
-        yeETH = YeETH(address(proxyContract));
+        vm.label(address(yeTokenVault), "WETH Vault");
+        vm.label(address(yeToken), "yeETH");
+        vm.label(address(yeTokenImplementation), "yeETH Implementation");
+        vm.label(address(this), "Default Address");
+        vm.label(asset, "Underlying Asset");
+        vm.label(nativeConverter, "Native Converter");
+        vm.label(owner, "Owner");
+        vm.label(recipient, "Recipient");
+        vm.label(sender, "Sender");
+        vm.label(yieldRecipient, "Yield Recipient");
+        vm.label(LXLY_BRIDGE, "Lxly Bridge");
+    }
+
+    function test_depositWithPermit() public override {
+        // WETH has no permit function.
+    }
+    function test_depositAndBridgePermit() public override {
+        // WETH has no permit function.
     }
 
     function test_basicFunctions() public view {
@@ -117,13 +138,13 @@ contract yeETHTest is Test {
         assertEq(yeETH.balanceOf(address(this)), amount); // shares minted to the sender
         assertApproxEqAbs(yeETH.totalAssets(), amount, 2); // allow for rounding
 
-        uint256 reserveAmount = (amount * MINIMUM_RESERVE_PERCENTAGE) / 1e18;
+        uint256 reserveAmount = (amount * minimumReservePercentage) / MAX_MINIMUM_RESERVE_PERCENTAGE;
         assertApproxEqAbs(yeETH.reservedAssets(), reserveAmount, 2); // allow for rounding
     }
 
-    function test_withdraw() public {
+    function test_withdraw() public override {
         uint256 initialAmount = 100;
-        uint256 reserveAmount = (initialAmount * MINIMUM_RESERVE_PERCENTAGE) / 1e18; // 10
+        uint256 reserveAmount = (initialAmount * minimumReservePercentage) / MAX_MINIMUM_RESERVE_PERCENTAGE; // 10
 
         // Deposit ETH
         vm.deal(address(this), initialAmount);
