@@ -55,29 +55,6 @@ contract GenericYieldExposedTokenTest is Test {
 
     // error messages
     error EnforcedPause();
-    error InvalidOwner();
-    error InvalidName();
-    error InvalidSymbol();
-    error InvalidUnderlyingToken();
-    error InvalidMinimumReservePercentage();
-    error InvalidYieldVault();
-    error InvalidYieldRecipient();
-    error InvalidLxLyBridge();
-    error InvalidNativeConverter();
-    error InvalidAssets();
-    error InvalidDestinationNetworkId();
-    error InvalidReceiver();
-    error InvalidPermitData();
-    error InvalidShares();
-    error IncorrectAmountOfSharesMinted(uint256 mintedShares, uint256 requiredShares);
-    error AssetsTooLarge(uint256 availableAssets, uint256 requestedAssets);
-    error IncorrectAmountOfSharesRedeemed(uint256 redeemedShares, uint256 requiredShares);
-    error CannotRebalanceReserve();
-    error NoNeedToReplenishReserve();
-    error Unauthorized();
-    error NoYield();
-    error InvalidOriginNetworkId();
-    error CannotCompleteMigration(uint256 requiredAssets, uint256 receivedAssets, uint256 availableYield);
 
     // events
     event BridgeEvent(
@@ -183,7 +160,7 @@ contract GenericYieldExposedTokenTest is Test {
                 nativeConverter
             )
         );
-        vm.expectRevert(InvalidOwner.selector);
+        vm.expectRevert(YieldExposedToken.InvalidOwner.selector);
         yeToken = GenericYeToken(_proxify(yeTokenImplementation, address(this), initData));
         vm.revertToState(stateBeforeInitialize);
 
@@ -201,7 +178,7 @@ contract GenericYieldExposedTokenTest is Test {
                 nativeConverter
             )
         );
-        vm.expectRevert(InvalidName.selector);
+        vm.expectRevert(YieldExposedToken.InvalidName.selector);
         yeToken = GenericYeToken(_proxify(yeTokenImplementation, address(this), initData));
         vm.revertToState(stateBeforeInitialize);
 
@@ -219,7 +196,7 @@ contract GenericYieldExposedTokenTest is Test {
                 nativeConverter
             )
         );
-        vm.expectRevert(InvalidSymbol.selector);
+        vm.expectRevert(YieldExposedToken.InvalidSymbol.selector);
         yeToken = GenericYeToken(_proxify(yeTokenImplementation, address(this), initData));
         vm.revertToState(stateBeforeInitialize);
 
@@ -237,7 +214,7 @@ contract GenericYieldExposedTokenTest is Test {
                 nativeConverter
             )
         );
-        vm.expectRevert(InvalidUnderlyingToken.selector);
+        vm.expectRevert(YieldExposedToken.InvalidUnderlyingToken.selector);
         yeToken = GenericYeToken(_proxify(yeTokenImplementation, address(this), initData));
         vm.revertToState(stateBeforeInitialize);
 
@@ -245,7 +222,7 @@ contract GenericYieldExposedTokenTest is Test {
             yeToken.initialize,
             (owner, name, symbol, asset, 1e19, address(yeTokenVault), yieldRecipient, LXLY_BRIDGE, nativeConverter)
         );
-        vm.expectRevert(InvalidMinimumReservePercentage.selector);
+        vm.expectRevert(YieldExposedToken.InvalidMinimumReservePercentage.selector);
         yeToken = GenericYeToken(_proxify(yeTokenImplementation, address(this), initData));
         vm.revertToState(stateBeforeInitialize);
 
@@ -263,7 +240,7 @@ contract GenericYieldExposedTokenTest is Test {
                 nativeConverter
             )
         );
-        vm.expectRevert(InvalidYieldVault.selector);
+        vm.expectRevert(YieldExposedToken.InvalidYieldVault.selector);
         yeToken = GenericYeToken(_proxify(yeTokenImplementation, address(this), initData));
         vm.revertToState(stateBeforeInitialize);
 
@@ -281,7 +258,7 @@ contract GenericYieldExposedTokenTest is Test {
                 nativeConverter
             )
         );
-        vm.expectRevert(InvalidYieldRecipient.selector);
+        vm.expectRevert(YieldExposedToken.InvalidYieldRecipient.selector);
         yeToken = GenericYeToken(_proxify(yeTokenImplementation, address(this), initData));
         vm.revertToState(stateBeforeInitialize);
 
@@ -299,7 +276,7 @@ contract GenericYieldExposedTokenTest is Test {
                 nativeConverter
             )
         );
-        vm.expectRevert(InvalidLxLyBridge.selector);
+        vm.expectRevert(YieldExposedToken.InvalidLxLyBridge.selector);
         yeToken = GenericYeToken(_proxify(yeTokenImplementation, address(this), initData));
         vm.revertToState(stateBeforeInitialize);
 
@@ -317,7 +294,7 @@ contract GenericYieldExposedTokenTest is Test {
                 address(0)
             )
         );
-        vm.expectRevert(InvalidNativeConverter.selector);
+        vm.expectRevert(YieldExposedToken.InvalidNativeConverter.selector);
         yeToken = GenericYeToken(_proxify(yeTokenImplementation, address(this), initData));
         vm.revertToState(stateBeforeInitialize);
     }
@@ -337,15 +314,15 @@ contract GenericYieldExposedTokenTest is Test {
 
         deal(asset, sender, amount);
 
-        vm.expectRevert(InvalidReceiver.selector);
+        vm.expectRevert(YieldExposedToken.InvalidReceiver.selector);
         vm.prank(address(yeToken));
         yeToken.deposit(amount, address(0));
 
         vm.startPrank(sender);
-        vm.expectRevert(InvalidAssets.selector);
+        vm.expectRevert(YieldExposedToken.InvalidAssets.selector);
         yeToken.deposit(0, recipient);
 
-        vm.expectRevert(InvalidReceiver.selector);
+        vm.expectRevert(YieldExposedToken.InvalidReceiver.selector);
         yeToken.deposit(amount, address(0));
 
         uint256 sharesToBeMinted = yeToken.previewDeposit(amount);
@@ -543,7 +520,7 @@ contract GenericYieldExposedTokenTest is Test {
         assertEq(IERC20(asset).balanceOf(sender), 0); // make sure sender has deposited all assets
         assertEq(yeToken.balanceOf(sender), amount); // sender gets 100 shares
 
-        vm.expectRevert(abi.encodeWithSelector(AssetsTooLarge.selector, yeToken.totalAssets(), amount + 1));
+        vm.expectRevert(abi.encodeWithSelector(YieldExposedToken.AssetsTooLarge.selector, yeToken.totalAssets(), amount + 1));
         yeToken.withdraw(amount + 1, sender, sender);
 
         uint256 assetsToDeposit = amount - reserveAmount;
@@ -574,7 +551,7 @@ contract GenericYieldExposedTokenTest is Test {
             userDepositAmount = vaultMaxDeposit;
         }
 
-        vm.expectRevert(NoNeedToReplenishReserve.selector);
+        vm.expectRevert(YieldExposedToken.NoNeedToReplenishReserve.selector);
         yeToken.replenishReserve();
 
         // create reserve
@@ -671,7 +648,7 @@ contract GenericYieldExposedTokenTest is Test {
         vm.expectRevert(); // only owner can claim yield
         yeToken.collectYield();
 
-        vm.expectRevert(NoYield.selector); // no reserved and staked assets
+        vm.expectRevert(YieldExposedToken.NoYield.selector); // no reserved and staked assets
         vm.prank(owner);
         yeToken.collectYield();
 
@@ -704,7 +681,7 @@ contract GenericYieldExposedTokenTest is Test {
         vm.expectRevert(); // only owner can claim yield
         yeToken.setYieldRecipient(newRecipient);
 
-        vm.expectRevert(InvalidYieldRecipient.selector);
+        vm.expectRevert(YieldExposedToken.InvalidYieldRecipient.selector);
         vm.prank(owner);
         yeToken.setYieldRecipient(address(0));
 
@@ -751,7 +728,7 @@ contract GenericYieldExposedTokenTest is Test {
         vm.expectRevert(); // only owner can set minimum reserve percentage
         yeToken.setMinimumReservePercentage(newPercentage);
 
-        vm.expectRevert(InvalidMinimumReservePercentage.selector);
+        vm.expectRevert(YieldExposedToken.InvalidMinimumReservePercentage.selector);
         vm.prank(owner);
         yeToken.setMinimumReservePercentage(MAX_MINIMUM_RESERVE_PERCENTAGE + 1);
 
@@ -827,10 +804,10 @@ contract GenericYieldExposedTokenTest is Test {
         assertEq(IERC20(asset).balanceOf(sender), 0);
         assertEq(yeToken.balanceOf(sender), amount);
 
-        vm.expectRevert(abi.encodeWithSelector(AssetsTooLarge.selector, yeToken.totalAssets(), 1000 ether));
+        vm.expectRevert(abi.encodeWithSelector(YieldExposedToken.AssetsTooLarge.selector, yeToken.totalAssets(), 1000 ether));
         yeToken.redeem(1000 ether, sender, sender); // redeem amount is greater than total assets
 
-        vm.expectRevert(InvalidShares.selector);
+        vm.expectRevert(YieldExposedToken.InvalidShares.selector);
         yeToken.redeem(0, sender, sender);
 
         uint256 redeemAmount = yeToken.totalAssets();
@@ -861,21 +838,21 @@ contract GenericYieldExposedTokenTest is Test {
         yeToken.unpause();
         vm.stopPrank();
 
-        vm.expectRevert(Unauthorized.selector);
+        vm.expectRevert(YieldExposedToken.Unauthorized.selector);
         yeToken.onMessageReceived(nativeConverter, NETWORK_ID_L2, data);
 
-        vm.expectRevert(Unauthorized.selector);
+        vm.expectRevert(YieldExposedToken.Unauthorized.selector);
         vm.prank(LXLY_BRIDGE);
         yeToken.onMessageReceived(address(0), NETWORK_ID_L2, data);
 
-        vm.expectRevert(InvalidOriginNetworkId.selector);
+        vm.expectRevert(YieldExposedToken.InvalidOriginNetworkId.selector);
         vm.prank(LXLY_BRIDGE);
         yeToken.onMessageReceived(nativeConverter, NETWORK_ID_L1, data);
 
         bytes memory invalidSharesData =
             abi.encode(YieldExposedToken.CrossNetworkInstruction.COMPLETE_MIGRATION, abi.encode(0, amount));
 
-        vm.expectRevert(InvalidShares.selector);
+        vm.expectRevert(YieldExposedToken.InvalidShares.selector);
         vm.prank(LXLY_BRIDGE);
         yeToken.onMessageReceived(nativeConverter, NETWORK_ID_L2, invalidSharesData);
 
@@ -979,7 +956,7 @@ contract GenericYieldExposedTokenTest is Test {
         yeToken.unpause();
         vm.stopPrank();
 
-        vm.expectRevert(InvalidAssets.selector);
+        vm.expectRevert(YieldExposedToken.InvalidAssets.selector);
         yeToken.previewDeposit(0);
 
         vm.assertEq(yeToken.previewDeposit(amount), amount);
@@ -1003,7 +980,7 @@ contract GenericYieldExposedTokenTest is Test {
         yeToken.unpause();
         vm.stopPrank();
 
-        vm.expectRevert(InvalidShares.selector);
+        vm.expectRevert(YieldExposedToken.InvalidShares.selector);
         yeToken.previewMint(0);
 
         vm.assertEq(yeToken.previewMint(amount), amount);
@@ -1041,7 +1018,7 @@ contract GenericYieldExposedTokenTest is Test {
         yeToken.unpause();
         vm.stopPrank();
 
-        vm.expectRevert(InvalidAssets.selector);
+        vm.expectRevert(YieldExposedToken.InvalidAssets.selector);
         yeToken.previewWithdraw(0);
 
         deal(asset, sender, amount);
@@ -1050,7 +1027,7 @@ contract GenericYieldExposedTokenTest is Test {
         yeToken.deposit(amount, sender);
         vm.stopPrank();
 
-        vm.expectRevert(abi.encodeWithSelector(AssetsTooLarge.selector, yeToken.totalAssets(), amount + 1));
+        vm.expectRevert(abi.encodeWithSelector(YieldExposedToken.AssetsTooLarge.selector, yeToken.totalAssets(), amount + 1));
         yeToken.previewWithdraw(amount + 1);
 
         uint256 stakedAmount = yeTokenVault.convertToAssets(yeTokenVault.balanceOf(address(yeToken)));
@@ -1094,7 +1071,7 @@ contract GenericYieldExposedTokenTest is Test {
         yeToken.unpause();
         vm.stopPrank();
 
-        vm.expectRevert(InvalidShares.selector);
+        vm.expectRevert(YieldExposedToken.InvalidShares.selector);
         yeToken.previewRedeem(0);
 
         deal(asset, sender, amount);
@@ -1103,7 +1080,7 @@ contract GenericYieldExposedTokenTest is Test {
         yeToken.deposit(amount, sender);
         vm.stopPrank();
 
-        vm.expectRevert(abi.encodeWithSelector(AssetsTooLarge.selector, yeToken.totalAssets(), amount + 1));
+        vm.expectRevert(abi.encodeWithSelector(YieldExposedToken.AssetsTooLarge.selector, yeToken.totalAssets(), amount + 1));
         yeToken.previewRedeem(amount + 1);
 
         uint256 stakedAmount = yeTokenVault.convertToAssets(yeTokenVault.balanceOf(address(yeToken)));
