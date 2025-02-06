@@ -37,11 +37,9 @@ abstract contract NativeConverter is
         CUSTOM
     }
 
-    /**
-     * @dev Storage of the Native Converter contract.
-     * @dev It's implemented on a custom ERC-7201 namespace to reduce the risk of storage collisions when using with upgradeable contracts.
-     * @custom:storage-location erc7201:0xpolygon.storage.NativeConverter
-     */
+    /// @dev Storage of the Native Converter contract.
+    /// @dev It's implemented on a custom ERC-7201 namespace to reduce the risk of storage collisions when using with upgradeable contracts.
+    /// @custom:storage-location erc7201:0xpolygon.storage.NativeConverter
     struct NativeConverterStorage {
         CustomToken customToken;
         IERC20 underlyingToken;
@@ -84,7 +82,7 @@ abstract contract NativeConverter is
     /// @param originalUnderlyingTokenDecimals_ The number of decimals of the original underlying token on Layer X. The `customToken` and `underlyingToken` MUST have the same number of decimals as the original underlying token. (ATTENTION) The decimals of the `customToken` and `underlyingToken` will default to 18 if they revert.
     /// @param customToken_ The token custom mapped to yeToken on LxLy Bridge on Layer Y. Native Converter must be able to mint and burn this token. Please refer to `CustomToken.sol` for more information.
     /// @param underlyingToken_ The token that represents the original underlying token on Layer Y. IMPORTANT: This token MUST be either the bridge-wrapped version of the original underlying token, or the original underlying token must be custom mapped to this token on LxLy Bridge on Layer Y.
-    /// @param nonMigratableBackingPercentage_ The percentage of the total supply of the custom token on Layer Y for which backing cannot be migrated to Layer X; 1e18 is 100%. The limit does not apply to the owner. Accounts with a large custom token balance may be able to circumvent the limit by quickly bridging to another network, migrating the backing, then bridging back, which would prevent others from deconverting the custom token on Layer Y. The next parameter is used to mitigate this risk.
+    /// @param nonMigratableBackingPercentage_ The percentage of the total supply of the custom token on Layer Y for which backing cannot be migrated to Layer X; 100 is 100%. The limit does not apply to the owner. Accounts with a large custom token balance may be able to circumvent the limit by quickly bridging to another network, migrating the backing, then bridging back, which would prevent others from deconverting the custom token on Layer Y. The next parameter is used to mitigate this risk.
     /// @param minimumBackingAfterMigration_ The minimum amount of backing (the underlying token) that must remain on Layer Y after a migration. The requirement does not apply if the owner is migrating backing. This parameter mitigates the risk of accounts with a large custom token balance draining the underlying token liquidity from Native Converter.
     /// @param yeToken_ The address of yeToken on Layer X.
     function __NativeConverter_init(
@@ -104,7 +102,7 @@ abstract contract NativeConverter is
         require(owner_ != address(0), InvalidOwner());
         require(customToken_ != address(0), InvalidCustomToken());
         require(underlyingToken_ != address(0), InvalidUnderlyingToken());
-        require(nonMigratableBackingPercentage_ <= 1e18, InvalidNonMigratableBackingPercentage());
+        require(nonMigratableBackingPercentage_ <= 100, InvalidNonMigratableBackingPercentage());
         require(lxlyBridge_ != address(0), InvalidLxLyBridge());
         require(yeToken_ != address(0), InvalidYeToken());
 
@@ -174,7 +172,7 @@ abstract contract NativeConverter is
         return $.backingOnLayerY;
     }
 
-    /// @notice The percentage of the total supply of the custom token on Layer Y for which backing cannot be migrated to Layer X; 1e18 is 100%.
+    /// @notice The percentage of the total supply of the custom token on Layer Y for which backing cannot be migrated to Layer X. 100 is 100%.
     /// @notice The limit does not apply to the owner.
     function nonMigratableBackingPercentage() public view returns (uint256) {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
@@ -206,9 +204,7 @@ abstract contract NativeConverter is
         return $.yeToken;
     }
 
-    /**
-     * @dev Returns a pointer to the ERC-7201 storage namespace.
-     */
+    /// @dev Returns a pointer to the ERC-7201 storage namespace.
     function _getNativeConverterStorage() private pure returns (NativeConverterStorage storage $) {
         assembly {
             $.slot := _NATIVE_CONVERTER_STORAGE
@@ -452,7 +448,7 @@ abstract contract NativeConverter is
         // Calculate the amount that cannot be migrated.
         // @note Check rounding.
         uint256 nonMigratableBacking =
-            (_convertToAssets($.customToken.totalSupply()) * $.nonMigratableBackingPercentage) / 1e18;
+            (_convertToAssets($.customToken.totalSupply()) * $.nonMigratableBackingPercentage) / 100;
 
         // Increase the amount that cannot be migrated if it is below the minimum amount.
         if (nonMigratableBacking < $.minimumBackingAfterMigration) {
@@ -500,13 +496,19 @@ abstract contract NativeConverter is
         uint256 shares = _convertToShares(assets);
 
         // Bridge the backing to yeToken on Layer X.
+        /* If the underlying token is not mintable by LxLy Bridge, we need to check for a transfer fee. */
         if ($._underlyingTokenIsNotMintable) {
-            // If the underlying token is not mintable by LxLy Bridge, we need to check for a transfer fee.
+            // Cache the balance.
             uint256 balanceBefore = $.underlyingToken.balanceOf(address($.lxlyBridge));
+
+            // Bridge.
             $.lxlyBridge.bridgeAsset($.layerXLxlyId, $.yeToken, assets, address($.underlyingToken), true, "");
+
+            // Calculate the bridged amount.
             assets = $.underlyingToken.balanceOf(address($.lxlyBridge)) - balanceBefore;
-        } else {
-            // If the underlying token is mintable by LxLy Bridge, it gets burned and there is no transfer fee.
+        }
+        /* If the underlying token is mintable by LxLy Bridge, it gets burned, and there is no transfer fee. */
+        else {
             $.lxlyBridge.bridgeAsset($.layerXLxlyId, $.yeToken, assets, address($.underlyingToken), true, "");
         }
 
@@ -530,7 +532,7 @@ abstract contract NativeConverter is
         NativeConverterStorage storage $ = _getNativeConverterStorage();
 
         // Check the input.
-        require(nonMigratableBackingPercentage_ <= 1e18, InvalidNonMigratableBackingPercentage());
+        require(nonMigratableBackingPercentage_ <= 100, InvalidNonMigratableBackingPercentage());
 
         // Set the non-migratable backing percentage.
         $.nonMigratableBackingPercentage = nonMigratableBackingPercentage_;
