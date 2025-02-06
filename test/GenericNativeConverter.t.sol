@@ -2,7 +2,8 @@
 pragma solidity ^0.8.28;
 
 import "forge-std/Test.sol";
-import "../src/custom-tokens/GenericNativeConverter.sol";
+import "src/custom-tokens/GenericNativeConverter.sol";
+import "src/NativeConverter.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
@@ -59,20 +60,6 @@ contract GenericNativeConverterTest is Test {
     }
 
     error EnforcedPause();
-    error InvalidOwner();
-    error InvalidCustomToken();
-    error InvalidUnderlyingToken();
-    error InvalidNonMigratableBackingPercentage();
-    error InvalidLxLyBridge();
-    error InvalidYeToken();
-    error NonMatchingCustomTokenDecimals(uint8 customTokenDecimals, uint8 originalUnderlyingTokenDecimals);
-    error NonMatchingUnderlyingTokenDecimals(uint8 underlyingTokenDecimals, uint8 originalUnderlyingTokenDecimals);
-    error InvalidAssets();
-    error InvalidReceiver();
-    error InvalidPermitData();
-    error InvalidShares();
-    error AssetsTooLarge(uint256 availableAssets, uint256 requestedAssets);
-    error InvalidDestinationNetworkId();
     error ERC20InsufficientBalance(address token, uint256 balance, uint256 amount);
 
     event BridgeEvent(
@@ -117,7 +104,7 @@ contract GenericNativeConverterTest is Test {
                 yeToken
             )
         );
-        vm.expectRevert(InvalidOwner.selector);
+        vm.expectRevert(NativeConverter.InvalidOwner.selector);
         GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
         vm.revertToState(beforeInit);
 
@@ -135,7 +122,7 @@ contract GenericNativeConverterTest is Test {
                 yeToken
             )
         );
-        vm.expectRevert(InvalidCustomToken.selector);
+        vm.expectRevert(NativeConverter.InvalidCustomToken.selector);
         GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
         vm.revertToState(beforeInit);
 
@@ -153,7 +140,7 @@ contract GenericNativeConverterTest is Test {
                 yeToken
             )
         );
-        vm.expectRevert(InvalidUnderlyingToken.selector);
+        vm.expectRevert(NativeConverter.InvalidUnderlyingToken.selector);
         GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
         vm.revertToState(beforeInit);
 
@@ -171,7 +158,7 @@ contract GenericNativeConverterTest is Test {
                 yeToken
             )
         );
-        vm.expectRevert(InvalidNonMigratableBackingPercentage.selector);
+        vm.expectRevert(NativeConverter.InvalidNonMigratableBackingPercentage.selector);
         GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
         vm.revertToState(beforeInit);
 
@@ -189,7 +176,7 @@ contract GenericNativeConverterTest is Test {
                 yeToken
             )
         );
-        vm.expectRevert(InvalidLxLyBridge.selector);
+        vm.expectRevert(NativeConverter.InvalidLxLyBridge.selector);
         GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
         vm.revertToState(beforeInit);
 
@@ -207,7 +194,7 @@ contract GenericNativeConverterTest is Test {
                 address(0)
             )
         );
-        vm.expectRevert(InvalidYeToken.selector);
+        vm.expectRevert(NativeConverter.InvalidYeToken.selector);
         GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
         vm.revertToState(beforeInit);
 
@@ -228,7 +215,7 @@ contract GenericNativeConverterTest is Test {
                 yeToken
             )
         );
-        vm.expectRevert(abi.encodeWithSelector(NonMatchingCustomTokenDecimals.selector, 6, 18));
+        vm.expectRevert(abi.encodeWithSelector(NativeConverter.NonMatchingCustomTokenDecimals.selector, 6, 18));
         GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
         vm.revertToState(beforeInit);
 
@@ -246,7 +233,7 @@ contract GenericNativeConverterTest is Test {
                 yeToken
             )
         );
-        vm.expectRevert(abi.encodeWithSelector(NonMatchingUnderlyingTokenDecimals.selector, 6, 18));
+        vm.expectRevert(abi.encodeWithSelector(NativeConverter.NonMatchingUnderlyingTokenDecimals.selector, 6, 18));
         GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
     }
 
@@ -261,10 +248,10 @@ contract GenericNativeConverterTest is Test {
         vm.stopPrank();
 
         vm.startPrank(sender);
-        vm.expectRevert(InvalidAssets.selector);
+        vm.expectRevert(NativeConverter.InvalidAssets.selector);
         nativeConverter.convert(0, recipient);
 
-        vm.expectRevert(InvalidReceiver.selector);
+        vm.expectRevert(NativeConverter.InvalidReceiver.selector);
         nativeConverter.convert(amount, address(0));
 
         deal(address(underlyingToken), sender, amount);
@@ -316,13 +303,13 @@ contract GenericNativeConverterTest is Test {
 
         vm.startPrank(sender);
 
-        vm.expectRevert(InvalidPermitData.selector);
+        vm.expectRevert(NativeConverter.InvalidPermitData.selector);
         nativeConverter.convertWithPermit(amount, recipient, "");
 
-        vm.expectRevert(InvalidAssets.selector);
+        vm.expectRevert(NativeConverter.InvalidAssets.selector);
         nativeConverter.convertWithPermit(0, recipient, permitData);
 
-        vm.expectRevert(InvalidReceiver.selector);
+        vm.expectRevert(NativeConverter.InvalidReceiver.selector);
         nativeConverter.convertWithPermit(amount, address(0), permitData);
 
         vm.expectRevert("ERC20: subtraction underflow");
@@ -378,13 +365,13 @@ contract GenericNativeConverterTest is Test {
         vm.stopPrank();
 
         vm.startPrank(sender);
-        vm.expectRevert(InvalidShares.selector);
+        vm.expectRevert(NativeConverter.InvalidShares.selector);
         nativeConverter.deconvert(0, recipient);
 
-        vm.expectRevert(InvalidReceiver.selector);
+        vm.expectRevert(NativeConverter.InvalidReceiver.selector);
         nativeConverter.deconvert(amount, address(0));
 
-        vm.expectRevert(abi.encodeWithSelector(AssetsTooLarge.selector, 0, amount));
+        vm.expectRevert(abi.encodeWithSelector(NativeConverter.AssetsTooLarge.selector, 0, amount));
         nativeConverter.deconvert(amount, recipient); // no backing on layer Y
 
         // create backing on layer Y
@@ -422,7 +409,7 @@ contract GenericNativeConverterTest is Test {
         vm.stopPrank();
 
         vm.startPrank(sender);
-        vm.expectRevert(InvalidDestinationNetworkId.selector);
+        vm.expectRevert(NativeConverter.InvalidDestinationNetworkId.selector);
         nativeConverter.deconvertAndBridge(amount, recipient, NETWORK_ID_L2, true);
 
         // create backing on layer Y
@@ -465,7 +452,7 @@ contract GenericNativeConverterTest is Test {
         nativeConverter.unpause();
         vm.stopPrank();
 
-        vm.expectRevert(InvalidAssets.selector);
+        vm.expectRevert(NativeConverter.InvalidAssets.selector);
         nativeConverter.migrateBackingToLayerX(); // try with 0 backing
 
         // create backing on layer Y
@@ -507,7 +494,7 @@ contract GenericNativeConverterTest is Test {
         nativeConverter.migrateBackingToLayerX();
         assertEq(underlyingToken.balanceOf(address(nativeConverter)), backingOnLayerY - amountToMigrate);
 
-        vm.expectRevert(InvalidAssets.selector);
+        vm.expectRevert(NativeConverter.InvalidAssets.selector);
         nativeConverter.migrateBackingToLayerX(); // backing is less than the non migratable backing percentage
 
         // Try to migrate as the owner with a specific amount
@@ -515,12 +502,14 @@ contract GenericNativeConverterTest is Test {
         nativeConverter.migrateBackingToLayerX(amount);
 
         vm.startPrank(owner);
-        vm.expectRevert(InvalidAssets.selector);
+        vm.expectRevert(NativeConverter.InvalidAssets.selector);
         nativeConverter.migrateBackingToLayerX(0);
 
         uint256 currentBacking = nativeConverter.backingOnLayerY();
 
-        vm.expectRevert(abi.encodeWithSelector(AssetsTooLarge.selector, currentBacking, currentBacking + 1));
+        vm.expectRevert(
+            abi.encodeWithSelector(NativeConverter.AssetsTooLarge.selector, currentBacking, currentBacking + 1)
+        );
         nativeConverter.migrateBackingToLayerX(currentBacking + 1);
     }
 
@@ -536,7 +525,7 @@ contract GenericNativeConverterTest is Test {
         nativeConverter.setNonMigratableBackingPercentage(0);
         nativeConverter.unpause();
 
-        vm.expectRevert(InvalidNonMigratableBackingPercentage.selector);
+        vm.expectRevert(NativeConverter.InvalidNonMigratableBackingPercentage.selector);
         nativeConverter.setNonMigratableBackingPercentage(MAX_NON_MIGRATABLE_BACKING_PERCENTAGE + 1);
 
         vm.expectEmit();
