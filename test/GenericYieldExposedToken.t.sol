@@ -520,7 +520,9 @@ contract GenericYieldExposedTokenTest is Test {
         assertEq(IERC20(asset).balanceOf(sender), 0); // make sure sender has deposited all assets
         assertEq(yeToken.balanceOf(sender), amount); // sender gets 100 shares
 
-        vm.expectRevert(abi.encodeWithSelector(YieldExposedToken.AssetsTooLarge.selector, yeToken.totalAssets(), amount + 1));
+        vm.expectRevert(
+            abi.encodeWithSelector(YieldExposedToken.AssetsTooLarge.selector, yeToken.totalAssets(), amount + 1)
+        );
         yeToken.withdraw(amount + 1, sender, sender);
 
         uint256 assetsToDeposit = amount - reserveAmount;
@@ -804,7 +806,9 @@ contract GenericYieldExposedTokenTest is Test {
         assertEq(IERC20(asset).balanceOf(sender), 0);
         assertEq(yeToken.balanceOf(sender), amount);
 
-        vm.expectRevert(abi.encodeWithSelector(YieldExposedToken.AssetsTooLarge.selector, yeToken.totalAssets(), 1000 ether));
+        vm.expectRevert(
+            abi.encodeWithSelector(YieldExposedToken.AssetsTooLarge.selector, yeToken.totalAssets(), 1000 ether)
+        );
         yeToken.redeem(1000 ether, sender, sender); // redeem amount is greater than total assets
 
         vm.expectRevert(YieldExposedToken.InvalidShares.selector);
@@ -1027,7 +1031,9 @@ contract GenericYieldExposedTokenTest is Test {
         yeToken.deposit(amount, sender);
         vm.stopPrank();
 
-        vm.expectRevert(abi.encodeWithSelector(YieldExposedToken.AssetsTooLarge.selector, yeToken.totalAssets(), amount + 1));
+        vm.expectRevert(
+            abi.encodeWithSelector(YieldExposedToken.AssetsTooLarge.selector, yeToken.totalAssets(), amount + 1)
+        );
         yeToken.previewWithdraw(amount + 1);
 
         uint256 stakedAmount = yeTokenVault.convertToAssets(yeTokenVault.balanceOf(address(yeToken)));
@@ -1080,7 +1086,9 @@ contract GenericYieldExposedTokenTest is Test {
         yeToken.deposit(amount, sender);
         vm.stopPrank();
 
-        vm.expectRevert(abi.encodeWithSelector(YieldExposedToken.AssetsTooLarge.selector, yeToken.totalAssets(), amount + 1));
+        vm.expectRevert(
+            abi.encodeWithSelector(YieldExposedToken.AssetsTooLarge.selector, yeToken.totalAssets(), amount + 1)
+        );
         yeToken.previewRedeem(amount + 1);
 
         uint256 stakedAmount = yeTokenVault.convertToAssets(yeTokenVault.balanceOf(address(yeToken)));
