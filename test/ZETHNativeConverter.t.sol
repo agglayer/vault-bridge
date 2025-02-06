@@ -23,7 +23,7 @@ contract ZETHNativeConverterTest is Test, GenericNativeConverterTest {
 
     WETHNativeConverter internal zETHConverter;
 
-    function setUp() public {
+    function setUp() public override {
         zkevmFork = vm.createSelectFork("polygon_zkevm", 19164969);
 
         // Setup tokens
