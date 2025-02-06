@@ -14,7 +14,7 @@ import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transpa
 
 import {GenericNativeConverterTest} from "./GenericNativeConverter.t.sol";
 import {WETHNativeConverter} from "../src/custom-tokens/WETH/WETHNativeConverter.sol";
-import {GenericNativeConverter} from "../src/custom-tokens/GenericNativeConverter.sol";
+import {GenericNativeConverter, NativeConverter} from "../src/custom-tokens/GenericNativeConverter.sol";
 
 contract ZETHNativeConverterTest is Test, GenericNativeConverterTest {
     MockERC20 internal wWETH;
@@ -103,7 +103,7 @@ contract ZETHNativeConverterTest is Test, GenericNativeConverterTest {
                 yeToken
             )
         );
-        vm.expectRevert(InvalidOwner.selector);
+        vm.expectRevert(NativeConverter.InvalidOwner.selector);
         GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
         vm.revertToState(beforeInit);
 
@@ -122,7 +122,7 @@ contract ZETHNativeConverterTest is Test, GenericNativeConverterTest {
                 yeToken
             )
         );
-        vm.expectRevert(InvalidCustomToken.selector);
+        vm.expectRevert(NativeConverter.InvalidCustomToken.selector);
         GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
         vm.revertToState(beforeInit);
 
@@ -141,7 +141,7 @@ contract ZETHNativeConverterTest is Test, GenericNativeConverterTest {
                 yeToken
             )
         );
-        vm.expectRevert(InvalidUnderlyingToken.selector);
+        vm.expectRevert(NativeConverter.InvalidUnderlyingToken.selector);
         GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
         vm.revertToState(beforeInit);
 
@@ -160,7 +160,7 @@ contract ZETHNativeConverterTest is Test, GenericNativeConverterTest {
                 yeToken
             )
         );
-        vm.expectRevert(InvalidNonMigratableBackingPercentage.selector);
+        vm.expectRevert(NativeConverter.InvalidNonMigratableBackingPercentage.selector);
         GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
         vm.revertToState(beforeInit);
 
@@ -179,7 +179,7 @@ contract ZETHNativeConverterTest is Test, GenericNativeConverterTest {
                 yeToken
             )
         );
-        vm.expectRevert(InvalidLxLyBridge.selector);
+        vm.expectRevert(NativeConverter.InvalidLxLyBridge.selector);
         GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
         vm.revertToState(beforeInit);
 
@@ -198,7 +198,7 @@ contract ZETHNativeConverterTest is Test, GenericNativeConverterTest {
                 address(0)
             )
         );
-        vm.expectRevert(InvalidYeToken.selector);
+        vm.expectRevert(NativeConverter.InvalidYeToken.selector);
         GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
         vm.revertToState(beforeInit);
 
@@ -220,7 +220,7 @@ contract ZETHNativeConverterTest is Test, GenericNativeConverterTest {
                 yeToken
             )
         );
-        vm.expectRevert(abi.encodeWithSelector(NonMatchingCustomTokenDecimals.selector, 6, 18));
+        vm.expectRevert(abi.encodeWithSelector(NativeConverter.NonMatchingCustomTokenDecimals.selector, 6, 18));
         GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
         vm.revertToState(beforeInit);
 
@@ -242,7 +242,7 @@ contract ZETHNativeConverterTest is Test, GenericNativeConverterTest {
                 yeToken
             )
         );
-        vm.expectRevert(abi.encodeWithSelector(NonMatchingUnderlyingTokenDecimals.selector, 6, 18));
+        vm.expectRevert(abi.encodeWithSelector(NativeConverter.NonMatchingUnderlyingTokenDecimals.selector, 6, 18));
         GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
     }
 }
