@@ -61,7 +61,7 @@ contract YeETH is YieldExposedToken {
         whenNotPaused
         returns (uint256 assets)
     {
-        require(shares > 0, "INVALID_AMOUNT");
+        require(shares > 0, InvalidShares());
         // The receiver is checked in the `_deposit` function.
 
         // Mint yeToken to the receiver.
@@ -71,7 +71,7 @@ contract YeETH is YieldExposedToken {
          _deposit(msg.value, lxlyId(), receiver, false, shares);
 
         // Check the output.
-        require(mintedShares == shares, "COULD_NOT_MINT_SHARES");
+        require(mintedShares == shares, IncorrectAmountOfSharesMinted(mintedShares, shares));
     }
 
     function _receiveUnderlyingToken(address, uint256 assets) internal override returns (uint256) {
