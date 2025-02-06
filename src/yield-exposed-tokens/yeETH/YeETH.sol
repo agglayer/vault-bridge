@@ -5,9 +5,12 @@ import {YieldExposedToken} from "../../YieldExposedToken.sol";
 import {IWETH9} from "../../etc/IWETH9.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {IVersioned} from "../../etc/IVersioned.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /// @title Yield Exposed gas token
 contract YeETH is YieldExposedToken {
+    using SafeERC20 for IWETH9;
+
     enum CustomCrossNetworkInstruction {
         WRAP_COIN_AND_COMPLETE_MIGRATION
     }
@@ -81,7 +84,7 @@ contract YeETH is YieldExposedToken {
             // deposit everything, excess funds will be refunded in WETH
             weth.deposit{value: msg.value}();
         } else {
-            weth.transferFrom(msg.sender, address(this), assets);
+            weth.safeTransferFrom(msg.sender, address(this), assets);
         }
         return assets;
     }
