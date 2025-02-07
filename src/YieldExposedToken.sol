@@ -28,8 +28,8 @@ import {ERC20Upgradeable} from "@openzeppelin-contracts-upgradeable/token/ERC20/
 /// @title Yield Exposed Token
 /// @notice A yeToken is an ERC-20 token, ERC-4626 vault, and LxLy Bridge extension, enabling deposits and bridging of assets such as WETH, USDC, USDT, and DAI, while producing yield.
 /// @dev A base contract used to create yield exposed tokens.
-/// @dev In order to not drive the complexity of the STB system up, yeToken MUST NOT have transfer, deposit, or withdrawal fees. The underlying token on Layer X, and the underlying token and Custom Token on Layer Ys MAY have transfer fees. The yield vault MAY have deposit and/or withdrawal fees.
-/// @dev It is expected that generated yield will offset any costs incurred when transferring the underlying token to and from the yield vault, or depositing to and withdrawing from the yield vault for the purpose of generating yield or rebalancing reserve. Those things should be taken into account when choosing and/or configuring the yield vault.
+/// @dev In order to not drive the complexity of the STB system up, yeToken MUST NOT have transfer, deposit, or withdrawal fees. The underlying token on Layer X, and the underlying token and Custom Token on Layer Ys MAY have transfer fees. The yield vault MUST NOT have deposit and/or withdrawal fees.
+/// @dev It is expected that generated yield will offset any costs incurred when transferring the underlying token to and from the yield vault, or depositing to and withdrawing from the yield vault for the purpose of generating yield or rebalancing reserve.
 abstract contract YieldExposedToken is
     Initializable,
     OwnableUpgradeable,
@@ -759,6 +759,7 @@ abstract contract YieldExposedToken is
 
     /// @notice Refill the internal reserve of the underlying token by withdrawing from the yield vault.
     /// @notice This function can be called by anyone.
+    /// @dev It is possible to force the reserved assets to be deposited into the yield vault by using a flashloan; however, this is a non-issue.
     function replenishReserve() public whenNotPaused {
         _rebalanceReserve(true, false);
     }
