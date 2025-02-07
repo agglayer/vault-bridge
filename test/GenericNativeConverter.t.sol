@@ -520,6 +520,71 @@ contract GenericNativeConverterTest is Test {
         assertEq(nativeConverter.backingOnLayerY(), 0);
     }
 
+    function test_deconvertWithPermit() public {
+        uint256 amount = 100;
+
+        vm.startPrank(owner);
+        nativeConverter.pause();
+        vm.expectRevert(PausableUpgradeable.EnforcedPause.selector);
+        nativeConverter.deconvertWithPermit(amount, recipient, "");
+        nativeConverter.unpause();
+        vm.stopPrank();
+
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+            senderPrivateKey,
+            keccak256(
+                abi.encodePacked(
+                    "\x19\x01",
+                    customToken.DOMAIN_SEPARATOR(),
+                    keccak256(
+                        abi.encode(
+                            PERMIT_TYPEHASH,
+                            sender,
+                            address(nativeConverter),
+                            amount,
+                            vm.getNonce(sender),
+                            block.timestamp
+                        )
+                    )
+                )
+            )
+        );
+        bytes memory permitData =
+            abi.encodeWithSelector(PERMIT_SIGNATURE, sender, address(nativeConverter), amount, block.timestamp, v, r, s);
+
+        vm.startPrank(sender);
+        vm.expectRevert(NativeConverter.InvalidPermitData.selector);
+        nativeConverter.deconvertWithPermit(amount, recipient, "");
+
+        vm.expectRevert(NativeConverter.InvalidShares.selector);
+        nativeConverter.deconvertWithPermit(0, recipient, permitData);
+
+        vm.expectRevert(NativeConverter.InvalidReceiver.selector);
+        nativeConverter.deconvertWithPermit(amount, address(0), permitData);
+
+        vm.expectRevert(abi.encodeWithSelector(NativeConverter.AssetsTooLarge.selector, 0, amount));
+        nativeConverter.deconvertWithPermit(amount, recipient, permitData);
+
+        // create backing on layer Y
+        uint256 backingOnLayerY = 0;
+        deal(address(underlyingToken), owner, amount);
+        vm.startPrank(owner);
+        underlyingToken.approve(address(nativeConverter), amount);
+        backingOnLayerY = nativeConverter.convert(amount, recipient);
+        vm.stopPrank();
+
+        vm.startPrank(sender);
+        assertEq(nativeConverter.backingOnLayerY(), 100);
+        deal(address(customToken), sender, amount);
+        nativeConverter.deconvertWithPermit(amount, recipient, permitData);
+
+        assertEq(customToken.balanceOf(sender), 0);
+        assertEq(customToken.balanceOf(address(nativeConverter)), 0);
+        assertEq(underlyingToken.balanceOf(recipient), amount);
+        assertEq(nativeConverter.backingOnLayerY(), 0);
+        vm.stopPrank();
+    }
+
     function test_deconvertAndBridge() public {
         uint256 amount = 100;
 
