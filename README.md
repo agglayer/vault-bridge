@@ -1,6 +1,6 @@
-<div align="center">
+<h1 align="center">🌾 Yield Exposed Token</h1>
 
-# 🌾 Yield Exposed Token
+<div align="center">
 
 Yield Exposed Token is the core of the Stake The Bridge system. Built from the ground up to be reusable, it offers complete STB functionality out of the box, allowing you to create yeTokens in just a few lines of code.
 
@@ -16,7 +16,7 @@ The Stake The Bridge system is comprised of:
   - [Custom Token](#custom-token-)
   - [Native Converter](#native-converter-)
 
-### Yield Exposed Token &nbsp;[↗](src/YieldExposedToken.sol)
+### Yield Exposed Token [↗](src/YieldExposedToken.sol)
 
 A Yield Exposed Token is an
 
@@ -26,7 +26,7 @@ A Yield Exposed Token is an
 
 enabling bridging of select assets, such as WBTC, WETH, USDC, USDT, and DAI, while producing yield.
 
-### Custom Token &nbsp;[↗](src/CustomToken.sol)
+### Custom Token [↗](src/CustomToken.sol)
 
 A Custom Token is an
 
@@ -34,14 +34,14 @@ A Custom Token is an
 
 custom-mapped to yeToken on [LxLy Bridge](https://github.com/0xPolygonHermez/zkevm-contracts).
 
-### Native Converter &nbsp;[↗](src/NativeConverter.sol)
+### Native Converter [↗](src/NativeConverter.sol)
 
 A Native Converter is a
 
 - Pseudo [ERC-4626](https://eips.ethereum.org/EIPS/eip-4626) vault
 - [LxLy Bridge](https://github.com/0xPolygonHermez/zkevm-contracts) extension
 
-allowing conversion to and deconversion of Custom Token.
+allowing conversion to, and deconversion of, Custom Token.
 
 ## Usage
 
