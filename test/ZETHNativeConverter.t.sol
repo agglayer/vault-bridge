@@ -11,6 +11,7 @@ import {MockERC20MintableBurnable} from "./GenericNativeConverter.t.sol";
 import {ZETH} from "../src/custom-tokens/WETH/zETH.sol";
 
 import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import {PausableUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/PausableUpgradeable.sol";
 
 import {GenericNativeConverterTest} from "./GenericNativeConverter.t.sol";
 import {WETHNativeConverter} from "../src/custom-tokens/WETH/WETHNativeConverter.sol";
@@ -71,6 +72,7 @@ contract ZETHNativeConverterTest is Test, GenericNativeConverterTest {
 
         // giving control over custom token to NativeConverter
         zETH.transferOwnership(address(nativeConverter));
+        zETHConverter = WETHNativeConverter(payable(address(nativeConverter)));
 
         vm.label(address(zETH), "zETH");
         vm.label(address(this), "testerAddress");
@@ -244,5 +246,62 @@ contract ZETHNativeConverterTest is Test, GenericNativeConverterTest {
         );
         vm.expectRevert(abi.encodeWithSelector(NativeConverter.NonMatchingUnderlyingTokenDecimals.selector, 6, 18));
         GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
+    }
+
+    function test_migrateGasBackingToLayerX() public {
+        uint256 amount = 100;
+        uint256 amountToMigrate = 50;
+
+        vm.startPrank(owner);
+        zETHConverter.pause();
+        vm.expectRevert(PausableUpgradeable.EnforcedPause.selector);
+        zETHConverter.migrateGasBackingToLayerX(amountToMigrate);
+        zETHConverter.unpause();
+        vm.stopPrank();
+
+        vm.expectRevert(NativeConverter.InvalidAssets.selector);
+        vm.prank(owner);
+        zETHConverter.migrateGasBackingToLayerX(0); // try with 0 backing
+
+        // create backing on layer Y
+        vm.deal(address(zETH), amount);
+
+        vm.expectEmit();
+        emit BridgeEvent(
+            LEAF_TYPE_ASSET, NETWORK_ID_L1, address(0x00), NETWORK_ID_L1, yeToken, amountToMigrate, "", 55413
+        );
+        vm.expectEmit();
+        emit BridgeEvent(
+            LEAF_TYPE_MESSAGE,
+            NETWORK_ID_L2,
+            address(zETHConverter),
+            NETWORK_ID_L1,
+            yeToken,
+            0,
+            abi.encode(
+                NativeConverter.CrossNetworkInstruction.CUSTOM,
+                WETHNativeConverter.CustomCrossNetworkInstruction.WRAP_COIN_AND_COMPLETE_MIGRATION,
+                amountToMigrate,
+                amountToMigrate
+            ),
+            55414
+        );
+        vm.expectEmit();
+        emit NativeConverter.MigrationStarted(owner, amountToMigrate, amountToMigrate);
+        vm.prank(owner);
+        zETHConverter.migrateGasBackingToLayerX(amountToMigrate);
+        assertEq(address(zETH).balance, amount - amountToMigrate);
+
+        vm.prank(owner);
+        vm.expectRevert(NativeConverter.InvalidAssets.selector);
+        zETHConverter.migrateGasBackingToLayerX(0);
+
+        uint256 currentBacking = address(zETH).balance;
+
+        vm.expectRevert(
+            abi.encodeWithSelector(NativeConverter.AssetsTooLarge.selector, currentBacking, currentBacking + 1)
+        );
+        vm.prank(owner);
+        zETHConverter.migrateGasBackingToLayerX(currentBacking + 1);
     }
 }
