@@ -152,13 +152,13 @@ abstract contract CustomToken is
 
     /// @notice Mints Custom Tokens to the recipient.
     /// @notice This function can be called by LxLy Bridge and Native Converter only.
-    function mint(address account, uint256 value) external onlyMinterBurner {
+    function mint(address account, uint256 value) external onlyMinterBurner whenNotPaused {
         _mint(account, value);
     }
 
     /// @notice Burns Custom Tokens from a holder.
     /// @notice This function can be called by LxLy Bridge and Native Converter only.
-    function burn(address account, uint256 value) external onlyMinterBurner {
+    function burn(address account, uint256 value) external onlyMinterBurner whenNotPaused {
         _burn(account, value);
     }
 
@@ -176,5 +176,3 @@ abstract contract CustomToken is
         _unpause();
     }
 }
-
-// @todo Review.

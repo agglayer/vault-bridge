@@ -18,7 +18,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 /// @title Native Converter
-/// @notice Native Converter lives on Layer Ys and converts the underlying token (usually the bridge-wrapped version of the original underlying token token) to Custom Token, and vice versa, on demand. It can also migrate backing for Custom Token it has minted to Layer X, where yeToken will be minted and locked in LxLy Bridge. Please refer to `migrateBackingToLayerX` for more information.
+/// @notice Native Converter lives on Layer Ys and converts the underlying token (usually the bridge-wrapped version of the original underlying token from Layer X) to Custom Token, and vice versa, on demand. It can also migrate backing for Custom Token it has minted to Layer X, where yeToken will be minted and locked in LxLy Bridge. Please refer to `migrateBackingToLayerX` for more information.
 /// @dev This contract MUST have mint and burn permission on Custom Token. Please refer to `CustomToken.sol` for more information.
 abstract contract NativeConverter is
     Initializable,

@@ -7,6 +7,9 @@ import {YieldExposedToken} from "../../YieldExposedToken.sol";
 // Other functionality.
 import {IVersioned} from "../../etc/IVersioned.sol";
 
+// External contracts.
+import {IUSDT} from "../../etc/IUSDT.sol";
+
 /// @title Yield Exposed USDT
 contract YeUSDT is YieldExposedToken {
     /// @dev Storage of the Yield Exposed USDT contract.
@@ -166,11 +169,3 @@ contract YeUSDT is YieldExposedToken {
         return candidate;
     }
 }
-
-/// @notice The interface of the USDT token.
-interface IUSDT {
-    function basisPointsRate() external view returns (uint256);
-    function maximumFee() external view returns (uint256);
-}
-
-// @todo @notes.

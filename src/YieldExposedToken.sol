@@ -26,7 +26,7 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 import {ERC20Upgradeable} from "@openzeppelin-contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 
 /// @title Yield Exposed Token
-/// @notice A yeToken is an ERC-20 token, ERC-4626 vault, and LxLy Bridge extension, enabling deposits and bridging of assets such as WETH, USDC, USDT, and DAI, while producing yield.
+/// @notice A yeToken is an ERC-20 token, ERC-4626 vault, and LxLy Bridge extension, enabling deposits and bridging of select assets, such as WBTC, WETH, USDC, USDT, and DAI, while producing yield.
 /// @dev A base contract used to create yield exposed tokens.
 /// @dev In order to not drive the complexity of the STB system up, yeToken MUST NOT have transfer, deposit, or withdrawal fees. The underlying token on Layer X, and the underlying token and Custom Token on Layer Ys MAY have transfer fees. The yield vault MUST NOT have deposit and/or withdrawal fees.
 /// @dev It is expected that generated yield will offset any costs incurred when transferring the underlying token to and from the yield vault, or depositing to and withdrawing from the yield vault for the purpose of generating yield or rebalancing reserve.
