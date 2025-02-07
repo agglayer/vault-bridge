@@ -666,6 +666,26 @@ contract GenericNativeConverterTest is Test {
         assertEq(nativeConverter.nonMigratableBackingPercentage(), newPercentage);
     }
 
+    function test_setMinimumBackingAfterMigration() public {
+        uint256 newMinimum = 1000;
+
+        vm.expectRevert(); // only owner can call this function
+        nativeConverter.setMinimumBackingAfterMigration(0);
+
+        vm.startPrank(owner);
+        nativeConverter.pause();
+        vm.expectRevert(EnforcedPause.selector);
+        nativeConverter.setMinimumBackingAfterMigration(0);
+        nativeConverter.unpause();
+
+        vm.expectEmit();
+        emit NativeConverter.MinimumBackingAfterMigrationSet(newMinimum);
+        nativeConverter.setMinimumBackingAfterMigration(newMinimum);
+        vm.stopPrank();
+
+        assertEq(nativeConverter.minimumBackingAfterMigration(), newMinimum);
+    }
+
     function test_version() public view {
         assertEq(nativeConverter.version(), NATIVE_CONVERTER_VERSION);
     }
