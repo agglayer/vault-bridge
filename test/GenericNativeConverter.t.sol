@@ -7,6 +7,7 @@ import "src/NativeConverter.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
+import {IERC20Errors} from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 
 import {MockERC20} from "forge-std/mocks/MockERC20.sol";
 import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
@@ -118,13 +119,6 @@ contract GenericNativeConverterTest is Test {
     uint256 internal senderPrivateKey = 0xBEEF;
     address internal sender = vm.addr(senderPrivateKey);
 
-    enum CrossNetworkInstruction {
-        COMPLETE_MIGRATION
-    }
-
-    error EnforcedPause();
-    error ERC20InsufficientBalance(address token, uint256 balance, uint256 amount);
-
     event BridgeEvent(
         uint8 leafType,
         uint32 originNetwork,
@@ -135,8 +129,6 @@ contract GenericNativeConverterTest is Test {
         bytes metadata,
         uint32 depositCount
     );
-    event NonMigratableBackingPercentageSet(uint256 nonMigratableBackingPercentage);
-    event MigrationStarted(address indexed sender, uint256 indexed customTokenAmount, uint256 backingAmount);
 
     function setUp() public virtual {
         zkevmFork = vm.createSelectFork("polygon_zkevm", 19164969);
@@ -372,7 +364,7 @@ contract GenericNativeConverterTest is Test {
 
         vm.startPrank(owner);
         nativeConverter.pause();
-        vm.expectRevert(EnforcedPause.selector);
+        vm.expectRevert(PausableUpgradeable.EnforcedPause.selector);
         nativeConverter.convert(amount, recipient);
         nativeConverter.unpause();
         vm.stopPrank();
@@ -404,7 +396,7 @@ contract GenericNativeConverterTest is Test {
 
         vm.startPrank(owner);
         nativeConverter.pause();
-        vm.expectRevert(EnforcedPause.selector);
+        vm.expectRevert(PausableUpgradeable.EnforcedPause.selector);
         nativeConverter.convertWithPermit(amount, recipient, "");
         nativeConverter.unpause();
         vm.stopPrank();
@@ -489,7 +481,7 @@ contract GenericNativeConverterTest is Test {
 
         vm.startPrank(owner);
         nativeConverter.pause();
-        vm.expectRevert(EnforcedPause.selector);
+        vm.expectRevert(PausableUpgradeable.EnforcedPause.selector);
         nativeConverter.deconvert(amount, recipient);
         nativeConverter.unpause();
         vm.stopPrank();
@@ -513,7 +505,7 @@ contract GenericNativeConverterTest is Test {
         vm.stopPrank();
 
         vm.startPrank(sender);
-        vm.expectRevert(abi.encodeWithSelector(ERC20InsufficientBalance.selector, sender, 0, amount));
+        vm.expectRevert(abi.encodeWithSelector(IERC20Errors.ERC20InsufficientBalance.selector, sender, 0, amount));
         nativeConverter.deconvert(amount, recipient); // sender has 0 shares
 
         deal(address(customToken), sender, amount); // mint shares
@@ -533,7 +525,7 @@ contract GenericNativeConverterTest is Test {
 
         vm.startPrank(owner);
         nativeConverter.pause();
-        vm.expectRevert(EnforcedPause.selector);
+        vm.expectRevert(PausableUpgradeable.EnforcedPause.selector);
         nativeConverter.deconvertAndBridge(amount, recipient, NETWORK_ID_L1, true);
         nativeConverter.unpause();
         vm.stopPrank();
@@ -577,7 +569,7 @@ contract GenericNativeConverterTest is Test {
 
         vm.startPrank(owner);
         nativeConverter.pause();
-        vm.expectRevert(EnforcedPause.selector);
+        vm.expectRevert(PausableUpgradeable.EnforcedPause.selector);
         nativeConverter.migrateBackingToLayerX();
         nativeConverter.unpause();
         vm.stopPrank();
@@ -616,11 +608,11 @@ contract GenericNativeConverterTest is Test {
             NETWORK_ID_L1,
             yeToken,
             0,
-            abi.encode(CrossNetworkInstruction.COMPLETE_MIGRATION, amountToMigrate, amountToMigrate),
+            abi.encode(NativeConverter.CrossNetworkInstruction.COMPLETE_MIGRATION, amountToMigrate, amountToMigrate),
             55414
         );
         vm.expectEmit();
-        emit MigrationStarted(address(this), amountToMigrate, amountToMigrate);
+        emit NativeConverter.MigrationStarted(address(this), amountToMigrate, amountToMigrate);
         nativeConverter.migrateBackingToLayerX();
         assertEq(underlyingToken.balanceOf(address(nativeConverter)), backingOnLayerY - amountToMigrate);
 
@@ -651,7 +643,7 @@ contract GenericNativeConverterTest is Test {
 
         vm.startPrank(owner);
         nativeConverter.pause();
-        vm.expectRevert(EnforcedPause.selector);
+        vm.expectRevert(PausableUpgradeable.EnforcedPause.selector);
         nativeConverter.setNonMigratableBackingPercentage(0);
         nativeConverter.unpause();
 
@@ -659,7 +651,7 @@ contract GenericNativeConverterTest is Test {
         nativeConverter.setNonMigratableBackingPercentage(MAX_NON_MIGRATABLE_BACKING_PERCENTAGE + 1);
 
         vm.expectEmit();
-        emit NonMigratableBackingPercentageSet(newPercentage);
+        emit NativeConverter.NonMigratableBackingPercentageSet(newPercentage);
         nativeConverter.setNonMigratableBackingPercentage(newPercentage);
         vm.stopPrank();
 
@@ -674,7 +666,7 @@ contract GenericNativeConverterTest is Test {
 
         vm.startPrank(owner);
         nativeConverter.pause();
-        vm.expectRevert(EnforcedPause.selector);
+        vm.expectRevert(PausableUpgradeable.EnforcedPause.selector);
         nativeConverter.setMinimumBackingAfterMigration(0);
         nativeConverter.unpause();
 
