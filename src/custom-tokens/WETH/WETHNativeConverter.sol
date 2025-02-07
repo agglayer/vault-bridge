@@ -9,8 +9,6 @@ import {IVersioned} from "../../etc/IVersioned.sol";
 contract WETHNativeConverter is NativeConverter {
     ZETH zETH;
 
-    error AmountTooLarge();
-
     enum CustomCrossNetworkInstruction {
         WRAP_COIN_AND_COMPLETE_MIGRATION
     }
@@ -56,7 +54,8 @@ contract WETHNativeConverter is NativeConverter {
     /// @notice Users can still bridge zETH back to Layer X to receive WETH or ETH.
     function migrateGasBackingToLayerX(uint256 amount) external whenNotPaused onlyOwner {
         // Check the input.
-        require(amount <= address(zETH).balance, AmountTooLarge());
+        require(amount > 0, InvalidAssets());
+        require(amount <= address(zETH).balance, AssetsTooLarge(address(zETH).balance, amount));
 
         // Precalculate the amount of Custom Token for which backing is being migrated.
         uint256 amountOfCustomToken = _convertToShares(amount);
@@ -81,6 +80,8 @@ contract WETHNativeConverter is NativeConverter {
         // Emit the event.
         emit MigrationStarted(msg.sender, amountOfCustomToken, amount);
     }
+
+    receive() external payable {}
 
     /// @inheritdoc IVersioned
     function version() external pure virtual returns (string memory) {
