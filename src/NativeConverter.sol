@@ -45,8 +45,6 @@ abstract contract NativeConverter is
         IERC20 underlyingToken;
         bool _underlyingTokenIsNotMintable;
         uint256 backingOnLayerY;
-        uint256 nonMigratableBackingPercentage;
-        uint256 minimumBackingAfterMigration;
         uint32 lxlyId;
         ILxLyBridge lxlyBridge;
         uint32 layerXLxlyId;
@@ -62,8 +60,8 @@ abstract contract NativeConverter is
     error InvalidOwner();
     error InvalidCustomToken();
     error InvalidUnderlyingToken();
-    error InvalidNonMigratableBackingPercentage();
     error InvalidLxLyBridge();
+    error InvalidLayerXLxlyId();
     error InvalidYeToken();
     error NonMatchingCustomTokenDecimals(uint8 customTokenDecimals, uint8 originalUnderlyingTokenDecimals);
     error NonMatchingUnderlyingTokenDecimals(uint8 underlyingTokenDecimals, uint8 originalUnderlyingTokenDecimals);
@@ -76,22 +74,16 @@ abstract contract NativeConverter is
 
     // Events.
     event MigrationStarted(address indexed initiator, uint256 indexed mintedCustomToken, uint256 migratedBacking);
-    event NonMigratableBackingPercentageSet(uint256 nonMigratableBackingPercentage);
-    event MinimumBackingAfterMigrationSet(uint256 minimumBackingAfterMigration);
 
     /// @param originalUnderlyingTokenDecimals_ The number of decimals of the original underlying token on Layer X. The `customToken` and `underlyingToken` MUST have the same number of decimals as the original underlying token. (ATTENTION) The decimals of the `customToken` and `underlyingToken` will default to 18 if they revert.
     /// @param customToken_ The token custom mapped to yeToken on LxLy Bridge on Layer Y. Native Converter must be able to mint and burn this token. Please refer to `CustomToken.sol` for more information.
     /// @param underlyingToken_ The token that represents the original underlying token on Layer Y. IMPORTANT: This token MUST be either the bridge-wrapped version of the original underlying token, or the original underlying token must be custom mapped to this token on LxLy Bridge on Layer Y.
-    /// @param nonMigratableBackingPercentage_ The percentage of the total supply of the custom token on Layer Y for which backing cannot be migrated to Layer X; 100 is 100%. The limit does not apply to the owner. Accounts with a large custom token balance may be able to circumvent the limit by quickly bridging to another network, migrating the backing, then bridging back, which would prevent others from deconverting the custom token on Layer Y. The next parameter is used to mitigate this risk.
-    /// @param minimumBackingAfterMigration_ The minimum amount of backing (the underlying token) that must remain on Layer Y after a migration. The requirement does not apply if the owner is migrating backing. This parameter mitigates the risk of accounts with a large custom token balance draining the underlying token liquidity from Native Converter.
     /// @param yeToken_ The address of yeToken on Layer X.
     function __NativeConverter_init(
         address owner_,
         uint8 originalUnderlyingTokenDecimals_,
         address customToken_,
         address underlyingToken_,
-        uint256 nonMigratableBackingPercentage_,
-        uint256 minimumBackingAfterMigration_,
         address lxlyBridge_,
         uint32 layerXLxlyId_,
         address yeToken_
@@ -102,8 +94,8 @@ abstract contract NativeConverter is
         require(owner_ != address(0), InvalidOwner());
         require(customToken_ != address(0), InvalidCustomToken());
         require(underlyingToken_ != address(0), InvalidUnderlyingToken());
-        require(nonMigratableBackingPercentage_ <= 100, InvalidNonMigratableBackingPercentage());
         require(lxlyBridge_ != address(0), InvalidLxLyBridge());
+        require(layerXLxlyId_ != ILxLyBridge(lxlyBridge_).networkID(), InvalidLxLyBridge());
         require(yeToken_ != address(0), InvalidYeToken());
 
         // Check the custom token's decimals.
@@ -140,8 +132,6 @@ abstract contract NativeConverter is
         $.customToken = CustomToken(customToken_);
         $.underlyingToken = IERC20(underlyingToken_);
         $._underlyingTokenIsNotMintable = ILxLyBridge(lxlyBridge_).wrappedAddressIsNotMintable(underlyingToken_);
-        $.nonMigratableBackingPercentage = nonMigratableBackingPercentage_;
-        $.minimumBackingAfterMigration = minimumBackingAfterMigration_;
         $.lxlyId = ILxLyBridge(lxlyBridge_).networkID();
         $.lxlyBridge = ILxLyBridge(lxlyBridge_);
         $.layerXLxlyId = layerXLxlyId_;
@@ -170,20 +160,6 @@ abstract contract NativeConverter is
     function backingOnLayerY() public view returns (uint256) {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
         return $.backingOnLayerY;
-    }
-
-    /// @notice The percentage of the total supply of the custom token on Layer Y for which backing cannot be migrated to Layer X. 100 is 100%.
-    /// @notice The limit does not apply to the owner.
-    function nonMigratableBackingPercentage() public view returns (uint256) {
-        NativeConverterStorage storage $ = _getNativeConverterStorage();
-        return $.nonMigratableBackingPercentage;
-    }
-
-    /// @notice The minimum amount of backing (the underlying token) that must remain on Layer Y after a migration.
-    /// @notice The requirement does not apply if the owner is migrating backing.
-    function minimumBackingAfterMigration() public view returns (uint256) {
-        NativeConverterStorage storage $ = _getNativeConverterStorage();
-        return $.minimumBackingAfterMigration;
     }
 
     /// @notice LxLy Bridge, which connects AggLayer networks.
@@ -440,49 +416,12 @@ abstract contract NativeConverter is
 
     // -----================= ::: NATIVE CONVERTER ::: =================-----
 
-    /// @notice The amount of backing that can be migrated to Layer X right now.
-    /// @notice The limit does not apply to the owner.
-    function migratableBacking() public view returns (uint256) {
-        NativeConverterStorage storage $ = _getNativeConverterStorage();
-
-        // Calculate the amount that cannot be migrated.
-        // @note Check rounding.
-        uint256 nonMigratableBacking =
-            (_convertToAssets($.customToken.totalSupply()) * $.nonMigratableBackingPercentage) / 100;
-
-        // Increase the amount that cannot be migrated if it is below the minimum amount.
-        if (nonMigratableBacking < $.minimumBackingAfterMigration) {
-            nonMigratableBacking = $.minimumBackingAfterMigration;
-        }
-
-        // Get the current backing.
-        uint256 backingOnLayerY_ = backingOnLayerY();
-
-        // Return zero if the migration limit is reached.
-        if (backingOnLayerY_ <= nonMigratableBacking) return 0;
-
-        // Calculate the amount that can be migrated.
-        return backingOnLayerY_ - nonMigratableBacking;
-    }
-
-    /// @notice Migrates a limited amount of backing to Layer X.
-    /// @notice This action provides yeToken liquidity on LxLy Bridge on Layer X.
-    /// @notice The bridged assets and message must be claimed manually on Layer X to complete the migration.
-    /// @notice This function can be called by anyone.
-    function migrateBackingToLayerX() external whenNotPaused {
-        _migrateBackingToLayerX(migratableBacking());
-    }
-
-    /// @notice Migrates any amount of backing to Layer X.
+    /// @notice Migrates a specific amount of backing to Layer X.
     /// @notice This action provides yeToken liquidity on LxLy Bridge on Layer X.
     /// @notice The bridged assets and message must be claimed manually on Layer X to complete the migration.
     /// @notice This function can be called by the owner only.
+    /// @dev Concider calling this function periodically - anyone will be able to complete migrations on Layer X.
     function migrateBackingToLayerX(uint256 assets) external whenNotPaused onlyOwner {
-        _migrateBackingToLayerX(assets);
-    }
-
-    /// @dev Migrates a specific amount of backing to Layer X.
-    function _migrateBackingToLayerX(uint256 assets) internal {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
 
         // Check the input.
@@ -507,7 +446,7 @@ abstract contract NativeConverter is
             // Calculate the bridged amount.
             assets = $.underlyingToken.balanceOf(address($.lxlyBridge)) - balanceBefore;
         }
-        /* If the underlying token is mintable by LxLy Bridge, it gets burned, and there is no transfer fee. */
+        /* If the underlying token is mintable by LxLy Bridge, it will be burned (not transfered). */
         else {
             $.lxlyBridge.bridgeAsset($.layerXLxlyId, $.yeToken, assets, address($.underlyingToken), true, "");
         }
@@ -519,39 +458,6 @@ abstract contract NativeConverter is
 
         // Emit the event.
         emit MigrationStarted(msg.sender, shares, assets);
-    }
-
-    /// @notice Sets the non-migratable backing percentage.
-    /// @notice The limit does not apply to the owner.
-    /// @notice This function can be called by the owner only.
-    function setNonMigratableBackingPercentage(uint256 nonMigratableBackingPercentage_)
-        external
-        onlyOwner
-        whenNotPaused
-    {
-        NativeConverterStorage storage $ = _getNativeConverterStorage();
-
-        // Check the input.
-        require(nonMigratableBackingPercentage_ <= 100, InvalidNonMigratableBackingPercentage());
-
-        // Set the non-migratable backing percentage.
-        $.nonMigratableBackingPercentage = nonMigratableBackingPercentage_;
-
-        // Emit the event.
-        emit NonMigratableBackingPercentageSet(nonMigratableBackingPercentage_);
-    }
-
-    /// @notice Sets the minimum backing after a migration.
-    /// @notice The requirement does not apply if the owner is migrating backing.
-    /// @notice This function can be called by the owner only.
-    function setMinimumBackingAfterMigration(uint256 minimumBackingAfterMigration_) external onlyOwner whenNotPaused {
-        NativeConverterStorage storage $ = _getNativeConverterStorage();
-
-        // Set the minimum backing after a migration.
-        $.minimumBackingAfterMigration = minimumBackingAfterMigration_;
-
-        // Emit the event.
-        emit MinimumBackingAfterMigrationSet(minimumBackingAfterMigration_);
     }
 
     // -----================= ::: ADMIN ::: =================-----
@@ -577,9 +483,13 @@ abstract contract NativeConverter is
     function _receiveUnderlyingToken(address from, uint256 value) internal virtual returns (uint256 receivedValue) {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
 
-        // Transfer the underlying token.
+        // Cache the balance.
         uint256 balanceBefore = $.underlyingToken.balanceOf(address(this));
+
+        // Transfer.
         $.underlyingToken.safeTransferFrom(from, address(this), value);
+
+        // Calculate the received amount.
         receivedValue = $.underlyingToken.balanceOf(address(this)) - balanceBefore;
     }
 
@@ -589,7 +499,7 @@ abstract contract NativeConverter is
     function _sendUnderlyingToken(address to, uint256 value) internal virtual {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
 
-        // Transfer the underlying token.
+        // Transfer.
         $.underlyingToken.safeTransfer(to, value);
     }
 }
