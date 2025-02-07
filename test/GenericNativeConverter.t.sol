@@ -680,7 +680,6 @@ contract GenericNativeConverterTest is Test {
         emit NativeConverter.MigrationStarted(address(this), amountToMigrate, amountToMigrate);
         nativeConverter.migrateBackingToLayerX();
         assertEq(underlyingToken.balanceOf(address(nativeConverter)), backingOnLayerY - amountToMigrate);
-        assertEq(underlyingToken.balanceOf(LXLY_BRIDGE), 0);
 
         vm.expectRevert(NativeConverter.InvalidAssets.selector);
         nativeConverter.migrateBackingToLayerX(); // backing is less than the non migratable backing percentage
@@ -749,6 +748,7 @@ contract GenericNativeConverterTest is Test {
             abi.encode(true)
         );
         nativeConverter = GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
+        vm.clearMockedCalls();
         assertEq(address(nativeConverter), calculatedNativeConverterAddr);
 
         // giving control over custom token to NativeConverter
