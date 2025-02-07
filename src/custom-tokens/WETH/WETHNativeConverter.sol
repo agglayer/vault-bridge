@@ -47,7 +47,7 @@ contract WETHNativeConverter is NativeConverter {
         zETH = ZETH(zETH_);
     }
 
-    /// @dev This special function allows the NativeConverter owner to migrate the gas backing of the zETH custom token
+    /// @dev This special function allows the NativeConverter owner to migrate the gas backing of the zETH Custom Token
     /// @dev It simply takes the amount of gas token from the zETH contract
     /// @dev and performs the migration using a special CrossNetworkInstruction called WRAP_COIN_AND_COMPLETE_MIGRATION
     /// @dev It instructs yeETH on Layer X to first wrap the gas token and then deposit it to complete the migration.
@@ -58,7 +58,7 @@ contract WETHNativeConverter is NativeConverter {
         // Check the input.
         require(amount <= address(zETH).balance, AmountTooLarge());
 
-        // Precalculate the amount of the custom token for which backing is being migrated.
+        // Precalculate the amount of Custom Token for which backing is being migrated.
         uint256 amountOfCustomToken = _convertToShares(amount);
 
         // Taking lxlyBridge's gas balance here

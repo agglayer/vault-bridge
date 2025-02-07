@@ -28,7 +28,7 @@ import {ERC20Upgradeable} from "@openzeppelin-contracts-upgradeable/token/ERC20/
 /// @title Yield Exposed Token
 /// @notice A yeToken is an ERC-20 token, ERC-4626 vault, and LxLy Bridge extension, enabling deposits and bridging of assets such as WETH, USDC, USDT, and DAI, while producing yield.
 /// @dev A base contract used to create yield exposed tokens.
-/// @dev In order to not drive the complexity of the STB system up, yeToken MUST NOT have transfer, deposit, or withdrawal fees. The underlying token on Layer X, and the underlying token and the custom token on Layer Ys MAY have transfer fees. The yield vault MAY have deposit and/or withdrawal fees.
+/// @dev In order to not drive the complexity of the STB system up, yeToken MUST NOT have transfer, deposit, or withdrawal fees. The underlying token on Layer X, and the underlying token and Custom Token on Layer Ys MAY have transfer fees. The yield vault MAY have deposit and/or withdrawal fees.
 /// @dev It is expected that generated yield will offset any costs incurred when transferring the underlying token to and from the yield vault, or depositing to and withdrawing from the yield vault for the purpose of generating yield or rebalancing reserve. Those things should be taken into account when choosing and/or configuring the yield vault.
 abstract contract YieldExposedToken is
     Initializable,
@@ -229,7 +229,7 @@ abstract contract YieldExposedToken is
     }
 
     /// @notice The address of Native Conveter of this yeToken.
-    /// @notice Native Converter on Layer Ys can mint the custom token independently of yeToken, and the migrate backing to Layer X. Please refer to `completeMigration` for more information.
+    /// @notice Native Converter on Layer Ys can mint Custom Token independently of yeToken, and the migrate backing to Layer X. Please refer to `completeMigration` for more information.
     function nativeConverter() public view returns (address) {
         YieldExposedTokenStorage storage $ = _getYieldExposedTokenStorage();
         return $.nativeConverter;
@@ -289,7 +289,7 @@ abstract contract YieldExposedToken is
     }
 
     /// @notice Deposit a specific amount of the underlying token, and bridge minted yeToken to another network.
-    /// @dev If yeToken is custom mapped on LxLy Bridge on the other network, the user will receive the custom token. Otherwise, they will receive wrapped yeToken.
+    /// @dev If yeToken is custom mapped on LxLy Bridge on the other network, the user will receive Custom Token. Otherwise, they will receive wrapped yeToken.
     /// @dev The `receiver` in the ERC-4626 `Deposit` event will be this contract.
     function depositAndBridge(
         uint256 assets,
@@ -402,7 +402,7 @@ abstract contract YieldExposedToken is
     }
 
     /// @notice Deposit a specific amount of the underlying token, and bridge minted yeToken to another network.
-    /// @dev If yeToken is custom mapped on LxLy Bridge on the other network, the user will receive the custom token. Otherwise, they will receive wrapped yeToken.
+    /// @dev If yeToken is custom mapped on LxLy Bridge on the other network, the user will receive Custom Token. Otherwise, they will receive wrapped yeToken.
     /// @dev Uses EIP-2612 permit to transfer the underlying token from the sender to self.
     /// @dev The `receiver` in the ERC-4626 `Deposit` event will be this contract.
     function depositWithPermitAndBridge(
@@ -893,9 +893,8 @@ abstract contract YieldExposedToken is
     }
 
     /// @notice Adds a specific amount of the underlying token to the reserve by transferring it from the sender.
-    /// @notice This function can be used to increase yield immediately in order to complete a migration when there is not enough available yield to cover for a discrepancy. Please refer to `completeMigration` for more information.
+    /// @notice This function can be used to increase the available yield when there is not enough to complete a migration due to a discrepancy. Please refer to `_completeMigration` for more information.
     /// @notice This function can be called by anyone.
-    /// @notice Emits a `Donated` event.
     function donate(uint256 assets) external {
         YieldExposedTokenStorage storage $ = _getYieldExposedTokenStorage();
 
@@ -950,12 +949,13 @@ abstract contract YieldExposedToken is
     }
 
     /// @notice Completes a migration of backing from a Layer Y to Layer X by minting and locking the required amount of yeToken in LxLy Bridge.
-    /// @dev Backing for the custom token minted by Native Converter on Layer Ys can be migrated to Layer X.
+    /// @notice Anyone can trigger the execution of this function by claiming the asset and message on LxLy Bridge. Please refer to `NativeConverter.sol` for more information.
+    /// @dev Backing for Custom Token minted by Native Converter on Layer Ys can be migrated to Layer X.
     /// @dev When Native Converter migrates backing, it calls both `bridgeAsset` and `bridgeMessage` on LxLy Bridge to `migrateBackingToLayerX`.
     /// @dev The asset must be claimed before the message on LxLy Bridge.
-    /// @dev The message tells yeToken on Layer X how much custom token must be backed by yeToken, which is minted and bridged to address zero on the respective Layer Y. This action provides liquidity when bridging the custom token to from Layer Ys to Layer X and increments the pessimistic proof.
+    /// @dev The message tells yeToken how much Custom Token must be backed by yeToken, which is minted and bridged to address zero on the respective Layer Y. This action provides liquidity when bridging Custom Token to from Layer Ys to Layer X and increments the pessimistic proof.
     /// @param originNetworkId The LxLy ID of Layer Y the backing is being migrated from.
-    /// @param shares The required amount of yeToken to mint and lock up in LxLy Bridge. Available yield may be used to offset transfer fees of the underlying token. If a migration cannot be completed (due to insufficient yield), anyone can `donate` the underlying token to increase available yield.
+    /// @param shares The required amount of yeToken to mint and lock up in LxLy Bridge. Available yield may be used to offset transfer fees of the underlying token. If a migration cannot be completed due to insufficient yield, anyone can `donate` the underlying token to increase the available yield. Please refer to `donate` for more information.
     /// @param assets The amount of the underlying token migrated from Layer Y (before transfer fees on Layer X).
     function _completeMigration(uint32 originNetworkId, uint256 shares, uint256 assets) internal {
         YieldExposedTokenStorage storage $ = _getYieldExposedTokenStorage();
@@ -973,7 +973,7 @@ abstract contract YieldExposedToken is
 
         // Calculate the discrepancy between the required amount of yeToken (`shares`) and the amount of the underlying token received from LxLy Bridge (`assets`).
         // A discrepancy is possible due to transfer fees of the underlying token. To offset the discrepancy, we mint more yeToken, backed by available yield.
-        // This ensures that the amount of yeToken locked up in LxLy Bridge on Layer X matches the supply of the custom token on Layer Ys exactly.
+        // This ensures that the amount of yeToken locked up in LxLy Bridge on Layer X matches the supply of Custom Token on Layer Ys exactly.
         uint256 requiredAssets = convertToAssets(shares);
         uint256 discrepancy = requiredAssets - assets;
         uint256 yield_ = yield();
@@ -1138,8 +1138,6 @@ abstract contract YieldExposedToken is
     function _assetsBeforeTransferFee(uint256 minimumAssetsAfterTransferFee) internal view virtual returns (uint256);
 }
 
-// @todo Reentrancy and cross-entrancy review.
-// @todo Review with Morpho: pre function calls (e.g., before `withdraw`), the possibility unfavorable rates, etc.
-// @todo Check Morpho skim and fee recipients.
-// @todo @notes.
-// @todo If some `whenNotPaused` should be removed.
+// @todo Review Morpho: The possibility unfavorable rates.
+// @todo Check Morpho skim and fee recipients setup.
+// @todo Whether some `whenNotPaused` should be removed.

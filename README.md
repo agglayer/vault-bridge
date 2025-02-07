@@ -1,56 +1,75 @@
-# Yield Exposed Token
+<div align="center">
 
-Yield Exposed Token is the core of the Stake The Bridge (STB) system. Built from the ground up to be reusable, it offers complete STB functionality out of the box, allowing you to create new yeTokens in just a few lines of code.
+# 🌾 Yield Exposed Token
 
-## Stake The Bridge
+Yield Exposed Token is the core of the Stake The Bridge system. Built from the ground up to be reusable, it offers complete STB functionality out of the box, allowing you to create yeTokens in just a few lines of code.
 
-The STB system is comprised of:
+</div>
+
+## Overview
+
+The Stake The Bridge system is comprised of:
 
 - Layer X
-  - [Yield Exposed Token](src/YieldExposedToken.sol)
+  - [Yield Exposed Token](#yield-exposed-token-)
 - Layer Y
-  - [Custom Token](src/CustomToken.sol)
-  - [Native Converter](src/NativeConverter.sol)
+  - [Custom Token](#custom-token-)
+  - [Native Converter](#native-converter-)
 
-### Yield Exposed Token
+### Yield Exposed Token &nbsp;[↗](src/YieldExposedToken.sol)
 
-A Yield Exposed Token (yeToken) is an
+A Yield Exposed Token is an
 
 - [ERC-20](https://eips.ethereum.org/EIPS/eip-20) token
 - [ERC-4626](https://eips.ethereum.org/EIPS/eip-4626) vault
 - [LxLy Bridge](https://github.com/0xPolygonHermez/zkevm-contracts) extension
 
-enabling deposits and bridging of assets such as WBTC, WETH, USDC, USDT, and DAI, while producing yield.
+enabling bridging of select assets, such as WBTC, WETH, USDC, USDT, and DAI, while producing yield.
 
-For more information, see the NatSpec documentation.
+### Custom Token &nbsp;[↗](src/CustomToken.sol)
+
+A Custom Token is an
+
+- [ERC-20](https://eips.ethereum.org/EIPS/eip-20) token
+
+custom-mapped to yeToken on [LxLy Bridge](https://github.com/0xPolygonHermez/zkevm-contracts).
+
+### Native Converter &nbsp;[↗](src/NativeConverter.sol)
+
+A Native Converter is a
+
+- Pseudo [ERC-4626](https://eips.ethereum.org/EIPS/eip-4626) vault
+- [LxLy Bridge](https://github.com/0xPolygonHermez/zkevm-contracts) extension
+
+allowing conversion to and deconversion of Custom Token.
 
 ## Usage
 
-**Prerequisite**
+#### Prerequisite
 
 ```
 foundryup
 ```
 
-**Install**
+#### Install
 
 ```
 forge soldeer install & bun install
 ```
 
-**Build**
+#### Build
 
 ```
 forge build
 ```
 
-**Test**
+#### Test
 
 ```
 forge test
 ```
 
-**Coverage**
+#### Coverage
 
 ```
 forge coverage --ir-minimum --report lcov && genhtml -o coverage lcov.info

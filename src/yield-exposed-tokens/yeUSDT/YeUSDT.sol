@@ -37,7 +37,7 @@ contract YeUSDT is YieldExposedToken {
         address yieldVault_,
         address yieldRecipient_,
         address lxlyBridge_,
-        address yeToken_
+        address nativeConverter_
     ) external initializer {
         // Initialize the base implementation.
         __YieldExposedToken_init(
@@ -49,7 +49,7 @@ contract YeUSDT is YieldExposedToken {
             yieldVault_,
             yieldRecipient_,
             lxlyBridge_,
-            yeToken_
+            nativeConverter_
         );
 
         // Cache the USDT transfer fee parameters.

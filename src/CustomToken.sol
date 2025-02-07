@@ -12,9 +12,9 @@ import {PausableUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/Pau
 import {IVersioned} from "./etc/IVersioned.sol";
 
 /// @title Custom Token
-/// @notice A custom token is an ERC-20 token deployed on Layer Ys to represent the native version of the original underlying token from Layer X on Layer Y.
-/// @dev A base contract used to create custom tokens.
-/// @dev The custom token MUST be custom mapped to the corresponding yeToken on LxLy Bridge on Layer Y and MUST give the minting and burning permission to LxLy Bridge and Native Converter. It MAY have a transfer fee.
+/// @notice A Custom Token is an ERC-20 token deployed on Layer Ys to represent the native version of the original underlying token from Layer X on Layer Y.
+/// @dev A base contract used to create Custom Tokens.
+/// @dev Custom Token MUST be custom mapped to the corresponding yeToken on LxLy Bridge on Layer Y and MUST give the minting and burning permission to LxLy Bridge and Native Converter. It MAY have a transfer fee.
 abstract contract CustomToken is
     Initializable,
     OwnableUpgradeable,
@@ -22,7 +22,7 @@ abstract contract CustomToken is
     ERC20PermitUpgradeable,
     IVersioned
 {
-    /// @dev Storage of the Custom Token contract.
+    /// @dev Storage of Custom Token contract.
     /// @dev It's implemented on a custom ERC-7201 namespace to reduce the risk of storage collisions when using with upgradeable contracts.
     /// @custom:storage-location erc7201:0xpolygon.storage.CustomToken
     struct CustomTokenStorage {
@@ -45,18 +45,18 @@ abstract contract CustomToken is
     error InvalidLxLyBridge();
     error InvalidNativeConverter();
 
-    /// @dev Checks if the sender has the permission to mint and burn the custom token.
+    /// @dev Checks if the sender has the permission to mint and burn Custom Token.
     modifier onlyMinterBurner() {
         CustomTokenStorage storage $ = _getCustomTokenStorage();
 
-        // Only LxLy Bridge and Native Converter can mint and burn the custom token.
+        // Only LxLy Bridge and Native Converter can mint and burn Custom Token.
         require(msg.sender == $.lxlyBridge || msg.sender == $.nativeConverter, Unauthorized());
 
         _;
     }
 
-    /// @param originalUnderlyingTokenDecimals_ The number of decimals of the original underlying token on Layer X. The custom token will have the same number of decimals as the original underlying token.
-    /// @param nativeConverter_ The address of Native Converter for this custom token.
+    /// @param originalUnderlyingTokenDecimals_ The number of decimals of the original underlying token on Layer X. Custom Token will have the same number of decimals as the original underlying token.
+    /// @param nativeConverter_ The address of Native Converter for this Custom Token.
     function __CustomToken_init(
         address owner_,
         string calldata name_,
@@ -89,7 +89,7 @@ abstract contract CustomToken is
 
     // -----================= ::: STORAGE ::: =================-----
 
-    /// @notice The number of decimals of the custom token.
+    /// @notice The number of decimals of Custom Token.
     /// @notice The number of decimals is the same as that of the original underlying token on Layer X.
     function decimals() public view override returns (uint8) {
         CustomTokenStorage storage $ = _getCustomTokenStorage();
@@ -102,7 +102,7 @@ abstract contract CustomToken is
         return $.lxlyBridge;
     }
 
-    /// @notice The address of Native Converter for this custom token.
+    /// @notice The address of Native Converter for this Custom Token.
     function nativeConverter() public view returns (address) {
         CustomTokenStorage storage $ = _getCustomTokenStorage();
         return $.nativeConverter;
@@ -150,13 +150,13 @@ abstract contract CustomToken is
 
     // -----================= ::: CUSTOM TOKEN ::: =================-----
 
-    /// @notice Mints custom tokens to the recipient.
+    /// @notice Mints Custom Tokens to the recipient.
     /// @notice This function can be called by LxLy Bridge and Native Converter only.
     function mint(address account, uint256 value) external onlyMinterBurner {
         _mint(account, value);
     }
 
-    /// @notice Burns custom tokens from a holder.
+    /// @notice Burns Custom Tokens from a holder.
     /// @notice This function can be called by LxLy Bridge and Native Converter only.
     function burn(address account, uint256 value) external onlyMinterBurner {
         _burn(account, value);

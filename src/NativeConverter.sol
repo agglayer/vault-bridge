@@ -18,8 +18,8 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 /// @title Native Converter
-/// @notice Native Converter lives on Layer Ys and converts the underlying token (usually a bridge-wrapped token) to the custom token, and vice versa, on demand. It can also migrate backing for the custom token it has minted to Layer X, where yeToken will be minted and locked in LxLy Bridge. Please refer to `migrateBackingToLayerX` for more information.
-/// @dev This contract MUST have mint and burn permission on the custom token. Please refer to `CustomToken.sol` for more information.
+/// @notice Native Converter lives on Layer Ys and converts the underlying token (usually a bridge-wrapped token) to Custom Token, and vice versa, on demand. It can also migrate backing for Custom Token it has minted to Layer X, where yeToken will be minted and locked in LxLy Bridge. Please refer to `migrateBackingToLayerX` for more information.
+/// @dev This contract MUST have mint and burn permission on Custom Token. Please refer to `CustomToken.sol` for more information.
 abstract contract NativeConverter is
     Initializable,
     OwnableUpgradeable,
@@ -98,7 +98,7 @@ abstract contract NativeConverter is
         require(layerXLxlyId_ != ILxLyBridge(lxlyBridge_).networkID(), InvalidLxLyBridge());
         require(yeToken_ != address(0), InvalidYeToken());
 
-        // Check the custom token's decimals.
+        // Check Custom Token's decimals.
         uint8 customTokenDecimals;
         try IERC20Metadata(customToken_).decimals() returns (uint8 decimals) {
             customTokenDecimals = decimals;
@@ -155,7 +155,7 @@ abstract contract NativeConverter is
         return $.underlyingToken;
     }
 
-    /// @notice The amount of the underlying token that backs the custom token minted by Native Converter on Layer Y that has not been migrated to Layer X.
+    /// @notice The amount of the underlying token that backs Custom Token minted by Native Converter on Layer Y that has not been migrated to Layer X.
     /// @dev The amount is used in accounting and may be different from Native Converter's underlying token balance. You may do as you wish with surplus underlying token balance, but you MUST NOT designate it as backing.
     function backingOnLayerY() public view returns (uint256) {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
@@ -189,9 +189,9 @@ abstract contract NativeConverter is
 
     // -----================= ::: PSEUDO ERC-4626 ::: =================-----
 
-    /// @notice Deposit a specific amount of the underlying token and get the custom token.
-    /// @param assets The amount of the underlying token to convert to the custom token.
-    /// @return shares The amount of the custom token minted to the receiver.
+    /// @notice Deposit a specific amount of the underlying token and get Custom Token.
+    /// @param assets The amount of the underlying token to convert to Custom Token.
+    /// @return shares The amount of Custom Token minted to the receiver.
     function convert(uint256 assets, address receiver) public whenNotPaused returns (uint256 shares) {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
 
@@ -208,14 +208,14 @@ abstract contract NativeConverter is
         // Set the return value.
         shares = _convertToShares(assets);
 
-        // Mint the custom token to the receiver.
+        // Mint Custom Token to the receiver.
         $.customToken.mint(receiver, shares);
     }
 
-    /// @notice Deposit a specific amount of the underlying token and get the custom token.
+    /// @notice Deposit a specific amount of the underlying token and get Custom Token.
     /// @dev Uses EIP-2612 permit to transfer the underlying token from the sender to self.
-    /// @param assets The amount of the underlying token to convert to the custom token.
-    /// @return shares The amount of the custom token minted to the receiver.
+    /// @param assets The amount of the underlying token to convert to Custom Token.
+    /// @return shares The amount of Custom Token minted to the receiver.
     function convertWithPermit(uint256 assets, address receiver, bytes calldata permitData)
         external
         whenNotPaused
@@ -232,7 +232,7 @@ abstract contract NativeConverter is
         return convert(assets, receiver);
     }
 
-    /// @notice How much custom token a specific user can burn. (Deconverting the custom token burns it and unlocks the underlying token).
+    /// @notice How much Custom Token a specific user can burn. (Deconverting Custom Token burns it and unlocks the underlying token).
     function maxDeconvert(address owner) external view returns (uint256 maxShares) {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
 
@@ -246,8 +246,8 @@ abstract contract NativeConverter is
         return _simulateDeconvert(shares, false);
     }
 
-    /// @dev Calculates the amount of the custom token that can be deconverted right now.
-    /// @param shares The maximum amount of the custom token to simulate deconversion for.
+    /// @dev Calculates the amount of Custom Token that can be deconverted right now.
+    /// @param shares The maximum amount of Custom Token to simulate deconversion for.
     /// @param force Whether to revert if the all of the `shares` would not be deconverted.
     function _simulateDeconvert(uint256 shares, bool force) internal view returns (uint256 deconvertedShares) {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
@@ -269,23 +269,23 @@ abstract contract NativeConverter is
         // Calculate the converted amount.
         uint256 convertedAssets = assets - remainingAssets;
 
-        // Set the return value (the amount of the custom token that can be deconverted right now).
+        // Set the return value (the amount of Custom Token that can be deconverted right now).
         deconvertedShares = _convertToShares(convertedAssets);
 
         // Revert if all of the `shares` must have been deconverted and there is a remaining amount.
         if (force) require(remainingAssets == 0, AssetsTooLarge(convertedAssets, assets));
     }
 
-    /// @notice Burn a specific amount of the custom token to unlock a respective amount of the underlying token.
-    /// @param shares The amount of the custom token to deconvert to the underlying token.
+    /// @notice Burn a specific amount of Custom Token to unlock a respective amount of the underlying token.
+    /// @param shares The amount of Custom Token to deconvert to the underlying token.
     /// @return assets The amount of the underlying token unlocked to the receiver.
     function deconvert(uint256 shares, address receiver) external whenNotPaused returns (uint256 assets) {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
         return _deconvert(shares, $.lxlyId, receiver, false);
     }
 
-    /// @notice Burn a specific amount of the custom token to unlock a respective amount of the underlying token, and bridge it to another network.
-    /// @param shares The amount of the custom token to deconvert to the underlying token.
+    /// @notice Burn a specific amount of Custom Token to unlock a respective amount of the underlying token, and bridge it to another network.
+    /// @param shares The amount of Custom Token to deconvert to the underlying token.
     /// @return assets The amount of the underlying token unlocked to the receiver.
     function deconvertAndBridge(
         uint256 shares,
@@ -301,8 +301,8 @@ abstract contract NativeConverter is
         return _deconvert(shares, destinationNetworkId, receiver, forceUpdateGlobalExitRoot);
     }
 
-    /// @notice Burn a specific amount of the custom token to unlock a respective amount of the underlying token, and optionally bridge it to another network.
-    /// @param shares The amount of the custom token to deconvert to the underlying token.
+    /// @notice Burn a specific amount of Custom Token to unlock a respective amount of the underlying token, and optionally bridge it to another network.
+    /// @param shares The amount of Custom Token to deconvert to the underlying token.
     /// @return assets The amount of the underlying token unlocked to the receiver.
     function _deconvert(uint256 shares, uint32 destinationNetworkId, address receiver, bool forceUpdateGlobalExitRoot)
         internal
@@ -327,7 +327,7 @@ abstract contract NativeConverter is
         // Update the backing data.
         $.backingOnLayerY -= assets;
 
-        // Burn the custom token.
+        // Burn Custom Token.
         $.customToken.burn(msg.sender, shares);
 
         // Withdraw the underlying token.
@@ -342,10 +342,10 @@ abstract contract NativeConverter is
         }
     }
 
-    /// @notice Burn a specific amount of the custom token to unlock a respective amount of the underlying token.
-    /// @param shares The amount of the custom token to deconvert to the underlying token.
+    /// @notice Burn a specific amount of Custom Token to unlock a respective amount of the underlying token.
+    /// @param shares The amount of Custom Token to deconvert to the underlying token.
     /// @return assets The amount of the underlying token unlocked to the receiver.
-    /// @dev Uses EIP-2612 permit to transfer the custom token from the sender to self.
+    /// @dev Uses EIP-2612 permit to transfer Custom Token from the sender to self.
     function deconvertWithPermit(uint256 shares, address receiver, bytes calldata permitData)
         external
         whenNotPaused
@@ -355,10 +355,10 @@ abstract contract NativeConverter is
         return _deconvertWithPermit(shares, permitData, $.lxlyId, receiver, false);
     }
 
-    /// @notice Burn a specific amount of the custom token to unlock a respective amount of the underlying token, and bridge it to another network.
-    /// @param shares The amount of the custom token to deconvert to the underlying token.
+    /// @notice Burn a specific amount of Custom Token to unlock a respective amount of the underlying token, and bridge it to another network.
+    /// @param shares The amount of Custom Token to deconvert to the underlying token.
     /// @return assets The amount of the underlying token unlocked to the receiver.
-    /// @dev Uses EIP-2612 permit to transfer the custom token from the sender to self.
+    /// @dev Uses EIP-2612 permit to transfer Custom Token from the sender to self.
     function deconvertWithPermitAndBridge(
         uint256 shares,
         address receiver,
@@ -374,10 +374,10 @@ abstract contract NativeConverter is
         return _deconvertWithPermit(shares, permitData, destinationNetworkId, receiver, forceUpdateGlobalExitRoot);
     }
 
-    /// @notice Burn a specific amount of the custom token to unlock a respective amount of the underlying token, and optionally bridge it to another network.
-    /// @param shares The amount of the custom token to deconvert to the underlying token.
+    /// @notice Burn a specific amount of Custom Token to unlock a respective amount of the underlying token, and optionally bridge it to another network.
+    /// @param shares The amount of Custom Token to deconvert to the underlying token.
     /// @return assets The amount of the underlying token unlocked to the receiver.
-    /// @dev Uses EIP-2612 permit to transfer the custom token from the sender to self.
+    /// @dev Uses EIP-2612 permit to transfer Custom Token from the sender to self.
     function _deconvertWithPermit(
         uint256 shares,
         bytes calldata permitData,
@@ -396,18 +396,18 @@ abstract contract NativeConverter is
         return _deconvert(shares, destinationNetworkId, receiver, forceUpdateGlobalExitRoot);
     }
 
-    /// @dev Tells how much a specific amount of underlying token is worth in the custom token.
+    /// @dev Tells how much a specific amount of underlying token is worth in Custom Token.
     /// @dev The underlying token backs yeToken 1:1.
     /// @param assets The amount of the underlying token.
-    /// @return shares The amount of the custom token.
+    /// @return shares The amount of Custom Token.
     function _convertToShares(uint256 assets) internal pure returns (uint256 shares) {
         // CAUTION! Changing this function will affect the conversion rate for the entire contract, and may introduce bugs.
         shares = assets;
     }
 
-    /// @dev Tells how much a specific amount of the custom token is worth in the underlying token.
+    /// @dev Tells how much a specific amount of Custom Token is worth in the underlying token.
     /// @dev yeToken is backed by the underlying token 1:1.
-    /// @param shares The amount of the custom token.
+    /// @param shares The amount of Custom Token.
     /// @return assets The amount of the underlying token.
     function _convertToAssets(uint256 shares) internal pure returns (uint256 assets) {
         // CAUTION! Changing this function will affect the conversion rate for the entire contract, and may introduce bugs.
@@ -418,9 +418,10 @@ abstract contract NativeConverter is
 
     /// @notice Migrates a specific amount of backing to Layer X.
     /// @notice This action provides yeToken liquidity on LxLy Bridge on Layer X.
-    /// @notice The bridged assets and message must be claimed manually on Layer X to complete the migration.
+    /// @notice The bridged asset and message must be claimed manually on LxLy Bridge on Layer X to complete the migration.
     /// @notice This function can be called by the owner only.
-    /// @dev Concider calling this function periodically - anyone will be able to complete migrations on Layer X.
+    /// @notice The migration can be completed by anyone on Layer X.
+    /// @dev Concider calling this function periodically - anyone will be able to complete a migration on Layer X.
     function migrateBackingToLayerX(uint256 assets) external whenNotPaused onlyOwner {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
 
@@ -431,7 +432,7 @@ abstract contract NativeConverter is
         // Update the backing data.
         $.backingOnLayerY -= assets;
 
-        // Calculate the amount of the custom token for which backing is being migrated.
+        // Calculate the amount of Custom Token for which backing is being migrated.
         uint256 shares = _convertToShares(assets);
 
         // Bridge the backing to yeToken on Layer X.
@@ -503,6 +504,3 @@ abstract contract NativeConverter is
         $.underlyingToken.safeTransfer(to, value);
     }
 }
-
-// @todo Reentrancy and cross-entrancy review.
-// @todo @notes.
