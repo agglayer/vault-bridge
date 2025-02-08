@@ -23,8 +23,6 @@ contract WETHNativeConverter is NativeConverter {
         uint8 originalUnderlyingTokenDecimals_,
         address customToken_,
         address wrappedUnderlyingToken_,
-        uint256 nonMigratableBackingPercentage_,
-        uint256 minimumBackingAfterMigration_,
         address lxlyBridge_,
         uint32 layerXNetworkId_,
         address yeToken_
@@ -35,8 +33,6 @@ contract WETHNativeConverter is NativeConverter {
             originalUnderlyingTokenDecimals_,
             customToken_,
             wrappedUnderlyingToken_,
-            nonMigratableBackingPercentage_,
-            minimumBackingAfterMigration_,
             lxlyBridge_,
             layerXNetworkId_,
             yeToken_

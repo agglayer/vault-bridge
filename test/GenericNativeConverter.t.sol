@@ -57,8 +57,6 @@ contract MockNativeConverter is NativeConverter {
         uint8 originalUnderlyingTokenDecimals_,
         address customToken_,
         address underlyingToken_,
-        uint256 nonMigratableBackingPercentage_,
-        uint256 minimumBackingAfterMigration_,
         address lxlyBridge_,
         uint32 layerXLxlyId_,
         address yeToken_
@@ -69,8 +67,6 @@ contract MockNativeConverter is NativeConverter {
             originalUnderlyingTokenDecimals_,
             customToken_,
             underlyingToken_,
-            nonMigratableBackingPercentage_,
-            minimumBackingAfterMigration_,
             lxlyBridge_,
             layerXLxlyId_,
             yeToken_
@@ -99,8 +95,6 @@ contract GenericNativeConverterTest is Test {
     bytes32 internal constant PERMIT_TYPEHASH =
         keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
     bytes4 internal constant PERMIT_SIGNATURE = 0xd505accf;
-    uint256 internal constant NON_MIGRATABLE_BACKING_PERCENTAGE = 10;
-    uint256 internal constant MINIMUM_BACKING_AFTER_MIGRATION = 5;
     uint256 constant MAX_NON_MIGRATABLE_BACKING_PERCENTAGE = 100;
 
     MockERC20MintableBurnable internal customToken;
@@ -170,8 +164,6 @@ contract GenericNativeConverterTest is Test {
                 18, // decimals
                 address(_customToken), // custom token
                 address(_underlyingToken), // wrapped underlying token
-                NON_MIGRATABLE_BACKING_PERCENTAGE,
-                MINIMUM_BACKING_AFTER_MIGRATION,
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
                 yeToken
@@ -197,7 +189,6 @@ contract GenericNativeConverterTest is Test {
     function test_setup() public view {
         assertEq(nativeConverter.layerXLxlyId(), NETWORK_ID_L1);
         assertEq(nativeConverter.yeToken(), yeToken);
-        assertEq(nativeConverter.nonMigratableBackingPercentage(), NON_MIGRATABLE_BACKING_PERCENTAGE);
         assertEq(nativeConverter.owner(), owner);
         assertEq(address(nativeConverter.customToken()), address(customToken));
         assertEq(address(nativeConverter.lxlyBridge()), LXLY_BRIDGE);
@@ -216,8 +207,6 @@ contract GenericNativeConverterTest is Test {
                 ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
                 address(customToken),
                 address(underlyingToken),
-                NON_MIGRATABLE_BACKING_PERCENTAGE,
-                MINIMUM_BACKING_AFTER_MIGRATION,
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
                 yeToken
@@ -234,8 +223,6 @@ contract GenericNativeConverterTest is Test {
                 ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
                 address(0),
                 address(underlyingToken),
-                NON_MIGRATABLE_BACKING_PERCENTAGE,
-                MINIMUM_BACKING_AFTER_MIGRATION,
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
                 yeToken
@@ -252,8 +239,6 @@ contract GenericNativeConverterTest is Test {
                 ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
                 address(customToken),
                 address(0),
-                NON_MIGRATABLE_BACKING_PERCENTAGE,
-                MINIMUM_BACKING_AFTER_MIGRATION,
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
                 yeToken
@@ -270,26 +255,6 @@ contract GenericNativeConverterTest is Test {
                 ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
                 address(customToken),
                 address(underlyingToken),
-                MAX_NON_MIGRATABLE_BACKING_PERCENTAGE + 1,
-                MINIMUM_BACKING_AFTER_MIGRATION,
-                LXLY_BRIDGE,
-                NETWORK_ID_L1,
-                yeToken
-            )
-        );
-        vm.expectRevert(NativeConverter.InvalidNonMigratableBackingPercentage.selector);
-        GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
-        vm.revertToState(beforeInit);
-
-        initData = abi.encodeCall(
-            nativeConverter.initialize,
-            (
-                owner,
-                ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
-                address(customToken),
-                address(underlyingToken),
-                NON_MIGRATABLE_BACKING_PERCENTAGE,
-                MINIMUM_BACKING_AFTER_MIGRATION,
                 address(0),
                 NETWORK_ID_L1,
                 yeToken
@@ -306,8 +271,6 @@ contract GenericNativeConverterTest is Test {
                 ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
                 address(customToken),
                 address(underlyingToken),
-                NON_MIGRATABLE_BACKING_PERCENTAGE,
-                MINIMUM_BACKING_AFTER_MIGRATION,
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
                 address(0)
@@ -327,8 +290,6 @@ contract GenericNativeConverterTest is Test {
                 ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
                 address(dummyToken),
                 address(underlyingToken),
-                NON_MIGRATABLE_BACKING_PERCENTAGE,
-                MINIMUM_BACKING_AFTER_MIGRATION,
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
                 yeToken
@@ -348,8 +309,6 @@ contract GenericNativeConverterTest is Test {
                 ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
                 address(customToken),
                 address(dummyToken),
-                NON_MIGRATABLE_BACKING_PERCENTAGE,
-                MINIMUM_BACKING_AFTER_MIGRATION,
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
                 yeToken
@@ -632,27 +591,34 @@ contract GenericNativeConverterTest is Test {
     function test_migrateBackingToLayerX() public {
         uint256 amount = 100;
 
+        // Try to migrate as the owner with a specific amount
+        vm.expectRevert(); // only owner can call this function
+        nativeConverter.migrateBackingToLayerX(amount);
+
         vm.startPrank(owner);
+
         nativeConverter.pause();
         vm.expectRevert(PausableUpgradeable.EnforcedPause.selector);
-        nativeConverter.migrateBackingToLayerX();
+        nativeConverter.migrateBackingToLayerX(amount);
         nativeConverter.unpause();
-        vm.stopPrank();
 
         vm.expectRevert(NativeConverter.InvalidAssets.selector);
-        nativeConverter.migrateBackingToLayerX(); // try with 0 backing
+        nativeConverter.migrateBackingToLayerX(0); // try with 0 backing
+
+        uint256 currentBacking = nativeConverter.backingOnLayerY();
+
+        vm.expectRevert(
+            abi.encodeWithSelector(NativeConverter.AssetsTooLarge.selector, currentBacking, currentBacking + 1)
+        );
+        nativeConverter.migrateBackingToLayerX(currentBacking + 1);
 
         // create backing on layer Y
-
         uint256 backingOnLayerY = 0;
         deal(address(underlyingToken), owner, amount);
-        vm.startPrank(owner);
         underlyingToken.approve(address(nativeConverter), amount);
         backingOnLayerY = nativeConverter.convert(amount, recipient);
-        vm.stopPrank();
 
-        uint256 amountToMigrate =
-            amount - (backingOnLayerY * NON_MIGRATABLE_BACKING_PERCENTAGE) / MAX_NON_MIGRATABLE_BACKING_PERCENTAGE;
+        uint256 amountToMigrate = amount / 2; // try sending half of the backing to layer X
 
         vm.expectEmit();
         emit BridgeEvent(
@@ -677,27 +643,11 @@ contract GenericNativeConverterTest is Test {
             55414
         );
         vm.expectEmit();
-        emit NativeConverter.MigrationStarted(address(this), amountToMigrate, amountToMigrate);
-        nativeConverter.migrateBackingToLayerX();
+        emit NativeConverter.MigrationStarted(owner, amountToMigrate, amountToMigrate);
+        nativeConverter.migrateBackingToLayerX(amountToMigrate);
         assertEq(underlyingToken.balanceOf(address(nativeConverter)), backingOnLayerY - amountToMigrate);
 
-        vm.expectRevert(NativeConverter.InvalidAssets.selector);
-        nativeConverter.migrateBackingToLayerX(); // backing is less than the non migratable backing percentage
-
-        // Try to migrate as the owner with a specific amount
-        vm.expectRevert(); // only owner can call this function
-        nativeConverter.migrateBackingToLayerX(amount);
-
-        vm.startPrank(owner);
-        vm.expectRevert(NativeConverter.InvalidAssets.selector);
-        nativeConverter.migrateBackingToLayerX(0);
-
-        uint256 currentBacking = nativeConverter.backingOnLayerY();
-
-        vm.expectRevert(
-            abi.encodeWithSelector(NativeConverter.AssetsTooLarge.selector, currentBacking, currentBacking + 1)
-        );
-        nativeConverter.migrateBackingToLayerX(currentBacking + 1);
+        vm.stopPrank();
     }
 
     function test_migrateBackingToLayerX_non_mintable() public {
@@ -735,8 +685,6 @@ contract GenericNativeConverterTest is Test {
                 18, // decimals
                 address(_customToken), // custom token
                 address(_underlyingToken), // wrapped underlying token
-                NON_MIGRATABLE_BACKING_PERCENTAGE,
-                MINIMUM_BACKING_AFTER_MIGRATION,
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
                 yeToken
@@ -756,27 +704,34 @@ contract GenericNativeConverterTest is Test {
 
         uint256 amount = 100;
 
+        // Try to migrate as the owner with a specific amount
+        vm.expectRevert(); // only owner can call this function
+        nativeConverter.migrateBackingToLayerX(amount);
+
         vm.startPrank(owner);
+
         nativeConverter.pause();
         vm.expectRevert(PausableUpgradeable.EnforcedPause.selector);
-        nativeConverter.migrateBackingToLayerX();
+        nativeConverter.migrateBackingToLayerX(amount);
         nativeConverter.unpause();
-        vm.stopPrank();
 
         vm.expectRevert(NativeConverter.InvalidAssets.selector);
-        nativeConverter.migrateBackingToLayerX(); // try with 0 backing
+        nativeConverter.migrateBackingToLayerX(0); // try with 0 backing
+
+        uint256 currentBacking = nativeConverter.backingOnLayerY();
+
+        vm.expectRevert(
+            abi.encodeWithSelector(NativeConverter.AssetsTooLarge.selector, currentBacking, currentBacking + 1)
+        );
+        nativeConverter.migrateBackingToLayerX(currentBacking + 1);
 
         // create backing on layer Y
-
         uint256 backingOnLayerY = 0;
         deal(address(underlyingToken), owner, amount);
-        vm.startPrank(owner);
         underlyingToken.approve(address(nativeConverter), amount);
         backingOnLayerY = nativeConverter.convert(amount, recipient);
-        vm.stopPrank();
 
-        uint256 amountToMigrate =
-            amount - (backingOnLayerY * NON_MIGRATABLE_BACKING_PERCENTAGE) / MAX_NON_MIGRATABLE_BACKING_PERCENTAGE;
+        uint256 amountToMigrate = amount / 2; // try sending half of the backing to layer X
 
         vm.expectEmit();
         emit BridgeEvent(
@@ -801,71 +756,12 @@ contract GenericNativeConverterTest is Test {
             55414
         );
         vm.expectEmit();
-        emit NativeConverter.MigrationStarted(address(this), amountToMigrate, amountToMigrate);
-        nativeConverter.migrateBackingToLayerX();
+        emit NativeConverter.MigrationStarted(owner, amountToMigrate, amountToMigrate);
+        nativeConverter.migrateBackingToLayerX(amountToMigrate);
         assertEq(underlyingToken.balanceOf(address(nativeConverter)), backingOnLayerY - amountToMigrate);
         assertEq(underlyingToken.balanceOf(LXLY_BRIDGE), amountToMigrate);
 
-        vm.expectRevert(NativeConverter.InvalidAssets.selector);
-        nativeConverter.migrateBackingToLayerX(); // backing is less than the non migratable backing percentage
-
-        // Try to migrate as the owner with a specific amount
-        vm.expectRevert(); // only owner can call this function
-        nativeConverter.migrateBackingToLayerX(amount);
-
-        vm.startPrank(owner);
-        vm.expectRevert(NativeConverter.InvalidAssets.selector);
-        nativeConverter.migrateBackingToLayerX(0);
-
-        uint256 currentBacking = nativeConverter.backingOnLayerY();
-
-        vm.expectRevert(
-            abi.encodeWithSelector(NativeConverter.AssetsTooLarge.selector, currentBacking, currentBacking + 1)
-        );
-        nativeConverter.migrateBackingToLayerX(currentBacking + 1);
-    }
-
-    function test_setNonMigratableBackingPercentage() public {
-        uint256 newPercentage = 20;
-
-        vm.expectRevert(); // only owner can call this function
-        nativeConverter.setNonMigratableBackingPercentage(0);
-
-        vm.startPrank(owner);
-        nativeConverter.pause();
-        vm.expectRevert(PausableUpgradeable.EnforcedPause.selector);
-        nativeConverter.setNonMigratableBackingPercentage(0);
-        nativeConverter.unpause();
-
-        vm.expectRevert(NativeConverter.InvalidNonMigratableBackingPercentage.selector);
-        nativeConverter.setNonMigratableBackingPercentage(MAX_NON_MIGRATABLE_BACKING_PERCENTAGE + 1);
-
-        vm.expectEmit();
-        emit NativeConverter.NonMigratableBackingPercentageSet(newPercentage);
-        nativeConverter.setNonMigratableBackingPercentage(newPercentage);
         vm.stopPrank();
-
-        assertEq(nativeConverter.nonMigratableBackingPercentage(), newPercentage);
-    }
-
-    function test_setMinimumBackingAfterMigration() public {
-        uint256 newMinimum = 1000;
-
-        vm.expectRevert(); // only owner can call this function
-        nativeConverter.setMinimumBackingAfterMigration(0);
-
-        vm.startPrank(owner);
-        nativeConverter.pause();
-        vm.expectRevert(PausableUpgradeable.EnforcedPause.selector);
-        nativeConverter.setMinimumBackingAfterMigration(0);
-        nativeConverter.unpause();
-
-        vm.expectEmit();
-        emit NativeConverter.MinimumBackingAfterMigrationSet(newMinimum);
-        nativeConverter.setMinimumBackingAfterMigration(newMinimum);
-        vm.stopPrank();
-
-        assertEq(nativeConverter.minimumBackingAfterMigration(), newMinimum);
     }
 
     function test_version() public view {

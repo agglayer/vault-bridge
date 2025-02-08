@@ -60,8 +60,6 @@ contract ZETHNativeConverterTest is Test, GenericNativeConverterTest {
                 18, // decimals
                 address(zETH), // custom token
                 address(wWETH), // wrapped underlying token
-                NON_MIGRATABLE_BACKING_PERCENTAGE,
-                MINIMUM_BACKING_AFTER_MIGRATION,
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
                 yeETH
@@ -98,8 +96,6 @@ contract ZETHNativeConverterTest is Test, GenericNativeConverterTest {
                 ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
                 address(customToken),
                 address(underlyingToken),
-                NON_MIGRATABLE_BACKING_PERCENTAGE,
-                MINIMUM_BACKING_AFTER_MIGRATION,
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
                 yeToken
@@ -117,8 +113,6 @@ contract ZETHNativeConverterTest is Test, GenericNativeConverterTest {
                 ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
                 address(0),
                 address(underlyingToken),
-                NON_MIGRATABLE_BACKING_PERCENTAGE,
-                MINIMUM_BACKING_AFTER_MIGRATION,
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
                 yeToken
@@ -136,8 +130,6 @@ contract ZETHNativeConverterTest is Test, GenericNativeConverterTest {
                 ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
                 address(customToken),
                 address(0),
-                NON_MIGRATABLE_BACKING_PERCENTAGE,
-                MINIMUM_BACKING_AFTER_MIGRATION,
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
                 yeToken
@@ -155,27 +147,6 @@ contract ZETHNativeConverterTest is Test, GenericNativeConverterTest {
                 ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
                 address(customToken),
                 address(underlyingToken),
-                MAX_NON_MIGRATABLE_BACKING_PERCENTAGE + 1,
-                MINIMUM_BACKING_AFTER_MIGRATION,
-                LXLY_BRIDGE,
-                NETWORK_ID_L1,
-                yeToken
-            )
-        );
-        vm.expectRevert(NativeConverter.InvalidNonMigratableBackingPercentage.selector);
-        GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
-        vm.revertToState(beforeInit);
-
-        initData = abi.encodeCall(
-            WETHNativeConverter.initialize,
-            (
-                payable(address(zETH)),
-                owner,
-                ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
-                address(customToken),
-                address(underlyingToken),
-                NON_MIGRATABLE_BACKING_PERCENTAGE,
-                MINIMUM_BACKING_AFTER_MIGRATION,
                 address(0),
                 NETWORK_ID_L1,
                 yeToken
@@ -193,8 +164,6 @@ contract ZETHNativeConverterTest is Test, GenericNativeConverterTest {
                 ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
                 address(customToken),
                 address(underlyingToken),
-                NON_MIGRATABLE_BACKING_PERCENTAGE,
-                MINIMUM_BACKING_AFTER_MIGRATION,
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
                 address(0)
@@ -215,8 +184,6 @@ contract ZETHNativeConverterTest is Test, GenericNativeConverterTest {
                 ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
                 address(dummyToken),
                 address(underlyingToken),
-                NON_MIGRATABLE_BACKING_PERCENTAGE,
-                MINIMUM_BACKING_AFTER_MIGRATION,
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
                 yeToken
@@ -237,8 +204,6 @@ contract ZETHNativeConverterTest is Test, GenericNativeConverterTest {
                 ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
                 address(customToken),
                 address(dummyToken),
-                NON_MIGRATABLE_BACKING_PERCENTAGE,
-                MINIMUM_BACKING_AFTER_MIGRATION,
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
                 yeToken

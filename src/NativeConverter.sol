@@ -421,7 +421,7 @@ abstract contract NativeConverter is
     /// @notice The bridged asset and message must be claimed manually on LxLy Bridge on Layer X to complete the migration.
     /// @notice This function can be called by the owner only.
     /// @notice The migration can be completed by anyone on Layer X.
-    /// @dev Concider calling this function periodically - anyone will be able to complete a migration on Layer X.
+    /// @dev Consider calling this function periodically - anyone will be able to complete a migration on Layer X.
     function migrateBackingToLayerX(uint256 assets) external whenNotPaused onlyOwner {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
 
