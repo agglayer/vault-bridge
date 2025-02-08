@@ -27,7 +27,7 @@ contract GenericYieldExposedTokenTest is Test {
     bytes4 constant PERMIT_SIGNATURE = 0xd505accf;
     address internal constant TEST_TOKEN = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
     address internal constant TEST_TOKEN_VAULT = 0xBEEF01735c132Ada46AA9aA4c54623cAA92A64CB;
-    uint256 internal constant MAX_MINIMUM_RESERVE_PERCENTAGE = 100;
+    uint256 internal constant MAX_MINIMUM_RESERVE_PERCENTAGE = 1e18;
     bytes32 internal constant RESERVE_ASSET_STORAGE =
         hex"ed23de664e59f2cbf6ba852da776346da171cf53c9d06b116fea0fc5ee912502";
 
@@ -92,7 +92,7 @@ contract GenericYieldExposedTokenTest is Test {
         symbol = "yeUSDC";
         decimals = 6;
         yeTokenMetaData = abi.encode(name, symbol, decimals);
-        minimumReservePercentage = 10;
+        minimumReservePercentage = 1e17;
 
         yeToken = new GenericYeToken();
         yeTokenImplementation = address(yeToken);
@@ -300,7 +300,7 @@ contract GenericYieldExposedTokenTest is Test {
     }
 
     function test_deposit() public {
-        uint256 amount = 100;
+        uint256 amount = 100 ether;
         uint256 vaultMaxDeposit = yeTokenVault.maxDeposit(address(yeToken));
         uint256 reserveAssets = (amount * minimumReservePercentage) / MAX_MINIMUM_RESERVE_PERCENTAGE;
 
@@ -342,7 +342,7 @@ contract GenericYieldExposedTokenTest is Test {
     }
 
     function test_depositWithPermit() public virtual {
-        uint256 amount = 100;
+        uint256 amount = 100 ether;
         uint256 vaultMaxDeposit = yeTokenVault.maxDeposit(address(yeToken));
         uint256 reserveAssets = (amount * minimumReservePercentage) / MAX_MINIMUM_RESERVE_PERCENTAGE;
 
@@ -384,7 +384,7 @@ contract GenericYieldExposedTokenTest is Test {
     }
 
     function test_depositAndBridge() public {
-        uint256 amount = 100;
+        uint256 amount = 100 ether;
         uint256 vaultMaxDeposit = yeTokenVault.maxDeposit(address(yeToken));
         uint256 reserveAssets = (amount * minimumReservePercentage) / MAX_MINIMUM_RESERVE_PERCENTAGE;
 
@@ -423,7 +423,7 @@ contract GenericYieldExposedTokenTest is Test {
     }
 
     function test_depositAndBridgePermit() public virtual {
-        uint256 amount = 100;
+        uint256 amount = 100 ether;
         uint256 vaultMaxDeposit = yeTokenVault.maxDeposit(address(yeToken));
         uint256 reserveAssets = (amount * minimumReservePercentage) / MAX_MINIMUM_RESERVE_PERCENTAGE;
 
@@ -472,7 +472,7 @@ contract GenericYieldExposedTokenTest is Test {
     }
 
     function test_mint() public virtual {
-        uint256 amount = 100;
+        uint256 amount = 100 ether;
         uint256 vaultMaxDeposit = yeTokenVault.maxDeposit(address(yeToken));
         uint256 reserveAssets = (amount * minimumReservePercentage) / MAX_MINIMUM_RESERVE_PERCENTAGE;
 
@@ -501,7 +501,7 @@ contract GenericYieldExposedTokenTest is Test {
     }
 
     function test_withdraw() public virtual {
-        uint256 amount = 100;
+        uint256 amount = 100 ether;
         uint256 vaultMaxDeposit = yeTokenVault.maxDeposit(address(yeToken));
         uint256 reserveAmount = (amount * minimumReservePercentage) / MAX_MINIMUM_RESERVE_PERCENTAGE;
 
@@ -545,7 +545,7 @@ contract GenericYieldExposedTokenTest is Test {
     }
 
     function test_replenishReserve() public {
-        uint256 amount = 100;
+        uint256 amount = 100 ether;
         uint256 vaultMaxDeposit = yeTokenVault.maxDeposit(address(yeToken));
         uint256 userDepositAmount = amount;
 
@@ -584,7 +584,7 @@ contract GenericYieldExposedTokenTest is Test {
         vm.expectRevert(); // only owner can rebalance reserve
         yeToken.rebalanceReserve();
 
-        uint256 amount = 100;
+        uint256 amount = 100 ether;
         uint256 vaultMaxDeposit = yeTokenVault.maxDeposit(address(yeToken));
         uint256 userDepositAmount = amount;
         uint256 totalSupply;
@@ -654,8 +654,8 @@ contract GenericYieldExposedTokenTest is Test {
         vm.prank(owner);
         yeToken.collectYield();
 
-        uint256 amount = 100;
-        uint256 yieldInAssets = 500;
+        uint256 amount = 100 ether;
+        uint256 yieldInAssets = 500 ether;
 
         deal(asset, sender, amount);
         vm.startPrank(sender);
@@ -697,8 +697,8 @@ contract GenericYieldExposedTokenTest is Test {
     }
 
     function test_setYieldRecipient_with_yield() public {
-        uint256 amount = 100;
-        uint256 yieldInAssets = 500;
+        uint256 amount = 100 ether;
+        uint256 yieldInAssets = 500 ether;
         address newRecipient = makeAddr("newRecipient");
 
         // generate yield
@@ -726,7 +726,7 @@ contract GenericYieldExposedTokenTest is Test {
     }
 
     function test_setMinimumReservePercentage_no_rebalance() public {
-        uint256 newPercentage = 20;
+        uint256 newPercentage = 2e17;
         vm.expectRevert(); // only owner can set minimum reserve percentage
         yeToken.setMinimumReservePercentage(newPercentage);
 
@@ -744,8 +744,8 @@ contract GenericYieldExposedTokenTest is Test {
     }
 
     function test_setMinimumReservePercentage_with_rebalance() public {
-        uint256 amount = 100;
-        uint256 newPercentage = 20;
+        uint256 amount = 100 ether;
+        uint256 newPercentage = 2e17;
         uint256 maxVaultDeposit = yeTokenVault.maxDeposit(address(yeToken));
         uint256 userDepositAmount = amount;
 
@@ -789,7 +789,7 @@ contract GenericYieldExposedTokenTest is Test {
     }
 
     function test_redeem() public virtual {
-        uint256 amount = 100;
+        uint256 amount = 100 ether;
 
         vm.startPrank(owner);
         yeToken.pause();
@@ -822,8 +822,8 @@ contract GenericYieldExposedTokenTest is Test {
     }
 
     function test_onMessageReceived_no_discrepancy() public {
-        uint256 amount = 100;
-        uint256 shares = 100;
+        uint256 amount = 100 ether;
+        uint256 shares = 100 ether;
 
         // make sure the amount is less than the max deposit limit
         uint256 vaultMaxDeposit = yeTokenVault.maxDeposit(address(yeToken));
@@ -890,9 +890,9 @@ contract GenericYieldExposedTokenTest is Test {
     }
 
     function test_onMessageReceived_with_discrepancy() public {
-        uint256 amount = 100;
-        uint256 shares = 110;
-        uint256 yieldInAssets = 20;
+        uint256 amount = 100 ether;
+        uint256 shares = 110 ether;
+        uint256 yieldInAssets = 20 ether;
 
         // make sure the amount is less than the max deposit limit
         uint256 vaultMaxDeposit = yeTokenVault.maxDeposit(address(yeToken));
@@ -951,7 +951,7 @@ contract GenericYieldExposedTokenTest is Test {
     }
 
     function test_previewDeposit() public {
-        uint256 amount = 100;
+        uint256 amount = 100 ether;
 
         vm.startPrank(owner);
         yeToken.pause();
@@ -975,7 +975,7 @@ contract GenericYieldExposedTokenTest is Test {
     }
 
     function test_previewMint() public virtual {
-        uint256 amount = 100;
+        uint256 amount = 100 ether;
 
         vm.startPrank(owner);
         yeToken.pause();
@@ -991,7 +991,7 @@ contract GenericYieldExposedTokenTest is Test {
     }
 
     function test_maxWithdraw() public virtual {
-        uint256 amount = 100;
+        uint256 amount = 100 ether;
 
         vm.startPrank(owner);
         yeToken.pause();
@@ -1011,7 +1011,7 @@ contract GenericYieldExposedTokenTest is Test {
     }
 
     function test_previewWithdraw() public virtual {
-        uint256 amount = 100;
+        uint256 amount = 100 ether;
         uint256 vaultMaxDeposit = yeTokenVault.maxDeposit(address(yeToken));
         uint256 reserveAmount = (amount * minimumReservePercentage) / MAX_MINIMUM_RESERVE_PERCENTAGE;
 
@@ -1046,7 +1046,7 @@ contract GenericYieldExposedTokenTest is Test {
     }
 
     function test_maxRedeem() public virtual {
-        uint256 amount = 100;
+        uint256 amount = 100 ether;
 
         vm.startPrank(owner);
         yeToken.pause();
@@ -1066,7 +1066,7 @@ contract GenericYieldExposedTokenTest is Test {
     }
 
     function test_previewRedeem() public virtual {
-        uint256 amount = 100;
+        uint256 amount = 100 ether;
         uint256 vaultMaxDeposit = yeTokenVault.maxDeposit(address(yeToken));
         uint256 reserveAmount = (amount * minimumReservePercentage) / MAX_MINIMUM_RESERVE_PERCENTAGE;
 
@@ -1101,7 +1101,7 @@ contract GenericYieldExposedTokenTest is Test {
     }
 
     function test_reservePercentage() public {
-        uint256 amount = 100;
+        uint256 amount = 100 ether;
         uint256 vaultMaxDeposit = yeTokenVault.maxDeposit(address(yeToken));
         uint256 reserveAmount = (amount * minimumReservePercentage) / MAX_MINIMUM_RESERVE_PERCENTAGE;
 

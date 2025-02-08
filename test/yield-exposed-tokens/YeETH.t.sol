@@ -26,7 +26,7 @@ contract YeETHTest is GenericYieldExposedTokenTest {
         symbol = "yeETH";
         decimals = 18;
         yeTokenMetaData = abi.encode(name, symbol, decimals);
-        minimumReservePercentage = 10;
+        minimumReservePercentage = 1e17;
 
         // Deploy implementation
         yeToken = GenericYeToken(address(new YeETH()));

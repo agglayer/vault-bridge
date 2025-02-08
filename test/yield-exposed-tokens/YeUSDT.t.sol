@@ -37,7 +37,7 @@ contract YeUSDTTest is GenericYieldExposedTokenTest {
         symbol = "yeUSDT";
         decimals = 6;
         yeTokenMetaData = abi.encode(name, symbol, decimals);
-        minimumReservePercentage = 10;
+        minimumReservePercentage = 1e17;
 
         yeToken = GenericYeToken(address(new YeUSDTHarness()));
         yeTokenImplementation = address(yeToken);
