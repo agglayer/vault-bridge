@@ -7,6 +7,8 @@ import {ILxLyBridge} from "src/etc/ILxLyBridge.sol";
 import {IWETH9} from "src/etc/IWETH9.sol";
 import {GenericYieldExposedTokenTest, GenericYeToken} from "test/GenericYieldExposedToken.t.sol";
 import {IMetaMorpho} from "test/interfaces/IMetaMorpho.sol";
+import {ILxLyBridge as _ILxLyBridge} from "test/interfaces/ILxLyBridge.sol";
+import {WETHNativeConverter} from "src/custom-tokens/WETH/WETHNativeConverter.sol";
 
 contract YeETHTest is GenericYieldExposedTokenTest {
     YeETH public yeETH;
@@ -169,5 +171,141 @@ contract YeETHTest is GenericYieldExposedTokenTest {
         assertEq(IWETH9(WETH).balanceOf(address(yeETH)), 0); // reserve assets remain same
         assertEq(IWETH9(WETH).balanceOf(address(this)), initialBalance + reserveWithdrawAmount + stakeWithdrawAmount); // assets returned to sender
         assertEq(yeETH.balanceOf(address(this)), initialAmount - reserveWithdrawAmount - stakeWithdrawAmount); // shares reduced
+    }
+
+    function test_onMessageReceived_CUSTOM_no_discrepancy() public {
+        uint256 amount = 100 ether;
+        uint256 shares = 100 ether;
+
+        // make sure the amount is less than the max deposit limit
+        uint256 vaultMaxDeposit = yeTokenVault.maxDeposit(address(yeToken));
+        if (amount > vaultMaxDeposit) {
+            amount = vaultMaxDeposit / 2;
+            shares = vaultMaxDeposit / 2;
+        }
+
+        bytes memory data = abi.encode(
+            YieldExposedToken.CrossNetworkInstruction.CUSTOM,
+            abi.encode(
+                WETHNativeConverter.CustomCrossNetworkInstruction.WRAP_COIN_AND_COMPLETE_MIGRATION,
+                abi.encode(shares, amount)
+            )
+        );
+
+        vm.startPrank(owner);
+        yeToken.pause();
+        vm.expectRevert(EnforcedPause.selector);
+        yeToken.onMessageReceived(nativeConverter, NETWORK_ID_L2, data);
+        yeToken.unpause();
+        vm.stopPrank();
+
+        deal(address(yeToken), amount);
+
+        vm.expectRevert(YieldExposedToken.Unauthorized.selector);
+        yeToken.onMessageReceived(nativeConverter, NETWORK_ID_L2, data);
+
+        vm.expectRevert(YieldExposedToken.Unauthorized.selector);
+        vm.prank(LXLY_BRIDGE);
+        yeToken.onMessageReceived(address(0), NETWORK_ID_L2, data);
+
+        vm.expectRevert(YieldExposedToken.InvalidOriginNetworkId.selector);
+        vm.prank(LXLY_BRIDGE);
+        yeToken.onMessageReceived(nativeConverter, NETWORK_ID_L1, data);
+
+        bytes memory invalidSharesData =
+            abi.encode(YieldExposedToken.CrossNetworkInstruction.COMPLETE_MIGRATION, abi.encode(
+                WETHNativeConverter.CustomCrossNetworkInstruction.WRAP_COIN_AND_COMPLETE_MIGRATION,
+                abi.encode(0, amount)
+            ));
+
+        vm.expectRevert(YieldExposedToken.InvalidShares.selector);
+        vm.prank(LXLY_BRIDGE);
+        yeToken.onMessageReceived(nativeConverter, NETWORK_ID_L2, invalidSharesData);
+
+
+        uint256 stakedAssetsBefore = yeToken.stakedAssets();
+
+        vm.expectEmit();
+        emit BridgeEvent(
+            LEAF_TYPE_ASSET,
+            NETWORK_ID_L1,
+            address(yeToken),
+            NETWORK_ID_L2,
+            address(0),
+            shares,
+            yeTokenMetaData,
+            _ILxLyBridge(LXLY_BRIDGE).depositCount()
+        );
+        vm.expectEmit();
+        emit Deposit(LXLY_BRIDGE, address(yeToken), amount, shares);
+        vm.expectEmit();
+        emit MigrationCompleted(NETWORK_ID_L2, shares, amount, amount, 0);
+        vm.prank(LXLY_BRIDGE);
+        yeToken.onMessageReceived(nativeConverter, NETWORK_ID_L2, data);
+
+        assertEq(
+            yeToken.reservedAssets(),
+            yeToken.convertToAssets(shares) * minimumReservePercentage / MAX_MINIMUM_RESERVE_PERCENTAGE
+        );
+        assertGt(yeToken.stakedAssets(), stakedAssetsBefore);
+    }
+
+    function test_onMessageReceived_CUSTOM_with_discrepancy() public {
+        uint256 amount = 100 ether;
+        uint256 shares = 110 ether;
+        uint256 yieldInAssets = 20 ether;
+
+        // make sure the amount is less than the max deposit limit
+        uint256 vaultMaxDeposit = yeTokenVault.maxDeposit(address(yeToken));
+        if (amount > vaultMaxDeposit) {
+            amount = vaultMaxDeposit / 2;
+            shares = (vaultMaxDeposit / 2) + 10;
+            yieldInAssets = vaultMaxDeposit;
+        }
+
+        bytes memory data = abi.encode(
+            YieldExposedToken.CrossNetworkInstruction.CUSTOM,
+            abi.encode(
+                WETHNativeConverter.CustomCrossNetworkInstruction.WRAP_COIN_AND_COMPLETE_MIGRATION,
+                abi.encode(shares, amount)
+            )
+        );
+        
+        deal(address(yeToken), amount);
+
+        vm.expectRevert(abi.encodeWithSelector(YieldExposedToken.CannotCompleteMigration.selector, shares, amount, 0));
+        vm.prank(LXLY_BRIDGE);
+        yeToken.onMessageReceived(nativeConverter, NETWORK_ID_L2, data);
+
+        uint256 sharesBalanceBefore = yeTokenVault.balanceOf(address(yeToken));
+        uint256 yieldShares = yeTokenVault.convertToShares(yieldInAssets);
+
+        deal(address(yeTokenVault), address(yeToken), sharesBalanceBefore + yieldShares); // add yield to the vault
+
+        uint256 stakedAssetsBefore = yeToken.stakedAssets();
+
+        vm.expectEmit();
+        emit BridgeEvent(
+            LEAF_TYPE_ASSET,
+            NETWORK_ID_L1,
+            address(yeToken),
+            NETWORK_ID_L2,
+            address(0),
+            shares,
+            yeTokenMetaData,
+            _ILxLyBridge(LXLY_BRIDGE).depositCount()
+        );
+        vm.expectEmit();
+        emit Deposit(LXLY_BRIDGE, address(yeToken), amount, shares);
+        vm.expectEmit();
+        emit MigrationCompleted(NETWORK_ID_L2, shares, amount, amount, shares - amount);
+        vm.prank(LXLY_BRIDGE);
+        yeToken.onMessageReceived(nativeConverter, NETWORK_ID_L2, data);
+
+        assertEq(
+            yeToken.reservedAssets(),
+            yeToken.convertToAssets(shares) * minimumReservePercentage / MAX_MINIMUM_RESERVE_PERCENTAGE
+        );
+        assertGt(yeToken.stakedAssets(), stakedAssetsBefore);
     }
 }
