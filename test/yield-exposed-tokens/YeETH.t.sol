@@ -212,16 +212,17 @@ contract YeETHTest is GenericYieldExposedTokenTest {
         vm.prank(LXLY_BRIDGE);
         yeToken.onMessageReceived(nativeConverter, NETWORK_ID_L1, data);
 
-        bytes memory invalidSharesData =
-            abi.encode(YieldExposedToken.CrossNetworkInstruction.COMPLETE_MIGRATION, abi.encode(
+        bytes memory invalidSharesData = abi.encode(
+            YieldExposedToken.CrossNetworkInstruction.COMPLETE_MIGRATION,
+            abi.encode(
                 WETHNativeConverter.CustomCrossNetworkInstruction.WRAP_COIN_AND_COMPLETE_MIGRATION,
                 abi.encode(0, amount)
-            ));
+            )
+        );
 
         vm.expectRevert(YieldExposedToken.InvalidShares.selector);
         vm.prank(LXLY_BRIDGE);
         yeToken.onMessageReceived(nativeConverter, NETWORK_ID_L2, invalidSharesData);
-
 
         uint256 stakedAssetsBefore = yeToken.stakedAssets();
 
@@ -270,7 +271,7 @@ contract YeETHTest is GenericYieldExposedTokenTest {
                 abi.encode(shares, amount)
             )
         );
-        
+
         deal(address(yeToken), amount);
 
         vm.expectRevert(abi.encodeWithSelector(YieldExposedToken.CannotCompleteMigration.selector, shares, amount, 0));

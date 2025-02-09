@@ -11,7 +11,7 @@ contract ZETHTest is Test {
     uint256 internal zkevmFork;
     address LXLY_BRIDGE = 0x2a3DD3EB832aF982ec71669E178424b10Dca2EDe;
     address internal calculatedNativeConverterAddr =
-    vm.computeCreateAddress(address(this), vm.getNonce(address(this)) + 2);
+        vm.computeCreateAddress(address(this), vm.getNonce(address(this)) + 2);
 
     function setUp() public {
         zkevmFork = vm.createSelectFork("polygon_zkevm", 19164969);
@@ -63,5 +63,5 @@ contract ZETHTest is Test {
         assertEq(zETH.version(), "1.0.0");
     }
 
-    receive() external payable{}
+    receive() external payable {}
 }
