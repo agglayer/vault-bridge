@@ -16,3 +16,9 @@ docs/
 
 # Dotenv file
 .env
+
+# Coverage report
+coverage
+lcov.info
+
+.DS_Store

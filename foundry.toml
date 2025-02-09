@@ -2,14 +2,23 @@
 src = "src"
 out = "out"
 libs = ["dependencies"]
+via-ir = true
 verbosity = 2
 ffi = true
 remappings = [
-    "forge-std/=dependencies/forge-std-1.9.4/src",
-    "@openzeppelin-contracts/=dependencies/@openzeppelin-contracts-5.1.0/",
     "@openzeppelin-contracts-upgradeable/=dependencies/@openzeppelin-contracts-upgradeable-5.1.0/",
+    "@openzeppelin-contracts/=dependencies/@openzeppelin-contracts-5.1.0/",
     "@openzeppelin/contracts/=dependencies/@openzeppelin-contracts-5.1.0/",
+    "forge-std/=dependencies/forge-std-1.9.4/src",
 ]
+
+[rpc_endpoints]
+mainnet = "https://mainnet.infura.io/v3/${INFURA_TOKEN}"
+mainnet_test = "https://eth-pokt.nodies.app"
+sepolia = "https://sepolia.infura.io/v3/${INFURA_TOKEN}"
+polygon_pos = "https://polygon-mainnet.infura.io/v3/${INFURA_TOKEN}"
+polygon_zkevm = "https://zkevm-rpc.com"
+polygon_zkevm_testnet = "https://rpc.public.zkevm-test.net"
 
 [dependencies]
 forge-std = { version = "1.9.4" }

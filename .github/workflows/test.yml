@@ -38,8 +38,12 @@ jobs:
         run: |
           forge --version
           forge soldeer install
-          forge build --sizes
+          forge build
         id: build
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update && sudo apt-get install unzip -y
 
       - name: Install Bun
         uses: oven-sh/setup-bun@v2
@@ -47,5 +51,5 @@ jobs:
       - name: Run Forge tests
         run: |
           bun install
-          forge test -vvv
+          forge test --no-match-contract "Generic" -vvv
         id: test

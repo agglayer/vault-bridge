@@ -1,27 +1,78 @@
-# Soldeer Minimal
+<h1 align="center">🌾 Yield Exposed Token</h1>
 
-**Minimal Forge, Soldeer, and Bun template.**
+<div align="center">
 
-Soldeer Minimal uses Soldeer package manager instead of git modules and can run TypeScript out of box.
+Yield Exposed Token is the core of the Stake The Bridge system. Built from the ground up to be reusable, it offers complete STB functionality out of the box, allowing you to create yeTokens in just a few lines of code.
+
+</div>
+
+## Overview
+
+The Stake The Bridge system is comprised of:
+
+- Layer X
+  - [Yield Exposed Token](#yield-exposed-token-)
+- Layer Y
+  - [Custom Token](#custom-token-)
+  - [Native Converter](#native-converter-)
+
+### Yield Exposed Token [↗](src/YieldExposedToken.sol)
+
+A Yield Exposed Token is an
+
+- [ERC-20](https://eips.ethereum.org/EIPS/eip-20) token
+- [ERC-4626](https://eips.ethereum.org/EIPS/eip-4626) vault
+- [LxLy Bridge](https://github.com/0xPolygonHermez/zkevm-contracts) extension
+
+enabling bridging of select assets, such as WBTC, WETH, USDC, USDT, and DAI, while producing yield.
+
+### Custom Token [↗](src/CustomToken.sol)
+
+A Custom Token is an
+
+- [ERC-20](https://eips.ethereum.org/EIPS/eip-20) token
+
+custom-mapped to yeToken on [LxLy Bridge](https://github.com/0xPolygonHermez/zkevm-contracts).
+
+### Native Converter [↗](src/NativeConverter.sol)
+
+A Native Converter is a
+
+- Pseudo [ERC-4626](https://eips.ethereum.org/EIPS/eip-4626) vault
+- [LxLy Bridge](https://github.com/0xPolygonHermez/zkevm-contracts) extension
+
+allowing conversion to, and deconversion of, Custom Token.
 
 ## Usage
 
-**Install**
+#### Prerequisite
 
-```shell
+```
+foundryup
+```
+
+#### Install
+
+```
 forge soldeer install & bun install
 ```
 
-**Build**
+#### Build
 
-```shell
+```
 forge build
 ```
 
-**Test**
+#### Test
 
-```shell
+```
 forge test
+```
+
+#### Coverage
+
+```
+forge coverage --ir-minimum --report lcov && genhtml -o coverage lcov.info
 ```
 
 ## License
@@ -37,4 +88,4 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 
 ---
 
-© 2025 Zero Ekkusu
+© 2025 PT Services DMCC
