@@ -38,7 +38,7 @@ custom-mapped to yeToken on [LxLy Bridge](https://github.com/0xPolygonHermez/zke
 
 A Native Converter is a
 
-- Pseudo [ERC-4626](https://eips.ethereum.org/EIPS/eip-4626) vault
+- pseudo [ERC-4626](https://eips.ethereum.org/EIPS/eip-4626) vault
 - [LxLy Bridge](https://github.com/0xPolygonHermez/zkevm-contracts) extension
 
 allowing conversion to, and deconversion of, Custom Token.
