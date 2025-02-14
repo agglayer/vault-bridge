@@ -48,8 +48,13 @@ jobs:
       - name: Install Bun
         uses: oven-sh/setup-bun@v2
 
+      - name: Install node
+        uses: actions/setup-node@v2
+        with:
+          node-version: "20"
+
       - name: Run Forge tests
         run: |
-          bun install
+          bun install && npm install
           forge test --no-match-contract "Generic" -vvv
         id: test
