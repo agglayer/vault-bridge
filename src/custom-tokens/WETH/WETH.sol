@@ -10,7 +10,7 @@ import {IVersioned} from "../../etc/IVersioned.sol";
 
 /// @title ZETH
 /// @dev based on https://github.com/gnosis/canonical-weth/blob/master/contracts/WETH9.sol
-contract ZETH is CustomToken {
+contract WETH is CustomToken {
     event Deposit(address indexed from, uint256 value);
     event Withdrawal(address indexed to, uint256 value);
 
@@ -18,7 +18,11 @@ contract ZETH is CustomToken {
         _disableInitializers();
     }
 
-    /// @notice Owner should be WETHNativeConverter.
+    modifier onlyNativeConverter() {
+        require(msg.sender == nativeConverter(), Unauthorized());
+        _;
+    }
+
     function initialize(
         address owner_,
         string calldata name_,
@@ -31,7 +35,7 @@ contract ZETH is CustomToken {
         __CustomToken_init(owner_, name_, symbol_, originalUnderlyingTokenDecimals_, lxlyBridge_, nativeConverter_);
     }
 
-    function bridgeBackingToLayerX(uint256 amount) external onlyOwner {
+    function bridgeBackingToLayerX(uint256 amount) external onlyNativeConverter {
         (bool success,) = owner().call{value: amount}("");
         require(success);
     }

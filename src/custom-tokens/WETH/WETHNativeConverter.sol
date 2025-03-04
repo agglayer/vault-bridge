@@ -2,12 +2,12 @@
 pragma solidity 0.8.28;
 
 import {NativeConverter} from "../../NativeConverter.sol";
-import {ZETH} from "./zETH.sol";
+import {WETH} from "./WETH.sol";
 import {IVersioned} from "../../etc/IVersioned.sol";
 
 /// @title WETH Native Converter
 contract WETHNativeConverter is NativeConverter {
-    ZETH zETH;
+    WETH weth;
 
     enum CustomCrossNetworkInstruction {
         WRAP_COIN_AND_COMPLETE_MIGRATION
@@ -18,11 +18,10 @@ contract WETHNativeConverter is NativeConverter {
     }
 
     function initialize(
-        address payable zETH_,
         address owner_,
         uint8 originalUnderlyingTokenDecimals_,
         address customToken_,
-        address wrappedUnderlyingToken_,
+        address underlyingToken_,
         address lxlyBridge_,
         uint32 layerXNetworkId_,
         address yeToken_
@@ -32,13 +31,13 @@ contract WETHNativeConverter is NativeConverter {
             owner_,
             originalUnderlyingTokenDecimals_,
             customToken_,
-            wrappedUnderlyingToken_,
+            underlyingToken_,
             lxlyBridge_,
             layerXNetworkId_,
             yeToken_
         );
 
-        zETH = ZETH(zETH_);
+        weth = WETH(payable(customToken_));
     }
 
     /// @dev This special function allows the NativeConverter owner to migrate the gas backing of the zETH Custom Token
@@ -51,13 +50,13 @@ contract WETHNativeConverter is NativeConverter {
     function migrateGasBackingToLayerX(uint256 amount) external whenNotPaused onlyOwner {
         // Check the input.
         require(amount > 0, InvalidAssets());
-        require(amount <= address(zETH).balance, AssetsTooLarge(address(zETH).balance, amount));
+        require(amount <= address(weth).balance, AssetsTooLarge(address(weth).balance, amount));
 
         // Precalculate the amount of Custom Token for which backing is being migrated.
         uint256 amountOfCustomToken = _convertToShares(amount);
 
         // Taking lxlyBridge's gas balance here
-        zETH.bridgeBackingToLayerX(amount);
+        weth.bridgeBackingToLayerX(amount);
         lxlyBridge().bridgeAsset{value: amount}(layerXLxlyId(), address(yeToken()), amount, address(0), true, "");
 
         // Bridge a message to Migration Manager on Layer X to complete the migration.
@@ -67,9 +66,7 @@ contract WETHNativeConverter is NativeConverter {
             true,
             abi.encode(
                 CrossNetworkInstruction.CUSTOM,
-                CustomCrossNetworkInstruction.WRAP_COIN_AND_COMPLETE_MIGRATION,
-                amountOfCustomToken,
-                amount
+                abi.encode(CustomCrossNetworkInstruction.WRAP_COIN_AND_COMPLETE_MIGRATION, amountOfCustomToken, amount)
             )
         );
 
