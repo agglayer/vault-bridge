@@ -5,6 +5,7 @@ pragma solidity 0.8.28;
 import {Initializable} from "@openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
 import {OwnableUpgradeable} from "@openzeppelin-contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {PausableUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/PausableUpgradeable.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import {ERC20PermitUser} from "./etc/ERC20PermitUser.sol";
 import {IVersioned} from "./etc/IVersioned.sol";
 
@@ -24,6 +25,7 @@ abstract contract NativeConverter is
     Initializable,
     OwnableUpgradeable,
     PausableUpgradeable,
+    ReentrancyGuardUpgradeable,
     ERC20PermitUser,
     IVersioned
 {
@@ -192,7 +194,14 @@ abstract contract NativeConverter is
     /// @notice Deposit a specific amount of the underlying token and get Custom Token.
     /// @param assets The amount of the underlying token to convert to Custom Token.
     /// @return shares The amount of Custom Token minted to the receiver.
-    function convert(uint256 assets, address receiver) public whenNotPaused returns (uint256 shares) {
+    function convert(uint256 assets, address receiver) external whenNotPaused nonReentrant returns (uint256 shares) {
+        return _convert(assets, receiver);
+    }
+
+    /// @notice Deposit a specific amount of the underlying token and get Custom Token.
+    /// @param assets The amount of the underlying token to convert to Custom Token.
+    /// @return shares The amount of Custom Token minted to the receiver.
+    function _convert(uint256 assets, address receiver) internal returns (uint256 shares) {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
 
         // Check the inputs.
@@ -219,6 +228,7 @@ abstract contract NativeConverter is
     function convertWithPermit(uint256 assets, address receiver, bytes calldata permitData)
         external
         whenNotPaused
+        nonReentrant
         returns (uint256 shares)
     {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
@@ -229,7 +239,7 @@ abstract contract NativeConverter is
         // Use the permit.
         _permit(address($.underlyingToken), assets, permitData);
 
-        return convert(assets, receiver);
+        return _convert(assets, receiver);
     }
 
     /// @notice How much Custom Token a specific user can burn. (Deconverting Custom Token burns it and unlocks the underlying token).
@@ -279,7 +289,7 @@ abstract contract NativeConverter is
     /// @notice Burn a specific amount of Custom Token to unlock a respective amount of the underlying token.
     /// @param shares The amount of Custom Token to deconvert to the underlying token.
     /// @return assets The amount of the underlying token unlocked to the receiver.
-    function deconvert(uint256 shares, address receiver) external whenNotPaused returns (uint256 assets) {
+    function deconvert(uint256 shares, address receiver) external whenNotPaused nonReentrant returns (uint256 assets) {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
         return _deconvert(shares, $.lxlyId, receiver, false);
     }
@@ -292,7 +302,7 @@ abstract contract NativeConverter is
         address receiver,
         uint32 destinationNetworkId,
         bool forceUpdateGlobalExitRoot
-    ) public whenNotPaused returns (uint256 assets) {
+    ) external whenNotPaused nonReentrant returns (uint256 assets) {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
 
         // Check the input.
@@ -349,6 +359,7 @@ abstract contract NativeConverter is
     function deconvertWithPermit(uint256 shares, address receiver, bytes calldata permitData)
         external
         whenNotPaused
+        nonReentrant
         returns (uint256 assets)
     {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
@@ -365,7 +376,7 @@ abstract contract NativeConverter is
         uint32 destinationNetworkId,
         bool forceUpdateGlobalExitRoot,
         bytes calldata permitData
-    ) external whenNotPaused returns (uint256 assets) {
+    ) external whenNotPaused nonReentrant returns (uint256 assets) {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
 
         // Check the input.
@@ -422,7 +433,7 @@ abstract contract NativeConverter is
     /// @notice This function can be called by the owner only.
     /// @notice The migration can be completed by anyone on Layer X.
     /// @dev Consider calling this function periodically - anyone will be able to complete a migration on Layer X.
-    function migrateBackingToLayerX(uint256 assets) external whenNotPaused onlyOwner {
+    function migrateBackingToLayerX(uint256 assets) external whenNotPaused onlyOwner nonReentrant {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
 
         // Check the input.
@@ -468,13 +479,13 @@ abstract contract NativeConverter is
 
     /// @notice Prevents usage of functions with the `whenNotPaused` modifier.
     /// @notice This function can be called by the owner only.
-    function pause() external onlyOwner {
+    function pause() external onlyOwner nonReentrant {
         _pause();
     }
 
     /// @notice Allows usage of functions with the `whenNotPaused` modifier.
     /// @notice This function can be called by the owner only.
-    function unpause() external onlyOwner {
+    function unpause() external onlyOwner nonReentrant {
         _unpause();
     }
 

@@ -45,7 +45,7 @@ contract YeETH is YieldExposedToken {
     }
 
     /// @dev deposit ETH to get yeETH
-    function depositGasToken(address receiver) external payable whenNotPaused returns (uint256 shares) {
+    function depositGasToken(address receiver) external payable whenNotPaused nonReentrant returns (uint256 shares) {
         (shares,) = _deposit(msg.value, lxlyId(), receiver, false, 0);
     }
 
@@ -54,7 +54,7 @@ contract YeETH is YieldExposedToken {
         address destinationAddress,
         uint32 destinationNetworkId,
         bool forceUpdateGlobalExitRoot
-    ) external payable whenNotPaused returns (uint256 shares) {
+    ) external payable whenNotPaused nonReentrant returns (uint256 shares) {
         (shares,) = _deposit(msg.value, destinationNetworkId, destinationAddress, forceUpdateGlobalExitRoot, 0);
     }
 
@@ -62,6 +62,7 @@ contract YeETH is YieldExposedToken {
         external
         payable
         whenNotPaused
+        nonReentrant
         returns (uint256 assets)
     {
         require(shares > 0, InvalidShares());

@@ -35,7 +35,7 @@ contract WETH is CustomToken {
         __CustomToken_init(owner_, name_, symbol_, originalUnderlyingTokenDecimals_, lxlyBridge_, nativeConverter_);
     }
 
-    function bridgeBackingToLayerX(uint256 amount) external onlyNativeConverter {
+    function bridgeBackingToLayerX(uint256 amount) external onlyNativeConverter nonReentrant {
         (bool success,) = owner().call{value: amount}("");
         require(success);
     }
@@ -44,12 +44,12 @@ contract WETH is CustomToken {
         deposit();
     }
 
-    function deposit() public payable {
+    function deposit() public payable nonReentrant {
         _mint(msg.sender, msg.value);
         emit Deposit(msg.sender, msg.value);
     }
 
-    function withdraw(uint256 value) public {
+    function withdraw(uint256 value) external nonReentrant {
         require(balanceOf(msg.sender) >= value);
         _burn(msg.sender, value);
         payable(msg.sender).transfer(value);

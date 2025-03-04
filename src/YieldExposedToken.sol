@@ -10,6 +10,7 @@ import {ERC20PermitUpgradeable} from
 import {Initializable} from "@openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
 import {OwnableUpgradeable} from "@openzeppelin-contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {PausableUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/PausableUpgradeable.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import {ERC20PermitUser} from "./etc/ERC20PermitUser.sol";
 import {IVersioned} from "./etc/IVersioned.sol";
 
@@ -34,6 +35,7 @@ abstract contract YieldExposedToken is
     Initializable,
     OwnableUpgradeable,
     PausableUpgradeable,
+    ReentrancyGuardUpgradeable,
     IERC4626,
     ERC20PermitUpgradeable,
     ERC20PermitUser,
@@ -144,6 +146,7 @@ abstract contract YieldExposedToken is
         __ERC20Permit_init(name_);
         __Ownable_init(owner_);
         __Pausable_init();
+        __ReentrancyGuard_init();
 
         // Initialize the storage.
         $.underlyingToken = IERC20(underlyingToken_);
@@ -283,7 +286,7 @@ abstract contract YieldExposedToken is
     }
 
     /// @notice Deposit a specific amount of the underlying token and mint yeToken.
-    function deposit(uint256 assets, address receiver) external whenNotPaused returns (uint256 shares) {
+    function deposit(uint256 assets, address receiver) external whenNotPaused nonReentrant returns (uint256 shares) {
         YieldExposedTokenStorage storage $ = _getYieldExposedTokenStorage();
         (shares,) = _deposit(assets, $.lxlyId, receiver, false, 0);
     }
@@ -296,7 +299,7 @@ abstract contract YieldExposedToken is
         address receiver,
         uint32 destinationNetworkId,
         bool forceUpdateGlobalExitRoot
-    ) external whenNotPaused returns (uint256 shares) {
+    ) external whenNotPaused nonReentrant returns (uint256 shares) {
         YieldExposedTokenStorage storage $ = _getYieldExposedTokenStorage();
 
         // Check the input.
@@ -395,6 +398,7 @@ abstract contract YieldExposedToken is
     function depositWithPermit(uint256 assets, address receiver, bytes calldata permitData)
         external
         whenNotPaused
+        nonReentrant
         returns (uint256 shares)
     {
         YieldExposedTokenStorage storage $ = _getYieldExposedTokenStorage();
@@ -411,7 +415,7 @@ abstract contract YieldExposedToken is
         uint32 destinationNetworkId,
         bool forceUpdateGlobalExitRoot,
         bytes calldata permitData
-    ) external whenNotPaused returns (uint256 shares) {
+    ) external whenNotPaused nonReentrant returns (uint256 shares) {
         YieldExposedTokenStorage storage $ = _getYieldExposedTokenStorage();
 
         // Check the input.
@@ -456,7 +460,7 @@ abstract contract YieldExposedToken is
     }
 
     /// @notice Mint a specific amount of yeToken by locking the required amount of the underlying token.
-    function mint(uint256 shares, address receiver) external whenNotPaused returns (uint256 assets) {
+    function mint(uint256 shares, address receiver) external whenNotPaused nonReentrant returns (uint256 assets) {
         YieldExposedTokenStorage storage $ = _getYieldExposedTokenStorage();
 
         // Check the input.
@@ -521,10 +525,10 @@ abstract contract YieldExposedToken is
 
     /// @notice Withdraw a specific amount of the underlying token by burning the required amount of yeToken.
     /// @notice Transfer fees of the underlying token may apply.
-    /// @notice Withdrawal fees of the yield vault may apply.
     function withdraw(uint256 assets, address receiver, address owner)
         external
         whenNotPaused
+        nonReentrant
         returns (uint256 shares)
     {
         return _withdraw(assets, receiver, owner);
@@ -597,42 +601,6 @@ abstract contract YieldExposedToken is
         }
     }
 
-    /// @notice Claim yeToken from LxLy Bridge and withdraw the underlying token.
-    /// @notice Transfer fees of the underlying token may apply.
-    /// @notice Withdrawal fees of the yield vault may apply.
-    function claimAndWithdraw(
-        bytes32[32] calldata smtProofLocalExitRoot,
-        bytes32[32] calldata smtProofRollupExitRoot,
-        uint256 globalIndex,
-        bytes32 mainnetExitRoot,
-        bytes32 rollupExitRoot,
-        uint32 originNetwork,
-        address originTokenAddress,
-        uint32 destinationNetwork,
-        address destinationAddress,
-        uint256 amount,
-        bytes calldata metadata,
-        address receiver
-    ) external whenNotPaused returns (uint256 shares) {
-        // Claim yeToken from LxLy Bridge.
-        lxlyBridge().claimAsset(
-            smtProofLocalExitRoot,
-            smtProofRollupExitRoot,
-            globalIndex,
-            mainnetExitRoot,
-            rollupExitRoot,
-            originNetwork,
-            originTokenAddress,
-            destinationNetwork,
-            destinationAddress,
-            amount,
-            metadata
-        );
-
-        // Withdraw the underlying token to the receiver.
-        return _withdraw(amount, receiver, destinationAddress);
-    }
-
     /// @notice How much yeToken can be redeemed for a specific user. (Redeeming yeToken burns it and unlocks the underlying token).
     function maxRedeem(address owner) external view returns (uint256 maxShares) {
         // Return zero if the contract is paused.
@@ -656,16 +624,58 @@ abstract contract YieldExposedToken is
 
     /// @notice Burn a specific amount of yeToken and unlock the respective amount of the underlying token.
     /// @notice Transfer fees of the underlying token may apply.
-    /// @notice Withdrawal fees of the yield vault may apply.
-    function redeem(uint256 shares, address receiver, address owner) external whenNotPaused returns (uint256 assets) {
+    function redeem(uint256 shares, address receiver, address owner)
+        external
+        whenNotPaused
+        nonReentrant
+        returns (uint256 assets)
+    {
         // Check the input.
         require(shares > 0, InvalidShares());
 
         // Set the return value.
         assets = convertToAssets(shares);
 
-        // Burn yeToken.
+        // Burn yeToken and unlock the underlying token.
         uint256 redeemedShares = _withdraw(assets, receiver, owner);
+
+        // Check the output.
+        require(redeemedShares == shares, IncorrectAmountOfSharesRedeemed(redeemedShares, shares));
+    }
+
+    /// @notice Claim yeToken from LxLy Bridge and redeem it.
+    /// @notice Transfer fees of the underlying token may apply.
+    function claimAndRedeem(
+        bytes32[32] calldata smtProofLocalExitRoot,
+        bytes32[32] calldata smtProofRollupExitRoot,
+        uint256 globalIndex,
+        bytes32 mainnetExitRoot,
+        bytes32 rollupExitRoot,
+        uint32 originNetwork,
+        address originTokenAddress,
+        uint32 destinationNetwork,
+        address destinationAddress,
+        uint256 amount,
+        bytes calldata metadata,
+        address receiver
+    ) external whenNotPaused nonReentrant returns (uint256 shares) {
+        // Claim yeToken from LxLy Bridge.
+        lxlyBridge().claimAsset(
+            smtProofLocalExitRoot,
+            smtProofRollupExitRoot,
+            globalIndex,
+            mainnetExitRoot,
+            rollupExitRoot,
+            originNetwork,
+            originTokenAddress,
+            destinationNetwork,
+            destinationAddress,
+            amount,
+            metadata
+        );
+
+        // Burn yeToken and unlock the underlying token.
+        uint256 redeemedShares = _withdraw(amount, receiver, destinationAddress);
 
         // Check the output.
         require(redeemedShares == shares, IncorrectAmountOfSharesRedeemed(redeemedShares, shares));
@@ -673,45 +683,49 @@ abstract contract YieldExposedToken is
 
     // -----================= ::: ERC-20 ::: =================-----
 
-    /// @dev Pausable ERC-20 `transfer` function.
+    /// @dev Pausable, non-reentrant ERC-20 `transfer` function.
     function transfer(address to, uint256 value)
         public
         virtual
         override(ERC20Upgradeable, IERC20)
         whenNotPaused
+        nonReentrant
         returns (bool)
     {
         return ERC20Upgradeable.transfer(to, value);
     }
 
-    /// @dev Pausable ERC-20 `transferFrom` function.
+    /// @dev Pausable, non-reentrant ERC-20 `transferFrom` function.
     function transferFrom(address from, address to, uint256 value)
         public
         virtual
         override(ERC20Upgradeable, IERC20)
         whenNotPaused
+        nonReentrant
         returns (bool)
     {
         return ERC20Upgradeable.transferFrom(from, to, value);
     }
 
-    /// @dev Pausable ERC-20 `approve` function.
+    /// @dev Pausable, non-reentrant ERC-20 `approve` function.
     function approve(address spender, uint256 value)
         public
         virtual
         override(ERC20Upgradeable, IERC20)
         whenNotPaused
+        nonReentrant
         returns (bool)
     {
         return ERC20Upgradeable.approve(spender, value);
     }
 
-    /// @dev Pausable ERC-20 Permit `permit` function.
+    /// @dev Pausable, non-reentrant ERC-20 Permit `permit` function.
     function permit(address owner, address spender, uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s)
         public
         virtual
         override
         whenNotPaused
+        nonReentrant
     {
         super.permit(owner, spender, value, deadline, v, r, s);
     }
@@ -760,20 +774,20 @@ abstract contract YieldExposedToken is
     /// @notice Refill the internal reserve of the underlying token by withdrawing from the yield vault.
     /// @notice This function can be called by anyone.
     /// @dev It is possible to force the reserved assets to be deposited into the yield vault by using a flashloan; however, this is a non-issue.
-    function replenishReserve() public whenNotPaused {
+    function replenishReserve() external whenNotPaused nonReentrant {
         _rebalanceReserve(true, false);
     }
 
     /// @notice Rebalances the internal reserve by withdrawing the underlying token from, or depositing the underlying token into, the yield vault.
     /// @notice This function can be called by the owner only.
-    function rebalanceReserve() external onlyOwner whenNotPaused {
+    function rebalanceReserve() external whenNotPaused onlyOwner nonReentrant {
         _rebalanceReserve(true, true);
     }
 
     /// @notice Rebalances the internal reserve by withdrawing the underlying token from, or depositing the underlying token into, the yield vault.
     /// @param force Whether to revert if the reserve cannot be rebalanced.
     /// @param allowRebalanceDown Whether to allow the reserve to be rebalanced down (by depositing into the yield vault).
-    function _rebalanceReserve(bool force, bool allowRebalanceDown) public {
+    function _rebalanceReserve(bool force, bool allowRebalanceDown) internal {
         YieldExposedTokenStorage storage $ = _getYieldExposedTokenStorage();
 
         // Calculate the minimum reserve amount.
@@ -839,7 +853,7 @@ abstract contract YieldExposedToken is
     /// @notice Transfers yield generated by the yield vault to the yield recipient in the form of yeToken.
     /// @notice The reserve will be rebalanced after collecting yield.
     /// @notice This function can be called by the owner only.
-    function collectYield() external whenNotPaused onlyOwner {
+    function collectYield() external whenNotPaused onlyOwner nonReentrant {
         _collectYield(true);
     }
 
@@ -873,7 +887,7 @@ abstract contract YieldExposedToken is
     /// @notice This function can be used if the yield recipient has collected an unrealistic (excessive) amount of yield historically.
     /// @notice The reserve will be rebalanced after burning yeToken.
     /// @notice This function can be called by the yield recipient only.
-    function burn(uint256 shares) external {
+    function burn(uint256 shares) external whenNotPaused nonReentrant {
         YieldExposedTokenStorage storage $ = _getYieldExposedTokenStorage();
 
         // Check the input.
@@ -896,7 +910,7 @@ abstract contract YieldExposedToken is
     /// @notice Adds a specific amount of the underlying token to the reserve by transferring it from the sender.
     /// @notice This function can be used to increase the available yield when there is not enough to complete a migration due to a discrepancy. Please refer to `_completeMigration` for more information.
     /// @notice This function can be called by anyone.
-    function donate(uint256 assets) external {
+    function donate(uint256 assets) external whenNotPaused nonReentrant {
         YieldExposedTokenStorage storage $ = _getYieldExposedTokenStorage();
 
         // Check the input.
@@ -919,6 +933,7 @@ abstract contract YieldExposedToken is
         external
         payable
         whenNotPaused
+        nonReentrant
     {
         YieldExposedTokenStorage storage $ = _getYieldExposedTokenStorage();
 
@@ -1019,7 +1034,7 @@ abstract contract YieldExposedToken is
     /// @notice Sets the yield recipient.
     /// @notice Yield will be collected before changing the recipient.
     /// @notice This function can be called by the owner only.
-    function setYieldRecipient(address yieldRecipient_) external onlyOwner whenNotPaused {
+    function setYieldRecipient(address yieldRecipient_) external whenNotPaused onlyOwner nonReentrant {
         YieldExposedTokenStorage storage $ = _getYieldExposedTokenStorage();
 
         // Check the input.
@@ -1038,7 +1053,12 @@ abstract contract YieldExposedToken is
     /// @notice Sets the minimum reserve percentage.
     /// @notice The reserve will be rebalanced after changing the minimum reserve percentage.
     /// @notice This function can be called by the owner only.
-    function setMinimumReservePercentage(uint256 minimumReservePercentage_) external onlyOwner whenNotPaused {
+    function setMinimumReservePercentage(uint256 minimumReservePercentage_)
+        external
+        whenNotPaused
+        onlyOwner
+        nonReentrant
+    {
         YieldExposedTokenStorage storage $ = _getYieldExposedTokenStorage();
 
         // Check the input.
@@ -1058,13 +1078,13 @@ abstract contract YieldExposedToken is
 
     /// @notice Prevents usage of functions with the `whenNotPaused` modifier.
     /// @notice This function can be called by the owner only.
-    function pause() external onlyOwner {
+    function pause() external onlyOwner nonReentrant {
         _pause();
     }
 
     /// @notice Allows usage of functions with the `whenNotPaused` modifier.
     /// @notice This function can be called by the owner only.
-    function unpause() external onlyOwner {
+    function unpause() external onlyOwner nonReentrant {
         _unpause();
     }
 

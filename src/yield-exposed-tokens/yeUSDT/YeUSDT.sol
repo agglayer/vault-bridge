@@ -85,7 +85,7 @@ contract YeUSDT is YieldExposedToken {
     // -----================= ::: YEUSDT ::: =================-----
 
     /// @notice Recache the USDT transfer fee parameters.
-    function recacheUsdtTransferFeeParameters() public {
+    function recacheUsdtTransferFeeParameters() public whenNotPaused nonReentrant {
         YeUSDTStorage storage $ = _getYeUSDTStorage();
 
         // Recache the parameters on this contract.

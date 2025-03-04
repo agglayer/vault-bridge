@@ -9,6 +9,7 @@ import {ERC20PermitUpgradeable} from
 import {Initializable} from "@openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
 import {OwnableUpgradeable} from "@openzeppelin-contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {PausableUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/PausableUpgradeable.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import {IVersioned} from "./etc/IVersioned.sol";
 
 /// @title Custom Token
@@ -19,6 +20,7 @@ abstract contract CustomToken is
     Initializable,
     OwnableUpgradeable,
     PausableUpgradeable,
+    ReentrancyGuardUpgradeable,
     ERC20PermitUpgradeable,
     IVersioned
 {
@@ -117,33 +119,42 @@ abstract contract CustomToken is
 
     // -----================= ::: ERC-20 ::: =================-----
 
-    /// @dev Pausable ERC-20 `transfer` function.
-    function transfer(address to, uint256 value) public virtual override whenNotPaused returns (bool) {
+    /// @dev Pausable, non-reentrant ERC-20 `transfer` function.
+    function transfer(address to, uint256 value) public virtual override whenNotPaused nonReentrant returns (bool) {
         return super.transfer(to, value);
     }
 
-    /// @dev Pausable ERC-20 `transferFrom` function.
+    /// @dev Pausable, non-reentrant ERC-20 `transferFrom` function.
     function transferFrom(address from, address to, uint256 value)
         public
         virtual
         override
         whenNotPaused
+        nonReentrant
         returns (bool)
     {
         return super.transferFrom(from, to, value);
     }
 
-    /// @dev Pausable ERC-20 `approve` function.
-    function approve(address spender, uint256 value) public virtual override whenNotPaused returns (bool) {
+    /// @dev Pausable, non-reentrant ERC-20 `approve` function.
+    function approve(address spender, uint256 value)
+        public
+        virtual
+        override
+        whenNotPaused
+        nonReentrant
+        returns (bool)
+    {
         return super.approve(spender, value);
     }
 
-    /// @dev Pausable ERC-20 Permit `permit` function.
+    /// @dev Pausable, non-reentrant ERC-20 Permit `permit` function.
     function permit(address owner, address spender, uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s)
         public
         virtual
         override
         whenNotPaused
+        nonReentrant
     {
         super.permit(owner, spender, value, deadline, v, r, s);
     }
@@ -152,13 +163,13 @@ abstract contract CustomToken is
 
     /// @notice Mints Custom Tokens to the recipient.
     /// @notice This function can be called by LxLy Bridge and Native Converter only.
-    function mint(address account, uint256 value) external onlyMinterBurner whenNotPaused {
+    function mint(address account, uint256 value) external whenNotPaused onlyMinterBurner nonReentrant {
         _mint(account, value);
     }
 
     /// @notice Burns Custom Tokens from a holder.
     /// @notice This function can be called by LxLy Bridge and Native Converter only.
-    function burn(address account, uint256 value) external onlyMinterBurner whenNotPaused {
+    function burn(address account, uint256 value) external whenNotPaused onlyMinterBurner nonReentrant {
         _burn(account, value);
     }
 
@@ -166,13 +177,13 @@ abstract contract CustomToken is
 
     /// @notice Prevents usage of functions with the `whenNotPaused` modifier.
     /// @notice This function can be called by the owner only.
-    function pause() external onlyOwner {
+    function pause() external onlyOwner nonReentrant {
         _pause();
     }
 
     /// @notice Allows usage of functions with the `whenNotPaused` modifier.
     /// @notice This function can be called by the owner only.
-    function unpause() external onlyOwner {
+    function unpause() external onlyOwner nonReentrant {
         _unpause();
     }
 }
