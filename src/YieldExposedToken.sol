@@ -665,14 +665,14 @@ abstract contract YieldExposedToken is
         uint256 globalIndex,
         bytes32 mainnetExitRoot,
         bytes32 rollupExitRoot,
-        uint32 originNetwork,
-        address originTokenAddress,
-        uint32 destinationNetwork,
         address destinationAddress,
         uint256 amount,
+        // @note Can be hardcoded too, maybe.
         bytes calldata metadata,
         address receiver
     ) external whenNotPaused nonReentrant returns (uint256 shares) {
+        YieldExposedTokenStorage storage $ = _getYieldExposedTokenStorage();
+
         // Claim yeToken from LxLy Bridge.
         lxlyBridge().claimAsset(
             smtProofLocalExitRoot,
@@ -680,9 +680,9 @@ abstract contract YieldExposedToken is
             globalIndex,
             mainnetExitRoot,
             rollupExitRoot,
-            originNetwork,
-            originTokenAddress,
-            destinationNetwork,
+            $.lxlyId,
+            address(this),
+            $.lxlyId,
             destinationAddress,
             amount,
             metadata
