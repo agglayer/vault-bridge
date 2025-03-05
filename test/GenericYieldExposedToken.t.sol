@@ -86,7 +86,7 @@ contract GenericYieldExposedTokenTest is Test {
     event Unpaused(address account);
 
     function setUp() public virtual {
-        mainnetFork = vm.createSelectFork("mainnet_test", 21590932);
+        mainnetFork = vm.createSelectFork("mainnet");
 
         asset = TEST_TOKEN;
         yeTokenVault = IMetaMorpho(TEST_TOKEN_VAULT);
@@ -852,7 +852,7 @@ contract GenericYieldExposedTokenTest is Test {
         vm.prank(LXLY_BRIDGE);
         yeToken.onMessageReceived(address(0), NETWORK_ID_L2, data);
 
-        vm.expectRevert(YieldExposedToken.InvalidOriginNetwork.selector);
+        vm.expectRevert(YieldExposedToken.Unauthorized.selector);
         vm.prank(LXLY_BRIDGE);
         yeToken.onMessageReceived(nativeConverterAddress, NETWORK_ID_L1, data);
 

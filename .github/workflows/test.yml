@@ -45,16 +45,18 @@ jobs:
         run: |
           sudo apt-get update && sudo apt-get install unzip -y
 
-      - name: Install Bun
-        uses: oven-sh/setup-bun@v2
-
       - name: Install node
         uses: actions/setup-node@v2
         with:
           node-version: "20"
 
+      - name: Set INFURA_TOKEN
+        run: |
+          echo "INFURA_TOKEN=${{ secrets.INFURA_TOKEN }}" >> .env
+          echo "TATARA_TOKEN=${{ secrets.TATARA_TOKEN }}" >> .env
+
       - name: Run Forge tests
         run: |
-          bun install && npm install
+          npm install
           forge test --no-match-contract "Generic" -vvv
         id: test

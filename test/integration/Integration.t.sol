@@ -389,7 +389,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
         //////////////////////////////////////////////////////////////
         // Switch to Layer Y
         //////////////////////////////////////////////////////////////
-        forkIdLayerY = vm.createSelectFork("katana_apex", 815634);
+        forkIdLayerY = vm.createSelectFork("tatara");
 
         // deploy custom token
         customToken = new MockCustomToken();

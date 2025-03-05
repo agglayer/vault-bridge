@@ -19,7 +19,7 @@ contract YeETHTest is GenericYieldExposedTokenTest {
     uint32 constant ZKEVM_NETWORK_ID = 1; // zkEVM
 
     function setUp() public override {
-        mainnetFork = vm.createSelectFork("mainnet_test", 21590932);
+        mainnetFork = vm.createSelectFork("mainnet");
 
         asset = WETH;
         yeTokenVault = IMetaMorpho(WETH_METAMORPHO);
@@ -208,7 +208,7 @@ contract YeETHTest is GenericYieldExposedTokenTest {
         vm.prank(LXLY_BRIDGE);
         yeToken.onMessageReceived(address(0), NETWORK_ID_L2, data);
 
-        vm.expectRevert(YieldExposedToken.InvalidOriginNetwork.selector);
+        vm.expectRevert(YieldExposedToken.Unauthorized.selector);
         vm.prank(LXLY_BRIDGE);
         yeToken.onMessageReceived(nativeConverterAddress, NETWORK_ID_L1, data);
 

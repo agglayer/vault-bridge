@@ -28,7 +28,7 @@ contract YeUSDTTest is GenericYieldExposedTokenTest {
     YeUSDTHarness yeUSDT;
 
     function setUp() public override {
-        mainnetFork = vm.createSelectFork("mainnet_test", 21590932);
+        mainnetFork = vm.createSelectFork("mainnet");
 
         asset = USDT;
         yeTokenVault = IMetaMorpho(USDT_VAULT);
