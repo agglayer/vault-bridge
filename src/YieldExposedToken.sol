@@ -247,7 +247,7 @@ abstract contract YieldExposedToken is
     /// @notice The address of Native Conveter on a Layer Y of this yeToken.
     /// @notice Native Converter on Layer Ys can mint Custom Token independently of yeToken, and the migrate backing to Layer X. Please refer to `completeMigration` for more information.
     /// @return Returns address zero if there is no Native Converter set for Layer Y.
-    function nativeConverter(uint32 layerYLxlyId) public view returns (address) {
+    function nativeConverters(uint32 layerYLxlyId) public view returns (address) {
         YieldExposedTokenStorage storage $ = _getYieldExposedTokenStorage();
         return $.nativeConverters[layerYLxlyId];
     }
@@ -1091,7 +1091,7 @@ abstract contract YieldExposedToken is
 
     /// @notice Sets Native Converter on Layer Ys. One Layer Y cannot have more than one Native Converter.
     /// @notice This function can be called by the owner only.
-    function setNativeConverters(NativeConverter[] calldata nativeConverters)
+    function setNativeConverters(NativeConverter[] calldata nativeConverters_)
         external
         whenNotPaused
         onlyOwner
@@ -1100,18 +1100,18 @@ abstract contract YieldExposedToken is
         YieldExposedTokenStorage storage $ = _getYieldExposedTokenStorage();
 
         // Check the input.
-        require(nativeConverters.length > 0, InvalidNativeConverters());
+        require(nativeConverters_.length > 0, InvalidNativeConverters());
 
         // Set the native converters.
-        for (uint256 i; i < nativeConverters.length; ++i) {
+        for (uint256 i; i < nativeConverters_.length; ++i) {
             // Check the input.
-            require(nativeConverters[i].layerYLxlyId != $.lxlyId, InvalidNativeConverters());
+            require(nativeConverters_[i].layerYLxlyId != $.lxlyId, InvalidNativeConverters());
 
             // Set Native Converter.
-            $.nativeConverters[nativeConverters[i].layerYLxlyId] = nativeConverters[i].nativeConverter;
+            $.nativeConverters[nativeConverters_[i].layerYLxlyId] = nativeConverters_[i].nativeConverter;
 
             // Emit the event.
-            emit NativeConverterSet(nativeConverters[i].layerYLxlyId, nativeConverters[i].nativeConverter);
+            emit NativeConverterSet(nativeConverters_[i].layerYLxlyId, nativeConverters_[i].nativeConverter);
         }
     }
 

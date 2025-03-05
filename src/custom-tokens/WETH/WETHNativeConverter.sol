@@ -66,7 +66,10 @@ contract WETHNativeConverter is NativeConverter {
             true,
             abi.encode(
                 CrossNetworkInstruction.CUSTOM,
-                abi.encode(CustomCrossNetworkInstruction.WRAP_COIN_AND_COMPLETE_MIGRATION, amountOfCustomToken, amount)
+                abi.encode(
+                    CustomCrossNetworkInstruction.WRAP_COIN_AND_COMPLETE_MIGRATION,
+                    abi.encode(amountOfCustomToken, amount)
+                )
             )
         );
 

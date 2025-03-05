@@ -129,6 +129,7 @@ abstract contract NativeConverter is
         // Initialize the inherited contracts.
         __Ownable_init(owner_);
         __Pausable_init();
+        __ReentrancyGuard_init();
 
         // Initialize the storage.
         $.customToken = CustomToken(customToken_);

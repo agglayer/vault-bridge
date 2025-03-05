@@ -28,7 +28,7 @@ contract YeETH is YieldExposedToken {
         address yieldVault_,
         address yieldRecipient_,
         address lxlyBridge_,
-        address nativeConverter_
+        NativeConverter[] calldata nativeConverters_
     ) external initializer {
         // Initialize the base implementation.
         __YieldExposedToken_init(
@@ -40,7 +40,7 @@ contract YeETH is YieldExposedToken {
             yieldVault_,
             yieldRecipient_,
             lxlyBridge_,
-            nativeConverter_
+            nativeConverters_
         );
     }
 
@@ -101,7 +101,8 @@ contract YeETH is YieldExposedToken {
             abi.decode(customData, (CustomCrossNetworkInstruction, bytes));
 
         if (instruction == CustomCrossNetworkInstruction.WRAP_COIN_AND_COMPLETE_MIGRATION) {
-            require(originAddress == nativeConverter(), Unauthorized());
+            require(originAddress != address(0), Unauthorized());
+            require(originAddress == nativeConverters(originNetwork), Unauthorized());
 
             (uint256 shares, uint256 assets) = abi.decode(instructionData, (uint256, uint256));
 

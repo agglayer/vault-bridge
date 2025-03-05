@@ -9,7 +9,6 @@ import {ERC20PermitUpgradeable} from
 import {Initializable} from "@openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
 import {OwnableUpgradeable} from "@openzeppelin-contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {PausableUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/PausableUpgradeable.sol";
-import {ReentrancyGuardUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import {IVersioned} from "./etc/IVersioned.sol";
 
 /// @title Custom Token
@@ -20,7 +19,6 @@ abstract contract CustomToken is
     Initializable,
     OwnableUpgradeable,
     PausableUpgradeable,
-    ReentrancyGuardUpgradeable,
     ERC20PermitUpgradeable,
     IVersioned
 {
@@ -120,7 +118,7 @@ abstract contract CustomToken is
     // -----================= ::: ERC-20 ::: =================-----
 
     /// @dev Pausable, non-reentrant ERC-20 `transfer` function.
-    function transfer(address to, uint256 value) public virtual override whenNotPaused nonReentrant returns (bool) {
+    function transfer(address to, uint256 value) public virtual override whenNotPaused returns (bool) {
         return super.transfer(to, value);
     }
 
@@ -130,21 +128,13 @@ abstract contract CustomToken is
         virtual
         override
         whenNotPaused
-        nonReentrant
         returns (bool)
     {
         return super.transferFrom(from, to, value);
     }
 
     /// @dev Pausable, non-reentrant ERC-20 `approve` function.
-    function approve(address spender, uint256 value)
-        public
-        virtual
-        override
-        whenNotPaused
-        nonReentrant
-        returns (bool)
-    {
+    function approve(address spender, uint256 value) public virtual override whenNotPaused returns (bool) {
         return super.approve(spender, value);
     }
 
@@ -154,7 +144,6 @@ abstract contract CustomToken is
         virtual
         override
         whenNotPaused
-        nonReentrant
     {
         super.permit(owner, spender, value, deadline, v, r, s);
     }
@@ -163,13 +152,13 @@ abstract contract CustomToken is
 
     /// @notice Mints Custom Tokens to the recipient.
     /// @notice This function can be called by LxLy Bridge and Native Converter only.
-    function mint(address account, uint256 value) external whenNotPaused onlyMinterBurner nonReentrant {
+    function mint(address account, uint256 value) external whenNotPaused onlyMinterBurner {
         _mint(account, value);
     }
 
     /// @notice Burns Custom Tokens from a holder.
     /// @notice This function can be called by LxLy Bridge and Native Converter only.
-    function burn(address account, uint256 value) external whenNotPaused onlyMinterBurner nonReentrant {
+    function burn(address account, uint256 value) external whenNotPaused onlyMinterBurner {
         _burn(account, value);
     }
 
@@ -177,13 +166,13 @@ abstract contract CustomToken is
 
     /// @notice Prevents usage of functions with the `whenNotPaused` modifier.
     /// @notice This function can be called by the owner only.
-    function pause() external onlyOwner nonReentrant {
+    function pause() external onlyOwner {
         _pause();
     }
 
     /// @notice Allows usage of functions with the `whenNotPaused` modifier.
     /// @notice This function can be called by the owner only.
-    function unpause() external onlyOwner nonReentrant {
+    function unpause() external onlyOwner {
         _unpause();
     }
 }
