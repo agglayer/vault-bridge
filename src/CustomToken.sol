@@ -117,12 +117,12 @@ abstract contract CustomToken is
 
     // -----================= ::: ERC-20 ::: =================-----
 
-    /// @dev Pausable, non-reentrant ERC-20 `transfer` function.
+    /// @dev Pausable ERC-20 `transfer` function.
     function transfer(address to, uint256 value) public virtual override whenNotPaused returns (bool) {
         return super.transfer(to, value);
     }
 
-    /// @dev Pausable, non-reentrant ERC-20 `transferFrom` function.
+    /// @dev Pausable ERC-20 `transferFrom` function.
     function transferFrom(address from, address to, uint256 value)
         public
         virtual
@@ -133,12 +133,12 @@ abstract contract CustomToken is
         return super.transferFrom(from, to, value);
     }
 
-    /// @dev Pausable, non-reentrant ERC-20 `approve` function.
+    /// @dev Pausable ERC-20 `approve` function.
     function approve(address spender, uint256 value) public virtual override whenNotPaused returns (bool) {
         return super.approve(spender, value);
     }
 
-    /// @dev Pausable, non-reentrant ERC-20 Permit `permit` function.
+    /// @dev Pausable ERC-20 Permit `permit` function.
     function permit(address owner, address spender, uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s)
         public
         virtual
