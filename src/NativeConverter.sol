@@ -165,6 +165,12 @@ abstract contract NativeConverter is
         return $.backingOnLayerY;
     }
 
+    /// @notice The LxLy ID of this network.
+    function lxlyId() public view returns (uint32) {
+        NativeConverterStorage storage $ = _getNativeConverterStorage();
+        return $.lxlyId;
+    }
+
     /// @notice LxLy Bridge, which connects AggLayer networks.
     function lxlyBridge() public view returns (ILxLyBridge) {
         NativeConverterStorage storage $ = _getNativeConverterStorage();

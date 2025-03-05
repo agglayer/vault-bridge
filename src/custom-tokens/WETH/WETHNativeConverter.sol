@@ -1,12 +1,16 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity 0.8.28;
 
-import {NativeConverter} from "../../NativeConverter.sol";
+// @todo Remove `SafeERC20`, `IERC20`.
+import {NativeConverter, SafeERC20, IERC20} from "../../NativeConverter.sol";
 import {WETH} from "./WETH.sol";
 import {IVersioned} from "../../etc/IVersioned.sol";
 
 /// @title WETH Native Converter
 contract WETHNativeConverter is NativeConverter {
+    // @todo Remove.
+    using SafeERC20 for IERC20;
+
     WETH weth;
 
     enum CustomCrossNetworkInstruction {
@@ -27,6 +31,32 @@ contract WETHNativeConverter is NativeConverter {
         address yeToken_
     ) external initializer {
         // Initialize the base implementation.
+        __NativeConverter_init(
+            owner_,
+            originalUnderlyingTokenDecimals_,
+            customToken_,
+            underlyingToken_,
+            lxlyBridge_,
+            layerXNetworkId_,
+            yeToken_
+        );
+
+        weth = WETH(payable(customToken_));
+    }
+
+    // @todo Remove.
+    function reinitialize(
+        address owner_,
+        uint8 originalUnderlyingTokenDecimals_,
+        address customToken_,
+        address underlyingToken_,
+        address lxlyBridge_,
+        uint32 layerXNetworkId_,
+        address yeToken_
+    ) external reinitializer(2) {
+        underlyingToken().forceApprove(address(lxlyBridge()), 0);
+
+        // Reinitialize the base implementation.
         __NativeConverter_init(
             owner_,
             originalUnderlyingTokenDecimals_,

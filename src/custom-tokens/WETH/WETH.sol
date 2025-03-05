@@ -35,6 +35,19 @@ contract WETH is CustomToken {
         __CustomToken_init(owner_, name_, symbol_, originalUnderlyingTokenDecimals_, lxlyBridge_, nativeConverter_);
     }
 
+    // @todo Remove.
+    function reinitialize(
+        address owner_,
+        string calldata name_,
+        string calldata symbol_,
+        uint8 originalUnderlyingTokenDecimals_,
+        address lxlyBridge_,
+        address nativeConverter_
+    ) external reinitializer(2) {
+        // Reinitialize the inherited contracts.
+        __CustomToken_init(owner_, name_, symbol_, originalUnderlyingTokenDecimals_, lxlyBridge_, nativeConverter_);
+    }
+
     function bridgeBackingToLayerX(uint256 amount) external onlyNativeConverter {
         (bool success,) = nativeConverter().call{value: amount}("");
         require(success);
