@@ -959,7 +959,7 @@ abstract contract YieldExposedToken is
         if (instruction == CrossNetworkInstruction.COMPLETE_MIGRATION) {
             // Check the input.
             require(originAddress != address(0), Unauthorized());
-            require(originAddress == $.nativeConverters[originNetwork], Unauthorized());
+            require(originAddress == $.nativeConverters[originNetwork], InvalidOriginNetwork());
 
             // Decode the amounts.
             (uint256 shares, uint256 assets) = abi.decode(instructionData, (uint256, uint256));
