@@ -50,13 +50,11 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Set INFURA_TOKEN
-        run: |
-          echo "INFURA_TOKEN=${{ secrets.INFURA_TOKEN }}" >> .env
-          echo "TATARA_TOKEN=${{ secrets.TATARA_TOKEN }}" >> .env
-
       - name: Run Forge tests
         run: |
           npm install
           forge test --no-match-contract "Generic" -vvv
+        env:
+          INFURA_TOKEN: ${{ secrets.INFURA_TOKEN }}
+          TATARA_TOKEN: ${{ secrets.TATARA_TOKEN }}
         id: test
