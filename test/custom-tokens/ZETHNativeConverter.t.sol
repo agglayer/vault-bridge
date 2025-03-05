@@ -237,9 +237,10 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
             0,
             abi.encode(
                 NativeConverter.CrossNetworkInstruction.CUSTOM,
-                WETHNativeConverter.CustomCrossNetworkInstruction.WRAP_COIN_AND_COMPLETE_MIGRATION,
-                amountToMigrate,
-                amountToMigrate
+                abi.encode(
+                    WETHNativeConverter.CustomCrossNetworkInstruction.WRAP_COIN_AND_COMPLETE_MIGRATION,
+                    abi.encode(amountToMigrate, amountToMigrate)
+                )
             ),
             55414
         );
