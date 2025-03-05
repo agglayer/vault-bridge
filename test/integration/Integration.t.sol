@@ -31,7 +31,7 @@ contract MockYeToken is YieldExposedToken {
         address yieldVault_,
         address yieldRecipient_,
         address lxlyBridge_,
-        address nativeConverter_
+        NativeConverter[] calldata nativeConverters_
     ) external initializer {
         __YieldExposedToken_init(
             owner_,
@@ -42,7 +42,7 @@ contract MockYeToken is YieldExposedToken {
             yieldVault_,
             yieldRecipient_,
             lxlyBridge_,
-            nativeConverter_
+            nativeConverters_
         );
     }
 
@@ -362,6 +362,9 @@ contract IntegrationTest is Test, ZkEVMCommon {
         uint256 nativeConverterNonce = vm.getNonce(address(this)) + 5;
         address nativeConverterAddr = vm.computeCreateAddress(address(this), nativeConverterNonce);
 
+        YieldExposedToken.NativeConverter[] memory nativeConverterStruct;
+        nativeConverterStruct[0] = YieldExposedToken.NativeConverter({layerYLxlyId: NETWORK_ID_Y, nativeConverter: nativeConverterAddr}); 
+
         // deploy yeToken
         yeToken = new MockYeToken();
         bytes memory yeTokenInitData = abi.encodeCall(
@@ -375,7 +378,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
                 address(yeTokenVault),
                 yieldRecipient,
                 LXLY_BRIDGE_X,
-                nativeConverterAddr
+                nativeConverterStruct
             )
         );
         yeToken = MockYeToken(_proxify(address(yeToken), address(this), yeTokenInitData));
@@ -520,7 +523,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
         _claimAndVerifyAssetLayerY(customToken, claimPayload);
     }
 
-    function test_claimAndWithdraw_bridgeWrappedMapping() public {
+    function test_claimAndRedeem_bridgeWrappedMapping() public {
         uint256 depositAmount = 100;
 
         vm.selectFork(forkIdLayerX);
@@ -584,10 +587,10 @@ contract IntegrationTest is Test, ZkEVMCommon {
 
         vm.selectFork(forkIdLayerX);
 
-        _claimAndWithdrawLayerXAndVerify(withdrawClaimPayload[0]);
+        _claimAndRedeemLayerXAndVerify(withdrawClaimPayload[0]);
     }
 
-    function test_claimAndWithdraw_customTokenMapping() public {
+    function test_claimAndRedeem_customTokenMapping() public {
         uint256 depositAmount = 100;
 
         vm.selectFork(forkIdLayerX);
@@ -651,7 +654,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
 
         vm.selectFork(forkIdLayerX);
 
-        _claimAndWithdrawLayerXAndVerify(withdrawClaimPayload[0]);
+        _claimAndRedeemLayerXAndVerify(withdrawClaimPayload[0]);
     }
 
     function test_deconvertAndBridge_bridgeWrappedMapping() public {
@@ -1073,7 +1076,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
         assertEq(_token.balanceOf(_claimPayload.destinationAddress), _claimPayload.amount);
     }
 
-    function _claimAndWithdrawLayerXAndVerify(ClaimPayload memory _claimPayload) internal {
+    function _claimAndRedeemLayerXAndVerify(ClaimPayload memory _claimPayload) internal {
         // make sure we are on Layer X
         assertEq(vm.activeFork(), forkIdLayerX);
 
@@ -1086,15 +1089,12 @@ contract IntegrationTest is Test, ZkEVMCommon {
         yeToken.approve(recipient, _claimPayload.amount);
 
         vm.prank(recipient);
-        yeToken.claimAndWithdraw(
+        yeToken.claimAndRedeem(
             _claimPayload.proofLayerX,
             _claimPayload.proofLayerY,
             _claimPayload.globalIndex,
             _claimPayload.exitRootLayerX,
             _claimPayload.exitRootLayerY,
-            _claimPayload.originNetwork,
-            _claimPayload.originAddress,
-            _claimPayload.destinationNetwork,
             _claimPayload.destinationAddress,
             _claimPayload.amount,
             _claimPayload.metadata,

@@ -8,7 +8,7 @@ import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC2
 
 import {MockERC20} from "forge-std/mocks/MockERC20.sol";
 import {MockERC20MintableBurnable} from "../GenericNativeConverter.t.sol";
-import {ZETH} from "../../src/custom-tokens/WETH/zETH.sol";
+import {WETH} from "../../src/custom-tokens/WETH/wETH.sol";
 
 import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import {PausableUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/PausableUpgradeable.sol";
@@ -17,12 +17,12 @@ import {GenericNativeConverterTest} from "../GenericNativeConverter.t.sol";
 import {WETHNativeConverter} from "../../src/custom-tokens/WETH/WETHNativeConverter.sol";
 import {GenericNativeConverter, NativeConverter} from "../../src/custom-tokens/GenericNativeConverter.sol";
 
-contract ZETHNativeConverterTest is Test, GenericNativeConverterTest {
+contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
     MockERC20 internal wWETH;
-    ZETH internal zETH;
+    WETH internal wETH;
     address internal yeETH = makeAddr("yeETH");
 
-    WETHNativeConverter internal zETHConverter;
+    WETHNativeConverter internal wETHConverter;
 
     function setUp() public override {
         zkevmFork = vm.createSelectFork("polygon_zkevm", 19164969);
@@ -30,16 +30,16 @@ contract ZETHNativeConverterTest is Test, GenericNativeConverterTest {
         // Setup tokens
         wWETH = new MockERC20();
         wWETH.initialize("Wrapped WETH", "wWETH", 18);
-        zETH = new ZETH();
+        wETH = new WETH();
         address calculatedNativeConverterAddr = vm.computeCreateAddress(address(this), vm.getNonce(address(this)) + 2);
         vm.etch(LXLY_BRIDGE, SOVEREIGN_BRIDGE_BYTECODE);
         bytes memory initData = abi.encodeCall(
-            ZETH.initialize, (address(this), "zETH", "zETH", 18, LXLY_BRIDGE, calculatedNativeConverterAddr)
+            WETH.initialize, (address(this), "wETH", "wETH", 18, LXLY_BRIDGE, calculatedNativeConverterAddr)
         );
-        zETH = ZETH(payable(address(new TransparentUpgradeableProxy(address(zETH), address(this), initData))));
+        wETH = WETH(payable(address(new TransparentUpgradeableProxy(address(wETH), address(this), initData))));
 
         // assign addresses for generic testing
-        customToken = MockERC20MintableBurnable(address(zETH));
+        customToken = MockERC20MintableBurnable(address(wETH));
         underlyingToken = MockERC20(address(wWETH));
         yeToken = yeETH;
 
@@ -55,10 +55,9 @@ contract ZETHNativeConverterTest is Test, GenericNativeConverterTest {
         initData = abi.encodeCall(
             WETHNativeConverter.initialize,
             (
-                payable(address(zETH)),
                 owner,
                 18, // decimals
-                address(zETH), // custom token
+                address(wETH), // custom token
                 address(wWETH), // wrapped underlying token
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
@@ -69,10 +68,10 @@ contract ZETHNativeConverterTest is Test, GenericNativeConverterTest {
         assertEq(address(nativeConverter), calculatedNativeConverterAddr);
 
         // giving control over custom token to NativeConverter
-        zETH.transferOwnership(address(nativeConverter));
-        zETHConverter = WETHNativeConverter(payable(address(nativeConverter)));
+        wETH.transferOwnership(address(nativeConverter));
+        wETHConverter = WETHNativeConverter(payable(address(nativeConverter)));
 
-        vm.label(address(zETH), "zETH");
+        vm.label(address(wETH), "wETH");
         vm.label(address(this), "testerAddress");
         vm.label(LXLY_BRIDGE, "lxlyBridge");
         vm.label(yeToken, "yeToken");
@@ -91,7 +90,6 @@ contract ZETHNativeConverterTest is Test, GenericNativeConverterTest {
         initData = abi.encodeCall(
             WETHNativeConverter.initialize,
             (
-                payable(address(zETH)),
                 address(0),
                 ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
                 address(customToken),
@@ -108,7 +106,6 @@ contract ZETHNativeConverterTest is Test, GenericNativeConverterTest {
         initData = abi.encodeCall(
             WETHNativeConverter.initialize,
             (
-                payable(address(zETH)),
                 owner,
                 ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
                 address(0),
@@ -125,7 +122,6 @@ contract ZETHNativeConverterTest is Test, GenericNativeConverterTest {
         initData = abi.encodeCall(
             WETHNativeConverter.initialize,
             (
-                payable(address(zETH)),
                 owner,
                 ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
                 address(customToken),
@@ -142,7 +138,6 @@ contract ZETHNativeConverterTest is Test, GenericNativeConverterTest {
         initData = abi.encodeCall(
             WETHNativeConverter.initialize,
             (
-                payable(address(zETH)),
                 owner,
                 ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
                 address(customToken),
@@ -159,7 +154,6 @@ contract ZETHNativeConverterTest is Test, GenericNativeConverterTest {
         initData = abi.encodeCall(
             WETHNativeConverter.initialize,
             (
-                payable(address(zETH)),
                 owner,
                 ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
                 address(customToken),
@@ -179,7 +173,6 @@ contract ZETHNativeConverterTest is Test, GenericNativeConverterTest {
         initData = abi.encodeCall(
             WETHNativeConverter.initialize,
             (
-                payable(address(zETH)),
                 owner,
                 ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
                 address(dummyToken),
@@ -199,7 +192,6 @@ contract ZETHNativeConverterTest is Test, GenericNativeConverterTest {
         initData = abi.encodeCall(
             WETHNativeConverter.initialize,
             (
-                payable(address(zETH)),
                 owner,
                 ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
                 address(customToken),
@@ -218,18 +210,18 @@ contract ZETHNativeConverterTest is Test, GenericNativeConverterTest {
         uint256 amountToMigrate = 50;
 
         vm.startPrank(owner);
-        zETHConverter.pause();
+        wETHConverter.pause();
         vm.expectRevert(PausableUpgradeable.EnforcedPause.selector);
-        zETHConverter.migrateGasBackingToLayerX(amountToMigrate);
-        zETHConverter.unpause();
+        wETHConverter.migrateGasBackingToLayerX(amountToMigrate);
+        wETHConverter.unpause();
         vm.stopPrank();
 
         vm.expectRevert(NativeConverter.InvalidAssets.selector);
         vm.prank(owner);
-        zETHConverter.migrateGasBackingToLayerX(0); // try with 0 backing
+        wETHConverter.migrateGasBackingToLayerX(0); // try with 0 backing
 
         // create backing on layer Y
-        vm.deal(address(zETH), amount);
+        vm.deal(address(wETH), amount);
 
         vm.expectEmit();
         emit BridgeEvent(
@@ -239,7 +231,7 @@ contract ZETHNativeConverterTest is Test, GenericNativeConverterTest {
         emit BridgeEvent(
             LEAF_TYPE_MESSAGE,
             NETWORK_ID_L2,
-            address(zETHConverter),
+            address(wETHConverter),
             NETWORK_ID_L1,
             yeToken,
             0,
@@ -254,19 +246,19 @@ contract ZETHNativeConverterTest is Test, GenericNativeConverterTest {
         vm.expectEmit();
         emit NativeConverter.MigrationStarted(owner, amountToMigrate, amountToMigrate);
         vm.prank(owner);
-        zETHConverter.migrateGasBackingToLayerX(amountToMigrate);
-        assertEq(address(zETH).balance, amount - amountToMigrate);
+        wETHConverter.migrateGasBackingToLayerX(amountToMigrate);
+        assertEq(address(wETH).balance, amount - amountToMigrate);
 
         vm.prank(owner);
         vm.expectRevert(NativeConverter.InvalidAssets.selector);
-        zETHConverter.migrateGasBackingToLayerX(0);
+        wETHConverter.migrateGasBackingToLayerX(0);
 
-        uint256 currentBacking = address(zETH).balance;
+        uint256 currentBacking = address(wETH).balance;
 
         vm.expectRevert(
             abi.encodeWithSelector(NativeConverter.AssetsTooLarge.selector, currentBacking, currentBacking + 1)
         );
         vm.prank(owner);
-        zETHConverter.migrateGasBackingToLayerX(currentBacking + 1);
+        wETHConverter.migrateGasBackingToLayerX(currentBacking + 1);
     }
 }

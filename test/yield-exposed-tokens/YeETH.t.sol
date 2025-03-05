@@ -60,7 +60,7 @@ contract YeETHTest is GenericYieldExposedTokenTest {
         vm.label(address(yeTokenImplementation), "yeETH Implementation");
         vm.label(address(this), "Default Address");
         vm.label(asset, "Underlying Asset");
-        vm.label(nativeConverter, "Native Converter");
+        vm.label(nativeConverterAddress, "Native Converter");
         vm.label(owner, "Owner");
         vm.label(recipient, "Recipient");
         vm.label(sender, "Sender");
@@ -195,22 +195,22 @@ contract YeETHTest is GenericYieldExposedTokenTest {
         vm.startPrank(owner);
         yeToken.pause();
         vm.expectRevert(EnforcedPause.selector);
-        yeToken.onMessageReceived(nativeConverter, NETWORK_ID_L2, data);
+        yeToken.onMessageReceived(nativeConverterAddress, NETWORK_ID_L2, data);
         yeToken.unpause();
         vm.stopPrank();
 
         deal(address(yeToken), amount);
 
         vm.expectRevert(YieldExposedToken.Unauthorized.selector);
-        yeToken.onMessageReceived(nativeConverter, NETWORK_ID_L2, data);
+        yeToken.onMessageReceived(nativeConverterAddress, NETWORK_ID_L2, data);
 
         vm.expectRevert(YieldExposedToken.Unauthorized.selector);
         vm.prank(LXLY_BRIDGE);
         yeToken.onMessageReceived(address(0), NETWORK_ID_L2, data);
 
-        vm.expectRevert(YieldExposedToken.InvalidOriginNetworkId.selector);
+        vm.expectRevert(YieldExposedToken.InvalidOriginNetwork.selector);
         vm.prank(LXLY_BRIDGE);
-        yeToken.onMessageReceived(nativeConverter, NETWORK_ID_L1, data);
+        yeToken.onMessageReceived(nativeConverterAddress, NETWORK_ID_L1, data);
 
         bytes memory invalidSharesData = abi.encode(
             YieldExposedToken.CrossNetworkInstruction.COMPLETE_MIGRATION,
@@ -222,7 +222,7 @@ contract YeETHTest is GenericYieldExposedTokenTest {
 
         vm.expectRevert(YieldExposedToken.InvalidShares.selector);
         vm.prank(LXLY_BRIDGE);
-        yeToken.onMessageReceived(nativeConverter, NETWORK_ID_L2, invalidSharesData);
+        yeToken.onMessageReceived(nativeConverterAddress, NETWORK_ID_L2, invalidSharesData);
 
         uint256 stakedAssetsBefore = yeToken.stakedAssets();
 
@@ -242,7 +242,7 @@ contract YeETHTest is GenericYieldExposedTokenTest {
         vm.expectEmit();
         emit MigrationCompleted(NETWORK_ID_L2, shares, amount, amount, 0);
         vm.prank(LXLY_BRIDGE);
-        yeToken.onMessageReceived(nativeConverter, NETWORK_ID_L2, data);
+        yeToken.onMessageReceived(nativeConverterAddress, NETWORK_ID_L2, data);
 
         assertEq(
             yeToken.reservedAssets(),
@@ -276,7 +276,7 @@ contract YeETHTest is GenericYieldExposedTokenTest {
 
         vm.expectRevert(abi.encodeWithSelector(YieldExposedToken.CannotCompleteMigration.selector, shares, amount, 0));
         vm.prank(LXLY_BRIDGE);
-        yeToken.onMessageReceived(nativeConverter, NETWORK_ID_L2, data);
+        yeToken.onMessageReceived(nativeConverterAddress, NETWORK_ID_L2, data);
 
         uint256 sharesBalanceBefore = yeTokenVault.balanceOf(address(yeToken));
         uint256 yieldShares = yeTokenVault.convertToShares(yieldInAssets);
@@ -301,7 +301,7 @@ contract YeETHTest is GenericYieldExposedTokenTest {
         vm.expectEmit();
         emit MigrationCompleted(NETWORK_ID_L2, shares, amount, amount, shares - amount);
         vm.prank(LXLY_BRIDGE);
-        yeToken.onMessageReceived(nativeConverter, NETWORK_ID_L2, data);
+        yeToken.onMessageReceived(nativeConverterAddress, NETWORK_ID_L2, data);
 
         assertEq(
             yeToken.reservedAssets(),

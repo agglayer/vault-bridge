@@ -64,7 +64,7 @@ contract YeUSDTTest is GenericYieldExposedTokenTest {
         vm.label(address(yeTokenImplementation), "yeUSDT Implementation");
         vm.label(address(this), "Default Address");
         vm.label(asset, "Underlying Asset");
-        vm.label(nativeConverter, "Native Converter");
+        vm.label(nativeConverterAddress, "Native Converter");
         vm.label(owner, "Owner");
         vm.label(recipient, "Recipient");
         vm.label(sender, "Sender");
