@@ -248,6 +248,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
     address constant LXLY_BRIDGE_Y = 0x528e26b25a34a4A5d0dbDa1d57D318153d2ED582;
     address constant GER_X = 0x2968D6d736178f8FE7393CC33C87f29D9C287e78;
     address constant GER_Y = 0xa40D5f56745a118D0906a34E69aeC8C0Db1cB8fA;
+    address constant GER_Y_UPDATER = 0x7d8EB43E982b1aAb2b0cd1084EeF80345D3f92d8;
     address constant ROLLUP_MANAGER = 0xE2EF6215aDc132Df6913C8DD16487aBF118d1764;
     uint8 constant LEAF_TYPE_ASSET = 0;
     uint8 constant LEAF_TYPE_MESSAGE = 1;
@@ -263,7 +264,6 @@ contract IntegrationTest is Test, ZkEVMCommon {
     IMetaMorpho yeTokenVault;
     MockNativeConverter nativeConverter;
     YieldExposedToken.NativeConverter[] nativeConverterStruct;
-
 
     // dummy addresses
     address recipient = makeAddr("recipient");
@@ -364,7 +364,9 @@ contract IntegrationTest is Test, ZkEVMCommon {
         uint256 nativeConverterNonce = vm.getNonce(address(this)) + 5;
         address nativeConverterAddr = vm.computeCreateAddress(address(this), nativeConverterNonce);
 
-        nativeConverterStruct.push(YieldExposedToken.NativeConverter({layerYLxlyId: NETWORK_ID_Y, nativeConverter: nativeConverterAddr})); 
+        nativeConverterStruct.push(
+            YieldExposedToken.NativeConverter({layerYLxlyId: NETWORK_ID_Y, nativeConverter: nativeConverterAddr})
+        );
 
         // deploy yeToken
         yeToken = new MockYeToken();
@@ -1045,7 +1047,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
         IPolygonZkEVMGlobalExitRoot(GER_Y).updateExitRoot(_claimPayload.exitRootLayerY);
 
         // insert Layer Y global exit root
-        vm.prank(BRIDGE_MANAGER);
+        vm.prank(GER_Y_UPDATER);
         IPolygonZkEVMGlobalExitRoot(GER_Y).insertGlobalExitRoot(
             _calculateGlobalExitRoot(_claimPayload.exitRootLayerX, _claimPayload.exitRootLayerY)
         );

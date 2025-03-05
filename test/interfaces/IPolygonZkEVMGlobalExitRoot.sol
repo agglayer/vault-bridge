@@ -3,6 +3,8 @@ pragma solidity 0.8.28;
 
 interface IPolygonZkEVMGlobalExitRoot {
     error OnlyAllowedContracts();
+    error GlobalExitRootAlreadySet();
+    error OnlyGlobalExitRootUpdater();
 
     function getLastGlobalExitRoot() external view returns (bytes32);
     function getRoot() external view returns (bytes32);
