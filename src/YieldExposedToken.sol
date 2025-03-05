@@ -670,7 +670,7 @@ abstract contract YieldExposedToken is
         // @note Can be hardcoded too, maybe.
         bytes calldata metadata,
         address receiver
-    ) external whenNotPaused nonReentrant returns (uint256 shares) {
+    ) external whenNotPaused nonReentrant returns (uint256 redeemedShares) {
         YieldExposedTokenStorage storage $ = _getYieldExposedTokenStorage();
 
         // Claim yeToken from LxLy Bridge.
@@ -689,10 +689,11 @@ abstract contract YieldExposedToken is
         );
 
         // Burn yeToken and unlock the underlying token.
-        uint256 redeemedShares = _withdraw(amount, receiver, destinationAddress);
+        redeemedShares = _withdraw(amount, receiver, destinationAddress);
 
         // Check the output.
-        require(redeemedShares == shares, IncorrectAmountOfSharesRedeemed(redeemedShares, shares));
+        // Important: this check might make no sense
+        require(redeemedShares == amount, IncorrectAmountOfSharesRedeemed(redeemedShares, amount));
     }
 
     // -----================= ::: ERC-20 ::: =================-----
