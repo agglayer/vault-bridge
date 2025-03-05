@@ -13,7 +13,7 @@ remappings = [
 ]
 
 [rpc_endpoints]
-mainnet = "https://mainnet.infura.io/v3/${INFURA_TOKEN}"
+mainnet = "wss://mainnet.gateway.tenderly.co"
 sepolia = "https://sepolia.infura.io/v3/${INFURA_TOKEN}"
 polygon_pos = "https://polygon-mainnet.infura.io/v3/${INFURA_TOKEN}"
 polygon_zkevm = "https://zkevm-rpc.com"
