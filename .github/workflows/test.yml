@@ -12,6 +12,7 @@ jobs:
   check:
     strategy:
       fail-fast: true
+    environment: Default
 
     name: Foundry project
     runs-on: ubuntu-latest
