@@ -245,7 +245,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
 
     address internal constant BRIDGE_MANAGER = 0x23BA22Dd7923F3a3f2495bB32a6f3c9b9CD1EC6C;
     address constant LXLY_BRIDGE_X = 0x1348947e282138d8f377b467F7D9c2EB0F335d1f;
-    address constant LXLY_BRIDGE_Y = 0x1348947e282138d8f377b467F7D9c2EB0F335d1f;
+    address constant LXLY_BRIDGE_Y = 0x528e26b25a34a4A5d0dbDa1d57D318153d2ED582;
     address constant GER_X = 0x2968D6d736178f8FE7393CC33C87f29D9C287e78;
     address constant GER_Y = 0xa40D5f56745a118D0906a34E69aeC8C0Db1cB8fA;
     address constant ROLLUP_MANAGER = 0xE2EF6215aDc132Df6913C8DD16487aBF118d1764;
@@ -262,6 +262,8 @@ contract IntegrationTest is Test, ZkEVMCommon {
     // extra contracts
     IMetaMorpho yeTokenVault;
     MockNativeConverter nativeConverter;
+    YieldExposedToken.NativeConverter[] nativeConverterStruct;
+
 
     // dummy addresses
     address recipient = makeAddr("recipient");
@@ -362,8 +364,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
         uint256 nativeConverterNonce = vm.getNonce(address(this)) + 5;
         address nativeConverterAddr = vm.computeCreateAddress(address(this), nativeConverterNonce);
 
-        YieldExposedToken.NativeConverter[] memory nativeConverterStruct;
-        nativeConverterStruct[0] = YieldExposedToken.NativeConverter({layerYLxlyId: NETWORK_ID_Y, nativeConverter: nativeConverterAddr}); 
+        nativeConverterStruct.push(YieldExposedToken.NativeConverter({layerYLxlyId: NETWORK_ID_Y, nativeConverter: nativeConverterAddr})); 
 
         // deploy yeToken
         yeToken = new MockYeToken();
