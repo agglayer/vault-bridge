@@ -670,7 +670,7 @@ abstract contract YieldExposedToken is
         // @note Can be hardcoded too, maybe.
         bytes calldata metadata,
         address receiver
-    ) external whenNotPaused nonReentrant returns (uint256 redeemedShares) {
+    ) external whenNotPaused nonReentrant returns (uint256 assets) {
         YieldExposedTokenStorage storage $ = _getYieldExposedTokenStorage();
 
         // Claim yeToken from LxLy Bridge.
@@ -688,11 +688,13 @@ abstract contract YieldExposedToken is
             metadata
         );
 
+        // Set the return value.
+        assets = convertToAssets(amount);
+
         // Burn yeToken and unlock the underlying token.
-        redeemedShares = _withdraw(amount, receiver, destinationAddress);
+        uint256 redeemedShares = _withdraw(amount, receiver, destinationAddress);
 
         // Check the output.
-        // Important: this check might make no sense
         require(redeemedShares == amount, IncorrectAmountOfSharesRedeemed(redeemedShares, amount));
     }
 
@@ -960,7 +962,7 @@ abstract contract YieldExposedToken is
         if (instruction == CrossNetworkInstruction.COMPLETE_MIGRATION) {
             // Check the input.
             require(originAddress != address(0), Unauthorized());
-            require(originAddress == $.nativeConverters[originNetwork], InvalidOriginNetwork());
+            require(originAddress == $.nativeConverters[originNetwork], Unauthorized());
 
             // Decode the amounts.
             (uint256 shares, uint256 assets) = abi.decode(instructionData, (uint256, uint256));

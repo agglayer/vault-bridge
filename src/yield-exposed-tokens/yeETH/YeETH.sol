@@ -102,7 +102,7 @@ contract YeETH is YieldExposedToken {
 
         if (instruction == CustomCrossNetworkInstruction.WRAP_COIN_AND_COMPLETE_MIGRATION) {
             require(originAddress != address(0), Unauthorized());
-            require(originAddress == nativeConverters(originNetwork), InvalidOriginNetwork());
+            require(originAddress == nativeConverters(originNetwork), Unauthorized());
 
             (uint256 shares, uint256 assets) = abi.decode(instructionData, (uint256, uint256));
 
