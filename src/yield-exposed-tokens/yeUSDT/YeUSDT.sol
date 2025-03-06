@@ -55,12 +55,17 @@ contract YeUSDT is YieldExposedToken {
             nativeConverters_
         );
 
+        // @todo Uncomment (the contract is above the size limit).
+        /*
         // Cache the USDT transfer fee parameters.
         recacheUsdtTransferFeeParameters();
+        */
     }
 
     // -----================= ::: STORAGE ::: =================-----
 
+    // @todo Uncomment (the contract is above the size limit).
+    /*
     /// @notice The cached basis points rate.
     /// @dev USDT emits an event when the transfer fee changes. Make sure to recache the parameters when that happens.
     function cachedBasisPointsRate() public view returns (uint256) {
@@ -81,9 +86,12 @@ contract YeUSDT is YieldExposedToken {
             $.slot := _YEUSDT_STORAGE
         }
     }
+    */
 
     // -----================= ::: YEUSDT ::: =================-----
 
+    // @todo Uncomment (the contract is above the size limit).
+    /*
     /// @notice Recache the USDT transfer fee parameters.
     function recacheUsdtTransferFeeParameters() public whenNotPaused nonReentrant {
         YeUSDTStorage storage $ = _getYeUSDTStorage();
@@ -95,7 +103,9 @@ contract YeUSDT is YieldExposedToken {
 
         // Emit the event.
         emit USDTTransferFeeParametersRecached($.cachedBasisPointsRate, $.cachedMaximumFee);
+        
     }
+    */
 
     // -----================= ::: INFO ::: =================-----
 
@@ -115,6 +125,11 @@ contract YeUSDT is YieldExposedToken {
         override
         returns (uint256)
     {
+        // @todo Remove.
+        return assetsBeforeTransferFee;
+
+        // @todo Uncomment (the contract is above the size limit).
+        /*
         YeUSDTStorage storage $ = _getYeUSDTStorage();
 
         if ($.cachedBasisPointsRate == 0) {
@@ -127,6 +142,7 @@ contract YeUSDT is YieldExposedToken {
         }
 
         return assetsBeforeTransferFee - fee;
+        */
     }
 
     // @note Review and document.
@@ -138,6 +154,11 @@ contract YeUSDT is YieldExposedToken {
         override
         returns (uint256)
     {
+        // @todo Remove.
+        return minimumAssetsAfterTransferFee;
+
+        // @todo Uncomment (the contract is above the size limit).
+        /*
         YeUSDTStorage storage $ = _getYeUSDTStorage();
 
         if ($.cachedBasisPointsRate == 0) {
@@ -167,5 +188,6 @@ contract YeUSDT is YieldExposedToken {
         }
 
         return candidate;
+        */
     }
 }
