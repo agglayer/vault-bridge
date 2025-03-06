@@ -146,7 +146,6 @@ abstract contract YieldExposedToken is
         require(yieldVault_ != address(0), InvalidYieldVault());
         require(yieldRecipient_ != address(0), InvalidYieldRecipient());
         require(lxlyBridge_ != address(0), InvalidLxLyBridge());
-        require(nativeConverters_.length > 0, InvalidNativeConverters());
 
         // Initialize the inherited contracts.
         __ERC20_init(name_, symbol_);
