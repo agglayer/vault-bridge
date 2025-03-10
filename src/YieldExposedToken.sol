@@ -196,8 +196,7 @@ abstract contract YieldExposedToken is
     }
 
     /// @notice Yield exposed tokens have an internal reserve of the underlying token from which withdrawals are served first.
-    /// @notice When the reserve is below the minimum threshold, it can be replenished by calling `replenishReserve`.
-    /// @notice The reserve can also be rebalanced up or down by the owner by calling `rebalanceReserve`.
+    /// @notice The owner can rebalance the reserve by calling `rebalanceReserve` when it is below or above the `minimumReservePercentage`.
     /// @notice 1e18 is 100%.
     function minimumReservePercentage() public view returns (uint256) {
         YieldExposedTokenStorage storage $ = _getYieldExposedTokenStorage();
@@ -205,7 +204,6 @@ abstract contract YieldExposedToken is
     }
 
     /// @notice Yield exposed tokens have an internal reserve of the underlying token from which withdrawals are served first.
-    /// @notice The reserve can be refilled by calling `replenishReserve` when it is below the `minimumReservePercentage`.
     /// @notice The owner can rebalance the reserve by calling `rebalanceReserve` when it is below or above the `minimumReservePercentage`.
     function reservedAssets() public view returns (uint256) {
         YieldExposedTokenStorage storage $ = _getYieldExposedTokenStorage();
@@ -666,14 +664,13 @@ abstract contract YieldExposedToken is
         bytes32 rollupExitRoot,
         address destinationAddress,
         uint256 amount,
-        // @note Can be hardcoded too, maybe.
-        bytes calldata metadata,
         address receiver
     ) external whenNotPaused nonReentrant returns (uint256 assets) {
         YieldExposedTokenStorage storage $ = _getYieldExposedTokenStorage();
 
         // Claim yeToken from LxLy Bridge.
-        lxlyBridge().claimAsset(
+        // @todo Review the hardcoded values.
+        $.lxlyBridge.claimAsset(
             smtProofLocalExitRoot,
             smtProofRollupExitRoot,
             globalIndex,
@@ -684,7 +681,7 @@ abstract contract YieldExposedToken is
             $.lxlyId,
             destinationAddress,
             amount,
-            metadata
+            abi.encode(name(), symbol(), decimals())
         );
 
         // Set the return value.
@@ -781,13 +778,6 @@ abstract contract YieldExposedToken is
         // Calculate the difference.
         return
             totalAssets_ >= minimumAssets ? (true, totalAssets_ - minimumAssets) : (false, minimumAssets - totalAssets_);
-    }
-
-    /// @notice Refill the internal reserve of the underlying token by withdrawing from the yield vault.
-    /// @notice This function can be called by anyone.
-    /// @dev It is possible to force the reserved assets to be deposited into the yield vault by using a flashloan; however, this is a non-issue.
-    function replenishReserve() external whenNotPaused nonReentrant {
-        _rebalanceReserve(true, false);
     }
 
     /// @notice Rebalances the internal reserve by withdrawing the underlying token from, or depositing the underlying token into, the yield vault.
@@ -971,7 +961,7 @@ abstract contract YieldExposedToken is
         }
         /* Custom. */
         else if (instruction == CrossNetworkInstruction.CUSTOM) {
-            // Unsupported by default; the transaction will revert.
+            // Unsupported by default - the call will revert.
             // Please refer to `_dispatchCustomCrossNetworkInstruction` for more information.
             _dispatchCustomCrossNetworkInstruction(originAddress, originNetwork, instructionData);
         }
