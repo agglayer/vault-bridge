@@ -361,24 +361,29 @@ abstract contract YieldExposedToken is
         spentAssets = assets;
 
         // Calculate the amount to reserve.
-        uint256 assetsToReserve = Math.mulDiv(assets, $.minimumReservePercentage, 1e18);
+        uint256 minimumReserve = Math.mulDiv(totalSupply() + shares, $.minimumReservePercentage, 1e18);
+        uint256 assetsToReserve = $.reservedAssets < minimumReserve ? minimumReserve - $.reservedAssets : 0;
+        assetsToReserve = assetsToReserve <= assets ? assetsToReserve : assets;
 
-        // Calculate the amount to deposit into the yield vault.
+        // Calculate the amount to try to deposit into the yield vault.
         uint256 assetsToDeposit = assets - assetsToReserve;
-        // @note Yield vault usage.
-        uint256 maxDeposit_ = $.yieldVault.maxDeposit(address(this));
-        assetsToDeposit = assetsToDeposit > maxDeposit_ ? maxDeposit_ : assetsToDeposit;
 
-        // Cache the balance.
-        uint256 balanceBefore = $.underlyingToken.balanceOf(address(this));
-
-        // Deposit into the yield vault.
+        // Try to deposit into the yield vault.
         if (assetsToDeposit > 0) {
-            $.yieldVault.deposit(assetsToDeposit, address(this));
-        }
+            // Calculate the amount to deposit into the yield vault.
+            // @note Yield vault usage.
+            uint256 maxDeposit_ = $.yieldVault.maxDeposit(address(this));
+            assetsToDeposit = assetsToDeposit > maxDeposit_ ? maxDeposit_ : assetsToDeposit;
 
-        // Recalculate the amount to reserve.
-        assetsToReserve = assets - (balanceBefore - $.underlyingToken.balanceOf(address(this)));
+            // Cache the balance.
+            uint256 balanceBefore = $.underlyingToken.balanceOf(address(this));
+
+            // Deposit.
+            $.yieldVault.deposit(assetsToDeposit, address(this));
+
+            // Recalculate the amount to reserve.
+            assetsToReserve = assets - (balanceBefore - $.underlyingToken.balanceOf(address(this)));
+        }
 
         // Update the reserve.
         $.reservedAssets += assetsToReserve;
@@ -798,13 +803,13 @@ abstract contract YieldExposedToken is
         // Check if the reserve is below, above, or at the minimum threshold.
         /* Below. */
         if ($.reservedAssets < minimumReserve) {
-            // Calculate how much to withdraw.
+            // Calculate the amount to try to withdraw from the yield vault.
             uint256 shortfall = minimumReserve - $.reservedAssets;
             // @note Yield vault usage.
             uint256 maxWithdraw_ = $.yieldVault.maxWithdraw(address(this));
             uint256 assetsToWithdraw = shortfall > maxWithdraw_ ? maxWithdraw_ : shortfall;
 
-            // Withdraw from the yield vault.
+            // Try to withdraw from the yield vault.
             if (assetsToWithdraw > 0) {
                 // Cache the balance.
                 uint256 balanceBefore = $.underlyingToken.balanceOf(address(this));
@@ -823,13 +828,13 @@ abstract contract YieldExposedToken is
         }
         /* Above */
         else if ($.reservedAssets > minimumReserve && allowRebalanceDown) {
-            // Calculate how much to deposit.
+            // Calculate the amunt to try to deposit into the yield vault.
             uint256 excess = $.reservedAssets - minimumReserve;
             // @note Yield vault usage.
             uint256 maxDeposit_ = $.yieldVault.maxDeposit(address(this));
             uint256 assetsToDeposit = excess > maxDeposit_ ? maxDeposit_ : excess;
 
-            // Deposit into the yield vault.
+            // Try to deposit into the yield vault.
             if (assetsToDeposit > 0) {
                 // Cache the balance.
                 uint256 balanceBefore = $.underlyingToken.balanceOf(address(this));
@@ -998,26 +1003,29 @@ abstract contract YieldExposedToken is
         uint256 yield_ = yield();
         if (discrepancy > 0) require(yield_ >= discrepancy, CannotCompleteMigration(requiredAssets, assets, yield_));
 
-        // Calculate the amount to reserve and the amount to deposit into the yield vault.
-        uint256 assetsToReserve = Math.mulDiv(requiredAssets, $.minimumReservePercentage, 1e18);
-        assetsToReserve = assetsToReserve > assets ? assets : assetsToReserve;
+        // Calculate the amount to reserve.
+        uint256 minimumReserve = Math.mulDiv(totalSupply() + shares, $.minimumReservePercentage, 1e18);
+        uint256 assetsToReserve = $.reservedAssets < minimumReserve ? minimumReserve - $.reservedAssets : 0;
+        assetsToReserve = assetsToReserve <= assets ? assetsToReserve : assets;
 
-        // Calculate the amount to deposit into the yield vault.
+        // Calculate the amount to try to deposit into the yield vault.
         uint256 assetsToDeposit = assets - assetsToReserve;
-        // @note Yield vault usage.
-        uint256 maxDeposit_ = $.yieldVault.maxDeposit(address(this));
-        assetsToDeposit = assetsToDeposit > maxDeposit_ ? maxDeposit_ : assetsToDeposit;
 
-        // Cache the balance.
-        uint256 balanceBefore = $.underlyingToken.balanceOf(address(this));
-
-        // Deposit into the yield vault.
+        // Try to deposit into the yield vault.
         if (assetsToDeposit > 0) {
-            $.yieldVault.deposit(assetsToDeposit, address(this));
-        }
+            // Calculate the amount to deposit into the yield vault.
+            // @note Yield vault usage.
+            uint256 maxDeposit_ = $.yieldVault.maxDeposit(address(this));
+            assetsToDeposit = assetsToDeposit > maxDeposit_ ? maxDeposit_ : assetsToDeposit;
 
-        // Recalculate the amount to reserve.
-        assetsToReserve = assets - (balanceBefore - $.underlyingToken.balanceOf(address(this)));
+            // Cache the balance.
+            uint256 balanceBefore = $.underlyingToken.balanceOf(address(this));
+
+            $.yieldVault.deposit(assetsToDeposit, address(this));
+
+            // Recalculate the amount to reserve.
+            assetsToReserve = assets - (balanceBefore - $.underlyingToken.balanceOf(address(this)));
+        }
 
         // Update the reserve.
         $.reservedAssets += assetsToReserve;
