@@ -509,6 +509,7 @@ abstract contract NativeConverter is
         uint256 balanceBefore = $.underlyingToken.balanceOf(address(this));
 
         // Transfer.
+        // IMPORTANT: Make sure the underlying token you are integrating does not enable reentrancy on `transferFrom`.
         $.underlyingToken.safeTransferFrom(from, address(this), value);
 
         // Calculate the received amount.
