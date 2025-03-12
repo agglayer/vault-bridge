@@ -361,28 +361,14 @@ abstract contract YieldExposedToken is
         spentAssets = assets;
 
         // Calculate the amount to reserve.
-        uint256 minimumReserve = Math.mulDiv(totalSupply() + shares, $.minimumReservePercentage, 1e18);
-        uint256 assetsToReserve = $.reservedAssets < minimumReserve ? minimumReserve - $.reservedAssets : 0;
-        assetsToReserve = assetsToReserve <= assets ? assetsToReserve : assets;
+        uint256 assetsToReserve = _calculateReserveAmount($, assets, shares);
 
         // Calculate the amount to try to deposit into the yield vault.
         uint256 assetsToDeposit = assets - assetsToReserve;
 
         // Try to deposit into the yield vault.
         if (assetsToDeposit > 0) {
-            // Calculate the amount to deposit into the yield vault.
-            // @note Yield vault usage.
-            uint256 maxDeposit_ = $.yieldVault.maxDeposit(address(this));
-            assetsToDeposit = assetsToDeposit > maxDeposit_ ? maxDeposit_ : assetsToDeposit;
-
-            // Cache the balance.
-            uint256 balanceBefore = $.underlyingToken.balanceOf(address(this));
-
-            // Deposit.
-            $.yieldVault.deposit(assetsToDeposit, address(this));
-
-            // Recalculate the amount to reserve.
-            assetsToReserve = assets - (balanceBefore - $.underlyingToken.balanceOf(address(this)));
+            assetsToReserve = _depositToYieldVault($, assets, assetsToDeposit);
         }
 
         // Update the reserve.
@@ -1004,28 +990,13 @@ abstract contract YieldExposedToken is
         if (discrepancy > 0) require(yield_ >= discrepancy, CannotCompleteMigration(requiredAssets, assets, yield_));
 
         // Calculate the amount to reserve.
-        uint256 minimumReserve = Math.mulDiv(totalSupply() + shares, $.minimumReservePercentage, 1e18);
-        uint256 assetsToReserve = $.reservedAssets < minimumReserve ? minimumReserve - $.reservedAssets : 0;
-        assetsToReserve = assetsToReserve <= assets ? assetsToReserve : assets;
+        uint256 assetsToReserve = _calculateReserveAmount($, assets, shares);
 
         // Calculate the amount to try to deposit into the yield vault.
         uint256 assetsToDeposit = assets - assetsToReserve;
 
         // Try to deposit into the yield vault.
-        if (assetsToDeposit > 0) {
-            // Calculate the amount to deposit into the yield vault.
-            // @note Yield vault usage.
-            uint256 maxDeposit_ = $.yieldVault.maxDeposit(address(this));
-            assetsToDeposit = assetsToDeposit > maxDeposit_ ? maxDeposit_ : assetsToDeposit;
-
-            // Cache the balance.
-            uint256 balanceBefore = $.underlyingToken.balanceOf(address(this));
-
-            $.yieldVault.deposit(assetsToDeposit, address(this));
-
-            // Recalculate the amount to reserve.
-            assetsToReserve = assets - (balanceBefore - $.underlyingToken.balanceOf(address(this)));
-        }
+        if (assetsToDeposit > 0) assetsToReserve = _depositToYieldVault($, assets, assetsToDeposit);
 
         // Update the reserve.
         $.reservedAssets += assetsToReserve;
@@ -1174,6 +1145,41 @@ abstract contract YieldExposedToken is
 
         // `CUSTOM` cross-network instruction are not supported by default.
         revert CustomCrossNetworkInstructionNotSupported();
+    }
+
+    /// @notice Calculates the amount of assets to reserve.
+    /// @param assets The amount of the underlying token to reserve.
+    /// @param shares The amount of yeToken to reserve.
+    function _calculateReserveAmount(YieldExposedTokenStorage storage $, uint256 assets, uint256 shares)
+        private
+        view
+        returns (uint256)
+    {
+        uint256 minimumReserve = Math.mulDiv(totalSupply() + shares, $.minimumReservePercentage, 1e18);
+        uint256 assetsToReserve = $.reservedAssets < minimumReserve ? minimumReserve - $.reservedAssets : 0;
+        return assetsToReserve <= assets ? assetsToReserve : assets;
+    }
+
+    /// @notice Deposits a specific amount of the underlying token into the yield vault.
+    /// @param assets Original amount of the underlying token to deposit.
+    /// @param assetsToDeposit The amount of the underlying token to deposit into the yield vault.
+    function _depositToYieldVault(YieldExposedTokenStorage storage $, uint256 assets, uint256 assetsToDeposit)
+        private
+        returns (uint256)
+    {
+        // Calculate the amount to deposit into the yield vault.
+        // @note Yield vault usage.
+        uint256 maxDeposit_ = $.yieldVault.maxDeposit(address(this));
+        assetsToDeposit = assetsToDeposit > maxDeposit_ ? maxDeposit_ : assetsToDeposit;
+
+        // Cache the balance.
+        uint256 balanceBefore = $.underlyingToken.balanceOf(address(this));
+
+        // Deposit.
+        $.yieldVault.deposit(assetsToDeposit, address(this));
+
+        // Recalculate the amount to reserve.
+        return assets - (balanceBefore - $.underlyingToken.balanceOf(address(this)));
     }
 
     /// @notice Accounts for the transfer fee of the underlying token.
