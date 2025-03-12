@@ -66,7 +66,8 @@ abstract contract YieldExposedToken is
         uint256 reservedAssets;
         IERC4626 yieldVault;
         address yieldRecipient;
-        uint256 totalCollectedYield;
+        // @todo Remove.
+        uint256 _DELETED_0;
         uint32 lxlyId;
         ILxLyBridge lxlyBridge;
         mapping(uint32 layerYLxlyId => address nativeConverter) nativeConverters;
@@ -221,12 +222,6 @@ abstract contract YieldExposedToken is
     function yieldRecipient() public view returns (address) {
         YieldExposedTokenStorage storage $ = _getYieldExposedTokenStorage();
         return $.yieldRecipient;
-    }
-
-    /// @notice The total yield in yeToken collected by the yield recipient.
-    function totalCollectedYield() public view returns (uint256) {
-        YieldExposedTokenStorage storage $ = _getYieldExposedTokenStorage();
-        return $.totalCollectedYield;
     }
 
     /// @notice The LxLy ID of this network.
@@ -860,9 +855,6 @@ abstract contract YieldExposedToken is
         uint256 yield_ = yield();
 
         if (yield_ > 0) {
-            // Update the total collected yield.
-            $.totalCollectedYield += yield_;
-
             // Mint yeToken to the yield recipient.
             _mint($.yieldRecipient, yield_);
 
@@ -886,9 +878,6 @@ abstract contract YieldExposedToken is
         // Check the input.
         require(msg.sender == $.yieldRecipient, Unauthorized());
         require(shares > 0, InvalidShares());
-
-        // Update the total collected yield.
-        $.totalCollectedYield -= shares;
 
         // Burn yeToken.
         _burn(msg.sender, shares);
