@@ -235,8 +235,8 @@ abstract contract YieldExposedToken is
         return $.lxlyBridge;
     }
 
-    /// @notice The address of Native Conveter on a Layer Y of this yeToken.
-    /// @notice Native Converter on Layer Ys can mint Custom Token independently of yeToken, and the migrate backing to Layer X. Please refer to `completeMigration` for more information.
+    /// @notice The address of Native Converter on a Layer Y of this yeToken.
+    /// @notice Native Converter on Layer Ys can mint Custom Token independently of yeToken, and migrate backing to Layer X. Please refer to `completeMigration` for more information.
     /// @return Returns address zero if there is no Native Converter set for Layer Y.
     function nativeConverters(uint32 layerYLxlyId) public view returns (address) {
         YieldExposedTokenStorage storage $ = _getYieldExposedTokenStorage();

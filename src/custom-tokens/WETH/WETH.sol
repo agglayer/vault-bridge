@@ -11,6 +11,8 @@ import {IVersioned} from "../../etc/IVersioned.sol";
 /// @title ZETH
 /// @dev based on https://github.com/gnosis/canonical-weth/blob/master/contracts/WETH9.sol
 contract WETH is CustomToken {
+    error AssetsTooLarge(uint256 availableAssets, uint256 requestedAssets);
+
     event Deposit(address indexed from, uint256 value);
     event Withdrawal(address indexed to, uint256 value);
 
@@ -63,7 +65,10 @@ contract WETH is CustomToken {
     }
 
     function withdraw(uint256 value) external {
-        require(balanceOf(msg.sender) >= value);
+        uint256 senderBalance = balanceOf(msg.sender);
+        uint256 contractBalance = address(this).balance;
+        uint256 availableAssets = senderBalance < contractBalance ? senderBalance : contractBalance;
+        require(address(this).balance >= value, AssetsTooLarge(availableAssets, value));
         _burn(msg.sender, value);
         payable(msg.sender).transfer(value);
         emit Withdrawal(msg.sender, value);

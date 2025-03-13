@@ -465,7 +465,7 @@ abstract contract NativeConverter is
             // Calculate the bridged amount.
             assets = $.underlyingToken.balanceOf(address($.lxlyBridge)) - balanceBefore;
         }
-        /* If the underlying token is mintable by LxLy Bridge, it will be burned (not transfered). */
+        /* If the underlying token is mintable by LxLy Bridge, it will be burned (not transferred). */
         else {
             $.lxlyBridge.bridgeAsset($.layerXLxlyId, $.yeToken, assets, address($.underlyingToken), true, "");
         }

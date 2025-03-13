@@ -49,7 +49,7 @@ abstract contract ERC20PermitUser {
 
         // Do not revert on failure to avoid DoS attacks caused by frontrunning the permit call.
         // If the allowance is insufficient, the subsequent transfer call will fail.
-        (bool ok,) = address(token).call(permitData);
+        (bool ok,) = token.call(permitData);
         ok;
     }
 }
