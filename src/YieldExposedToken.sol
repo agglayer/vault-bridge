@@ -107,7 +107,6 @@ abstract contract YieldExposedToken is
     // Events.
     event ReserveRebalanced(uint256 reservedAssets);
     event YieldCollected(address indexed yieldRecipient, uint256 yeTokenAmount);
-    event Burned(uint256 yeTokenAmount);
     event Donated(address indexed who, uint256 assets);
     event MigrationCompleted(
         uint32 indexed destinationNetworkId,
