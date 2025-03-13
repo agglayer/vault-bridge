@@ -81,13 +81,14 @@ contract YeETH is YieldExposedToken {
     function _receiveUnderlyingToken(address, uint256 assets) internal override returns (uint256) {
         IWETH9 weth = IWETH9(address(underlyingToken()));
 
-        if (msg.value >= assets) {
+        if (msg.value > 0) {
             // deposit everything, excess funds will be refunded in WETH
             weth.deposit{value: msg.value}();
+            return msg.value;
         } else {
             weth.safeTransferFrom(msg.sender, address(this), assets);
+            return assets;
         }
-        return assets;
     }
 
     function _dispatchCustomCrossNetworkInstruction(
