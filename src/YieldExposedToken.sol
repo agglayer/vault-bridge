@@ -105,7 +105,7 @@ abstract contract YieldExposedToken is
     error CustomCrossNetworkInstructionNotSupported();
 
     // Events.
-    event ReserveRebalanced(uint256 reservedAssets);
+    event ReserveRebalanced(uint256 oldReservedAssets, uint256 newReservedAssets, uint256 reservePercentage);
     event YieldCollected(address indexed yieldRecipient, uint256 yeTokenAmount);
     event Donated(address indexed who, uint256 assets);
     event MigrationCompleted(
@@ -734,7 +734,7 @@ abstract contract YieldExposedToken is
 
     /// @notice The current reserve percentage.
     /// @notice The reserve is based on the total supply of yeToken, and does not account for uncompleted migrations of backing from Layer Ys to Layer X. Please refer to `completeMigration` for more information.
-    function reservePercentage() external view returns (uint256) {
+    function reservePercentage() public view returns (uint256) {
         YieldExposedTokenStorage storage $ = _getYieldExposedTokenStorage();
 
         // Return zero if the total supply is zero.
@@ -777,6 +777,9 @@ abstract contract YieldExposedToken is
     function _rebalanceReserve(bool force, bool allowRebalanceDown) internal {
         YieldExposedTokenStorage storage $ = _getYieldExposedTokenStorage();
 
+        // Cache the old reserved assets.
+        uint256 oldReservedAssets = $.reservedAssets;
+
         // Calculate the minimum reserve amount.
         uint256 minimumReserve = convertToAssets(Math.mulDiv(totalSupply(), $.minimumReservePercentage, 1e18));
 
@@ -801,7 +804,7 @@ abstract contract YieldExposedToken is
                 $.reservedAssets += $.underlyingToken.balanceOf(address(this)) - balanceBefore;
 
                 // Emit the event.
-                emit ReserveRebalanced($.reservedAssets);
+                emit ReserveRebalanced(oldReservedAssets, $.reservedAssets, reservePercentage());
             } else if (force) {
                 revert CannotRebalanceReserve();
             }
@@ -826,7 +829,7 @@ abstract contract YieldExposedToken is
                 $.reservedAssets -= balanceBefore - $.underlyingToken.balanceOf(address(this));
 
                 // Emit the event.
-                emit ReserveRebalanced($.reservedAssets);
+                emit ReserveRebalanced(oldReservedAssets, $.reservedAssets, reservePercentage());
             } else if (force) {
                 revert CannotRebalanceReserve();
             }
