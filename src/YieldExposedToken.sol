@@ -868,29 +868,9 @@ abstract contract YieldExposedToken is
         _rebalanceReserve(false, true);
     }
 
-    /// @notice Burns a specific amount of yeToken.
-    /// @notice This function can be used if the yield recipient has collected an unrealistic (excessive) amount of yield historically.
-    /// @notice The reserve will be rebalanced after burning yeToken.
-    /// @notice This function can be called by the yield recipient only.
-    function burn(uint256 shares) external whenNotPaused nonReentrant {
-        YieldExposedTokenStorage storage $ = _getYieldExposedTokenStorage();
-
-        // Check the input.
-        require(msg.sender == $.yieldRecipient, Unauthorized());
-        require(shares > 0, InvalidShares());
-
-        // Burn yeToken.
-        _burn(msg.sender, shares);
-
-        // Try to rebalance the reserve.
-        _rebalanceReserve(false, true);
-
-        // Emit the event.
-        emit Burned(shares);
-    }
-
     /// @notice Adds a specific amount of the underlying token to the reserve by transferring it from the sender.
     /// @notice This function can be used to increase the available yield when there is not enough to complete a migration due to a discrepancy. Please refer to `_completeMigration` for more information.
+    /// @notice This function can also be used to restore the backing balance if too much yield has been collected by the yield recipient.
     /// @notice This function can be called by anyone.
     function donate(uint256 assets) external whenNotPaused nonReentrant {
         YieldExposedTokenStorage storage $ = _getYieldExposedTokenStorage();
