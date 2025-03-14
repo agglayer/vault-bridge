@@ -66,10 +66,8 @@ contract WETH is CustomToken {
 
     function withdraw(uint256 value) external {
         _burn(msg.sender, value);
-        uint256 senderBalance = balanceOf(msg.sender);
-        uint256 contractBalance = address(this).balance;
-        uint256 availableAssets = senderBalance < contractBalance ? senderBalance : contractBalance;
-        require(address(this).balance >= value, AssetsTooLarge(availableAssets, value));
+        uint256 availableAssets = address(this).balance;
+        require(availableAssets >= value, AssetsTooLarge(availableAssets, value));
         payable(msg.sender).transfer(value);
         emit Withdrawal(msg.sender, value);
     }
