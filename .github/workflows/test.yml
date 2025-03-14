@@ -12,7 +12,6 @@ jobs:
   check:
     strategy:
       fail-fast: true
-    environment: Default
 
     name: Foundry project
     runs-on: ubuntu-latest
@@ -55,7 +54,4 @@ jobs:
         run: |
           npm install
           forge test --no-match-contract "Generic" -vvv
-        env:
-          INFURA_TOKEN: ${{ secrets.INFURA_TOKEN }}
-          TATARA_TOKEN: ${{ secrets.TATARA_TOKEN }}
         id: test
