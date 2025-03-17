@@ -66,11 +66,11 @@ abstract contract YieldExposedToken is
         uint256 reservedAssets;
         IERC4626 yieldVault;
         address yieldRecipient;
-        // @todo Remove.
-        uint256 _DELETED_0;
+        uint256 _netCollectedYield;
         uint32 lxlyId;
         ILxLyBridge lxlyBridge;
         mapping(uint32 layerYLxlyId => address nativeConverter) nativeConverters;
+        uint256 migrationFund;
     }
 
     /// @dev The storage slot at which Yield Exposed Token storage starts, following the EIP-7201 standard.
@@ -101,13 +101,15 @@ abstract contract YieldExposedToken is
     error Unauthorized();
     error NoYield();
     error InvalidOriginNetwork();
-    error CannotCompleteMigration(uint256 requiredAssets, uint256 receivedAssets, uint256 availableYield);
+    error CannotCompleteMigration(uint256 requiredAssets, uint256 receivedAssets, uint256 assetsInMigrationFund);
     error CustomCrossNetworkInstructionNotSupported();
 
     // Events.
     event ReserveRebalanced(uint256 oldReservedAssets, uint256 newReservedAssets, uint256 reservePercentage);
     event YieldCollected(address indexed yieldRecipient, uint256 yeTokenAmount);
-    event Donated(address indexed who, uint256 assets);
+    event Burned(uint256 yeTokenAmount);
+    event DonatedAsYield(address indexed who, uint256 assets);
+    event DonatedForCompletingMigration(address indexed who, uint256 assets);
     event MigrationCompleted(
         uint32 indexed destinationNetworkId,
         uint256 indexed shares,
@@ -243,6 +245,12 @@ abstract contract YieldExposedToken is
         return $.nativeConverters[layerYLxlyId];
     }
 
+    /// @notice A dedicated fund for covering the underlying token's transfer fees during a migration from a Layer Y. Please refer to `_completeMigration` for more information.
+    function migrationFund() public view returns (uint256) {
+        YieldExposedTokenStorage storage $ = _getYieldExposedTokenStorage();
+        return $.migrationFund;
+    }
+
     /// @dev Returns a pointer to the ERC-7201 storage namespace.
     function _getYieldExposedTokenStorage() private pure returns (YieldExposedTokenStorage storage $) {
         assembly {
@@ -354,12 +362,14 @@ abstract contract YieldExposedToken is
         shares = convertToShares(assets);
         spentAssets = assets;
 
+        // @todo Review the refactor.
         // Calculate the amount to reserve.
         uint256 assetsToReserve = _calculateReserveAmount($, assets, shares);
 
         // Calculate the amount to try to deposit into the yield vault.
         uint256 assetsToDeposit = assets - assetsToReserve;
 
+        // @todo Review the refactor.
         // Try to deposit into the yield vault.
         if (assetsToDeposit > 0) {
             assetsToReserve = _depositToYieldVault($, assets, assetsToDeposit);
@@ -490,6 +500,7 @@ abstract contract YieldExposedToken is
     }
 
     /// @dev Calculates the amount of the underlying token that could be withdrawn right now.
+    /// @dev This function is used for estimation purposes only.
     /// @param assets The maximum amount of the underlying token to simulate a withdrawal for.
     /// @param force Whether to revert if the all of the `assets` would not be withdrawn.
     function _simulateWithdraw(uint256 assets, bool force) internal view returns (uint256 withdrawnAssets) {
@@ -857,6 +868,9 @@ abstract contract YieldExposedToken is
         uint256 yield_ = yield();
 
         if (yield_ > 0) {
+            // Update the net collected yield.
+            $._netCollectedYield += yield_;
+
             // Mint yeToken to the yield recipient.
             _mint($.yieldRecipient, yield_);
 
@@ -870,11 +884,34 @@ abstract contract YieldExposedToken is
         _rebalanceReserve(false, true);
     }
 
+    /// @notice Burns a specific amount of yeToken.
+    /// @notice This function can be used if the yield recipient has collected an unrealistic (excessive) amount of yield historically.
+    /// @notice The reserve will be rebalanced after burning yeToken.
+    /// @notice This function can be called by the yield recipient only.
+    function burn(uint256 shares) external whenNotPaused nonReentrant {
+        YieldExposedTokenStorage storage $ = _getYieldExposedTokenStorage();
+
+        // Check the inputs.
+        require(msg.sender == $.yieldRecipient, Unauthorized());
+        require(shares > 0, InvalidShares());
+
+        // Update the net collected yield.
+        $._netCollectedYield -= shares;
+
+        // Burn yeToken.
+        _burn(msg.sender, shares);
+
+        // Try to rebalance the reserve.
+        _rebalanceReserve(false, true);
+
+        // Emit the event.
+        emit Burned(shares);
+    }
+
     /// @notice Adds a specific amount of the underlying token to the reserve by transferring it from the sender.
-    /// @notice This function can be used to increase the available yield when there is not enough to complete a migration due to a discrepancy. Please refer to `_completeMigration` for more information.
-    /// @notice This function can also be used to restore the backing balance if too much yield has been collected by the yield recipient.
+    /// @notice This function can be used to restore backing difference by donating the underlying token.
     /// @notice This function can be called by anyone.
-    function donate(uint256 assets) external whenNotPaused nonReentrant {
+    function donateAsYield(uint256 assets) external whenNotPaused nonReentrant {
         YieldExposedTokenStorage storage $ = _getYieldExposedTokenStorage();
 
         // Check the input.
@@ -887,7 +924,7 @@ abstract contract YieldExposedToken is
         $.reservedAssets += assets;
 
         // Emit the event.
-        emit Donated(msg.sender, assets);
+        emit DonatedAsYield(msg.sender, assets);
     }
 
     /// @notice Receives and dispatches a cross-network instruction.
@@ -936,7 +973,7 @@ abstract contract YieldExposedToken is
     /// @dev The asset must be claimed before the message on LxLy Bridge.
     /// @dev The message tells yeToken how much Custom Token must be backed by yeToken, which is minted and bridged to address zero on the respective Layer Y. This action provides liquidity when bridging Custom Token to from Layer Ys to Layer X and increments the pessimistic proof.
     /// @param originNetwork The LxLy ID of Layer Y the backing is being migrated from.
-    /// @param shares The required amount of yeToken to mint and lock up in LxLy Bridge. Available yield may be used to offset transfer fees of the underlying token. If a migration cannot be completed due to insufficient yield, anyone can `donate` the underlying token to increase the available yield. Please refer to `donate` for more information.
+    /// @param shares The required amount of yeToken to mint and lock up in LxLy Bridge. Assets from a dedicated migration fund may be used to offset transfer fees of the underlying token. If a migration cannot be completed due to insufficient assets, anyone can donate the underlying token to the migration fund. Please refer to `donateForCompletingMigration` for more information.
     /// @param assets The amount of the underlying token migrated from Layer Y (before transfer fees on Layer X).
     function _completeMigration(uint32 originNetwork, uint256 shares, uint256 assets) internal {
         YieldExposedTokenStorage storage $ = _getYieldExposedTokenStorage();
@@ -952,20 +989,32 @@ abstract contract YieldExposedToken is
         require(originNetwork != $.lxlyId, InvalidOriginNetwork());
         require(shares > 0, InvalidShares());
 
+        // @todo
         // Calculate the discrepancy between the required amount of yeToken (`shares`) and the amount of the underlying token received from LxLy Bridge (`assets`).
-        // A discrepancy is possible due to transfer fees of the underlying token. To offset the discrepancy, we mint more yeToken, backed by available yield.
+        // A discrepancy is possible due to transfer fees of the underlying token. To offset the discrepancy, we mint more yeToken, backed by assets from the dedicated migration fund.
         // This ensures that the amount of yeToken locked up in LxLy Bridge on Layer X matches the supply of Custom Token on Layer Ys exactly.
         uint256 requiredAssets = convertToAssets(shares);
         uint256 discrepancy = requiredAssets - assets;
-        uint256 yield_ = yield();
-        if (discrepancy > 0) require(yield_ >= discrepancy, CannotCompleteMigration(requiredAssets, assets, yield_));
+        uint256 assetsInMigrationFund = $.migrationFund;
+        if (discrepancy > 0) {
+            require(
+                assetsInMigrationFund >= discrepancy,
+                CannotCompleteMigration(requiredAssets, assets, assetsInMigrationFund)
+            );
+        }
 
+        // Move the discrepancy from the migration fund to the reserve.
+        $.migrationFund -= discrepancy;
+        $.reservedAssets += discrepancy;
+
+        // @todo Review the refactor.
         // Calculate the amount to reserve.
         uint256 assetsToReserve = _calculateReserveAmount($, assets, shares);
 
         // Calculate the amount to try to deposit into the yield vault.
         uint256 assetsToDeposit = assets - assetsToReserve;
 
+        // @todo Review the refactor.
         // Try to deposit into the yield vault.
         if (assetsToDeposit > 0) assetsToReserve = _depositToYieldVault($, assets, assetsToDeposit);
 
@@ -982,6 +1031,23 @@ abstract contract YieldExposedToken is
 
         // Emit the event.
         emit MigrationCompleted(originNetwork, shares, assetsBeforeTransferFee, assets, discrepancy);
+    }
+
+    /// @notice Adds a specific amount of the underlying token to a dedicated fund for covering the underlying token's transfer fees during a migration by transferring it from the sender. Please refer to `_completeMigration` for more information.
+    function donateForCompletingMigration(uint256 assets) external whenNotPaused nonReentrant {
+        YieldExposedTokenStorage storage $ = _getYieldExposedTokenStorage();
+
+        // Check the input.
+        require(assets > 0, InvalidAssets());
+
+        // Transfer the underlying token from the sender to self.
+        assets = _receiveUnderlyingToken(msg.sender, assets);
+
+        // Update the migration fund.
+        $.migrationFund += assets;
+
+        // Emit the event.
+        emit DonatedForCompletingMigration(msg.sender, assets);
     }
 
     /// @notice Sets the yield recipient.
@@ -1118,6 +1184,7 @@ abstract contract YieldExposedToken is
         revert CustomCrossNetworkInstructionNotSupported();
     }
 
+    // @todo Review the refactor.
     /// @notice Calculates the amount of assets to reserve.
     /// @param assets The amount of the underlying token to reserve.
     /// @param shares The amount of yeToken to reserve.
@@ -1131,6 +1198,7 @@ abstract contract YieldExposedToken is
         return assetsToReserve <= assets ? assetsToReserve : assets;
     }
 
+    // @todo Review the refactor.
     /// @notice Deposits a specific amount of the underlying token into the yield vault.
     /// @param assets Original amount of the underlying token to deposit.
     /// @param assetsToDeposit The amount of the underlying token to deposit into the yield vault.
