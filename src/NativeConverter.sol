@@ -77,9 +77,9 @@ abstract contract NativeConverter is
     // Events.
     event MigrationStarted(address indexed initiator, uint256 indexed mintedCustomToken, uint256 migratedBacking);
 
-    /// @param originalUnderlyingTokenDecimals_ The number of decimals of the original underlying token on Layer X. The `customToken` and `underlyingToken` MUST have the same number of decimals as the original underlying token. (ATTENTION) The decimals of the `customToken` and `underlyingToken` will default to 18 if they revert.
+    /// @param originalUnderlyingTokenDecimals_ The number of decimals of the original underlying token on Layer X. The `customToken` and `underlyingToken` MUST have the same number of decimals as the original underlying token. @note (ATTENTION) The decimals of the `customToken` and `underlyingToken` will default to 18 if they revert.
     /// @param customToken_ The token custom mapped to yeToken on LxLy Bridge on Layer Y. Native Converter must be able to mint and burn this token. Please refer to `CustomToken.sol` for more information.
-    /// @param underlyingToken_ The token that represents the original underlying token on Layer Y. IMPORTANT: This token MUST be either the bridge-wrapped version of the original underlying token, or the original underlying token must be custom mapped to this token on LxLy Bridge on Layer Y.
+    /// @param underlyingToken_ The token that represents the original underlying token on Layer Y. @note IMPORTANT: This token MUST be either the bridge-wrapped version of the original underlying token, or the original underlying token must be custom mapped to this token on LxLy Bridge on Layer Y.
     /// @param yeToken_ The address of yeToken on Layer X.
     function __NativeConverter_init(
         address owner_,
@@ -419,7 +419,7 @@ abstract contract NativeConverter is
     /// @param assets The amount of the underlying token.
     /// @return shares The amount of Custom Token.
     function _convertToShares(uint256 assets) internal pure returns (uint256 shares) {
-        // CAUTION! Changing this function will affect the conversion rate for the entire contract, and may introduce bugs.
+        // @note CAUTION! Changing this function will affect the conversion rate for the entire contract, and may introduce bugs.
         shares = assets;
     }
 
@@ -428,7 +428,7 @@ abstract contract NativeConverter is
     /// @param shares The amount of Custom Token.
     /// @return assets The amount of the underlying token.
     function _convertToAssets(uint256 shares) internal pure returns (uint256 assets) {
-        // CAUTION! Changing this function will affect the conversion rate for the entire contract, and may introduce bugs.
+        // @note CAUTION! Changing this function will affect the conversion rate for the entire contract, and may introduce bugs.
         assets = shares;
     }
 
@@ -460,6 +460,7 @@ abstract contract NativeConverter is
             uint256 balanceBefore = $.underlyingToken.balanceOf(address($.lxlyBridge));
 
             // Bridge.
+            // @note IMPORTANT: Make sure the underlying token you are integrating does not enable reentrancy on `transferFrom`.
             $.lxlyBridge.bridgeAsset($.layerXLxlyId, $.yeToken, assets, address($.underlyingToken), true, "");
 
             // Calculate the bridged amount.
@@ -500,7 +501,7 @@ abstract contract NativeConverter is
 
     /// @notice Transfers the underlying token from an external account to itself.
     /// @dev This function can be overridden to implement custom transfer logic.
-    /// @dev CAUTION! This function MUST NOT introduce reentrancy/cross-entrancy vulnerabilities.
+    /// @dev @note CAUTION! This function MUST NOT introduce reentrancy/cross-entrancy vulnerabilities.
     /// @return receivedValue The amount of the underlying actually received (e.g., after transfer fees).
     function _receiveUnderlyingToken(address from, uint256 value) internal virtual returns (uint256 receivedValue) {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
@@ -509,7 +510,7 @@ abstract contract NativeConverter is
         uint256 balanceBefore = $.underlyingToken.balanceOf(address(this));
 
         // Transfer.
-        // IMPORTANT: Make sure the underlying token you are integrating does not enable reentrancy on `transferFrom`.
+        // @note IMPORTANT: Make sure the underlying token you are integrating does not enable reentrancy on `transferFrom`.
         $.underlyingToken.safeTransferFrom(from, address(this), value);
 
         // Calculate the received amount.
@@ -518,11 +519,12 @@ abstract contract NativeConverter is
 
     /// @notice Transfers the underlying token to an external account.
     /// @dev This function can be overridden to implement custom transfer logic.
-    /// @dev CAUTION! This function MUST NOT introduce reentrancy/cross-entrancy vulnerabilities.
+    /// @dev @note CAUTION! This function MUST NOT introduce reentrancy/cross-entrancy vulnerabilities.
     function _sendUnderlyingToken(address to, uint256 value) internal virtual {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
 
         // Transfer.
+        // @note IMPORTANT: Make sure the underlying token you are integrating does not enable reentrancy on `transfer`.
         $.underlyingToken.safeTransfer(to, value);
     }
 }
