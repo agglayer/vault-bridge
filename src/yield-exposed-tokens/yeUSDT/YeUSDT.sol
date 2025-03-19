@@ -106,7 +106,7 @@ contract YeUSDT is YieldExposedToken {
 
     // -----================= ::: DEVELOPER ::: =================-----
 
-    // @note Review and document.
+    // @todo Review and document.
     /// @dev USDT has a transfer fee.
     function _assetsAfterTransferFee(uint256 assetsBeforeTransferFee)
         internal
@@ -129,7 +129,7 @@ contract YeUSDT is YieldExposedToken {
         return assetsBeforeTransferFee - fee;
     }
 
-    // @note Review and document.
+    // @todo Review and document.
     /// @dev USDT has a transfer fee.
     function _assetsBeforeTransferFee(uint256 minimumAssetsAfterTransferFee)
         internal

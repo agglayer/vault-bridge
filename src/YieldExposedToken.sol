@@ -369,7 +369,7 @@ abstract contract YieldExposedToken is
         // Calculate the amount to try to deposit into the yield vault.
         uint256 assetsToDeposit = assets - assetsToReserve;
 
-        // @note Reentrancy?
+        // @todo Reentrancy?
         // @todo Review the refactor.
         // Try to deposit into the yield vault.
         if (assetsToDeposit > 0) {
@@ -809,7 +809,7 @@ abstract contract YieldExposedToken is
                 // Cache the balance.
                 uint256 balanceBefore = $.underlyingToken.balanceOf(address(this));
 
-                // @note Reentrancy?
+                // @todo Reentrancy?
                 // Withdraw.
                 $.yieldVault.withdraw(assetsToWithdraw, address(this), address(this));
 
@@ -835,7 +835,7 @@ abstract contract YieldExposedToken is
                 // Cache the balance.
                 uint256 balanceBefore = $.underlyingToken.balanceOf(address(this));
 
-                // @note Reentrancy?
+                // @todo Reentrancy?
                 // Deposit.
                 $.yieldVault.deposit(assetsToDeposit, address(this));
 
@@ -1018,7 +1018,7 @@ abstract contract YieldExposedToken is
         // Calculate the amount to try to deposit into the yield vault.
         uint256 assetsToDeposit = assets - assetsToReserve;
 
-        // @note Reentrancy?
+        // @todo Reentrancy?
         // @todo Review the refactor.
         // Try to deposit into the yield vault.
         if (assetsToDeposit > 0) assetsToReserve = _depositToYieldVault($, assets, assetsToDeposit);
