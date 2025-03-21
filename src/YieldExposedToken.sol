@@ -71,6 +71,7 @@ abstract contract YieldExposedToken is
         ILxLyBridge lxlyBridge;
         mapping(uint32 layerYLxlyId => address nativeConverter) nativeConverters;
         uint256 migrationFeesFund;
+        uint256 minimumYieldVaultDeposit;
     }
 
     /// @dev The storage slot at which Yield Exposed Token storage starts, following the EIP-7201 standard.
@@ -135,7 +136,8 @@ abstract contract YieldExposedToken is
         address yieldVault_,
         address yieldRecipient_,
         address lxlyBridge_,
-        NativeConverter[] calldata nativeConverters_
+        NativeConverter[] calldata nativeConverters_,
+        uint256 minimumYieldVaultDeposit_
     ) internal onlyInitializing {
         YieldExposedTokenStorage storage $ = _getYieldExposedTokenStorage();
 
@@ -176,6 +178,7 @@ abstract contract YieldExposedToken is
             // Set Native Converter.
             $.nativeConverters[nativeConverters_[i].layerYLxlyId] = nativeConverters_[i].nativeConverter;
         }
+        $.minimumYieldVaultDeposit = minimumYieldVaultDeposit_;
 
         // Approve the yield vault and LxLy Bridge.
         IERC20(underlyingToken_).forceApprove(yieldVault_, type(uint256).max);
@@ -249,6 +252,13 @@ abstract contract YieldExposedToken is
     function migrationFeesFund() public view returns (uint256) {
         YieldExposedTokenStorage storage $ = _getYieldExposedTokenStorage();
         return $.migrationFeesFund;
+    }
+
+    /// @notice The minimum deposit amount for triggering a yield vault deposit.
+    /// @notice Amounts below this value will be reserved in full, regardless of the reserve percentage, in order to save gas for the user.
+    function minimumYieldVaultDeposit() public view returns (uint256) {
+        YieldExposedTokenStorage storage $ = _getYieldExposedTokenStorage();
+        return $.minimumYieldVaultDeposit;
     }
 
     /// @dev Returns a pointer to the ERC-7201 storage namespace.
@@ -362,24 +372,30 @@ abstract contract YieldExposedToken is
         shares = convertToShares(assets);
         spentAssets = assets;
 
-        // Calculate the amount to reserve.
-        uint256 assetsToReserve = _calculateAmountToReserve(assets, shares);
+        // Check whether to skip depositing into the yield vault.
+        if (assets >= $.minimumYieldVaultDeposit) {
+            // Calculate the amount to reserve.
+            uint256 assetsToReserve = _calculateAmountToReserve(assets, shares);
 
-        // Calculate the amount to try to deposit into the yield vault.
-        uint256 assetsToDeposit = assets - assetsToReserve;
+            // Calculate the amount to try to deposit into the yield vault.
+            uint256 assetsToDeposit = assets - assetsToReserve;
 
-        // @todo Reentrancy?
-        // Try to deposit into the yield vault.
-        if (assetsToDeposit > 0) {
-            // Deposit.
-            uint256 nonDepositedAssets = _depositIntoYieldVault(assetsToDeposit);
+            // @todo Reentrancy?
+            // Try to deposit into the yield vault.
+            if (assetsToDeposit > 0) {
+                // Deposit.
+                uint256 nonDepositedAssets = _depositIntoYieldVault(assetsToDeposit);
 
-            // Update the amount to reserve.
-            assetsToReserve += nonDepositedAssets;
+                // Update the amount to reserve.
+                assetsToReserve += nonDepositedAssets;
+            }
+
+            // Update the reserve.
+            $.reservedAssets += assetsToReserve;
+        } else {
+            // Update the reserve.
+            $.reservedAssets += assets;
         }
-
-        // Update the reserve.
-        $.reservedAssets += assetsToReserve;
 
         // Mint yeToken.
         if (destinationNetworkId != $.lxlyId) {
@@ -1118,6 +1134,13 @@ abstract contract YieldExposedToken is
             // Emit the event.
             emit NativeConverterSet(nativeConverters_[i].layerYLxlyId, nativeConverters_[i].nativeConverter);
         }
+    }
+
+    /// @notice Sets the minimum deposit amount that triggers a yield vault deposit.
+    /// @notice This function can be called by the owner only.
+    function setMinimumDepositAmount(uint256 minimumYieldVaultDeposit_) external whenNotPaused onlyOwner nonReentrant {
+        YieldExposedTokenStorage storage $ = _getYieldExposedTokenStorage();
+        $.minimumYieldVaultDeposit = minimumYieldVaultDeposit_;
     }
 
     /// @notice Calculates the amount of assets to reserve (as opposed to depositing into the yield vault).
