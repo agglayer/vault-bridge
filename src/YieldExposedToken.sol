@@ -103,6 +103,8 @@ abstract contract YieldExposedToken is
     error NoYield();
     error InvalidOriginNetwork();
     error CannotCompleteMigration(uint256 requiredAssets, uint256 receivedAssets, uint256 assetsInMigrationFund);
+    error InsufficientYieldVaultSharesMinted(uint256 depositedAssets, uint256 mintedShares);
+    error ExcessiveYieldVaultSharesBurned(uint256 burnedShares, uint256 withdrawnAssets);
     error CustomCrossNetworkInstructionNotSupported();
 
     // Events.
@@ -276,7 +278,7 @@ abstract contract YieldExposedToken is
         return address($.underlyingToken);
     }
 
-    /// @notice The total backing of yeToken in the underlying token.
+    /// @notice The real-time total backing of yeToken in the underlying token.
     function totalAssets() public view returns (uint256 totalManagedAssets) {
         return stakedAssets() + reservedAssets();
     }
@@ -377,21 +379,15 @@ abstract contract YieldExposedToken is
             // Calculate the amount to reserve.
             uint256 assetsToReserve = _calculateAmountToReserve(assets, shares);
 
+            // Update the reserve.
+            $.reservedAssets += assetsToReserve;
+
             // Calculate the amount to try to deposit into the yield vault.
             uint256 assetsToDeposit = assets - assetsToReserve;
 
             // @todo Reentrancy?
             // Try to deposit into the yield vault.
-            if (assetsToDeposit > 0) {
-                // Deposit.
-                uint256 nonDepositedAssets = _depositIntoYieldVault(assetsToDeposit);
-
-                // Update the amount to reserve.
-                assetsToReserve += nonDepositedAssets;
-            }
-
-            // Update the reserve.
-            $.reservedAssets += assetsToReserve;
+            if (assetsToDeposit > 0) _depositIntoYieldVault(assetsToDeposit);
         } else {
             // Update the reserve.
             $.reservedAssets += assets;
@@ -569,6 +565,10 @@ abstract contract YieldExposedToken is
         require(receiver != address(0), InvalidReceiver());
         require(owner != address(0), InvalidOwner());
 
+        // Cache the total supply and uncollected yield.
+        uint256 originalTotalSupply = totalSupply();
+        uint256 originalYield = yield();
+
         // Set the return value.
         shares = convertToShares(assets);
 
@@ -613,10 +613,12 @@ abstract contract YieldExposedToken is
             _burn(owner, convertToShares(remainingAssets));
 
             // Withdraw to the receiver.
-            $.yieldVault.withdraw(remainingAssets, receiver, address(this));
+            _withdrawFromYieldVault(remainingAssets, receiver, originalTotalSupply, originalYield);
 
-            // Emit the ERC-4626 event and return.
+            // Emit the ERC-4626 event.
             emit IERC4626.Withdraw(msg.sender, receiver, owner, assets, shares);
+
+            // Return the amount of yeToken burned.
             return shares;
         } else {
             // Update the remaining assets.
@@ -762,7 +764,7 @@ abstract contract YieldExposedToken is
         return $.yieldVault.convertToAssets($.yieldVault.balanceOf(address(this)));
     }
 
-    /// @notice The current reserve percentage.
+    /// @notice The real-time reserve percentage.
     /// @notice The reserve is based on the total supply of yeToken, and does not account for uncompleted migrations of backing from Layer Ys to Layer X. Please refer to `completeMigration` for more information.
     function reservePercentage() public view returns (uint256) {
         YieldExposedTokenStorage storage $ = _getYieldExposedTokenStorage();
@@ -774,7 +776,7 @@ abstract contract YieldExposedToken is
         return Math.mulDiv($.reservedAssets, 1e18, convertToAssets(totalSupply()));
     }
 
-    /// @notice The amount of yield available for collection.
+    /// @notice The real-time amount of yield available for collection.
     function yield() public view returns (uint256) {
         // The formula for calculating yield is:
         // yield = assets reported by yield vault + reserved assets - yeToken total supply in assets
@@ -784,7 +786,7 @@ abstract contract YieldExposedToken is
         return positive ? difference : 0;
     }
 
-    /// @notice The difference between the total assets and the minimum assets required to back the total supply of yeToken.
+    /// @notice The real-time difference between the total assets and the minimum assets required to back the total supply of yeToken.
     function backingDifference() public view returns (bool positive, uint256 difference) {
         // Get the state.
         uint256 totalAssets_ = totalAssets();
@@ -807,43 +809,43 @@ abstract contract YieldExposedToken is
     function _rebalanceReserve(bool force, bool allowRebalanceDown) internal {
         YieldExposedTokenStorage storage $ = _getYieldExposedTokenStorage();
 
-        // Cache the old reserved assets.
-        uint256 oldReservedAssets = $.reservedAssets;
+        // Cache the reserved assets, total supply, and uncollected yield.
+        uint256 originalReservedAssets = $.reservedAssets;
+        uint256 originalTotalSupply = totalSupply();
+        uint256 originalYield = yield();
 
         // Calculate the minimum reserve amount.
         uint256 minimumReserve = convertToAssets(Math.mulDiv(totalSupply(), $.minimumReservePercentage, 1e18));
 
         // Check if the reserve is below, above, or at the minimum threshold.
         /* Below. */
-        if ($.reservedAssets < minimumReserve) {
+        if (originalReservedAssets < minimumReserve) {
             // Calculate the amount to try to withdraw from the yield vault.
-            uint256 shortfall = minimumReserve - $.reservedAssets;
+            uint256 shortfall = minimumReserve - originalReservedAssets;
             // @note Yield vault usage.
             uint256 maxWithdraw_ = $.yieldVault.maxWithdraw(address(this));
             uint256 assetsToWithdraw = shortfall > maxWithdraw_ ? maxWithdraw_ : shortfall;
 
             // Try to withdraw from the yield vault.
             if (assetsToWithdraw > 0) {
-                // Cache the balance.
-                uint256 balanceBefore = $.underlyingToken.balanceOf(address(this));
-
                 // @todo Reentrancy?
                 // Withdraw.
-                $.yieldVault.withdraw(assetsToWithdraw, address(this), address(this));
+                uint256 withdrawnAssets =
+                    _withdrawFromYieldVault(assetsToWithdraw, address(this), originalTotalSupply, originalYield);
 
                 // Update the reserve.
-                $.reservedAssets += $.underlyingToken.balanceOf(address(this)) - balanceBefore;
+                $.reservedAssets += withdrawnAssets;
 
                 // Emit the event.
-                emit ReserveRebalanced(oldReservedAssets, $.reservedAssets, reservePercentage());
+                emit ReserveRebalanced(originalReservedAssets, $.reservedAssets, reservePercentage());
             } else if (force) {
                 revert CannotRebalanceReserve();
             }
         }
         /* Above */
-        else if ($.reservedAssets > minimumReserve && allowRebalanceDown) {
+        else if (originalReservedAssets > minimumReserve && allowRebalanceDown) {
             // Calculate the amunt to try to deposit into the yield vault.
-            uint256 excess = $.reservedAssets - minimumReserve;
+            uint256 excess = originalReservedAssets - minimumReserve;
             // @note Yield vault usage.
             uint256 maxDeposit_ = $.yieldVault.maxDeposit(address(this));
             uint256 assetsToDeposit = excess > maxDeposit_ ? maxDeposit_ : excess;
@@ -852,13 +854,13 @@ abstract contract YieldExposedToken is
             if (assetsToDeposit > 0) {
                 // @todo Reentrancy?
                 // Deposit.
-                uint256 nonDepositedAssets = _depositIntoYieldVault(assetsToDeposit);
+                _depositIntoYieldVault(assetsToDeposit);
 
                 // Update the reserve.
-                $.reservedAssets = $.reservedAssets - assetsToDeposit + nonDepositedAssets;
+                $.reservedAssets -= assetsToDeposit;
 
                 // Emit the event.
-                emit ReserveRebalanced(oldReservedAssets, $.reservedAssets, reservePercentage());
+                emit ReserveRebalanced(originalReservedAssets, $.reservedAssets, reservePercentage());
             } else if (force) {
                 revert CannotRebalanceReserve();
             }
@@ -1032,13 +1034,7 @@ abstract contract YieldExposedToken is
 
         // @todo Reentrancy?
         // Try to deposit into the yield vault.
-        if (assetsToDeposit > 0) {
-            // Deposit.
-            uint256 nonDepositedAssets = _depositIntoYieldVault(assetsToDeposit);
-
-            // Update the amount to reserve.
-            assetsToReserve += nonDepositedAssets;
-        }
+        if (assetsToDeposit > 0) _depositIntoYieldVault(assetsToDeposit);
 
         // Update the reserve.
         $.reservedAssets += assetsToReserve;
@@ -1162,10 +1158,9 @@ abstract contract YieldExposedToken is
         return assetsToReserve <= assets ? assetsToReserve : assets;
     }
 
-    /// @notice Tries to deposit a specific amount of the underlying token into the yield vault.
-    /// @param assets The amount of the underlying token to try to deposit into the yield vault.
-    /// @return nonDepositedAssets The amount of the underlying token that could not be deposited into the yield vault.
-    function _depositIntoYieldVault(uint256 assets) internal returns (uint256 nonDepositedAssets) {
+    /// @notice Deposits a specific amount of the underlying token into the yield vault.
+    /// @param assets The amount of the underlying token to deposit into the yield vault.
+    function _depositIntoYieldVault(uint256 assets) internal {
         YieldExposedTokenStorage storage $ = _getYieldExposedTokenStorage();
 
         // Calculate the amount to deposit into the yield vault.
@@ -1176,12 +1171,56 @@ abstract contract YieldExposedToken is
         // Cache the balance.
         uint256 balanceBefore = $.underlyingToken.balanceOf(address(this));
 
-        // @todo Reentrancy?
         // Deposit.
-        $.yieldVault.deposit(assets, address(this));
+        uint256 mintedYieldVaultShares = $.yieldVault.deposit(assets, address(this));
 
-        // Calculate the amount that could not be deposited.
-        nonDepositedAssets = assets - ($.underlyingToken.balanceOf(address(this)) - balanceBefore);
+        // Check the output.
+        // This code checks if the minted yield vault shares are worth enough in the underlying token, on average. Allows for 1% slippage.
+        require(
+            $.yieldVault.convertToAssets(mintedYieldVaultShares)
+                >= Math.mulDiv(_assetsAfterTransferFee(assets), 0.99e18, 1e18),
+            InsufficientYieldVaultSharesMinted(assets, mintedYieldVaultShares)
+        );
+
+        // Check the accounting.
+        assert($.underlyingToken.balanceOf(address(this)) - balanceBefore == assets);
+    }
+
+    /// @notice Withdraws a specific amount of the underlying token from the yield vault.
+    /// @param assets The amount of the underlying token to withdraw from the yield vault.
+    /// @param receiver The address to withdraw the underlying token to.
+    /// @param originalTotalSupply The total supply of yeToken before burning the required amount of yeToken or updating the reserve.
+    /// @param originalYield The uncollected yield before burning the required amount of yeToken or updating the reserve.
+    /// @return withdrawnAssets The amount of the underlying token actually withdrawn from the yield vault.
+    function _withdrawFromYieldVault(
+        uint256 assets,
+        address receiver,
+        uint256 originalTotalSupply,
+        uint256 originalYield
+    ) internal returns (uint256 withdrawnAssets) {
+        YieldExposedTokenStorage storage $ = _getYieldExposedTokenStorage();
+
+        // Cache the underlying token balance and yield vault shares balance.
+        uint256 underlyingTokenBalanceBefore = $.underlyingToken.balanceOf(address(this));
+        uint256 yieldVaultSharesBalanceBefore = $.yieldVault.balanceOf(address(this));
+
+        // @todo Reentrancy?
+        // Withdraw.
+        uint256 burnedYieldVaultShares = $.yieldVault.withdraw(assets, receiver, address(this));
+
+        // Check the output.
+        // This code checks if the contract would go insolvent if the total supply, including uncollected yield, were withdrawn. Allows for 1% slippage.
+        require(
+            Math.mulDiv(
+                burnedYieldVaultShares,
+                convertToAssets(Math.mulDiv(originalTotalSupply + originalYield, 0.99e18, 1e18)),
+                assets
+            ) <= yieldVaultSharesBalanceBefore,
+            ExcessiveYieldVaultSharesBurned(burnedYieldVaultShares, assets)
+        );
+
+        // Calculate the withdrawn amount.
+        withdrawnAssets = $.underlyingToken.balanceOf(address(this)) - underlyingTokenBalanceBefore;
     }
 
     // -----================= ::: ADMIN ::: =================-----
