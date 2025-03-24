@@ -2,15 +2,15 @@
 pragma solidity 0.8.28;
 
 // Main functionality.
-import {YieldExposedToken} from "../YieldExposedToken.sol";
+import {VaultBackedToken} from "../VaultBackedToken.sol";
 
 // Other functionality.
 import {ITransferFeeUtils} from "../etc/ITransferFeeUtils.sol";
 import {IVersioned} from "../etc/IVersioned.sol";
 
-/// @title Generic Yield Exposed Token
-/// @dev This contract can be used to deploy yeTokens that do not require any customization, and the underlying token does not have a transfer fee.
-contract GenericYeToken is YieldExposedToken {
+/// @title Generic Vault Backed Token
+/// @dev This contract can be used to deploy vbTokens that do not require any customization, and the underlying token does not have a transfer fee.
+contract GenericVbToken is VaultBackedToken {
     constructor() {
         _disableInitializers();
     }
