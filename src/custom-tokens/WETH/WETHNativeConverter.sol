@@ -28,7 +28,7 @@ contract WETHNativeConverter is NativeConverter {
         address underlyingToken_,
         address lxlyBridge_,
         uint32 layerXNetworkId_,
-        address yeToken_,
+        address vbToken_,
         address migrator_
     ) external initializer {
         // Initialize the base implementation.
@@ -39,7 +39,7 @@ contract WETHNativeConverter is NativeConverter {
             underlyingToken_,
             lxlyBridge_,
             layerXNetworkId_,
-            yeToken_,
+            vbToken_,
             migrator_
         );
 
@@ -54,7 +54,7 @@ contract WETHNativeConverter is NativeConverter {
         address underlyingToken_,
         address lxlyBridge_,
         uint32 layerXNetworkId_,
-        address yeToken_,
+        address vbToken_,
         address migrator_
     ) external reinitializer(2) {
         underlyingToken().forceApprove(address(lxlyBridge()), 0);
@@ -67,7 +67,7 @@ contract WETHNativeConverter is NativeConverter {
             underlyingToken_,
             lxlyBridge_,
             layerXNetworkId_,
-            yeToken_,
+            vbToken_,
             migrator_
         );
 
@@ -75,12 +75,12 @@ contract WETHNativeConverter is NativeConverter {
     }
 
     /// @dev This special function allows the NativeConverter owner to migrate the gas backing of the zETH Custom Token
-    /// @dev It simply takes the amount of gas token from the zETH contract
+    /// @dev It simply takes the amount of gas token from the WETH contract
     /// @dev and performs the migration using a special CrossNetworkInstruction called WRAP_COIN_AND_COMPLETE_MIGRATION
-    /// @dev It instructs yeETH on Layer X to first wrap the gas token and then deposit it to complete the migration.
+    /// @dev It instructs vbETH on Layer X to first wrap the gas token and then deposit it to complete the migration.
     /// @notice It is known that this can lead to zETH not being able to perform withdrawals, because of a lack of gas backing.
-    /// @notice However, this is acceptable, because zETH is a yield-exposed token so its backing should actually be staked.
-    /// @notice Users can still bridge zETH back to Layer X to receive WETH or ETH.
+    /// @notice However, this is acceptable, because WETH is a vault backed token so its backing should actually be staked.
+    /// @notice Users can still bridge WETH back to Layer X to receive wETH or ETH.
     function migrateGasBackingToLayerX(uint256 amount) external whenNotPaused onlyOwner {
         // Check the input.
         require(amount > 0, InvalidAssets());
@@ -91,12 +91,12 @@ contract WETHNativeConverter is NativeConverter {
 
         // Taking lxlyBridge's gas balance here
         weth.bridgeBackingToLayerX(amount);
-        lxlyBridge().bridgeAsset{value: amount}(layerXLxlyId(), address(yeToken()), amount, address(0), true, "");
+        lxlyBridge().bridgeAsset{value: amount}(layerXLxlyId(), address(vbToken()), amount, address(0), true, "");
 
         // Bridge a message to Migration Manager on Layer X to complete the migration.
         lxlyBridge().bridgeMessage(
             layerXLxlyId(),
-            address(yeToken()),
+            address(vbToken()),
             true,
             abi.encode(
                 CrossNetworkInstruction.CUSTOM,

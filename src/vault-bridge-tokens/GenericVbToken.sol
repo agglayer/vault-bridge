@@ -29,7 +29,7 @@ contract GenericVbToken is VaultBackedToken {
         address transferFeeUtil_
     ) external initializer {
         // Initialize the base implementation.
-        __YieldExposedToken_init(
+        __VaultBackedToken_init(
             owner_,
             name_,
             symbol_,

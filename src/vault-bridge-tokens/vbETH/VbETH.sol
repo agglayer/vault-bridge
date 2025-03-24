@@ -33,7 +33,7 @@ contract VbETH is VaultBackedToken {
         address transferFeeUtil_
     ) external initializer {
         // Initialize the base implementation.
-        __YieldExposedToken_init(
+        __VaultBackedToken_init(
             owner_,
             name_,
             symbol_,
@@ -48,12 +48,12 @@ contract VbETH is VaultBackedToken {
         );
     }
 
-    /// @dev deposit ETH to get yeETH
+    /// @dev deposit ETH to get vbETH
     function depositGasToken(address receiver) external payable whenNotPaused nonReentrant returns (uint256 shares) {
         (shares,) = _deposit(msg.value, lxlyId(), receiver, false, 0);
     }
 
-    /// @dev deposit ETH to get yeETH and bridge to an L2
+    /// @dev deposit ETH to get vbETH and bridge to an L2
     function depositGasTokenAndBridge(
         address destinationAddress,
         uint32 destinationNetworkId,
@@ -72,7 +72,7 @@ contract VbETH is VaultBackedToken {
         require(shares > 0, InvalidShares());
         // The receiver is checked in the `_deposit` function.
 
-        // Mint yeToken to the receiver.
+        // Mint vbToken to the receiver.
         uint256 mintedShares;
         (mintedShares, assets) =
         // msg.value is used as assets value, if it exceeds shares value, WETH will be refunded

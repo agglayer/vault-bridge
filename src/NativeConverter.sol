@@ -19,7 +19,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 /// @title Native Converter
-/// @notice Native Converter lives on Layer Ys and converts the underlying token (usually the bridge-wrapped version of the original underlying token from Layer X) to Custom Token, and vice versa, on demand. It can also migrate backing for Custom Token it has minted to Layer X, where yeToken will be minted and locked in LxLy Bridge. Please refer to `migrateBackingToLayerX` for more information.
+/// @notice Native Converter lives on Layer Ys and converts the underlying token (usually the bridge-wrapped version of the original underlying token from Layer X) to Custom Token, and vice versa, on demand. It can also migrate backing for Custom Token it has minted to Layer X, where vbToken will be minted and locked in LxLy Bridge. Please refer to `migrateBackingToLayerX` for more information.
 /// @dev This contract MUST have mint and burn permission on Custom Token. Please refer to `CustomToken.sol` for more information.
 abstract contract NativeConverter is
     Initializable,
@@ -50,7 +50,7 @@ abstract contract NativeConverter is
         uint32 lxlyId;
         ILxLyBridge lxlyBridge;
         uint32 layerXLxlyId;
-        address yeToken;
+        address vbToken;
         address migrator;
     }
 
@@ -65,7 +65,7 @@ abstract contract NativeConverter is
     error InvalidUnderlyingToken();
     error InvalidLxLyBridge();
     error InvalidLayerXLxlyId();
-    error InvalidYeToken();
+    error InvalidVbToken();
     error InvalidMigrator();
     error NonMatchingCustomTokenDecimals(uint8 customTokenDecimals, uint8 originalUnderlyingTokenDecimals);
     error NonMatchingUnderlyingTokenDecimals(uint8 underlyingTokenDecimals, uint8 originalUnderlyingTokenDecimals);
@@ -81,9 +81,9 @@ abstract contract NativeConverter is
     event MigrationStarted(address indexed initiator, uint256 indexed mintedCustomToken, uint256 migratedBacking);
 
     /// @param originalUnderlyingTokenDecimals_ The number of decimals of the original underlying token on Layer X. The `customToken` and `underlyingToken` MUST have the same number of decimals as the original underlying token. @note (ATTENTION) The decimals of the `customToken` and `underlyingToken` will default to 18 if they revert.
-    /// @param customToken_ The token custom mapped to yeToken on LxLy Bridge on Layer Y. Native Converter must be able to mint and burn this token. Please refer to `CustomToken.sol` for more information.
+    /// @param customToken_ The token custom mapped to vbToken on LxLy Bridge on Layer Y. Native Converter must be able to mint and burn this token. Please refer to `CustomToken.sol` for more information.
     /// @param underlyingToken_ The token that represents the original underlying token on Layer Y. @note IMPORTANT: This token MUST be either the bridge-wrapped version of the original underlying token, or the original underlying token must be custom mapped to this token on LxLy Bridge on Layer Y.
-    /// @param yeToken_ The address of yeToken on Layer X.
+    /// @param vbToken_ The address of vbToken on Layer X.
     function __NativeConverter_init(
         address owner_,
         uint8 originalUnderlyingTokenDecimals_,
@@ -91,7 +91,7 @@ abstract contract NativeConverter is
         address underlyingToken_,
         address lxlyBridge_,
         uint32 layerXLxlyId_,
-        address yeToken_,
+        address vbToken_,
         address migrator_
     ) internal onlyInitializing {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
@@ -102,7 +102,7 @@ abstract contract NativeConverter is
         require(underlyingToken_ != address(0), InvalidUnderlyingToken());
         require(lxlyBridge_ != address(0), InvalidLxLyBridge());
         require(layerXLxlyId_ != ILxLyBridge(lxlyBridge_).networkID(), InvalidLxLyBridge());
-        require(yeToken_ != address(0), InvalidYeToken());
+        require(vbToken_ != address(0), InvalidVbToken());
         require(migrator_ != address(0), InvalidMigrator());
 
         // Check Custom Token's decimals.
@@ -143,7 +143,7 @@ abstract contract NativeConverter is
         $.lxlyId = ILxLyBridge(lxlyBridge_).networkID();
         $.lxlyBridge = ILxLyBridge(lxlyBridge_);
         $.layerXLxlyId = layerXLxlyId_;
-        $.yeToken = yeToken_;
+        $.vbToken = vbToken_;
         $.migrator = migrator_;
 
         // Approve LxLy Bridge.
@@ -152,7 +152,7 @@ abstract contract NativeConverter is
 
     // -----================= ::: STORAGE ::: =================-----
 
-    /// @notice The token custom mapped to yeToken on LxLy Bridge on Layer Y.
+    /// @notice The token custom mapped to vbToken on LxLy Bridge on Layer Y.
     function customToken() public view returns (IERC20) {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
         return $.customToken;
@@ -189,10 +189,10 @@ abstract contract NativeConverter is
         return $.layerXLxlyId;
     }
 
-    /// @notice The address of yeToken on Layer X.
-    function yeToken() public view returns (address) {
+    /// @notice The address of vbToken on Layer X.
+    function vbToken() public view returns (address) {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
-        return $.yeToken;
+        return $.vbToken;
     }
 
     /// @notice The address of the migrator contract.
@@ -436,7 +436,7 @@ abstract contract NativeConverter is
     }
 
     /// @dev Tells how much a specific amount of Custom Token is worth in the underlying token.
-    /// @dev yeToken is backed by the underlying token 1:1.
+    /// @dev vbToken is backed by the underlying token 1:1.
     /// @param shares The amount of Custom Token.
     /// @return assets The amount of the underlying token.
     function _convertToAssets(uint256 shares) internal pure returns (uint256 assets) {
@@ -447,7 +447,7 @@ abstract contract NativeConverter is
     // -----================= ::: NATIVE CONVERTER ::: =================-----
 
     /// @notice Migrates a specific amount of backing to Layer X.
-    /// @notice This action provides yeToken liquidity on LxLy Bridge on Layer X.
+    /// @notice This action provides vbToken liquidity on LxLy Bridge on Layer X.
     /// @notice The bridged asset and message must be claimed manually on LxLy Bridge on Layer X to complete the migration.
     /// @notice This function can be called by the owner only.
     /// @notice The migration can be completed by anyone on Layer X.
@@ -467,7 +467,7 @@ abstract contract NativeConverter is
         // Calculate the amount of Custom Token for which backing is being migrated.
         uint256 shares = _convertToShares(assets);
 
-        // Bridge the backing to yeToken on Layer X.
+        // Bridge the backing to vbToken on Layer X.
         /* If the underlying token is not mintable by LxLy Bridge, we need to check for a transfer fee. */
         if ($._underlyingTokenIsNotMintable) {
             // Cache the balance.
@@ -475,20 +475,20 @@ abstract contract NativeConverter is
 
             // Bridge.
             // @note IMPORTANT: Make sure the underlying token you are integrating does not enable reentrancy on `transferFrom`.
-            $.lxlyBridge.bridgeAsset($.layerXLxlyId, $.yeToken, assets, address($.underlyingToken), true, "");
+            $.lxlyBridge.bridgeAsset($.layerXLxlyId, $.vbToken, assets, address($.underlyingToken), true, "");
 
             // Calculate the bridged amount.
             assets = $.underlyingToken.balanceOf(address($.lxlyBridge)) - balanceBefore;
         }
         /* If the underlying token is mintable by LxLy Bridge, it will be burned (not transferred). */
         else {
-            $.lxlyBridge.bridgeAsset($.layerXLxlyId, $.yeToken, assets, address($.underlyingToken), true, "");
+            $.lxlyBridge.bridgeAsset($.layerXLxlyId, $.vbToken, assets, address($.underlyingToken), true, "");
         }
 
-        // Bridge a message to yeToken on Layer X to complete the migration.
+        // Bridge a message to vbToken on Layer X to complete the migration.
         $.lxlyBridge.bridgeMessage(
             $.layerXLxlyId,
-            $.yeToken,
+            $.vbToken,
             true,
             abi.encode(CrossNetworkInstruction.COMPLETE_MIGRATION, abi.encode(shares, assets))
         );
