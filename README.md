@@ -1,8 +1,8 @@
-<h1 align="center">🌾 Yield Exposed Token</h1>
+<h1 align="center">🌾 Vault Backed Token</h1>
 
 <div align="center">
 
-Yield Exposed Token is the core of the Stake The Bridge system. Built from the ground up to be reusable, it offers complete STB functionality out of the box, allowing you to create yeTokens in just a few lines of code.
+Vault Backed Token is the core of the Stake The Bridge system. Built from the ground up to be reusable, it offers complete STB functionality out of the box, allowing you to create vbTokens in just a few lines of code.
 
 </div>
 
@@ -11,14 +11,14 @@ Yield Exposed Token is the core of the Stake The Bridge system. Built from the g
 The Stake The Bridge system is comprised of:
 
 - Layer X
-  - [Yield Exposed Token](#yield-exposed-token-)
+  - [Vault Backed Token](#vault-backed-token-)
 - Layer Y
   - [Custom Token](#custom-token-)
   - [Native Converter](#native-converter-)
 
-### Yield Exposed Token [↗](src/YieldExposedToken.sol)
+### Vault Backed Token [↗](src/VaultBackedToken.sol)
 
-A Yield Exposed Token is an
+A Vault Backed Token is an
 
 - [ERC-20](https://eips.ethereum.org/EIPS/eip-20) token
 - [ERC-4626](https://eips.ethereum.org/EIPS/eip-4626) vault
@@ -32,7 +32,7 @@ A Custom Token is an
 
 - [ERC-20](https://eips.ethereum.org/EIPS/eip-20) token
 
-custom-mapped to yeToken on [LxLy Bridge](https://github.com/0xPolygonHermez/zkevm-contracts).
+custom-mapped to vbToken on [LxLy Bridge](https://github.com/0xPolygonHermez/zkevm-contracts).
 
 ### Native Converter [↗](src/NativeConverter.sol)
 
