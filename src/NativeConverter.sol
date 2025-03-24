@@ -427,7 +427,7 @@ abstract contract NativeConverter is
     }
 
     /// @dev Tells how much a specific amount of underlying token is worth in Custom Token.
-    /// @dev The underlying token backs yeToken 1:1.
+    /// @dev The underlying token backs vbToken 1:1.
     /// @param assets The amount of the underlying token.
     /// @return shares The amount of Custom Token.
     function _convertToShares(uint256 assets) internal pure returns (uint256 shares) {

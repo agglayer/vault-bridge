@@ -201,14 +201,14 @@ abstract contract VaultBackedToken is
         return $.underlyingToken;
     }
 
-    /// @notice The number of decimals of the yield exposed token.
+    /// @notice The number of decimals of the vault backed token.
     /// @notice The number of decimals is the same as that of the underlying token, or 18 if the underlying token reverted (e.g., does not implement `decimals`).
     function decimals() public view override(ERC20Upgradeable, IERC20Metadata) returns (uint8) {
         VaultBackedTokenStorage storage $ = _getVaultBackedTokenStorage();
         return $.decimals;
     }
 
-    /// @notice Yield exposed tokens have an internal reserve of the underlying token from which withdrawals are served first.
+    /// @notice Vault backed tokens have an internal reserve of the underlying token from which withdrawals are served first.
     /// @notice The owner can rebalance the reserve by calling `rebalanceReserve` when it is below or above the `minimumReservePercentage`.
     /// @notice 1e18 is 100%.
     function minimumReservePercentage() public view returns (uint256) {
@@ -216,7 +216,7 @@ abstract contract VaultBackedToken is
         return $.minimumReservePercentage;
     }
 
-    /// @notice Yield exposed tokens have an internal reserve of the underlying token from which withdrawals are served first.
+    /// @notice Vault backed tokens have an internal reserve of the underlying token from which withdrawals are served first.
     /// @notice The owner can rebalance the reserve by calling `rebalanceReserve` when it is below or above the `minimumReservePercentage`.
     function reservedAssets() public view returns (uint256) {
         VaultBackedTokenStorage storage $ = _getVaultBackedTokenStorage();
@@ -774,7 +774,7 @@ abstract contract VaultBackedToken is
         super.permit(owner, spender, value, deadline, v, r, s);
     }
 
-    // -----================= ::: YIELD EXPOSED TOKEN ::: =================-----
+    // -----================= ::: VAULT BACKED TOKEN ::: =================-----
 
     /// @notice The real-time amount of the underlying token in the yield vault, as reported by the yield vault.
     function stakedAssets() public view returns (uint256) {
