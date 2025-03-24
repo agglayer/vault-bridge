@@ -4,7 +4,7 @@ pragma solidity 0.8.28;
 // Main functionality.
 import {GenericCustomToken} from "../GenericCustomToken.sol";
 
-/// @title USDC Custom Token
+/// @title vbUSDC Custom Token
 /// @dev No customization is required.
-/// @dev This contract does not need to be deployed. You can point `USDC` proxy to `GenericCustomToken` instead.
-contract USDC is GenericCustomToken {}
+/// @dev This contract does not need to be deployed. You can point `vbUSDC` proxy to `GenericCustomToken` instead.
+contract vbUSDC is GenericCustomToken {}

@@ -1,0 +1,10 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
+pragma solidity 0.8.28;
+
+// Main functionality.
+import {GenericNativeConverter} from "../GenericNativeConverter.sol";
+
+/// @title vbUSDT Native Converter
+/// @dev No customization is required.
+/// @dev This contract does not need to be deployed. You can point `vbUSDTNativeConverter` proxy to `GenericNativeConverter` instead.
+contract vbUSDTNativeConverter is GenericNativeConverter {}
