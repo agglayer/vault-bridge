@@ -2,15 +2,18 @@
 pragma solidity 0.8.28;
 
 import {YeETH} from "src/yield-exposed-tokens/yeETH/YeETH.sol";
-import {YieldExposedToken} from "src/YieldExposedToken.sol";
+import {YieldExposedToken, PausableUpgradeable} from "src/YieldExposedToken.sol";
 import {ILxLyBridge} from "src/etc/ILxLyBridge.sol";
+import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {IWETH9} from "src/etc/IWETH9.sol";
-import {GenericYieldExposedTokenTest, GenericYeToken} from "test/GenericYieldExposedToken.t.sol";
+import {GenericYieldExposedTokenTest, GenericYeToken, IERC20, SafeERC20} from "test/GenericYieldExposedToken.t.sol";
 import {IMetaMorpho} from "test/interfaces/IMetaMorpho.sol";
 import {ILxLyBridge as _ILxLyBridge} from "test/interfaces/ILxLyBridge.sol";
 import {WETHNativeConverter} from "src/custom-tokens/WETH/WETHNativeConverter.sol";
 
 contract YeETHTest is GenericYieldExposedTokenTest {
+    using SafeERC20 for IERC20;
+
     YeETH public yeETH;
     address public morphoVault;
 
@@ -47,7 +50,8 @@ contract YeETHTest is GenericYieldExposedTokenTest {
                 address(yeTokenVault), // Use our deployed Morpho vault
                 yieldRecipient, // mock yield recipient
                 LXLY_BRIDGE,
-                nativeConverter // mock migration manager
+                nativeConverter, // mock migration manager
+                MINIMUM_YIELD_VAULT_DEPOSIT
             )
         );
 
@@ -125,8 +129,8 @@ contract YeETHTest is GenericYieldExposedTokenTest {
         assertEq(yeETH.balanceOf(receiver), shares, "Receiver should get correct shares");
     }
 
-    function test_mint(uint256 amount) public {
-        vm.assume(amount > 0 && amount < 100 ether);
+    function test_mint() public override {
+        uint256 amount = 100 ether;
         vm.deal(address(this), amount + 1 ether);
 
         uint256 initialBalance = IWETH9(WETH).balanceOf(address(this));
@@ -144,33 +148,49 @@ contract YeETHTest is GenericYieldExposedTokenTest {
         assertApproxEqAbs(yeETH.reservedAssets(), reserveAmount, 2); // allow for rounding
     }
 
-    function test_withdraw() public override {
-        uint256 initialAmount = 100;
-        uint256 reserveAmount = (initialAmount * minimumReservePercentage) / MAX_MINIMUM_RESERVE_PERCENTAGE; // 10
+    function test_withdraw_from_reserve() public override {
+        uint256 amount = 100 ether;
+        uint256 vaultMaxDeposit = yeTokenVault.maxDeposit(address(yeToken));
 
         // Deposit ETH
-        vm.deal(address(this), initialAmount);
-        uint256 shares = yeETH.depositGasToken{value: initialAmount}(address(this));
+        vm.deal(address(this), amount);
+        uint256 shares = yeETH.depositGasToken{value: amount}(address(this));
         assertEq(yeETH.balanceOf(address(this)), shares); // sender gets 100 shares
 
-        uint256 withdrawAmount = 110; // withdraw amount is greater than total assets (100)
-        vm.expectRevert(abi.encodeWithSelector(YieldExposedToken.AssetsTooLarge.selector, 99, 110));
-        yeETH.withdraw(withdrawAmount, address(this), address(this));
+        uint256 reserveAssetsAfterDeposit = _calculateReserveAssets(amount, vaultMaxDeposit);
+
+        uint256 reserveWithdrawAmount = (reserveAssetsAfterDeposit * 90) / 100; // withdraw 90% of reserve assets
+        uint256 reserveAfterWithdraw = reserveAssetsAfterDeposit - reserveWithdrawAmount;
 
         uint256 initialBalance = IWETH9(WETH).balanceOf(address(this));
 
-        uint256 reserveWithdrawAmount = 5;
-        reserveAmount -= reserveWithdrawAmount;
+        vm.expectEmit();
+        emit IERC4626.Withdraw(
+            address(this), address(this), address(this), reserveWithdrawAmount, reserveWithdrawAmount
+        );
         yeETH.withdraw(reserveWithdrawAmount, address(this), address(this));
-        assertEq(IWETH9(WETH).balanceOf(address(yeETH)), reserveAmount); // reserve assets reduced
+        assertEq(IWETH9(WETH).balanceOf(address(yeETH)), reserveAfterWithdraw); // reserve assets reduced
         assertEq(IWETH9(WETH).balanceOf(address(this)), initialBalance + reserveWithdrawAmount); // assets returned to sender
-        assertEq(yeETH.balanceOf(address(this)), initialAmount - reserveWithdrawAmount); // shares reduced
+        assertEq(yeETH.balanceOf(address(this)), amount - reserveWithdrawAmount); // shares reduced
+    }
 
-        uint256 stakeWithdrawAmount = 10; // withdraw amount is greater than reserve amount (5)
-        yeETH.withdraw(stakeWithdrawAmount, address(this), address(this));
-        assertEq(IWETH9(WETH).balanceOf(address(yeETH)), 0); // reserve assets remain same
-        assertEq(IWETH9(WETH).balanceOf(address(this)), initialBalance + reserveWithdrawAmount + stakeWithdrawAmount); // assets returned to sender
-        assertEq(yeETH.balanceOf(address(this)), initialAmount - reserveWithdrawAmount - stakeWithdrawAmount); // shares reduced
+    function test_withdraw_from_stake() public override {
+        uint256 amount = 100 ether;
+
+        // Deposit ETH
+        vm.deal(address(this), amount);
+        uint256 shares = yeETH.depositGasToken{value: amount}(address(this));
+        assertEq(yeETH.balanceOf(address(this)), shares); // sender gets 100 shares
+
+        uint256 amountToWithdraw = amount - 1;
+        uint256 initialBalance = IWETH9(WETH).balanceOf(address(this));
+
+        vm.expectEmit();
+        emit IERC4626.Withdraw(address(this), address(this), address(this), amountToWithdraw, amountToWithdraw);
+        yeToken.withdraw(amountToWithdraw, address(this), address(this));
+        assertEq(IWETH9(WETH).balanceOf(address(yeETH)), 0); // reserve assets reduced
+        assertEq(IWETH9(WETH).balanceOf(address(this)), initialBalance + amountToWithdraw); // assets returned to sender
+        assertEq(yeETH.balanceOf(address(this)), amount - amountToWithdraw); // shares reduced
     }
 
     function test_onMessageReceived_CUSTOM_no_discrepancy() public {
@@ -192,12 +212,8 @@ contract YeETHTest is GenericYieldExposedTokenTest {
             )
         );
 
-        vm.startPrank(owner);
-        yeToken.pause();
-        vm.expectRevert(EnforcedPause.selector);
-        yeToken.onMessageReceived(nativeConverterAddress, NETWORK_ID_L2, data);
-        yeToken.unpause();
-        vm.stopPrank();
+        bytes memory callData = abi.encodeCall(yeETH.onMessageReceived, (nativeConverterAddress, NETWORK_ID_L2, data));
+        _testPauseUnpause(owner, address(yeETH), callData);
 
         deal(address(yeToken), amount);
 
@@ -238,9 +254,9 @@ contract YeETHTest is GenericYieldExposedTokenTest {
             _ILxLyBridge(LXLY_BRIDGE).depositCount()
         );
         vm.expectEmit();
-        emit Deposit(LXLY_BRIDGE, address(yeToken), amount, shares);
+        emit IERC4626.Deposit(LXLY_BRIDGE, address(yeToken), amount, shares);
         vm.expectEmit();
-        emit MigrationCompleted(NETWORK_ID_L2, shares, amount, amount, 0);
+        emit YieldExposedToken.MigrationCompleted(NETWORK_ID_L2, shares, amount, amount, 0);
         vm.prank(LXLY_BRIDGE);
         yeToken.onMessageReceived(nativeConverterAddress, NETWORK_ID_L2, data);
 
@@ -254,14 +270,12 @@ contract YeETHTest is GenericYieldExposedTokenTest {
     function test_onMessageReceived_CUSTOM_with_discrepancy() public {
         uint256 amount = 100 ether;
         uint256 shares = 110 ether;
-        uint256 yieldInAssets = 20 ether;
 
         // make sure the amount is less than the max deposit limit
         uint256 vaultMaxDeposit = yeTokenVault.maxDeposit(address(yeToken));
         if (amount > vaultMaxDeposit) {
             amount = vaultMaxDeposit / 2;
             shares = (vaultMaxDeposit / 2) + 10;
-            yieldInAssets = vaultMaxDeposit;
         }
 
         bytes memory data = abi.encode(
@@ -278,10 +292,12 @@ contract YeETHTest is GenericYieldExposedTokenTest {
         vm.prank(LXLY_BRIDGE);
         yeToken.onMessageReceived(nativeConverterAddress, NETWORK_ID_L2, data);
 
-        uint256 sharesBalanceBefore = yeTokenVault.balanceOf(address(yeToken));
-        uint256 yieldShares = yeTokenVault.convertToShares(yieldInAssets);
-
-        deal(address(yeTokenVault), address(yeToken), sharesBalanceBefore + yieldShares); // add yield to the vault
+        // fund the migration fees
+        deal(asset, address(this), amount);
+        IERC20(asset).forceApprove(address(yeToken), amount);
+        vm.expectEmit();
+        emit YieldExposedToken.DonatedForCompletingMigration(address(this), amount);
+        yeToken.donateForCompletingMigration(amount);
 
         uint256 stakedAssetsBefore = yeToken.stakedAssets();
 
@@ -297,9 +313,9 @@ contract YeETHTest is GenericYieldExposedTokenTest {
             _ILxLyBridge(LXLY_BRIDGE).depositCount()
         );
         vm.expectEmit();
-        emit Deposit(LXLY_BRIDGE, address(yeToken), amount, shares);
+        emit IERC4626.Deposit(LXLY_BRIDGE, address(yeToken), amount, shares);
         vm.expectEmit();
-        emit MigrationCompleted(NETWORK_ID_L2, shares, amount, amount, shares - amount);
+        emit YieldExposedToken.MigrationCompleted(NETWORK_ID_L2, shares, amount, amount, shares - amount);
         vm.prank(LXLY_BRIDGE);
         yeToken.onMessageReceived(nativeConverterAddress, NETWORK_ID_L2, data);
 

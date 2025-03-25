@@ -53,7 +53,8 @@ contract YeUSDTTest is GenericYieldExposedTokenTest {
                 address(yeTokenVault),
                 yieldRecipient,
                 LXLY_BRIDGE,
-                nativeConverter
+                nativeConverter,
+                MINIMUM_YIELD_VAULT_DEPOSIT
             )
         );
         yeToken = GenericYeToken(_proxify(address(yeToken), address(this), initData));
