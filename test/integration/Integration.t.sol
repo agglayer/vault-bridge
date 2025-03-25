@@ -1103,8 +1103,8 @@ contract IntegrationTest is Test, ZkEVMCommon {
             _claimPayload.exitRootLayerY,
             _claimPayload.destinationAddress,
             _claimPayload.amount,
-            _claimPayload.metadata,
-            recipient
+            recipient,
+            _claimPayload.metadata
         );
 
         assertEq(yeToken.underlyingToken().balanceOf(recipient), _claimPayload.amount);

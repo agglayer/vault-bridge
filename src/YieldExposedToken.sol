@@ -681,7 +681,8 @@ abstract contract YieldExposedToken is
         bytes32 rollupExitRoot,
         address destinationAddress,
         uint256 amount,
-        address receiver
+        address receiver,
+        bytes memory metadata
     ) external whenNotPaused nonReentrant returns (uint256 assets) {
         YieldExposedTokenStorage storage $ = _getYieldExposedTokenStorage();
 
@@ -698,7 +699,8 @@ abstract contract YieldExposedToken is
             $.lxlyId,
             destinationAddress,
             amount,
-            abi.encode(name(), symbol(), decimals())
+            // Todo: use the old optimization, but first fix test correctly
+            metadata
         );
 
         // Set the return value.
