@@ -42,7 +42,8 @@ contract MockYeToken is YieldExposedToken {
             yieldVault_,
             yieldRecipient_,
             lxlyBridge_,
-            nativeConverters_
+            nativeConverters_,
+            10
         );
     }
 
@@ -527,7 +528,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
     }
 
     function test_claimAndRedeem_bridgeWrappedMapping() public {
-        uint256 depositAmount = 100;
+        uint256 depositAmount = 1000;
 
         vm.selectFork(forkIdLayerX);
 
@@ -593,8 +594,10 @@ contract IntegrationTest is Test, ZkEVMCommon {
         _claimAndRedeemLayerXAndVerify(withdrawClaimPayload[0]);
     }
 
+    // Add test for not being able to withdraw the needed amount from external vault
+    // Add another test where vault maxWithdraw works
     function test_claimAndRedeem_customTokenMapping() public {
-        uint256 depositAmount = 100;
+        uint256 depositAmount = 1000;
 
         vm.selectFork(forkIdLayerX);
 
