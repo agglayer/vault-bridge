@@ -6,7 +6,10 @@ import "forge-std/Test.sol";
 import {GenericVbToken} from "src/vault-bridge-tokens/GenericVbToken.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
-import {VaultBridgeToken, PausableUpgradeable, OwnableUpgradeable} from "src/VaultBridgeToken.sol";
+import {
+    VaultBridgeToken, PausableUpgradeable, OwnableUpgradeable, NativeConverterInfo, Initializable
+} from "src/VaultBridgeToken.sol";
+import {VaultBridgeTokenInitializer} from "src/VaultBridgeTokenInitializer.sol";
 
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -41,8 +44,8 @@ contract GenericVaultBridgeTokenTest is Test {
     address asset;
 
     address nativeConverterAddress = makeAddr("nativeConverter");
-    VaultBridgeToken.NativeConverter[] nativeConverter =
-        [VaultBridgeToken.NativeConverter({layerYLxlyId: NETWORK_ID_L2, nativeConverter: nativeConverterAddress})];
+    NativeConverterInfo[] nativeConverter =
+        [NativeConverterInfo({layerYLxlyId: NETWORK_ID_L2, nativeConverter: nativeConverterAddress})];
 
     address recipient = makeAddr("recipient");
     address owner = makeAddr("owner");
@@ -69,6 +72,7 @@ contract GenericVaultBridgeTokenTest is Test {
     uint256 decimals;
     uint256 minimumReservePercentage;
     bytes vbTokenMetaData;
+    address initializer;
 
     function setUp() public virtual {
         mainnetFork = vm.createSelectFork("mainnet");
@@ -81,6 +85,7 @@ contract GenericVaultBridgeTokenTest is Test {
         decimals = 6;
         vbTokenMetaData = abi.encode(name, symbol, decimals);
         minimumReservePercentage = 1e17;
+        initializer = address(new VaultBridgeTokenInitializer());
 
         vbToken = new GenericVbToken();
         vbTokenImplementation = address(vbToken);
@@ -98,7 +103,8 @@ contract GenericVaultBridgeTokenTest is Test {
                 LXLY_BRIDGE,
                 nativeConverter,
                 MINIMUM_YIELD_VAULT_DEPOSIT,
-                address(0)
+                address(0),
+                initializer
             )
         );
         vbToken = GenericVbToken(_proxify(address(vbTokenImplementation), address(this), initData));
@@ -131,6 +137,22 @@ contract GenericVaultBridgeTokenTest is Test {
         assertEq(IERC20(asset).allowance(address(vbToken), address(vbToken.yieldVault())), type(uint256).max);
     }
 
+    function test_initialize_twice() public {
+        vm.expectRevert(Initializable.InvalidInitialization.selector);
+        vbToken.initialize(owner,
+                name,
+                symbol,
+                asset,
+                minimumReservePercentage,
+                address(vbTokenVault),
+                yieldRecipient,
+                LXLY_BRIDGE,
+                nativeConverter,
+                MINIMUM_YIELD_VAULT_DEPOSIT,
+                address(0),
+                initializer);
+    }
+
     function test_initialize() public virtual {
         vm.revertToState(stateBeforeInitialize);
 
@@ -149,7 +171,8 @@ contract GenericVaultBridgeTokenTest is Test {
                 LXLY_BRIDGE,
                 nativeConverter,
                 MINIMUM_YIELD_VAULT_DEPOSIT,
-                address(0)
+                address(0),
+                initializer
             )
         );
         vm.expectRevert(VaultBridgeToken.InvalidOwner.selector);
@@ -169,7 +192,8 @@ contract GenericVaultBridgeTokenTest is Test {
                 LXLY_BRIDGE,
                 nativeConverter,
                 MINIMUM_YIELD_VAULT_DEPOSIT,
-                address(0)
+                address(0),
+                initializer
             )
         );
         vm.expectRevert(VaultBridgeToken.InvalidName.selector);
@@ -189,7 +213,8 @@ contract GenericVaultBridgeTokenTest is Test {
                 LXLY_BRIDGE,
                 nativeConverter,
                 MINIMUM_YIELD_VAULT_DEPOSIT,
-                address(0)
+                address(0),
+                initializer
             )
         );
         vm.expectRevert(VaultBridgeToken.InvalidSymbol.selector);
@@ -209,9 +234,11 @@ contract GenericVaultBridgeTokenTest is Test {
                 LXLY_BRIDGE,
                 nativeConverter,
                 MINIMUM_YIELD_VAULT_DEPOSIT,
-                address(0)
+                address(0),
+                initializer
             )
         );
+        /// forge-config: default.allow_internal_expect_revert = true
         vm.expectRevert(VaultBridgeToken.InvalidUnderlyingToken.selector);
         vbToken = GenericVbToken(_proxify(vbTokenImplementation, address(this), initData));
         vm.revertToState(stateBeforeInitialize);
@@ -229,7 +256,8 @@ contract GenericVaultBridgeTokenTest is Test {
                 LXLY_BRIDGE,
                 nativeConverter,
                 MINIMUM_YIELD_VAULT_DEPOSIT,
-                address(0)
+                address(0),
+                initializer
             )
         );
         vm.expectRevert(VaultBridgeToken.InvalidMinimumReservePercentage.selector);
@@ -249,7 +277,8 @@ contract GenericVaultBridgeTokenTest is Test {
                 LXLY_BRIDGE,
                 nativeConverter,
                 MINIMUM_YIELD_VAULT_DEPOSIT,
-                address(0)
+                address(0),
+                initializer
             )
         );
         vm.expectRevert(VaultBridgeToken.InvalidYieldVault.selector);
@@ -269,7 +298,8 @@ contract GenericVaultBridgeTokenTest is Test {
                 LXLY_BRIDGE,
                 nativeConverter,
                 MINIMUM_YIELD_VAULT_DEPOSIT,
-                address(0)
+                address(0),
+                initializer
             )
         );
         vm.expectRevert(VaultBridgeToken.InvalidYieldRecipient.selector);
@@ -289,15 +319,15 @@ contract GenericVaultBridgeTokenTest is Test {
                 address(0),
                 nativeConverter,
                 MINIMUM_YIELD_VAULT_DEPOSIT,
-                address(0)
+                address(0),
+                initializer
             )
         );
         vm.expectRevert(VaultBridgeToken.InvalidLxLyBridge.selector);
         vbToken = GenericVbToken(_proxify(vbTokenImplementation, address(this), initData));
         vm.revertToState(stateBeforeInitialize);
 
-        nativeConverter =
-            [VaultBridgeToken.NativeConverter({layerYLxlyId: NETWORK_ID_L1, nativeConverter: nativeConverterAddress})];
+        nativeConverter = [NativeConverterInfo({layerYLxlyId: NETWORK_ID_L1, nativeConverter: nativeConverterAddress})];
 
         initData = abi.encodeCall(
             vbToken.initialize,
@@ -312,7 +342,8 @@ contract GenericVaultBridgeTokenTest is Test {
                 LXLY_BRIDGE,
                 nativeConverter,
                 MINIMUM_YIELD_VAULT_DEPOSIT,
-                address(0)
+                address(0),
+                initializer
             )
         );
         vm.expectRevert(VaultBridgeToken.InvalidNativeConverters.selector);

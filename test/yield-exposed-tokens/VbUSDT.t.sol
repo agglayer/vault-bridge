@@ -13,6 +13,7 @@ import {
     stdStorage,
     StdStorage
 } from "test/GenericVaultBridgeToken.t.sol";
+import {VaultBridgeTokenInitializer} from "src/VaultBridgeTokenInitializer.sol";
 
 contract VbUSDTHarness is GenericVbToken {
     function exposed_assetsAfterTransferFee(uint256 assetsBeforeTransferFee) public view returns (uint256) {
@@ -44,6 +45,7 @@ contract VbUSDTTest is GenericVaultBridgeTokenTest {
         decimals = 6;
         vbTokenMetaData = abi.encode(name, symbol, decimals);
         minimumReservePercentage = 1e17;
+        initializer = address(new VaultBridgeTokenInitializer());
 
         transferFeeUtil = new TransferFeeUtilsVbUSDT(owner, asset);
 
@@ -63,7 +65,8 @@ contract VbUSDTTest is GenericVaultBridgeTokenTest {
                 LXLY_BRIDGE,
                 nativeConverter,
                 MINIMUM_YIELD_VAULT_DEPOSIT,
-                address(transferFeeUtil)
+                address(transferFeeUtil),
+                initializer
             )
         );
         vbToken = GenericVbToken(_proxify(address(vbToken), address(this), initData));

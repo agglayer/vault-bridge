@@ -22,7 +22,7 @@ import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {ILxLyBridge} from "./etc/ILxLyBridge.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-
+import {IVaultBridgeTokenInitializer, NativeConverterInfo} from "./etc/IVaultBridgeTokenInitializer.sol";
 // Other.
 import {ERC20Upgradeable} from "@openzeppelin-contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 
@@ -48,12 +48,6 @@ abstract contract VaultBridgeToken is
     enum CrossNetworkInstruction {
         COMPLETE_MIGRATION,
         CUSTOM
-    }
-
-    /// @dev Used when setting Native Converter on Layer Ys.
-    struct NativeConverter {
-        uint32 layerYLxlyId;
-        address nativeConverter;
     }
 
     /// @dev Storage of the Vault bridged Token contract.
@@ -142,55 +136,35 @@ abstract contract VaultBridgeToken is
         address yieldVault_,
         address yieldRecipient_,
         address lxlyBridge_,
-        NativeConverter[] calldata nativeConverters_,
+        NativeConverterInfo[] calldata nativeConverters_,
         uint256 minimumYieldVaultDeposit_,
-        address transferFeeUtil_
-    ) internal onlyInitializing {
-        VaultBridgeTokenStorage storage $ = _getVaultBridgeTokenStorage();
-
-        // Check the inputs.
-        require(owner_ != address(0), InvalidOwner());
-        require(bytes(name_).length > 0, InvalidName());
-        require(bytes(symbol_).length > 0, InvalidSymbol());
-        require(underlyingToken_ != address(0), InvalidUnderlyingToken());
-        require(minimumReservePercentage_ <= 1e18, InvalidMinimumReservePercentage());
-        require(yieldVault_ != address(0), InvalidYieldVault());
-        require(yieldRecipient_ != address(0), InvalidYieldRecipient());
-        require(lxlyBridge_ != address(0), InvalidLxLyBridge());
-
-        // Initialize the inherited contracts.
-        __ERC20_init(name_, symbol_);
-        __ERC20Permit_init(name_);
-        __Ownable_init(owner_);
-        __Pausable_init();
-        __ReentrancyGuard_init();
-
-        // Initialize the storage.
-        $.underlyingToken = IERC20(underlyingToken_);
-        try IERC20Metadata(underlyingToken_).decimals() returns (uint8 decimals_) {
-            $.decimals = decimals_;
-        } catch {
-            // Default to 18 decimals.
-            $.decimals = 18;
+        address transferFeeUtil_,
+        address initializer_
+    ) internal virtual initializer {
+        require(initializer_ != address(0));
+        (bool success, bytes memory result) = initializer_.delegatecall(
+            abi.encodeCall(
+                IVaultBridgeTokenInitializer.__VaultBackedTokenInit_init,
+                (
+                    owner_,
+                    name_,
+                    symbol_,
+                    underlyingToken_,
+                    minimumReservePercentage_,
+                    yieldVault_,
+                    yieldRecipient_,
+                    lxlyBridge_,
+                    nativeConverters_,
+                    minimumYieldVaultDeposit_,
+                    transferFeeUtil_
+                )
+            )
+        );
+        if (!success) {
+            assembly ("memory-safe") {
+                revert(add(32, result), mload(result))
+            }
         }
-        $.minimumReservePercentage = minimumReservePercentage_;
-        $.yieldVault = IERC4626(yieldVault_);
-        $.yieldRecipient = yieldRecipient_;
-        $.lxlyId = ILxLyBridge(lxlyBridge_).networkID();
-        $.lxlyBridge = ILxLyBridge(lxlyBridge_);
-        for (uint256 i; i < nativeConverters_.length; ++i) {
-            // Check the input.
-            require(nativeConverters_[i].layerYLxlyId != $.lxlyId, InvalidNativeConverters());
-
-            // Set Native Converter.
-            $.nativeConverters[nativeConverters_[i].layerYLxlyId] = nativeConverters_[i].nativeConverter;
-        }
-        $.minimumYieldVaultDeposit = minimumYieldVaultDeposit_;
-        $.transferFeeUtil = transferFeeUtil_;
-
-        // Approve the yield vault and LxLy Bridge.
-        IERC20(underlyingToken_).forceApprove(yieldVault_, type(uint256).max);
-        _approve(address(this), address(lxlyBridge_), type(uint256).max);
     }
 
     // -----================= ::: STORAGE ::: =================-----
@@ -278,7 +252,7 @@ abstract contract VaultBridgeToken is
     }
 
     /// @dev Returns a pointer to the ERC-7201 storage namespace.
-    function _getVaultBridgeTokenStorage() private pure returns (VaultBridgeTokenStorage storage $) {
+    function _getVaultBridgeTokenStorage() internal pure returns (VaultBridgeTokenStorage storage $) {
         assembly {
             $.slot := _YIELD_EXPOSED_TOKEN_STORAGE
         }
@@ -1147,7 +1121,7 @@ abstract contract VaultBridgeToken is
 
     /// @notice Sets Native Converter on Layer Ys. One Layer Y cannot have more than one Native Converter.
     /// @notice This function can be called by the owner only.
-    function setNativeConverters(NativeConverter[] calldata nativeConverters_) external onlyOwner nonReentrant {
+    function setNativeConverters(NativeConverterInfo[] calldata nativeConverters_) external onlyOwner nonReentrant {
         VaultBridgeTokenStorage storage $ = _getVaultBridgeTokenStorage();
 
         // Check the input.

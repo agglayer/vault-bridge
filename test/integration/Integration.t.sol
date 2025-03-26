@@ -9,6 +9,7 @@ import {CustomToken} from "src/CustomToken.sol";
 import {NativeConverter} from "src/NativeConverter.sol";
 import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import {ZkEVMCommon} from "test/etc/ZkEVMCommon.sol";
+import {VaultBridgeTokenInitializer} from "src/VaultBridgeTokenInitializer.sol";
 
 import {IBridgeL2SovereignChain} from "test/interfaces/IBridgeL2SovereignChain.sol";
 import {IMetaMorpho} from "test/interfaces/IMetaMorpho.sol";
@@ -31,7 +32,8 @@ contract MockVbToken is VaultBridgeToken {
         address yieldVault_,
         address yieldRecipient_,
         address lxlyBridge_,
-        NativeConverter[] calldata nativeConverters_
+        NativeConverterInfo[] calldata nativeConverters_,
+        address initializer_
     ) external initializer {
         __VaultBridgeToken_init(
             owner_,
@@ -44,7 +46,8 @@ contract MockVbToken is VaultBridgeToken {
             lxlyBridge_,
             nativeConverters_,
             10,
-            address(0)
+            address(0),
+            initializer_
         );
     }
 
@@ -267,7 +270,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
     // extra contracts
     IMetaMorpho vbTokenVault;
     MockNativeConverter nativeConverter;
-    VaultBridgeToken.NativeConverter[] nativeConverterStruct;
+    NativeConverterInfo[] nativeConverterStruct;
 
     // dummy addresses
     address recipient = makeAddr("recipient");
@@ -366,12 +369,13 @@ contract IntegrationTest is Test, ZkEVMCommon {
         );
 
         // calculate native converter address
-        uint256 nativeConverterNonce = vm.getNonce(address(this)) + 5;
+        uint256 nativeConverterNonce = vm.getNonce(address(this)) + 6;
         address nativeConverterAddr = vm.computeCreateAddress(address(this), nativeConverterNonce);
 
         nativeConverterStruct.push(
-            VaultBridgeToken.NativeConverter({layerYLxlyId: NETWORK_ID_Y, nativeConverter: nativeConverterAddr})
+            NativeConverterInfo({layerYLxlyId: NETWORK_ID_Y, nativeConverter: nativeConverterAddr})
         );
+        address initializer = address(new VaultBridgeTokenInitializer());
 
         // deploy vbToken
         vbToken = new MockVbToken();
@@ -386,7 +390,8 @@ contract IntegrationTest is Test, ZkEVMCommon {
                 address(vbTokenVault),
                 yieldRecipient,
                 LXLY_BRIDGE_X,
-                nativeConverterStruct
+                nativeConverterStruct,
+                initializer
             )
         );
         vbToken = MockVbToken(_proxify(address(vbToken), address(this), vbTokenInitData));

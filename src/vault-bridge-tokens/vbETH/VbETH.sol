@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity 0.8.28;
 
-import {VaultBridgeToken} from "../../VaultBridgeToken.sol";
+import {VaultBridgeToken, NativeConverterInfo} from "../../VaultBridgeToken.sol";
 import {IWETH9} from "../../etc/IWETH9.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {IVersioned} from "../../etc/IVersioned.sol";
@@ -28,9 +28,10 @@ contract VbETH is VaultBridgeToken {
         address yieldVault_,
         address yieldRecipient_,
         address lxlyBridge_,
-        NativeConverter[] calldata nativeConverters_,
+        NativeConverterInfo[] calldata nativeConverters_,
         uint256 minimumYieldVaultDeposit_,
-        address transferFeeUtil_
+        address transferFeeUtil_,
+        address initializer_
     ) external initializer {
         // Initialize the base implementation.
         __VaultBridgeToken_init(
@@ -44,7 +45,8 @@ contract VbETH is VaultBridgeToken {
             lxlyBridge_,
             nativeConverters_,
             minimumYieldVaultDeposit_,
-            transferFeeUtil_
+            transferFeeUtil_,
+            initializer_
         );
     }
 

@@ -7,6 +7,7 @@ import {ILxLyBridge} from "src/etc/ILxLyBridge.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {IWETH9} from "src/etc/IWETH9.sol";
 import {GenericVaultBridgeTokenTest, GenericVbToken, IERC20, SafeERC20} from "test/GenericVaultBridgeToken.t.sol";
+import {VaultBridgeTokenInitializer} from "src/VaultBridgeTokenInitializer.sol";
 import {IMetaMorpho} from "test/interfaces/IMetaMorpho.sol";
 import {ILxLyBridge as _ILxLyBridge} from "test/interfaces/ILxLyBridge.sol";
 import {WETHNativeConverter} from "src/custom-tokens/WETH/WETHNativeConverter.sol";
@@ -32,6 +33,7 @@ contract VbETHTest is GenericVaultBridgeTokenTest {
         decimals = 18;
         vbTokenMetaData = abi.encode(name, symbol, decimals);
         minimumReservePercentage = 1e17;
+        initializer = address(new VaultBridgeTokenInitializer());
 
         // Deploy implementation
         vbToken = GenericVbToken(address(new VbETH()));
@@ -52,7 +54,8 @@ contract VbETHTest is GenericVaultBridgeTokenTest {
                 LXLY_BRIDGE,
                 nativeConverter, // mock migration manager
                 MINIMUM_YIELD_VAULT_DEPOSIT,
-                address(0) // transfer fee util
+                address(0), // transfer fee util
+                initializer
             )
         );
 
