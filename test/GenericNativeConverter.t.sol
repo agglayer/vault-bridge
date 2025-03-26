@@ -59,7 +59,7 @@ contract MockNativeConverter is NativeConverter {
         address underlyingToken_,
         address lxlyBridge_,
         uint32 layerXLxlyId_,
-        address yeToken_,
+        address vbToken_,
         address migrator_
     ) external initializer {
         // Initialize the base implementation.
@@ -70,7 +70,7 @@ contract MockNativeConverter is NativeConverter {
             underlyingToken_,
             lxlyBridge_,
             layerXLxlyId_,
-            yeToken_,
+            vbToken_,
             migrator_
         );
     }
@@ -101,7 +101,7 @@ contract GenericNativeConverterTest is Test {
 
     MockERC20MintableBurnable internal customToken;
     MockERC20 internal underlyingToken;
-    address internal yeToken;
+    address internal vbToken;
     uint256 internal zkevmFork;
     uint256 internal beforeInit;
     bytes internal underlyingTokenMetadata;
@@ -149,7 +149,7 @@ contract GenericNativeConverterTest is Test {
         // assign addresses for generic testing
         customToken = MockERC20MintableBurnable(address(_customToken));
         underlyingToken = _underlyingToken;
-        yeToken = makeAddr("yeToken");
+        vbToken = makeAddr("vbToken");
 
         underlyingTokenMetadata = abi.encode("Underlying Token", "uTKN", 18);
 
@@ -169,7 +169,7 @@ contract GenericNativeConverterTest is Test {
                 address(_underlyingToken), // wrapped underlying token
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
-                yeToken,
+                vbToken,
                 migrator
             )
         );
@@ -182,7 +182,7 @@ contract GenericNativeConverterTest is Test {
         vm.label(address(_customToken), "zETH");
         vm.label(address(this), "testerAddress");
         vm.label(LXLY_BRIDGE, "lxlyBridge");
-        vm.label(yeToken, "yeToken");
+        vm.label(vbToken, "vbToken");
         vm.label(owner, "owner");
         vm.label(recipient, "recipient");
         vm.label(sender, "sender");
@@ -192,7 +192,7 @@ contract GenericNativeConverterTest is Test {
 
     function test_setup() public view {
         assertEq(nativeConverter.layerXLxlyId(), NETWORK_ID_L1);
-        assertEq(nativeConverter.yeToken(), yeToken);
+        assertEq(nativeConverter.vbToken(), vbToken);
         assertEq(nativeConverter.owner(), owner);
         assertEq(address(nativeConverter.customToken()), address(customToken));
         assertEq(address(nativeConverter.lxlyBridge()), LXLY_BRIDGE);
@@ -213,7 +213,7 @@ contract GenericNativeConverterTest is Test {
                 address(underlyingToken),
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
-                yeToken,
+                vbToken,
                 migrator
             )
         );
@@ -230,7 +230,7 @@ contract GenericNativeConverterTest is Test {
                 address(underlyingToken),
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
-                yeToken,
+                vbToken,
                 migrator
             )
         );
@@ -247,7 +247,7 @@ contract GenericNativeConverterTest is Test {
                 address(0),
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
-                yeToken,
+                vbToken,
                 migrator
             )
         );
@@ -264,7 +264,7 @@ contract GenericNativeConverterTest is Test {
                 address(underlyingToken),
                 address(0),
                 NETWORK_ID_L1,
-                yeToken,
+                vbToken,
                 migrator
             )
         );
@@ -285,7 +285,7 @@ contract GenericNativeConverterTest is Test {
                 migrator
             )
         );
-        vm.expectRevert(NativeConverter.InvalidYeToken.selector);
+        vm.expectRevert(NativeConverter.InvalidVbToken.selector);
         GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
         vm.revertToState(beforeInit);
 
@@ -301,7 +301,7 @@ contract GenericNativeConverterTest is Test {
                 address(underlyingToken),
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
-                yeToken,
+                vbToken,
                 migrator
             )
         );
@@ -321,7 +321,7 @@ contract GenericNativeConverterTest is Test {
                 address(dummyToken),
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
-                yeToken,
+                vbToken,
                 migrator
             )
         );
@@ -338,7 +338,7 @@ contract GenericNativeConverterTest is Test {
                 address(underlyingToken),
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
-                yeToken,
+                vbToken,
                 address(0)
             )
         );
@@ -658,7 +658,7 @@ contract GenericNativeConverterTest is Test {
             NETWORK_ID_L2,
             address(underlyingToken),
             NETWORK_ID_L1,
-            yeToken,
+            vbToken,
             amountToMigrate,
             underlyingTokenMetadata,
             55413
@@ -669,7 +669,7 @@ contract GenericNativeConverterTest is Test {
             NETWORK_ID_L2,
             address(nativeConverter),
             NETWORK_ID_L1,
-            yeToken,
+            vbToken,
             0,
             abi.encode(
                 NativeConverter.CrossNetworkInstruction.COMPLETE_MIGRATION, abi.encode(amountToMigrate, amountToMigrate)
@@ -706,7 +706,7 @@ contract GenericNativeConverterTest is Test {
         // assign addresses for generic testing
         customToken = MockERC20MintableBurnable(address(_customToken));
         underlyingToken = _underlyingToken;
-        yeToken = makeAddr("yeToken");
+        vbToken = makeAddr("vbToken");
 
         underlyingTokenMetadata = abi.encode("Underlying Token", "uTKN", 18);
 
@@ -721,7 +721,7 @@ contract GenericNativeConverterTest is Test {
                 address(_underlyingToken), // wrapped underlying token
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
-                yeToken,
+                vbToken,
                 migrator
             )
         );
@@ -778,7 +778,7 @@ contract GenericNativeConverterTest is Test {
             NETWORK_ID_L2,
             address(underlyingToken),
             NETWORK_ID_L1,
-            yeToken,
+            vbToken,
             amountToMigrate,
             underlyingTokenMetadata,
             55413
@@ -789,7 +789,7 @@ contract GenericNativeConverterTest is Test {
             NETWORK_ID_L2,
             address(nativeConverter),
             NETWORK_ID_L1,
-            yeToken,
+            vbToken,
             0,
             abi.encode(
                 NativeConverter.CrossNetworkInstruction.COMPLETE_MIGRATION, abi.encode(amountToMigrate, amountToMigrate)

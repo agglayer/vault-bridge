@@ -2,7 +2,7 @@
 pragma solidity ^0.8.28;
 
 import "forge-std/Test.sol";
-import "src/YieldExposedToken.sol";
+import "src/VaultBridgeToken.sol";
 
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {CustomToken} from "src/CustomToken.sol";
@@ -17,7 +17,7 @@ import {ILxLyBridge as _ILxLyBridge} from "test/interfaces/ILxLyBridge.sol";
 import {IPolygonZkEVMGlobalExitRoot} from "test/interfaces/IPolygonZkEVMGlobalExitRoot.sol";
 
 // MOCKS
-contract MockYeToken is YieldExposedToken {
+contract MockVbToken is VaultBridgeToken {
     constructor() {
         _disableInitializers();
     }
@@ -33,7 +33,7 @@ contract MockYeToken is YieldExposedToken {
         address lxlyBridge_,
         NativeConverter[] calldata nativeConverters_
     ) external initializer {
-        __YieldExposedToken_init(
+        __VaultBridgeToken_init(
             owner_,
             name_,
             symbol_,
@@ -85,7 +85,7 @@ contract MockNativeConverter is NativeConverter {
         address underlyingToken_,
         address lxlyBridge_,
         uint32 layerXLxlyId_,
-        address yeToken_,
+        address vbToken_,
         address migrator_
     ) external initializer {
         // Initialize the base implementation.
@@ -96,7 +96,7 @@ contract MockNativeConverter is NativeConverter {
             underlyingToken_,
             lxlyBridge_,
             layerXLxlyId_,
-            yeToken_,
+            vbToken_,
             migrator_
         );
     }
@@ -265,9 +265,9 @@ contract IntegrationTest is Test, ZkEVMCommon {
     bytes4 constant PERMIT_SIGNATURE = 0xd505accf;
 
     // extra contracts
-    IMetaMorpho yeTokenVault;
+    IMetaMorpho vbTokenVault;
     MockNativeConverter nativeConverter;
-    YieldExposedToken.NativeConverter[] nativeConverterStruct;
+    VaultBridgeToken.NativeConverter[] nativeConverterStruct;
 
     // dummy addresses
     address recipient = makeAddr("recipient");
@@ -292,13 +292,13 @@ contract IntegrationTest is Test, ZkEVMCommon {
     uint8 internal constant BW_UNDERLYING_ASSET_DECIMALS = 18;
     bytes bwUnderlyingAssetMetaData = abi.encode("", "", 18);
 
-    // yeToken
-    MockYeToken yeToken;
+    // vbToken
+    MockVbToken vbToken;
     uint256 internal constant MINIMUM_RESERVE_PERCENTAGE = 1e17;
-    string internal constant YETOKEN_NAME = "Yield Exposed Token";
-    string internal constant YETOKEN_SYMBOL = "YETK";
-    uint8 internal constant YETOKEN_DECIMALS = 18;
-    bytes yeTokenMetaData = abi.encode(YETOKEN_NAME, YETOKEN_SYMBOL, YETOKEN_DECIMALS);
+    string internal constant VBTOKEN_NAME = "Vault Bridge Token";
+    string internal constant VBTOKEN_SYMBOL = "VBTK";
+    uint8 internal constant VBTOKEN_DECIMALS = 18;
+    bytes vbTokenMetaData = abi.encode(VBTOKEN_NAME, VBTOKEN_SYMBOL, VBTOKEN_DECIMALS);
 
     // custom token
     MockCustomToken customToken;
@@ -307,12 +307,12 @@ contract IntegrationTest is Test, ZkEVMCommon {
     uint8 internal constant CUSTOM_TOKEN_DECIMALS = 18;
     bytes customTokenMetaData = abi.encode(CUSTOM_TOKEN_NAME, CUSTOM_TOKEN_SYMBOL, CUSTOM_TOKEN_DECIMALS);
 
-    // bridge wrapped yeToken
-    TokenWrapped bwYeToken;
-    string internal constant BW_YETOKEN_NAME = "Bridge Wrapped YeToken";
-    string internal constant BW_YETOKEN_SYMBOL = "BWYETK";
-    uint8 internal constant BW_YETOKEN_DECIMALS = 18;
-    bytes bwYeTokenMetaData = abi.encode("", "", 18);
+    // bridge wrapped vbToken
+    TokenWrapped bwVbToken;
+    string internal constant BW_VBTOKEN_NAME = "Bridge Wrapped VbToken";
+    string internal constant BW_VBTOKEN_SYMBOL = "BWVBTK";
+    uint8 internal constant BW_VBTOKEN_DECIMALS = 18;
+    bytes bwVbTokenMetaData = abi.encode("", "", 18);
 
     uint256 forkIdLayerX;
     uint256 forkIdLayerY;
@@ -336,7 +336,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
     );
     event Deposit(address indexed sender, address indexed owner, uint256 assets, uint256 shares);
     event ReserveRebalanced(uint256 reservedAssets);
-    event YieldCollected(address indexed yieldRecipient, uint256 yeTokenAmount);
+    event YieldCollected(address indexed yieldRecipient, uint256 vbTokenAmount);
     event YieldRecipientChanged(address indexed yieldRecipient);
     event MinimumReservePercentageChanged(uint8 minimumReservePercentage);
     event MigrationCompleted(
@@ -359,9 +359,9 @@ contract IntegrationTest is Test, ZkEVMCommon {
         // deploy vault
         vm.etch(MORPHO, MORPHO_BYTECODE);
         vm.etch(METAMORPHO_FACTORY, METAMORPHO_FACTORY_BYTECODE);
-        yeTokenVault = IMetaMorpho(
+        vbTokenVault = IMetaMorpho(
             IMetaMorphoV1_1Factory(METAMORPHO_FACTORY).createMetaMorpho(
-                owner, 0, address(underlyingAsset), "YeToken vault", "vYETOKEN", ""
+                owner, 0, address(underlyingAsset), "VbToken vault", "vVBTOKEN", ""
             )
         );
 
@@ -370,26 +370,26 @@ contract IntegrationTest is Test, ZkEVMCommon {
         address nativeConverterAddr = vm.computeCreateAddress(address(this), nativeConverterNonce);
 
         nativeConverterStruct.push(
-            YieldExposedToken.NativeConverter({layerYLxlyId: NETWORK_ID_Y, nativeConverter: nativeConverterAddr})
+            VaultBridgeToken.NativeConverter({layerYLxlyId: NETWORK_ID_Y, nativeConverter: nativeConverterAddr})
         );
 
-        // deploy yeToken
-        yeToken = new MockYeToken();
-        bytes memory yeTokenInitData = abi.encodeCall(
-            yeToken.initialize,
+        // deploy vbToken
+        vbToken = new MockVbToken();
+        bytes memory vbTokenInitData = abi.encodeCall(
+            vbToken.initialize,
             (
                 owner,
-                YETOKEN_NAME,
-                YETOKEN_SYMBOL,
+                VBTOKEN_NAME,
+                VBTOKEN_SYMBOL,
                 address(underlyingAsset),
                 MINIMUM_RESERVE_PERCENTAGE,
-                address(yeTokenVault),
+                address(vbTokenVault),
                 yieldRecipient,
                 LXLY_BRIDGE_X,
                 nativeConverterStruct
             )
         );
-        yeToken = MockYeToken(_proxify(address(yeToken), address(this), yeTokenInitData));
+        vbToken = MockVbToken(_proxify(address(vbToken), address(this), vbTokenInitData));
 
         //////////////////////////////////////////////////////////////
         // Switch to Layer Y
@@ -404,17 +404,17 @@ contract IntegrationTest is Test, ZkEVMCommon {
         );
         customToken = MockCustomToken(_proxify(address(customToken), address(this), customTokenInitData));
 
-        // calculate bridge wrapped yeToken address
-        bwYeToken = TokenWrapped(
+        // calculate bridge wrapped vbToken address
+        bwVbToken = TokenWrapped(
             _ILxLyBridge(LXLY_BRIDGE_Y).precalculatedWrapperAddress(
-                NETWORK_ID_X, address(yeToken), YETOKEN_NAME, YETOKEN_SYMBOL, YETOKEN_DECIMALS
+                NETWORK_ID_X, address(vbToken), VBTOKEN_NAME, VBTOKEN_SYMBOL, VBTOKEN_DECIMALS
             )
         );
 
-        // deploy underlying token (note: normally we don't have to do this manually and this should be done automatically by bridging yeToken on Layer X)
+        // deploy underlying token (note: normally we don't have to do this manually and this should be done automatically by bridging vbToken on Layer X)
         vm.prank(LXLY_BRIDGE_Y);
-        ERC20 tempBwYeToken = new TokenWrapped(BW_YETOKEN_NAME, BW_YETOKEN_SYMBOL, BW_YETOKEN_DECIMALS);
-        vm.etch(address(bwYeToken), address(tempBwYeToken).code);
+        ERC20 tempBwVbToken = new TokenWrapped(BW_VBTOKEN_NAME, BW_VBTOKEN_SYMBOL, BW_VBTOKEN_DECIMALS);
+        vm.etch(address(bwVbToken), address(tempBwVbToken).code);
 
         // calculate bridge wrapped underlying asset address
         bwUnderlyingAsset = UnderlyingAsset(
@@ -439,12 +439,12 @@ contract IntegrationTest is Test, ZkEVMCommon {
             MockNativeConverter(nativeConverter).initialize,
             (
                 owner,
-                YETOKEN_DECIMALS,
+                VBTOKEN_DECIMALS,
                 address(customToken),
                 address(bwUnderlyingAsset),
                 LXLY_BRIDGE_Y,
                 NETWORK_ID_X,
-                address(yeToken),
+                address(vbToken),
                 migrator
             )
         );
@@ -470,9 +470,9 @@ contract IntegrationTest is Test, ZkEVMCommon {
         vm.label(address(sender), "Sender");
         vm.label(address(underlyingAsset), "Underlying Asset");
         vm.label(address(bwUnderlyingAsset), "Bridge Wrapped Underlying Asset");
-        vm.label(address(bwYeToken), "Underlying Wrapped Asset");
-        vm.label(address(yeToken), "yeToken");
-        vm.label(address(yeTokenVault), "yeToken Vault");
+        vm.label(address(bwVbToken), "Underlying Wrapped Asset");
+        vm.label(address(vbToken), "vbToken");
+        vm.label(address(vbTokenVault), "vbToken Vault");
         vm.label(address(yieldRecipient), "Yield Recipient");
     }
 
@@ -482,11 +482,11 @@ contract IntegrationTest is Test, ZkEVMCommon {
         LeafPayload memory depositLeaf = LeafPayload({
             leafType: LEAF_TYPE_ASSET,
             originNetwork: NETWORK_ID_X,
-            originAddress: address(yeToken),
+            originAddress: address(vbToken),
             destinationNetwork: NETWORK_ID_Y,
             destinationAddress: recipient,
             amount: depositAmount,
-            metadata: yeTokenMetaData
+            metadata: vbTokenMetaData
         });
 
         vm.selectFork(forkIdLayerX);
@@ -499,9 +499,9 @@ contract IntegrationTest is Test, ZkEVMCommon {
 
         vm.selectFork(forkIdLayerY);
 
-        // map the bridge wrapped yeToken to the yeToken (simulating the natural bridging process, no need in real life)
-        _mapTokenLayerYToLayerX(address(yeToken), address(bwYeToken), false);
-        _claimAndVerifyAssetLayerY(bwYeToken, claimPayload);
+        // map the bridge wrapped vbToken to the vbToken (simulating the natural bridging process, no need in real life)
+        _mapTokenLayerYToLayerX(address(vbToken), address(bwVbToken), false);
+        _claimAndVerifyAssetLayerY(bwVbToken, claimPayload);
     }
 
     function test_depositAndBridge_customTokenMapping() public {
@@ -510,11 +510,11 @@ contract IntegrationTest is Test, ZkEVMCommon {
         LeafPayload memory leaf = LeafPayload({
             leafType: LEAF_TYPE_ASSET,
             originNetwork: NETWORK_ID_X,
-            originAddress: address(yeToken),
+            originAddress: address(vbToken),
             destinationNetwork: NETWORK_ID_Y,
             destinationAddress: recipient,
             amount: depositAmount,
-            metadata: yeTokenMetaData
+            metadata: vbTokenMetaData
         });
 
         vm.selectFork(forkIdLayerX);
@@ -527,8 +527,8 @@ contract IntegrationTest is Test, ZkEVMCommon {
 
         vm.selectFork(forkIdLayerY);
 
-        // map the custom token to the yeToken
-        _mapTokenLayerYToLayerX(address(yeToken), address(customToken), false);
+        // map the custom token to the vbToken
+        _mapTokenLayerYToLayerX(address(vbToken), address(customToken), false);
         _claimAndVerifyAssetLayerY(customToken, claimPayload);
     }
 
@@ -542,11 +542,11 @@ contract IntegrationTest is Test, ZkEVMCommon {
         LeafPayload memory depositLeaf = LeafPayload({
             leafType: LEAF_TYPE_ASSET,
             originNetwork: NETWORK_ID_X,
-            originAddress: address(yeToken),
+            originAddress: address(vbToken),
             destinationNetwork: NETWORK_ID_Y,
             destinationAddress: recipient,
             amount: depositAmount,
-            metadata: yeTokenMetaData
+            metadata: vbTokenMetaData
         });
         _depositAndBridgeLayerX(sender, depositAmount, depositLeaf);
         bytes32 lastLayerXExitRoot = IPolygonZkEVMGlobalExitRoot(GER_X).lastMainnetExitRoot();
@@ -555,23 +555,23 @@ contract IntegrationTest is Test, ZkEVMCommon {
 
         uint256 withdrawAmount = 100;
 
-        _mapTokenLayerYToLayerX(address(yeToken), address(bwYeToken), false); // map the bridge wrapped yeToken to the yeToken (simulating the natural bridging process, no need in real life)
-        deal(address(bwYeToken), sender, withdrawAmount);
+        _mapTokenLayerYToLayerX(address(vbToken), address(bwVbToken), false); // map the bridge wrapped vbToken to the vbToken (simulating the natural bridging process, no need in real life)
+        deal(address(bwVbToken), sender, withdrawAmount);
 
         vm.startPrank(sender);
-        bwYeToken.approve(LXLY_BRIDGE_Y, withdrawAmount);
+        bwVbToken.approve(LXLY_BRIDGE_Y, withdrawAmount);
 
         LeafPayload memory withdrawLeaf = LeafPayload({
             leafType: LEAF_TYPE_ASSET,
             originNetwork: NETWORK_ID_X,
-            originAddress: address(yeToken),
+            originAddress: address(vbToken),
             destinationNetwork: NETWORK_ID_X,
-            destinationAddress: address(yeToken),
+            destinationAddress: address(vbToken),
             amount: withdrawAmount,
-            metadata: bwYeTokenMetaData
+            metadata: bwVbTokenMetaData
         });
 
-        // bridge the bridge wrapped yeToken
+        // bridge the bridge wrapped vbToken
         vm.expectEmit();
         emit BridgeEvent(
             withdrawLeaf.leafType,
@@ -584,10 +584,10 @@ contract IntegrationTest is Test, ZkEVMCommon {
             _ILxLyBridge(LXLY_BRIDGE_Y).depositCount()
         );
         ILxLyBridge(LXLY_BRIDGE_Y).bridgeAsset(
-            NETWORK_ID_X, address(yeToken), withdrawAmount, address(bwYeToken), true, ""
+            NETWORK_ID_X, address(vbToken), withdrawAmount, address(bwVbToken), true, ""
         );
 
-        assertEq(bwYeToken.balanceOf(LXLY_BRIDGE_Y), 0); // underlying asset is burned as it is custom mapped to yeToken
+        assertEq(bwVbToken.balanceOf(LXLY_BRIDGE_Y), 0); // underlying asset is burned as it is custom mapped to vbToken
         vm.stopPrank();
 
         LeafPayload[] memory leafPayloads = new LeafPayload[](1);
@@ -611,11 +611,11 @@ contract IntegrationTest is Test, ZkEVMCommon {
         LeafPayload memory depositLeaf = LeafPayload({
             leafType: LEAF_TYPE_ASSET,
             originNetwork: NETWORK_ID_X,
-            originAddress: address(yeToken),
+            originAddress: address(vbToken),
             destinationNetwork: NETWORK_ID_Y,
             destinationAddress: recipient,
             amount: depositAmount,
-            metadata: yeTokenMetaData
+            metadata: vbTokenMetaData
         });
         _depositAndBridgeLayerX(sender, depositAmount, depositLeaf);
         bytes32 lastLayerXExitRoot = IPolygonZkEVMGlobalExitRoot(GER_X).lastMainnetExitRoot();
@@ -624,7 +624,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
 
         uint256 withdrawAmount = 100;
 
-        _mapTokenLayerYToLayerX(address(yeToken), address(customToken), false);
+        _mapTokenLayerYToLayerX(address(vbToken), address(customToken), false);
         deal(address(customToken), sender, withdrawAmount);
 
         vm.startPrank(sender);
@@ -634,9 +634,9 @@ contract IntegrationTest is Test, ZkEVMCommon {
         LeafPayload memory withdrawLeaf = LeafPayload({
             leafType: LEAF_TYPE_ASSET,
             originNetwork: NETWORK_ID_X,
-            originAddress: address(yeToken),
+            originAddress: address(vbToken),
             destinationNetwork: NETWORK_ID_X,
-            destinationAddress: address(yeToken),
+            destinationAddress: address(vbToken),
             amount: withdrawAmount,
             metadata: customTokenMetaData
         });
@@ -654,9 +654,9 @@ contract IntegrationTest is Test, ZkEVMCommon {
             _ILxLyBridge(LXLY_BRIDGE_Y).depositCount()
         );
         ILxLyBridge(LXLY_BRIDGE_Y).bridgeAsset(
-            NETWORK_ID_X, address(yeToken), withdrawAmount, address(customToken), true, ""
+            NETWORK_ID_X, address(vbToken), withdrawAmount, address(customToken), true, ""
         );
-        assertEq(customToken.balanceOf(LXLY_BRIDGE_Y), 0); // custom token is burned as it is custom mapped to yeToken
+        assertEq(customToken.balanceOf(LXLY_BRIDGE_Y), 0); // custom token is burned as it is custom mapped to vbToken
         vm.stopPrank();
 
         LeafPayload[] memory leafPayloads = new LeafPayload[](1);
@@ -688,7 +688,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
         backingOnLayerY = nativeConverter.convert(convertAmount, recipient);
         vm.stopPrank();
 
-        _mapTokenLayerYToLayerX(address(yeToken), address(customToken), false);
+        _mapTokenLayerYToLayerX(address(vbToken), address(customToken), false);
         _mapTokenLayerYToLayerX(address(underlyingAsset), address(bwUnderlyingAsset), false);
 
         deal(address(customToken), sender, convertAmount);
@@ -715,7 +715,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
     function test_migrateBackingToLayerX() public {
         uint256 amount = 100;
 
-        uint256 yeTokenTotalSupplyBefore = yeToken.totalSupply();
+        uint256 vbTokenTotalSupplyBefore = vbToken.totalSupply();
 
         // switch to Layer X
         vm.selectFork(forkIdLayerX);
@@ -735,7 +735,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
         backingOnLayerY = nativeConverter.convert(convertAmount, recipient);
         vm.stopPrank();
 
-        _mapTokenLayerYToLayerX(address(yeToken), address(customToken), false);
+        _mapTokenLayerYToLayerX(address(vbToken), address(customToken), false);
         _mapTokenLayerYToLayerX(address(underlyingAsset), address(bwUnderlyingAsset), false);
 
         // make the migration leaves
@@ -744,9 +744,9 @@ contract IntegrationTest is Test, ZkEVMCommon {
             originNetwork: NETWORK_ID_X,
             originAddress: address(underlyingAsset),
             destinationNetwork: NETWORK_ID_X,
-            destinationAddress: address(yeToken),
+            destinationAddress: address(vbToken),
             amount: backingOnLayerY,
-            metadata: bwYeTokenMetaData
+            metadata: bwVbTokenMetaData
         });
 
         LeafPayload memory messageLeaf = LeafPayload({
@@ -754,7 +754,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
             originNetwork: NETWORK_ID_Y,
             originAddress: address(nativeConverter),
             destinationNetwork: NETWORK_ID_X,
-            destinationAddress: address(yeToken),
+            destinationAddress: address(vbToken),
             amount: 0,
             metadata: abi.encode(
                 NativeConverter.CrossNetworkInstruction.COMPLETE_MIGRATION, abi.encode(backingOnLayerY, backingOnLayerY)
@@ -801,8 +801,8 @@ contract IntegrationTest is Test, ZkEVMCommon {
         _claimAndVerifyAssetLayerX(underlyingAsset, claimPayloads[0]);
         _claimMessageLayerX(claimPayloads[1]);
 
-        uint256 yeTokenTotalSupplyAfter = yeToken.totalSupply();
-        assertGt(yeTokenTotalSupplyAfter, yeTokenTotalSupplyBefore);
+        uint256 vbTokenTotalSupplyAfter = vbToken.totalSupply();
+        assertGt(vbTokenTotalSupplyAfter, vbTokenTotalSupplyBefore);
     }
 
     function _depositAndBridgeLayerX(address _sender, uint256 _amount, LeafPayload memory _leaf) internal {
@@ -812,7 +812,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
         vm.startPrank(_sender);
 
         // approve underlying asset
-        yeToken.underlyingToken().approve(address(yeToken), _amount);
+        vbToken.underlyingToken().approve(address(vbToken), _amount);
 
         // deposit and bridge
         vm.expectEmit();
@@ -826,13 +826,13 @@ contract IntegrationTest is Test, ZkEVMCommon {
             _leaf.metadata,
             _ILxLyBridge(LXLY_BRIDGE_X).depositCount()
         );
-        yeToken.depositAndBridge(_amount, _leaf.destinationAddress, _leaf.destinationNetwork, true);
+        vbToken.depositAndBridge(_amount, _leaf.destinationAddress, _leaf.destinationNetwork, true);
 
         vm.stopPrank();
 
         // assert balances
-        vm.assertEq(yeToken.underlyingToken().balanceOf(_sender), 0);
-        vm.assertEq(yeToken.balanceOf(LXLY_BRIDGE_X), _amount); // shares locked in the bridge
+        vm.assertEq(vbToken.underlyingToken().balanceOf(_sender), 0);
+        vm.assertEq(vbToken.balanceOf(LXLY_BRIDGE_X), _amount); // shares locked in the bridge
     }
 
     function _mapTokenLayerYToLayerX(address _originTokenAddress, address _sovereignTokenAddress, bool _isNotMintable)
@@ -1096,11 +1096,11 @@ contract IntegrationTest is Test, ZkEVMCommon {
         IPolygonZkEVMGlobalExitRoot(GER_X).updateExitRoot(_claimPayload.exitRootLayerY);
 
         // claim and withdraw on Layer X
-        vm.prank(address(yeToken));
-        yeToken.approve(recipient, _claimPayload.amount);
+        vm.prank(address(vbToken));
+        vbToken.approve(recipient, _claimPayload.amount);
 
         vm.prank(recipient);
-        yeToken.claimAndRedeem(
+        vbToken.claimAndRedeem(
             _claimPayload.proofLayerX,
             _claimPayload.proofLayerY,
             _claimPayload.globalIndex,
@@ -1112,7 +1112,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
             _claimPayload.metadata
         );
 
-        assertEq(yeToken.underlyingToken().balanceOf(recipient), _claimPayload.amount);
+        assertEq(vbToken.underlyingToken().balanceOf(recipient), _claimPayload.amount);
     }
 
     function _deconvertAndBridgeLayerY(address _sender, uint256 _amount, LeafPayload memory _leaf) internal {

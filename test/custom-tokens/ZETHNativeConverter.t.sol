@@ -20,7 +20,7 @@ import {GenericNativeConverter, NativeConverter} from "../../src/custom-tokens/G
 contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
     MockERC20 internal wWETH;
     WETH internal wETH;
-    address internal yeETH = makeAddr("yeETH");
+    address internal vbETH = makeAddr("vbETH");
 
     WETHNativeConverter internal wETHConverter;
 
@@ -41,7 +41,7 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
         // assign addresses for generic testing
         customToken = MockERC20MintableBurnable(address(wETH));
         underlyingToken = MockERC20(address(wWETH));
-        yeToken = yeETH;
+        vbToken = vbETH;
 
         underlyingTokenMetadata = abi.encode("Wrapped WETH", "wWETH", 18);
 
@@ -61,7 +61,7 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
                 address(wWETH), // wrapped underlying token
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
-                yeETH,
+                vbETH,
                 migrator
             )
         );
@@ -75,7 +75,7 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
         vm.label(address(wETH), "wETH");
         vm.label(address(this), "testerAddress");
         vm.label(LXLY_BRIDGE, "lxlyBridge");
-        vm.label(yeToken, "yeToken");
+        vm.label(vbToken, "vbToken");
         vm.label(owner, "owner");
         vm.label(recipient, "recipient");
         vm.label(sender, "sender");
@@ -97,7 +97,7 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
                 address(underlyingToken),
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
-                yeToken,
+                vbToken,
                 migrator
             )
         );
@@ -114,7 +114,7 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
                 address(underlyingToken),
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
-                yeToken,
+                vbToken,
                 migrator
             )
         );
@@ -131,7 +131,7 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
                 address(0),
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
-                yeToken,
+                vbToken,
                 migrator
             )
         );
@@ -148,7 +148,7 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
                 address(underlyingToken),
                 address(0),
                 NETWORK_ID_L1,
-                yeToken,
+                vbToken,
                 migrator
             )
         );
@@ -169,7 +169,7 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
                 migrator
             )
         );
-        vm.expectRevert(NativeConverter.InvalidYeToken.selector);
+        vm.expectRevert(NativeConverter.InvalidVbToken.selector);
         GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
         vm.revertToState(beforeInit);
 
@@ -182,7 +182,7 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
                 address(underlyingToken),
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
-                yeToken,
+                vbToken,
                 address(0)
             )
         );
@@ -202,7 +202,7 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
                 address(underlyingToken),
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
-                yeToken,
+                vbToken,
                 migrator
             )
         );
@@ -222,7 +222,7 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
                 address(dummyToken),
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
-                yeToken,
+                vbToken,
                 migrator
             )
         );
@@ -250,7 +250,7 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
 
         vm.expectEmit();
         emit BridgeEvent(
-            LEAF_TYPE_ASSET, NETWORK_ID_L1, address(0x00), NETWORK_ID_L1, yeToken, amountToMigrate, "", 55413
+            LEAF_TYPE_ASSET, NETWORK_ID_L1, address(0x00), NETWORK_ID_L1, vbToken, amountToMigrate, "", 55413
         );
         vm.expectEmit();
         emit BridgeEvent(
@@ -258,7 +258,7 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
             NETWORK_ID_L2,
             address(wETHConverter),
             NETWORK_ID_L1,
-            yeToken,
+            vbToken,
             0,
             abi.encode(
                 NativeConverter.CrossNetworkInstruction.CUSTOM,
