@@ -74,11 +74,11 @@ contract WETHNativeConverter is NativeConverter {
         weth = WETH(payable(customToken_));
     }
 
-    /// @dev This special function allows the NativeConverter owner to migrate the gas backing of the zETH Custom Token
+    /// @dev This special function allows the NativeConverter owner to migrate the gas backing of the WETH Custom Token
     /// @dev It simply takes the amount of gas token from the WETH contract
     /// @dev and performs the migration using a special CrossNetworkInstruction called WRAP_COIN_AND_COMPLETE_MIGRATION
     /// @dev It instructs vbETH on Layer X to first wrap the gas token and then deposit it to complete the migration.
-    /// @notice It is known that this can lead to zETH not being able to perform withdrawals, because of a lack of gas backing.
+    /// @notice It is known that this can lead to WETH not being able to perform withdrawals, because of a lack of gas backing.
     /// @notice However, this is acceptable, because WETH is a vault backed token so its backing should actually be staked.
     /// @notice Users can still bridge WETH back to Layer X to receive wETH or ETH.
     function migrateGasBackingToLayerX(uint256 amount) external whenNotPaused onlyOwner {

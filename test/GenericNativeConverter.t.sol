@@ -179,7 +179,7 @@ contract GenericNativeConverterTest is Test {
         // giving control over custom token to NativeConverter
         _customToken.transferOwnership(address(nativeConverter));
 
-        vm.label(address(_customToken), "zETH");
+        vm.label(address(_customToken), "WETH");
         vm.label(address(this), "testerAddress");
         vm.label(LXLY_BRIDGE, "lxlyBridge");
         vm.label(vbToken, "vbToken");

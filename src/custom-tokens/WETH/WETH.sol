@@ -8,7 +8,7 @@ import {IVersioned} from "../../etc/IVersioned.sol";
 // TODO
 // - make upgradeable to enable potential future ETH staking plans
 
-/// @title ZETH
+/// @title WETH
 /// @dev based on https://github.com/gnosis/canonical-weth/blob/master/contracts/WETH9.sol
 contract WETH is CustomToken {
     error AssetsTooLarge(uint256 availableAssets, uint256 requestedAssets);
