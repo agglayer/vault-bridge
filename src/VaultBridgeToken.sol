@@ -69,11 +69,10 @@ abstract contract VaultBridgeToken is
         address transferFeeUtil;
     }
 
-    // Todo fix slot while keeping weth intact
-    /// @dev The storage slot at which Vau Token storage starts, following the EIP-7201 standard.
-    /// @dev Calculated as `keccak256(abi.encode(uint256(keccak256("0xpolygon.storage.YieldExposedToken")) - 1)) & ~bytes32(uint256(0xff))`.
-    bytes32 private constant _YIELD_EXPOSED_TOKEN_STORAGE =
-        hex"ed23de664e59f2cbf6ba852da776346da171cf53c9d06b116fea0fc5ee912500";
+    /// @dev The storage slot at which Vault Bridge Token storage starts, following the EIP-7201 standard.
+    /// @dev Calculated as `keccak256(abi.encode(uint256(keccak256("0xpolygon.storage.VaultBridgeToken")) - 1)) & ~bytes32(uint256(0xff))`.
+    bytes32 private constant _VAULT_BRIDGE_TOKEN_STORAGE =
+        hex"0bb25252701cf32638570970f607d30c3e6cb5d951ee6c3cd06f6d3f41890300";
 
     // Errors.
     error InvalidOwner();
@@ -254,7 +253,7 @@ abstract contract VaultBridgeToken is
     /// @dev Returns a pointer to the ERC-7201 storage namespace.
     function _getVaultBridgeTokenStorage() internal pure returns (VaultBridgeTokenStorage storage $) {
         assembly {
-            $.slot := _YIELD_EXPOSED_TOKEN_STORAGE
+            $.slot := _VAULT_BRIDGE_TOKEN_STORAGE
         }
     }
 
