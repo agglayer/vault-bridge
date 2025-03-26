@@ -1,13 +1,20 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity ^0.8.28;
 
-import {YeUSDT} from "src/yield-exposed-tokens/yeUSDT/YeUSDT.sol";
+import {GenericYeToken} from "src/yield-exposed-tokens/GenericYeToken.sol";
 import {YieldExposedToken} from "src/YieldExposedToken.sol";
+import {TransferFeeUtilsYeUSDT} from "src/yield-exposed-tokens/yeUSDT/TransferFeeUtilsYeUSDT.sol";
 
 import {IMetaMorpho} from "test/interfaces/IMetaMorpho.sol";
-import {GenericYieldExposedTokenTest, GenericYeToken} from "test/GenericYieldExposedToken.t.sol";
+import {
+    GenericYieldExposedTokenTest,
+    GenericYeToken,
+    console,
+    stdStorage,
+    StdStorage
+} from "test/GenericYieldExposedToken.t.sol";
 
-contract YeUSDTHarness is YeUSDT {
+contract YeUSDTHarness is GenericYeToken {
     function exposed_assetsAfterTransferFee(uint256 assetsBeforeTransferFee) public view returns (uint256) {
         return _assetsAfterTransferFee(assetsBeforeTransferFee);
     }
@@ -18,14 +25,13 @@ contract YeUSDTHarness is YeUSDT {
 }
 
 contract YeUSDTTest is GenericYieldExposedTokenTest {
+    using stdStorage for StdStorage;
+
     address internal constant USDT = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
     address internal constant USDT_VAULT = 0x8CB3649114051cA5119141a34C200D65dc0Faa73;
-    bytes32 internal constant YEUSDT_STORAGE_CACHED_BASIS_POINT_RATE =
-        0x8ee293a165ac3d78d3724b0faed67bcdb8e52fa45b6e98021a6acfdf2696c100;
-    bytes32 internal constant YEUSDT_STORAGE_CACHED_MAXIMUM_FEE =
-        0x8ee293a165ac3d78d3724b0faed67bcdb8e52fa45b6e98021a6acfdf2696c101;
 
     YeUSDTHarness yeUSDT;
+    TransferFeeUtilsYeUSDT transferFeeUtil;
 
     function setUp() public override {
         mainnetFork = vm.createSelectFork("mainnet");
@@ -38,6 +44,8 @@ contract YeUSDTTest is GenericYieldExposedTokenTest {
         decimals = 6;
         yeTokenMetaData = abi.encode(name, symbol, decimals);
         minimumReservePercentage = 1e17;
+
+        transferFeeUtil = new TransferFeeUtilsYeUSDT(owner, asset);
 
         yeToken = GenericYeToken(address(new YeUSDTHarness()));
         yeTokenImplementation = address(yeToken);
@@ -54,12 +62,14 @@ contract YeUSDTTest is GenericYieldExposedTokenTest {
                 yieldRecipient,
                 LXLY_BRIDGE,
                 nativeConverter,
-                MINIMUM_YIELD_VAULT_DEPOSIT
+                MINIMUM_YIELD_VAULT_DEPOSIT,
+                address(transferFeeUtil)
             )
         );
         yeToken = GenericYeToken(_proxify(address(yeToken), address(this), initData));
         yeUSDT = YeUSDTHarness(address(yeToken));
 
+        vm.label(address(transferFeeUtil), "Transfer Fee Util");
         vm.label(address(yeTokenVault), "USDT Vault");
         vm.label(address(yeToken), "yeUSDT");
         vm.label(address(yeTokenImplementation), "yeUSDT Implementation");
@@ -80,33 +90,39 @@ contract YeUSDTTest is GenericYieldExposedTokenTest {
         // USDT has no permit function.
     }
 
-    function test_recacheUsdtTransferFeeParameters() public {
-        yeUSDT.recacheUsdtTransferFeeParameters();
-        assertEq(yeUSDT.cachedBasisPointsRate(), 0);
-        assertEq(yeUSDT.cachedMaximumFee(), 0);
+    function test_transferFeeUtil() public {
+        assertEq(yeUSDT.transferFeeUtil(), address(transferFeeUtil));
+        assertEq(transferFeeUtil.cachedBasisPointsRate(), 0);
+        assertEq(transferFeeUtil.cachedMaximumFee(), 0);
 
-        vm.store(address(yeUSDT), YEUSDT_STORAGE_CACHED_BASIS_POINT_RATE, bytes32(uint256(100)));
-        vm.store(address(yeUSDT), YEUSDT_STORAGE_CACHED_MAXIMUM_FEE, bytes32(uint256(100)));
-        assertEq(yeUSDT.cachedBasisPointsRate(), 100);
-        assertEq(yeUSDT.cachedMaximumFee(), 100);
+        vm.expectRevert(); // Only owner can recache transfer fee parameters.
+        transferFeeUtil.recacheUsdtTransferFeeParameters();
+
+        vm.prank(owner);
+        transferFeeUtil.recacheUsdtTransferFeeParameters();
+        assertEq(TransferFeeUtilsYeUSDT(yeUSDT.transferFeeUtil()).cachedBasisPointsRate(), 0);
+        assertEq(TransferFeeUtilsYeUSDT(yeUSDT.transferFeeUtil()).cachedMaximumFee(), 0);
     }
 
     function test_assetsAfterTransferFee() public {
-        vm.store(address(yeUSDT), YEUSDT_STORAGE_CACHED_BASIS_POINT_RATE, bytes32(uint256(1000)));
-        vm.store(address(yeUSDT), YEUSDT_STORAGE_CACHED_MAXIMUM_FEE, bytes32(uint256(5)));
-        assertEq(yeUSDT.cachedBasisPointsRate(), 1000);
+        _writeTransferFeeUtilStorage(1000, 5); // 5% fee
         assertEq(yeUSDT.exposed_assetsAfterTransferFee(100), 95);
     }
 
     function test_assetBeforeTransferFee() public {
         uint256 state = vm.snapshotState();
-        vm.store(address(yeUSDT), YEUSDT_STORAGE_CACHED_BASIS_POINT_RATE, bytes32(uint256(1000)));
-        vm.store(address(yeUSDT), YEUSDT_STORAGE_CACHED_MAXIMUM_FEE, bytes32(uint256(5)));
+        _writeTransferFeeUtilStorage(1000, 5); // 5% fee
         assertEq(yeUSDT.exposed_assetsBeforeTransferFee(95), 100);
 
         vm.revertToState(state);
-        vm.store(address(yeUSDT), YEUSDT_STORAGE_CACHED_BASIS_POINT_RATE, bytes32(uint256(250)));
-        vm.store(address(yeUSDT), YEUSDT_STORAGE_CACHED_MAXIMUM_FEE, bytes32(uint256(5)));
+        _writeTransferFeeUtilStorage(250, 5); // 2.5% fee
         assertEq(yeUSDT.exposed_assetsBeforeTransferFee(95), 97);
+    }
+
+    function _writeTransferFeeUtilStorage(uint256 basisPointsRate, uint256 maximumFee) internal {
+        stdstore.target(address(transferFeeUtil)).sig("cachedBasisPointsRate()").checked_write(basisPointsRate);
+        stdstore.target(address(transferFeeUtil)).sig("cachedMaximumFee()").checked_write(maximumFee);
+        assertEq(TransferFeeUtilsYeUSDT(yeUSDT.transferFeeUtil()).cachedBasisPointsRate(), basisPointsRate);
+        assertEq(TransferFeeUtilsYeUSDT(yeUSDT.transferFeeUtil()).cachedMaximumFee(), maximumFee);
     }
 }

@@ -29,7 +29,8 @@ contract YeETH is YieldExposedToken {
         address yieldRecipient_,
         address lxlyBridge_,
         NativeConverter[] calldata nativeConverters_,
-        uint256 minimumYieldVaultDeposit_
+        uint256 minimumYieldVaultDeposit_,
+        address transferFeeUtil_
     ) external initializer {
         // Initialize the base implementation.
         __YieldExposedToken_init(
@@ -42,7 +43,8 @@ contract YeETH is YieldExposedToken {
             yieldRecipient_,
             lxlyBridge_,
             nativeConverters_,
-            minimumYieldVaultDeposit_
+            minimumYieldVaultDeposit_,
+            transferFeeUtil_
         );
     }
 

@@ -51,7 +51,8 @@ contract YeETHTest is GenericYieldExposedTokenTest {
                 yieldRecipient, // mock yield recipient
                 LXLY_BRIDGE,
                 nativeConverter, // mock migration manager
-                MINIMUM_YIELD_VAULT_DEPOSIT
+                MINIMUM_YIELD_VAULT_DEPOSIT,
+                address(0) // transfer fee util
             )
         );
 

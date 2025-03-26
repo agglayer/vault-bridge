@@ -5,6 +5,7 @@ pragma solidity 0.8.28;
 import {YieldExposedToken} from "../YieldExposedToken.sol";
 
 // Other functionality.
+import {ITransferFeeUtils} from "../etc/ITransferFeeUtils.sol";
 import {IVersioned} from "../etc/IVersioned.sol";
 
 /// @title Generic Yield Exposed Token
@@ -24,7 +25,8 @@ contract GenericYeToken is YieldExposedToken {
         address yieldRecipient_,
         address lxlyBridge_,
         NativeConverter[] calldata nativeConverters_,
-        uint256 minimumYieldVaultDeposit_
+        uint256 minimumYieldVaultDeposit_,
+        address transferFeeUtil_
     ) external initializer {
         // Initialize the base implementation.
         __YieldExposedToken_init(
@@ -37,7 +39,8 @@ contract GenericYeToken is YieldExposedToken {
             yieldRecipient_,
             lxlyBridge_,
             nativeConverters_,
-            minimumYieldVaultDeposit_
+            minimumYieldVaultDeposit_,
+            transferFeeUtil_
         );
     }
 
@@ -58,7 +61,11 @@ contract GenericYeToken is YieldExposedToken {
         override
         returns (uint256)
     {
-        return assetsBeforeTransferFee;
+        if (transferFeeUtil() != address(0)) {
+            return ITransferFeeUtils(transferFeeUtil()).assetsAfterTransferFee(assetsBeforeTransferFee);
+        } else {
+            return assetsBeforeTransferFee;
+        }
     }
 
     /// @dev The underlying token does not have a transfer fee.
@@ -69,6 +76,10 @@ contract GenericYeToken is YieldExposedToken {
         override
         returns (uint256)
     {
-        return minimumAssetsAfterTransferFee;
+        if (transferFeeUtil() != address(0)) {
+            return ITransferFeeUtils(transferFeeUtil()).assetsBeforeTransferFee(minimumAssetsAfterTransferFee);
+        } else {
+            return minimumAssetsAfterTransferFee;
+        }
     }
 }

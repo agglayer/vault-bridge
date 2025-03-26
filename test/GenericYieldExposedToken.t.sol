@@ -97,7 +97,8 @@ contract GenericYieldExposedTokenTest is Test {
                 yieldRecipient,
                 LXLY_BRIDGE,
                 nativeConverter,
-                MINIMUM_YIELD_VAULT_DEPOSIT
+                MINIMUM_YIELD_VAULT_DEPOSIT,
+                address(0)
             )
         );
         yeToken = GenericYeToken(_proxify(address(yeTokenImplementation), address(this), initData));
@@ -147,7 +148,8 @@ contract GenericYieldExposedTokenTest is Test {
                 yieldRecipient,
                 LXLY_BRIDGE,
                 nativeConverter,
-                MINIMUM_YIELD_VAULT_DEPOSIT
+                MINIMUM_YIELD_VAULT_DEPOSIT,
+                address(0)
             )
         );
         vm.expectRevert(YieldExposedToken.InvalidOwner.selector);
@@ -166,7 +168,8 @@ contract GenericYieldExposedTokenTest is Test {
                 yieldRecipient,
                 LXLY_BRIDGE,
                 nativeConverter,
-                MINIMUM_YIELD_VAULT_DEPOSIT
+                MINIMUM_YIELD_VAULT_DEPOSIT,
+                address(0)
             )
         );
         vm.expectRevert(YieldExposedToken.InvalidName.selector);
@@ -185,7 +188,8 @@ contract GenericYieldExposedTokenTest is Test {
                 yieldRecipient,
                 LXLY_BRIDGE,
                 nativeConverter,
-                MINIMUM_YIELD_VAULT_DEPOSIT
+                MINIMUM_YIELD_VAULT_DEPOSIT,
+                address(0)
             )
         );
         vm.expectRevert(YieldExposedToken.InvalidSymbol.selector);
@@ -204,7 +208,8 @@ contract GenericYieldExposedTokenTest is Test {
                 yieldRecipient,
                 LXLY_BRIDGE,
                 nativeConverter,
-                MINIMUM_YIELD_VAULT_DEPOSIT
+                MINIMUM_YIELD_VAULT_DEPOSIT,
+                address(0)
             )
         );
         vm.expectRevert(YieldExposedToken.InvalidUnderlyingToken.selector);
@@ -223,7 +228,8 @@ contract GenericYieldExposedTokenTest is Test {
                 yieldRecipient,
                 LXLY_BRIDGE,
                 nativeConverter,
-                MINIMUM_YIELD_VAULT_DEPOSIT
+                MINIMUM_YIELD_VAULT_DEPOSIT,
+                address(0)
             )
         );
         vm.expectRevert(YieldExposedToken.InvalidMinimumReservePercentage.selector);
@@ -242,7 +248,8 @@ contract GenericYieldExposedTokenTest is Test {
                 yieldRecipient,
                 LXLY_BRIDGE,
                 nativeConverter,
-                MINIMUM_YIELD_VAULT_DEPOSIT
+                MINIMUM_YIELD_VAULT_DEPOSIT,
+                address(0)
             )
         );
         vm.expectRevert(YieldExposedToken.InvalidYieldVault.selector);
@@ -261,7 +268,8 @@ contract GenericYieldExposedTokenTest is Test {
                 address(0),
                 LXLY_BRIDGE,
                 nativeConverter,
-                MINIMUM_YIELD_VAULT_DEPOSIT
+                MINIMUM_YIELD_VAULT_DEPOSIT,
+                address(0)
             )
         );
         vm.expectRevert(YieldExposedToken.InvalidYieldRecipient.selector);
@@ -280,7 +288,8 @@ contract GenericYieldExposedTokenTest is Test {
                 yieldRecipient,
                 address(0),
                 nativeConverter,
-                MINIMUM_YIELD_VAULT_DEPOSIT
+                MINIMUM_YIELD_VAULT_DEPOSIT,
+                address(0)
             )
         );
         vm.expectRevert(YieldExposedToken.InvalidLxLyBridge.selector);
@@ -302,7 +311,8 @@ contract GenericYieldExposedTokenTest is Test {
                 yieldRecipient,
                 LXLY_BRIDGE,
                 nativeConverter,
-                MINIMUM_YIELD_VAULT_DEPOSIT
+                MINIMUM_YIELD_VAULT_DEPOSIT,
+                address(0)
             )
         );
         vm.expectRevert(YieldExposedToken.InvalidNativeConverters.selector);
@@ -319,7 +329,7 @@ contract GenericYieldExposedTokenTest is Test {
         deal(asset, sender, amount);
 
         vm.startPrank(sender);
-        
+
         vm.expectRevert(YieldExposedToken.InvalidAssets.selector);
         yeToken.deposit(0, recipient);
 

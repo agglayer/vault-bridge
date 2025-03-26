@@ -43,7 +43,8 @@ contract MockYeToken is YieldExposedToken {
             yieldRecipient_,
             lxlyBridge_,
             nativeConverters_,
-            10
+            10,
+            address(0)
         );
     }
 
