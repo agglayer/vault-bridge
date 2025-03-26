@@ -4,7 +4,7 @@ pragma solidity 0.8.28;
 // Main functionality.
 import {GenericVbToken} from "../GenericVbToken.sol";
 
-/// @title Vault Backed USDS
+/// @title Vault Bridge USDS
 /// @dev USDS does not have a transfer fee, and no customization is required.
 /// @dev This contract does not need to be deployed. You can point `VbUSDS` proxy to `GenericVbToken` instead.
 contract VbUSDS is GenericVbToken {}

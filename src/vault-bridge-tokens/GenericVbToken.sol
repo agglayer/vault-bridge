@@ -2,15 +2,15 @@
 pragma solidity 0.8.28;
 
 // Main functionality.
-import {VaultBackedToken} from "../VaultBackedToken.sol";
+import {VaultBridgeToken} from "../VaultBridgeToken.sol";
 
 // Other functionality.
 import {ITransferFeeUtils} from "../etc/ITransferFeeUtils.sol";
 import {IVersioned} from "../etc/IVersioned.sol";
 
-/// @title Generic Vault Backed Token
+/// @title Generic Vault Bridge Token
 /// @dev This contract can be used to deploy vbTokens that do not require any customization, and the underlying token does not have a transfer fee.
-contract GenericVbToken is VaultBackedToken {
+contract GenericVbToken is VaultBridgeToken {
     constructor() {
         _disableInitializers();
     }
@@ -29,7 +29,7 @@ contract GenericVbToken is VaultBackedToken {
         address transferFeeUtil_
     ) external initializer {
         // Initialize the base implementation.
-        __VaultBackedToken_init(
+        __VaultBridgeToken_init(
             owner_,
             name_,
             symbol_,

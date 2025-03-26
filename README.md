@@ -1,8 +1,8 @@
-<h1 align="center">🌾 Vault Backed Token</h1>
+<h1 align="center">🌾 Vault Bridge Token</h1>
 
 <div align="center">
 
-Vault Backed Token is the core of the Stake The Bridge system. Built from the ground up to be reusable, it offers complete STB functionality out of the box, allowing you to create vbTokens in just a few lines of code.
+Vault Bridge Token is the core of the Stake The Bridge system. Built from the ground up to be reusable, it offers complete STB functionality out of the box, allowing you to create vbTokens in just a few lines of code.
 
 </div>
 
@@ -11,14 +11,14 @@ Vault Backed Token is the core of the Stake The Bridge system. Built from the gr
 The Stake The Bridge system is comprised of:
 
 - Layer X
-  - [Vault Backed Token](#vault-backed-token-)
+  - [Vault Bridge Token](#vault-bridged-token-)
 - Layer Y
   - [Custom Token](#custom-token-)
   - [Native Converter](#native-converter-)
 
-### Vault Backed Token [↗](src/VaultBackedToken.sol)
+### Vault Bridge Token [↗](src/VaultBridgeToken.sol)
 
-A Vault Backed Token is an
+A Vault Bridge Token is an
 
 - [ERC-20](https://eips.ethereum.org/EIPS/eip-20) token
 - [ERC-4626](https://eips.ethereum.org/EIPS/eip-4626) vault

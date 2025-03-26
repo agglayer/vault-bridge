@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity 0.8.28;
 
-import {VaultBackedToken} from "../../VaultBackedToken.sol";
+import {VaultBridgeToken} from "../../VaultBridgeToken.sol";
 import {IWETH9} from "../../etc/IWETH9.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {IVersioned} from "../../etc/IVersioned.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-/// @title Vualt Backed gas token
-contract VbETH is VaultBackedToken {
+/// @title Vault Bridge gas token
+contract VbETH is VaultBridgeToken {
     using SafeERC20 for IWETH9;
 
     enum CustomCrossNetworkInstruction {
@@ -33,7 +33,7 @@ contract VbETH is VaultBackedToken {
         address transferFeeUtil_
     ) external initializer {
         // Initialize the base implementation.
-        __VaultBackedToken_init(
+        __VaultBridgeToken_init(
             owner_,
             name_,
             symbol_,

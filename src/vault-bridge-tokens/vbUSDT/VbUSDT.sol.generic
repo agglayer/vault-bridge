@@ -4,7 +4,7 @@ pragma solidity 0.8.28;
 // Main functionality.
 import {GenericVbToken} from "../GenericVbToken.sol";
 
-/// @title Vault Backed USDT
+/// @title Vault Bridge USDT
 /// @dev USDT does not have special functionality, and no customization is required.
 /// @dev This contract does not need to be deployed. You can point `VbUSDT` proxy to `GenericVbToken` instead.
 contract VbUSDT is GenericVbToken {}
