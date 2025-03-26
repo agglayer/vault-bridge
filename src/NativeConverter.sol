@@ -51,6 +51,7 @@ abstract contract NativeConverter is
         ILxLyBridge lxlyBridge;
         uint32 layerXLxlyId;
         address yeToken;
+        address migrator;
     }
 
     /// @dev The storage slot at which Native Converter storage starts, following the EIP-7201 standard.
@@ -65,6 +66,7 @@ abstract contract NativeConverter is
     error InvalidLxLyBridge();
     error InvalidLayerXLxlyId();
     error InvalidYeToken();
+    error InvalidMigrator();
     error NonMatchingCustomTokenDecimals(uint8 customTokenDecimals, uint8 originalUnderlyingTokenDecimals);
     error NonMatchingUnderlyingTokenDecimals(uint8 underlyingTokenDecimals, uint8 originalUnderlyingTokenDecimals);
     error InvalidAssets();
@@ -73,6 +75,7 @@ abstract contract NativeConverter is
     error InvalidShares();
     error AssetsTooLarge(uint256 availableAssets, uint256 requestedAssets);
     error InvalidDestinationNetworkId();
+    error OnlyMigrator();
 
     // Events.
     event MigrationStarted(address indexed initiator, uint256 indexed mintedCustomToken, uint256 migratedBacking);
@@ -88,7 +91,8 @@ abstract contract NativeConverter is
         address underlyingToken_,
         address lxlyBridge_,
         uint32 layerXLxlyId_,
-        address yeToken_
+        address yeToken_,
+        address migrator_
     ) internal onlyInitializing {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
 
@@ -99,6 +103,7 @@ abstract contract NativeConverter is
         require(lxlyBridge_ != address(0), InvalidLxLyBridge());
         require(layerXLxlyId_ != ILxLyBridge(lxlyBridge_).networkID(), InvalidLxLyBridge());
         require(yeToken_ != address(0), InvalidYeToken());
+        require(migrator_ != address(0), InvalidMigrator());
 
         // Check Custom Token's decimals.
         uint8 customTokenDecimals;
@@ -139,6 +144,7 @@ abstract contract NativeConverter is
         $.lxlyBridge = ILxLyBridge(lxlyBridge_);
         $.layerXLxlyId = layerXLxlyId_;
         $.yeToken = yeToken_;
+        $.migrator = migrator_;
 
         // Approve LxLy Bridge.
         $.underlyingToken.forceApprove(address($.lxlyBridge), type(uint256).max);
@@ -187,6 +193,12 @@ abstract contract NativeConverter is
     function yeToken() public view returns (address) {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
         return $.yeToken;
+    }
+
+    /// @notice The address of the migrator contract.
+    function migrator() public view returns (address) {
+        NativeConverterStorage storage $ = _getNativeConverterStorage();
+        return $.migrator;
     }
 
     /// @dev Returns a pointer to the ERC-7201 storage namespace.
@@ -440,7 +452,9 @@ abstract contract NativeConverter is
     /// @notice This function can be called by the owner only.
     /// @notice The migration can be completed by anyone on Layer X.
     /// @dev Consider calling this function periodically - anyone will be able to complete a migration on Layer X.
-    function migrateBackingToLayerX(uint256 assets) external whenNotPaused onlyOwner nonReentrant {
+    function migrateBackingToLayerX(uint256 assets) external whenNotPaused nonReentrant {
+        require(msg.sender == migrator(), OnlyMigrator());
+
         NativeConverterStorage storage $ = _getNativeConverterStorage();
 
         // Check the input.
@@ -495,6 +509,14 @@ abstract contract NativeConverter is
     /// @notice This function can be called by the owner only.
     function unpause() external onlyOwner nonReentrant {
         _unpause();
+    }
+
+    /// @notice Sets the migrator contract address.
+    /// @notice This function can be called by the owner only.
+    /// @param migrator_ The address of the migrator contract.
+    function setMigrator(address migrator_) external onlyOwner {
+        NativeConverterStorage storage $ = _getNativeConverterStorage();
+        $.migrator = migrator_;
     }
 
     // -----================= ::: DEVELOPER ::: =================-----

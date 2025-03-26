@@ -85,7 +85,8 @@ contract MockNativeConverter is NativeConverter {
         address underlyingToken_,
         address lxlyBridge_,
         uint32 layerXLxlyId_,
-        address yeToken_
+        address yeToken_,
+        address migrator_
     ) external initializer {
         // Initialize the base implementation.
         __NativeConverter_init(
@@ -95,7 +96,8 @@ contract MockNativeConverter is NativeConverter {
             underlyingToken_,
             lxlyBridge_,
             layerXLxlyId_,
-            yeToken_
+            yeToken_,
+            migrator_
         );
     }
 
@@ -271,6 +273,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
     address recipient = makeAddr("recipient");
     address owner = makeAddr("owner");
     address yieldRecipient = makeAddr("yieldRecipient");
+    address migrator = makeAddr("migrator");
     uint256 senderPrivateKey = 0xBEEF;
     address sender = vm.addr(senderPrivateKey);
 
@@ -441,7 +444,8 @@ contract IntegrationTest is Test, ZkEVMCommon {
                 address(bwUnderlyingAsset),
                 LXLY_BRIDGE_Y,
                 NETWORK_ID_X,
-                address(yeToken)
+                address(yeToken),
+                migrator
             )
         );
         nativeConverter =
@@ -781,8 +785,8 @@ contract IntegrationTest is Test, ZkEVMCommon {
             _ILxLyBridge(LXLY_BRIDGE_Y).depositCount() + 1
         );
         vm.expectEmit();
-        emit NativeConverter.MigrationStarted(owner, backingOnLayerY, backingOnLayerY);
-        vm.prank(owner);
+        emit NativeConverter.MigrationStarted(migrator, backingOnLayerY, backingOnLayerY);
+        vm.prank(migrator);
         nativeConverter.migrateBackingToLayerX(backingOnLayerY);
 
         LeafPayload[] memory leafPayloads = new LeafPayload[](2);

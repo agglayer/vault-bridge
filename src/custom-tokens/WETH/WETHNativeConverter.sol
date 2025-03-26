@@ -28,7 +28,8 @@ contract WETHNativeConverter is NativeConverter {
         address underlyingToken_,
         address lxlyBridge_,
         uint32 layerXNetworkId_,
-        address yeToken_
+        address yeToken_,
+        address migrator_
     ) external initializer {
         // Initialize the base implementation.
         __NativeConverter_init(
@@ -38,7 +39,8 @@ contract WETHNativeConverter is NativeConverter {
             underlyingToken_,
             lxlyBridge_,
             layerXNetworkId_,
-            yeToken_
+            yeToken_,
+            migrator_
         );
 
         weth = WETH(payable(customToken_));
@@ -52,7 +54,8 @@ contract WETHNativeConverter is NativeConverter {
         address underlyingToken_,
         address lxlyBridge_,
         uint32 layerXNetworkId_,
-        address yeToken_
+        address yeToken_,
+        address migrator_
     ) external reinitializer(2) {
         underlyingToken().forceApprove(address(lxlyBridge()), 0);
 
@@ -64,7 +67,8 @@ contract WETHNativeConverter is NativeConverter {
             underlyingToken_,
             lxlyBridge_,
             layerXNetworkId_,
-            yeToken_
+            yeToken_,
+            migrator_
         );
 
         weth = WETH(payable(customToken_));

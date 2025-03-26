@@ -21,7 +21,8 @@ contract GenericNativeConverter is NativeConverter {
         address underlyingToken_,
         address lxlyBridge_,
         uint32 layerXLxlyId_,
-        address yeToken_
+        address yeToken_,
+        address migrator_
     ) external initializer {
         // Initialize the base implementation.
         __NativeConverter_init(
@@ -31,7 +32,8 @@ contract GenericNativeConverter is NativeConverter {
             underlyingToken_,
             lxlyBridge_,
             layerXLxlyId_,
-            yeToken_
+            yeToken_,
+            migrator_
         );
     }
 

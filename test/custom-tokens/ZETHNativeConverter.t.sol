@@ -61,7 +61,8 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
                 address(wWETH), // wrapped underlying token
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
-                yeETH
+                yeETH,
+                migrator
             )
         );
         nativeConverter = GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
@@ -96,7 +97,8 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
                 address(underlyingToken),
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
-                yeToken
+                yeToken,
+                migrator
             )
         );
         vm.expectRevert(NativeConverter.InvalidOwner.selector);
@@ -112,7 +114,8 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
                 address(underlyingToken),
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
-                yeToken
+                yeToken,
+                migrator
             )
         );
         vm.expectRevert(NativeConverter.InvalidCustomToken.selector);
@@ -128,7 +131,8 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
                 address(0),
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
-                yeToken
+                yeToken,
+                migrator
             )
         );
         vm.expectRevert(NativeConverter.InvalidUnderlyingToken.selector);
@@ -144,7 +148,8 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
                 address(underlyingToken),
                 address(0),
                 NETWORK_ID_L1,
-                yeToken
+                yeToken,
+                migrator
             )
         );
         vm.expectRevert(NativeConverter.InvalidLxLyBridge.selector);
@@ -160,10 +165,28 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
                 address(underlyingToken),
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
-                address(0)
+                address(0),
+                migrator
             )
         );
         vm.expectRevert(NativeConverter.InvalidYeToken.selector);
+        GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
+        vm.revertToState(beforeInit);
+
+        initData = abi.encodeCall(
+            WETHNativeConverter.initialize,
+            (
+                owner,
+                ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
+                address(customToken),
+                address(underlyingToken),
+                LXLY_BRIDGE,
+                NETWORK_ID_L1,
+                yeToken,
+                address(0)
+            )
+        );
+        vm.expectRevert(NativeConverter.InvalidMigrator.selector);
         GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
         vm.revertToState(beforeInit);
 
@@ -179,7 +202,8 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
                 address(underlyingToken),
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
-                yeToken
+                yeToken,
+                migrator
             )
         );
         vm.expectRevert(abi.encodeWithSelector(NativeConverter.NonMatchingCustomTokenDecimals.selector, 6, 18));
@@ -198,7 +222,8 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
                 address(dummyToken),
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
-                yeToken
+                yeToken,
+                migrator
             )
         );
         vm.expectRevert(abi.encodeWithSelector(NativeConverter.NonMatchingUnderlyingTokenDecimals.selector, 6, 18));
