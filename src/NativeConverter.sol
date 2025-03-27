@@ -479,12 +479,13 @@ abstract contract NativeConverter is
         require(assets <= $.backingOnLayerY, AssetsTooLarge($.backingOnLayerY, assets));
 
         // Calculate the max non-migratable backing.
-        uint256 backingBalance = IERC20($.underlyingToken).balanceOf(address(this));
-        uint256 maxNonMigratableBacking = Math.mulDiv(backingBalance, $.maxNonMigratableBackingPercentage, 1e18);
+        uint256 totalToken = customToken().totalSupply();
+        uint256 maxNonMigratableBacking = Math.mulDiv(totalToken, $.maxNonMigratableBackingPercentage, 1e18);
 
-        // @note: Check if the remaining backing is greater than the non-migratable backing.
-        uint256 remainingBacking = backingBalance - assets;
-        require(remainingBacking >= maxNonMigratableBacking, NonMigratableBackingThresholdReached());
+        require(maxNonMigratableBacking < $.backingOnLayerY, NonMigratableBackingThresholdReached());
+
+        uint256 migrateable = $.backingOnLayerY - maxNonMigratableBacking;
+        assets = assets > migrateable ? migrateable : assets;
 
         // Update the backing data.
         $.backingOnLayerY -= assets;
