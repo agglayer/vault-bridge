@@ -1152,6 +1152,29 @@ abstract contract VaultBridgeToken is
         }
     }
 
+    /// @notice Drains the current vault as far as possible(uint256.MAX) or for a selected amount. 
+    /// @notice Make sure to disable deposits by setting minimumYieldVaultDeposit to uint256.MAX
+    /// @notice This function can be called by the owner only.
+    function drainVault(uint256 amountToDrain_, bool exact) external onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant {
+        VaultBridgeTokenStorage storage $ = _getVaultBridgeTokenStorage();
+        uint256 totalAmount = $.yieldVault.balanceOf(address(this));
+        uint256 maxAmount = $.yieldVault.maxWithdraw(address(this));
+        maxAmount = maxAmount < totalAmount ? maxAmount : totalAmount;
+        amountToDrain_ = maxAmount < amountToDrain_ ? maxAmount : amountToDrain_;
+
+        uint256 result = $.yieldVault.withdraw(amountToDrain_, address(this), address(this));
+        if (exact) {
+            require(result == amountToDrain_);
+        }
+    }
+
+    /// @notice Sets a new yieldVault. Be careful to only call this once the current vault has been emptied.
+    /// @notice This function can be called by the owner only.
+    function changeYieldVault(address _newYieldVault) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        VaultBridgeTokenStorage storage $ = _getVaultBridgeTokenStorage();
+        $.yieldVault = IERC4626(_newYieldVault);
+    }
+
     /// @notice Sets the minimum deposit amount that triggers a yield vault deposit.
     /// @notice This function can be called by the owner only.
     function setMinimumDepositAmount(uint256 minimumYieldVaultDeposit_)
