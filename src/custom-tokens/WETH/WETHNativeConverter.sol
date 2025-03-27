@@ -59,7 +59,7 @@ contract WETHNativeConverter is NativeConverter {
         address vbToken_,
         address migrator_,
         uint256 maxNonMigratableBackingPercentage_
-    ) external reinitializer(2) {
+    ) external reinitializer(3) {
         underlyingToken().forceApprove(address(lxlyBridge()), 0);
 
         // Reinitialize the base implementation.
