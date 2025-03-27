@@ -835,7 +835,7 @@ abstract contract VaultBridgeToken is
         }
         /* Above */
         else if (originalReservedAssets > minimumReserve && allowRebalanceDown) {
-            // Calculate the amunt to try to deposit into the yield vault.
+            // Calculate the amount to try to deposit into the yield vault.
             uint256 excess = originalReservedAssets - minimumReserve;
             // @note Yield vault usage.
             uint256 maxDeposit_ = $.yieldVault.maxDeposit(address(this));
@@ -845,7 +845,7 @@ abstract contract VaultBridgeToken is
             if (assetsToDeposit > 0) {
                 // @todo Reentrancy?
                 // Deposit.
-                $.reservedAssets -= _depositIntoYieldVault(assetsToDeposit);
+                _depositIntoYieldVault(assetsToDeposit);
 
                 // Update the reserve.
                 $.reservedAssets -= assetsToDeposit;
@@ -1218,7 +1218,8 @@ abstract contract VaultBridgeToken is
 
         // Check the output.
         // This code checks if the contract would go insolvent if the total supply, including uncollected yield, were withdrawn. Allows for 1% slippage.
-        // require( // TODO: Fix this check
+        // TODO: find a way to test this check
+        // require(
         //     Math.mulDiv(
         //         burnedYieldVaultShares,
         //         convertToAssets(Math.mulDiv(originalTotalSupply + originalYield, 0.99e18, 1e18)),

@@ -55,7 +55,7 @@ contract GenericVbToken is VaultBridgeToken {
 
     // -----================= ::: DEVELOPER ::: =================-----
 
-    /// @dev The underlying token does not have a transfer fee.
+    /// @dev The underlying token does not have a transfer fee if the transfer fee utility is not set.
     function _assetsAfterTransferFee(uint256 assetsBeforeTransferFee)
         internal
         view
@@ -70,7 +70,7 @@ contract GenericVbToken is VaultBridgeToken {
         }
     }
 
-    /// @dev The underlying token does not have a transfer fee.
+    /// @dev The underlying token does not have a transfer fee if the transfer fee utility is not set.
     function _assetsBeforeTransferFee(uint256 minimumAssetsAfterTransferFee)
         internal
         view

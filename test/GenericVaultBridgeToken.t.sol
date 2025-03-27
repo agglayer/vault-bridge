@@ -373,7 +373,7 @@ contract GenericVaultBridgeTokenTest is Test {
 
     function test_deposit_amount_gt_max_deposit() public {
         uint256 vaultMaxDeposit = vbTokenVault.maxDeposit(address(vbToken));
-        uint256 amount = (vaultMaxDeposit * 10) / 9 + 1; // acount for the minimum reserve percentage and add to make the amount greater than the max deposit limit
+        uint256 amount = (vaultMaxDeposit * 10) / 9 + 1; // account for the minimum reserve percentage and add to make the amount greater than the max deposit limit
         assertGt(amount, MINIMUM_YIELD_VAULT_DEPOSIT, "Amount should be greater than the minimum deposit.");
 
         deal(asset, sender, amount);
@@ -398,7 +398,7 @@ contract GenericVaultBridgeTokenTest is Test {
 
     function test_deposit_amount_lt_max_deposit() public {
         uint256 vaultMaxDeposit = vbTokenVault.maxDeposit(address(vbToken));
-        uint256 amount = (vaultMaxDeposit * 10) / 9 - 1; // acount for the minimum reserve percentage and subtracy to make the amount less than the max deposit limit
+        uint256 amount = (vaultMaxDeposit * 10) / 9 - 1; // account for the minimum reserve percentage and subtract to make the amount less than the max deposit limit
         assertGt(amount, MINIMUM_YIELD_VAULT_DEPOSIT, "Amount should be greater than the minimum deposit.");
 
         deal(asset, sender, amount);
@@ -666,73 +666,76 @@ contract GenericVaultBridgeTokenTest is Test {
         _testPauseUnpause(owner, address(vbToken), callData);
     }
 
-    // TODO: fix this test and possibly the rebalance function
-    // function test_rebalanceReserve_main() public {
-    //     uint256 amount = 100 ether;
-    //     uint256 vaultMaxDeposit = vbTokenVault.maxDeposit(address(vbToken));
-    //     uint256 userDepositAmount = amount;
-    //     uint256 totalSupply;
-    //     deal(asset, sender, amount); // fund the sender
+    function test_rebalanceReserve_below() public virtual {
+        uint256 vaultMaxDeposit = vbTokenVault.maxDeposit(address(vbToken));
+        uint256 amount = (vaultMaxDeposit * 10) / 9 + 1; // account for the minimum reserve percentage and add to make the amount greater than the max deposit limit
+        assertGt(amount, MINIMUM_YIELD_VAULT_DEPOSIT, "Amount should be greater than the minimum deposit.");
 
-    //     if (userDepositAmount > vaultMaxDeposit) {
-    //         userDepositAmount = vaultMaxDeposit / 2; // deposit half of the max deposit limit
-    //         assertGt(
-    //             userDepositAmount, MINIMUM_YIELD_VAULT_DEPOSIT, "Amount should be greater than the minimum deposit."
-    //         );
-    //         uint256 reserveAmount = (userDepositAmount * minimumReservePercentage) / MAX_MINIMUM_RESERVE_PERCENTAGE;
+        uint256 totalSupply;
+        deal(asset, sender, amount); // fund the sender
 
-    //         // create reserve
-    //         vm.startPrank(sender);
+        uint256 reserveAmount = _calculateReserveAssets(amount, vaultMaxDeposit);
 
-    //         IERC20(asset).forceApprove(address(vbToken), amount);
-    //         vbToken.deposit(userDepositAmount, recipient);
-    //         totalSupply += userDepositAmount;
-    //         assertEq(vbToken.reservedAssets(), reserveAmount);
-    //         console.log("Reserve Amount: ", reserveAmount);
+        // create reserve
+        vm.startPrank(sender);
 
-    //         uint256 stakedAssetsBefore = vbToken.stakedAssets();
+        IERC20(asset).forceApprove(address(vbToken), amount);
+        vbToken.deposit(amount, recipient);
+        totalSupply += amount;
+        assertEq(vbToken.reservedAssets(), reserveAmount);
 
-    //         // offset the reserve by reducing the reserve assets
-    //         vm.store(address(vbToken), RESERVE_ASSET_STORAGE, bytes32(uint256(reserveAmount - 1)));
+        uint256 stakedAssetsBefore = vbToken.stakedAssets();
 
-    //         vm.stopPrank();
+        // offset the reserve by reducing the reserve assets
+        vm.store(address(vbToken), RESERVE_ASSET_STORAGE, bytes32(uint256(reserveAmount - 100)));
 
-    //         uint256 finalReserveAmount = totalSupply * minimumReservePercentage / MAX_MINIMUM_RESERVE_PERCENTAGE;
-    //         vm.expectEmit();
-    //         emit VaultBridgeToken.ReserveRebalanced(reserveAmount, finalReserveAmount, vbToken.reservePercentage());
-    //         vm.prank(owner);
-    //         vbToken.rebalanceReserve();
+        vm.stopPrank();
 
-    //         assertEq(vbToken.reservedAssets(), finalReserveAmount);
-    //         assertLt(vbToken.stakedAssets(), stakedAssetsBefore);
-    //     } else {
-    //         uint256 reserveAmount = (userDepositAmount * minimumReservePercentage) / MAX_MINIMUM_RESERVE_PERCENTAGE;
+        uint256 finalReserveAmount = totalSupply * minimumReservePercentage / MAX_MINIMUM_RESERVE_PERCENTAGE;
+        uint256 finalPercentage = finalReserveAmount * 1e18 / totalSupply;
+        vm.expectEmit();
+        emit VaultBridgeToken.ReserveRebalanced(reserveAmount - 100, finalReserveAmount, finalPercentage);
+        vm.prank(owner);
+        vbToken.rebalanceReserve();
 
-    //         vm.startPrank(sender);
+        assertEq(vbToken.reservedAssets(), finalReserveAmount);
+        assertGt(stakedAssetsBefore, vbToken.stakedAssets()); // staked assets would be reduced as reserve is replinished from the vault
+    }
 
-    //         IERC20(asset).forceApprove(address(vbToken), amount);
-    //         vbToken.deposit(userDepositAmount, recipient);
-    //         totalSupply += userDepositAmount;
-    //         assertEq(vbToken.reservedAssets(), reserveAmount);
+    function test_rebalanceReserve_above() public virtual {
+        uint256 vaultMaxDeposit = vbTokenVault.maxDeposit(address(vbToken));
+        uint256 amount = vaultMaxDeposit / 2;
+        assertGt(amount, MINIMUM_YIELD_VAULT_DEPOSIT, "Amount should be greater than the minimum deposit.");
 
-    //         uint256 stakedAssetsBefore = vbToken.stakedAssets();
-    //         uint256 reservedAssetsBefore = vbToken.reservedAssets();
+        uint256 totalSupply;
+        deal(asset, sender, amount); // fund the sender
 
-    //         // offset the reserve by adding more shares
-    //         deal(asset, address(vbToken), reservedAssetsBefore + amount);
-    //         vm.store(address(vbToken), RESERVE_ASSET_STORAGE, bytes32(uint256(reservedAssetsBefore + amount)));
+        uint256 reserveAmount = _calculateReserveAssets(amount, vaultMaxDeposit);
 
-    //         vm.stopPrank();
+        vm.startPrank(sender);
 
-    //         vm.expectEmit();
-    //         emit VaultBridgeToken.ReserveRebalanced(reserveAmount, reservedAssetsBefore, vbToken.reservePercentage());
-    //         vm.prank(owner);
-    //         vbToken.rebalanceReserve();
+        IERC20(asset).forceApprove(address(vbToken), amount);
+        vbToken.deposit(amount, recipient);
+        totalSupply += amount;
+        assertEq(vbToken.reservedAssets(), reserveAmount);
 
-    //         assertEq(vbToken.reservedAssets(), reservedAssetsBefore);
-    //         assertGt(vbToken.stakedAssets(), stakedAssetsBefore);
-    //     }
-    // }
+        uint256 stakedAssetsBefore = vbToken.stakedAssets();
+
+        // offset the reserve by reducing the reserve assets
+        vm.store(address(vbToken), RESERVE_ASSET_STORAGE, bytes32(uint256(reserveAmount + 100)));
+
+        vm.stopPrank();
+
+        uint256 finalReserveAmount = totalSupply * minimumReservePercentage / MAX_MINIMUM_RESERVE_PERCENTAGE;
+        uint256 finalPercentage = finalReserveAmount * 1e18 / totalSupply;
+        vm.expectEmit();
+        emit VaultBridgeToken.ReserveRebalanced(reserveAmount + 100, finalReserveAmount, finalPercentage);
+        vm.prank(owner);
+        vbToken.rebalanceReserve();
+
+        assertEq(vbToken.reservedAssets(), finalReserveAmount);
+        assertGt(vbToken.stakedAssets(), stakedAssetsBefore); //  staked assets would be increased as execess reserve is deposited in the vault
+    }
 
     function test_collectYield() public {
         vm.expectRevert(); // only owner can claim yield
@@ -831,44 +834,45 @@ contract GenericVaultBridgeTokenTest is Test {
         assertEq(vbToken.minimumReservePercentage(), newPercentage);
     }
 
-    // TODO: fix rebalance function
-    // function test_setMinimumReservePercentage_with_rebalance() public {
-    //     uint256 amount = 100 ether;
-    //     uint256 newPercentage = 2e17;
-    //     uint256 maxVaultDeposit = vbTokenVault.maxDeposit(address(vbToken));
-    //     uint256 userDepositAmount = amount;
+    function test_setMinimumReservePercentage_with_rebalance() public {
+        uint256 amount = 100 ether;
+        uint256 newPercentage = 2e17;
+        uint256 maxVaultDeposit = vbTokenVault.maxDeposit(address(vbToken));
+        uint256 userDepositAmount = amount;
 
-    //     if (userDepositAmount > maxVaultDeposit) {
-    //         userDepositAmount = maxVaultDeposit / 2;
-    //     }
+        if (userDepositAmount > maxVaultDeposit) {
+            userDepositAmount = maxVaultDeposit / 2;
+        }
 
-    //     // create reserve
-    //     deal(asset, sender, userDepositAmount);
+        // create reserve
+        deal(asset, sender, userDepositAmount);
 
-    //     vm.startPrank(sender);
+        vm.startPrank(sender);
 
-    //     IERC20(asset).forceApprove(address(vbToken), userDepositAmount);
-    //     vbToken.deposit(userDepositAmount, recipient);
+        IERC20(asset).forceApprove(address(vbToken), userDepositAmount);
+        vbToken.deposit(userDepositAmount, recipient);
 
-    //     vm.stopPrank();
+        vm.stopPrank();
 
-    //     uint256 reserveAmount = (userDepositAmount * minimumReservePercentage) / MAX_MINIMUM_RESERVE_PERCENTAGE;
-    //     assertEq(vbToken.reservedAssets(), reserveAmount);
+        uint256 reserveAmount = (userDepositAmount * minimumReservePercentage) / MAX_MINIMUM_RESERVE_PERCENTAGE;
+        assertEq(vbToken.reservedAssets(), reserveAmount);
 
-    //     uint256 finalReserveAmount = (userDepositAmount * newPercentage) / MAX_MINIMUM_RESERVE_PERCENTAGE;
-    //     uint256 stakedAssetsBefore = vbToken.stakedAssets();
+        uint256 finalReserveAmount = (userDepositAmount * newPercentage) / MAX_MINIMUM_RESERVE_PERCENTAGE;
+        uint256 stakedAssetsBefore = vbToken.stakedAssets();
 
-    //     vm.expectEmit();
-    //     emit VaultBridgeToken.ReserveRebalanced(reserveAmount, finalReserveAmount, vbToken.reservePercentage());
-    //     vm.expectEmit();
-    //     emit VaultBridgeToken.MinimumReservePercentageSet(newPercentage);
-    //     vm.prank(owner);
-    //     vbToken.setMinimumReservePercentage(newPercentage);
+        uint256 finalPercentage = finalReserveAmount * 1e18 / userDepositAmount;
 
-    //     assertEq(vbToken.minimumReservePercentage(), newPercentage);
-    //     assertEq(vbToken.reservedAssets(), finalReserveAmount);
-    //     assertLt(vbToken.stakedAssets(), stakedAssetsBefore);
-    // }
+        vm.expectEmit();
+        emit VaultBridgeToken.ReserveRebalanced(reserveAmount, finalReserveAmount, finalPercentage);
+        vm.expectEmit();
+        emit VaultBridgeToken.MinimumReservePercentageSet(newPercentage);
+        vm.prank(owner);
+        vbToken.setMinimumReservePercentage(newPercentage);
+
+        assertEq(vbToken.minimumReservePercentage(), newPercentage);
+        assertEq(vbToken.reservedAssets(), finalReserveAmount);
+        assertLt(vbToken.stakedAssets(), stakedAssetsBefore);
+    }
 
     function testFuzz_setMinimumReservePercentage(uint256 percentage) public {
         vm.assume(percentage <= MAX_MINIMUM_RESERVE_PERCENTAGE);
