@@ -7,7 +7,11 @@ import {GenericVbToken} from "src/vault-bridge-tokens/GenericVbToken.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import {
-    VaultBridgeToken, PausableUpgradeable, OwnableUpgradeable, NativeConverterInfo, Initializable
+    VaultBridgeToken,
+    PausableUpgradeable,
+    OwnableUpgradeable,
+    NativeConverterInfo,
+    Initializable
 } from "src/VaultBridgeToken.sol";
 import {VaultBridgeTokenInitializer} from "src/VaultBridgeTokenInitializer.sol";
 
@@ -139,18 +143,20 @@ contract GenericVaultBridgeTokenTest is Test {
 
     function test_initialize_twice() public {
         vm.expectRevert(Initializable.InvalidInitialization.selector);
-        vbToken.initialize(owner,
-                name,
-                symbol,
-                asset,
-                minimumReservePercentage,
-                address(vbTokenVault),
-                yieldRecipient,
-                LXLY_BRIDGE,
-                nativeConverter,
-                MINIMUM_YIELD_VAULT_DEPOSIT,
-                address(0),
-                initializer);
+        vbToken.initialize(
+            owner,
+            name,
+            symbol,
+            asset,
+            minimumReservePercentage,
+            address(vbTokenVault),
+            yieldRecipient,
+            LXLY_BRIDGE,
+            nativeConverter,
+            MINIMUM_YIELD_VAULT_DEPOSIT,
+            address(0),
+            initializer
+        );
     }
 
     function test_initialize() public virtual {
