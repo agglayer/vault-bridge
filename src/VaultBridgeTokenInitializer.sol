@@ -45,7 +45,7 @@ contract VaultBridgeTokenInitializer is VaultBridgeToken, IVaultBridgeTokenIniti
         // Initialize the inherited contracts.
         __ERC20_init(name_, symbol_);
         __ERC20Permit_init(name_);
-        __Ownable_init(owner_);
+        __AccessControl_init();
         __Pausable_init();
         __ReentrancyGuard_init();
 
@@ -71,6 +71,9 @@ contract VaultBridgeTokenInitializer is VaultBridgeToken, IVaultBridgeTokenIniti
         }
         $.minimumYieldVaultDeposit = minimumYieldVaultDeposit_;
         $.transferFeeUtil = transferFeeUtil_;
+
+        // Roles
+        _grantRole(DEFAULT_ADMIN_ROLE, owner_);
 
         // Approve the yield vault and LxLy Bridge.
         IERC20(underlyingToken_).forceApprove(yieldVault_, type(uint256).max);

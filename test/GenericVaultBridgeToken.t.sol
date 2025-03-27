@@ -6,13 +6,7 @@ import "forge-std/Test.sol";
 import {GenericVbToken} from "src/vault-bridge-tokens/GenericVbToken.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
-import {
-    VaultBridgeToken,
-    PausableUpgradeable,
-    OwnableUpgradeable,
-    NativeConverterInfo,
-    Initializable
-} from "src/VaultBridgeToken.sol";
+import {VaultBridgeToken, PausableUpgradeable, NativeConverterInfo, Initializable} from "src/VaultBridgeToken.sol";
 import {VaultBridgeTokenInitializer} from "src/VaultBridgeTokenInitializer.sol";
 
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
@@ -127,7 +121,7 @@ contract GenericVaultBridgeTokenTest is Test {
     }
 
     function test_setup() public view {
-        assertEq(vbToken.owner(), owner);
+        assert(vbToken.hasRole(vbToken.DEFAULT_ADMIN_ROLE(), owner));
         assertEq(vbToken.name(), name);
         assertEq(vbToken.symbol(), symbol);
         assertEq(vbToken.decimals(), decimals);
