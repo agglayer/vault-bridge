@@ -89,7 +89,8 @@ contract MockNativeConverter is NativeConverter {
         address lxlyBridge_,
         uint32 layerXLxlyId_,
         address vbToken_,
-        address migrator_
+        address migrator_,
+        uint256 maxNonMigratableBackingPercentage_
     ) external initializer {
         // Initialize the base implementation.
         __NativeConverter_init(
@@ -100,7 +101,8 @@ contract MockNativeConverter is NativeConverter {
             lxlyBridge_,
             layerXLxlyId_,
             vbToken_,
-            migrator_
+            migrator_,
+            maxNonMigratableBackingPercentage_
         );
     }
 
@@ -266,6 +268,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
     bytes32 constant PERMIT_TYPEHASH =
         keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
     bytes4 constant PERMIT_SIGNATURE = 0xd505accf;
+    uint256 constant MAX_NON_MIGRATABLE_BACKING_PERCENTAGE = 1e17;
 
     // extra contracts
     IMetaMorpho vbTokenVault;
@@ -450,7 +453,8 @@ contract IntegrationTest is Test, ZkEVMCommon {
                 LXLY_BRIDGE_Y,
                 NETWORK_ID_X,
                 address(vbToken),
-                migrator
+                migrator,
+                MAX_NON_MIGRATABLE_BACKING_PERCENTAGE
             )
         );
         nativeConverter =
@@ -743,6 +747,9 @@ contract IntegrationTest is Test, ZkEVMCommon {
         _mapTokenLayerYToLayerX(address(vbToken), address(customToken), false);
         _mapTokenLayerYToLayerX(address(underlyingAsset), address(bwUnderlyingAsset), false);
 
+        uint256 maxNonMigratableBacking = backingOnLayerY * MAX_NON_MIGRATABLE_BACKING_PERCENTAGE / 1e18;
+        uint256 amountToMigrate = backingOnLayerY - maxNonMigratableBacking;
+
         // make the migration leaves
         LeafPayload memory assetLeaf = LeafPayload({
             leafType: LEAF_TYPE_ASSET,
@@ -750,7 +757,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
             originAddress: address(underlyingAsset),
             destinationNetwork: NETWORK_ID_X,
             destinationAddress: address(vbToken),
-            amount: backingOnLayerY,
+            amount: amountToMigrate,
             metadata: bwVbTokenMetaData
         });
 
@@ -762,7 +769,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
             destinationAddress: address(vbToken),
             amount: 0,
             metadata: abi.encode(
-                NativeConverter.CrossNetworkInstruction.COMPLETE_MIGRATION, abi.encode(backingOnLayerY, backingOnLayerY)
+                NativeConverter.CrossNetworkInstruction.COMPLETE_MIGRATION, abi.encode(amountToMigrate, amountToMigrate)
             )
         });
 
@@ -790,9 +797,9 @@ contract IntegrationTest is Test, ZkEVMCommon {
             _ILxLyBridge(LXLY_BRIDGE_Y).depositCount() + 1
         );
         vm.expectEmit();
-        emit NativeConverter.MigrationStarted(migrator, backingOnLayerY, backingOnLayerY);
+        emit NativeConverter.MigrationStarted(migrator, amountToMigrate, amountToMigrate);
         vm.prank(migrator);
-        nativeConverter.migrateBackingToLayerX(backingOnLayerY);
+        nativeConverter.migrateBackingToLayerX(amountToMigrate);
 
         LeafPayload[] memory leafPayloads = new LeafPayload[](2);
         leafPayloads[0] = assetLeaf;

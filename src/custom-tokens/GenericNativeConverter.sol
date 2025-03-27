@@ -22,7 +22,8 @@ contract GenericNativeConverter is NativeConverter {
         address lxlyBridge_,
         uint32 layerXLxlyId_,
         address vbToken_,
-        address migrator_
+        address migrator_,
+        uint256 maxNonMigratableBackingPercentage_
     ) external initializer {
         // Initialize the base implementation.
         __NativeConverter_init(
@@ -33,7 +34,8 @@ contract GenericNativeConverter is NativeConverter {
             lxlyBridge_,
             layerXLxlyId_,
             vbToken_,
-            migrator_
+            migrator_,
+            maxNonMigratableBackingPercentage_
         );
     }
 

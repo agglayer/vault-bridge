@@ -29,7 +29,8 @@ contract WETHNativeConverter is NativeConverter {
         address lxlyBridge_,
         uint32 layerXNetworkId_,
         address vbToken_,
-        address migrator_
+        address migrator_,
+        uint256 maxNonMigratableBackingPercentage_
     ) external initializer {
         // Initialize the base implementation.
         __NativeConverter_init(
@@ -40,7 +41,8 @@ contract WETHNativeConverter is NativeConverter {
             lxlyBridge_,
             layerXNetworkId_,
             vbToken_,
-            migrator_
+            migrator_,
+            maxNonMigratableBackingPercentage_
         );
 
         weth = WETH(payable(customToken_));
@@ -55,7 +57,8 @@ contract WETHNativeConverter is NativeConverter {
         address lxlyBridge_,
         uint32 layerXNetworkId_,
         address vbToken_,
-        address migrator_
+        address migrator_,
+        uint256 maxNonMigratableBackingPercentage_
     ) external reinitializer(2) {
         underlyingToken().forceApprove(address(lxlyBridge()), 0);
 
@@ -68,7 +71,8 @@ contract WETHNativeConverter is NativeConverter {
             lxlyBridge_,
             layerXNetworkId_,
             vbToken_,
-            migrator_
+            migrator_,
+            maxNonMigratableBackingPercentage_
         );
 
         weth = WETH(payable(customToken_));

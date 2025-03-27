@@ -62,7 +62,8 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
                 vbETH,
-                migrator
+                migrator,
+                MAX_NON_MIGRATABLE_BACKING_PERCENTAGE
             )
         );
         nativeConverter = GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
@@ -98,7 +99,8 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
                 vbToken,
-                migrator
+                migrator,
+                MAX_NON_MIGRATABLE_BACKING_PERCENTAGE
             )
         );
         vm.expectRevert(NativeConverter.InvalidOwner.selector);
@@ -115,7 +117,8 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
                 vbToken,
-                migrator
+                migrator,
+                MAX_NON_MIGRATABLE_BACKING_PERCENTAGE
             )
         );
         vm.expectRevert(NativeConverter.InvalidCustomToken.selector);
@@ -132,7 +135,8 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
                 vbToken,
-                migrator
+                migrator,
+                MAX_NON_MIGRATABLE_BACKING_PERCENTAGE
             )
         );
         vm.expectRevert(NativeConverter.InvalidUnderlyingToken.selector);
@@ -149,7 +153,8 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
                 address(0),
                 NETWORK_ID_L1,
                 vbToken,
-                migrator
+                migrator,
+                MAX_NON_MIGRATABLE_BACKING_PERCENTAGE
             )
         );
         vm.expectRevert(NativeConverter.InvalidLxLyBridge.selector);
@@ -166,7 +171,8 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
                 address(0),
-                migrator
+                migrator,
+                MAX_NON_MIGRATABLE_BACKING_PERCENTAGE
             )
         );
         vm.expectRevert(NativeConverter.InvalidVbToken.selector);
@@ -183,7 +189,8 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
                 vbToken,
-                address(0)
+                address(0),
+                MAX_NON_MIGRATABLE_BACKING_PERCENTAGE
             )
         );
         vm.expectRevert(NativeConverter.InvalidMigrator.selector);
@@ -203,7 +210,8 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
                 vbToken,
-                migrator
+                migrator,
+                MAX_NON_MIGRATABLE_BACKING_PERCENTAGE
             )
         );
         vm.expectRevert(abi.encodeWithSelector(NativeConverter.NonMatchingCustomTokenDecimals.selector, 6, 18));
@@ -223,10 +231,30 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
                 vbToken,
-                migrator
+                migrator,
+                MAX_NON_MIGRATABLE_BACKING_PERCENTAGE
             )
         );
         vm.expectRevert(abi.encodeWithSelector(NativeConverter.NonMatchingUnderlyingTokenDecimals.selector, 6, 18));
+        GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
+
+        vm.revertToState(beforeInit);
+
+        initData = abi.encodeCall(
+            WETHNativeConverter.initialize,
+            (
+                owner,
+                ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
+                address(customToken),
+                address(dummyToken),
+                LXLY_BRIDGE,
+                NETWORK_ID_L1,
+                vbToken,
+                migrator,
+                1e19
+            )
+        );
+        vm.expectRevert(abi.encodeWithSelector(NativeConverter.InvalidMaxNonMigratableBackingPercentage.selector));
         GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
     }
 

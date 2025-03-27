@@ -60,7 +60,8 @@ contract MockNativeConverter is NativeConverter {
         address lxlyBridge_,
         uint32 layerXLxlyId_,
         address vbToken_,
-        address migrator_
+        address migrator_,
+        uint256 maxNonMigratableBackingPercentage_
     ) external initializer {
         // Initialize the base implementation.
         __NativeConverter_init(
@@ -71,7 +72,8 @@ contract MockNativeConverter is NativeConverter {
             lxlyBridge_,
             layerXLxlyId_,
             vbToken_,
-            migrator_
+            migrator_,
+            maxNonMigratableBackingPercentage_
         );
     }
 
@@ -97,7 +99,7 @@ contract GenericNativeConverterTest is Test {
     bytes32 internal constant PERMIT_TYPEHASH =
         keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
     bytes4 internal constant PERMIT_SIGNATURE = 0xd505accf;
-    uint256 constant MAX_NON_MIGRATABLE_BACKING_PERCENTAGE = 100;
+    uint256 constant MAX_NON_MIGRATABLE_BACKING_PERCENTAGE = 1e17;
 
     MockERC20MintableBurnable internal customToken;
     MockERC20 internal underlyingToken;
@@ -170,7 +172,8 @@ contract GenericNativeConverterTest is Test {
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
                 vbToken,
-                migrator
+                migrator,
+                MAX_NON_MIGRATABLE_BACKING_PERCENTAGE
             )
         );
         nativeConverter = GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
@@ -214,7 +217,8 @@ contract GenericNativeConverterTest is Test {
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
                 vbToken,
-                migrator
+                migrator,
+                MAX_NON_MIGRATABLE_BACKING_PERCENTAGE
             )
         );
         vm.expectRevert(NativeConverter.InvalidOwner.selector);
@@ -231,7 +235,8 @@ contract GenericNativeConverterTest is Test {
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
                 vbToken,
-                migrator
+                migrator,
+                MAX_NON_MIGRATABLE_BACKING_PERCENTAGE
             )
         );
         vm.expectRevert(NativeConverter.InvalidCustomToken.selector);
@@ -248,7 +253,8 @@ contract GenericNativeConverterTest is Test {
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
                 vbToken,
-                migrator
+                migrator,
+                MAX_NON_MIGRATABLE_BACKING_PERCENTAGE
             )
         );
         vm.expectRevert(NativeConverter.InvalidUnderlyingToken.selector);
@@ -265,7 +271,8 @@ contract GenericNativeConverterTest is Test {
                 address(0),
                 NETWORK_ID_L1,
                 vbToken,
-                migrator
+                migrator,
+                MAX_NON_MIGRATABLE_BACKING_PERCENTAGE
             )
         );
         vm.expectRevert(NativeConverter.InvalidLxLyBridge.selector);
@@ -282,7 +289,8 @@ contract GenericNativeConverterTest is Test {
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
                 address(0),
-                migrator
+                migrator,
+                MAX_NON_MIGRATABLE_BACKING_PERCENTAGE
             )
         );
         vm.expectRevert(NativeConverter.InvalidVbToken.selector);
@@ -302,7 +310,8 @@ contract GenericNativeConverterTest is Test {
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
                 vbToken,
-                migrator
+                migrator,
+                MAX_NON_MIGRATABLE_BACKING_PERCENTAGE
             )
         );
         vm.expectRevert(abi.encodeWithSelector(NativeConverter.NonMatchingCustomTokenDecimals.selector, 6, 18));
@@ -322,7 +331,8 @@ contract GenericNativeConverterTest is Test {
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
                 vbToken,
-                migrator
+                migrator,
+                MAX_NON_MIGRATABLE_BACKING_PERCENTAGE
             )
         );
         vm.expectRevert(abi.encodeWithSelector(NativeConverter.NonMatchingUnderlyingTokenDecimals.selector, 6, 18));
@@ -339,10 +349,29 @@ contract GenericNativeConverterTest is Test {
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
                 vbToken,
-                address(0)
+                address(0),
+                MAX_NON_MIGRATABLE_BACKING_PERCENTAGE
             )
         );
         vm.expectRevert(NativeConverter.InvalidMigrator.selector);
+        GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
+
+        vm.revertToState(beforeInit);
+        initData = abi.encodeCall(
+            nativeConverter.initialize,
+            (
+                owner,
+                ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
+                address(customToken),
+                address(underlyingToken),
+                LXLY_BRIDGE,
+                NETWORK_ID_L1,
+                vbToken,
+                migrator,
+                1e19
+            )
+        );
+        vm.expectRevert(NativeConverter.InvalidMaxNonMigratableBackingPercentage.selector);
         GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
     }
 
@@ -650,6 +679,10 @@ contract GenericNativeConverterTest is Test {
         underlyingToken.approve(address(nativeConverter), amount);
         backingOnLayerY = nativeConverter.convert(amount, recipient);
 
+        uint256 maxNonMigratableBacking = backingOnLayerY * MAX_NON_MIGRATABLE_BACKING_PERCENTAGE / 1e18;
+        vm.expectRevert(NativeConverter.NonMigratableBackingThresholdReached.selector);
+        nativeConverter.migrateBackingToLayerX(backingOnLayerY + 1 - maxNonMigratableBacking);
+
         uint256 amountToMigrate = amount / 2; // try sending half of the backing to layer X
 
         vm.expectEmit();
@@ -722,7 +755,8 @@ contract GenericNativeConverterTest is Test {
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
                 vbToken,
-                migrator
+                migrator,
+                MAX_NON_MIGRATABLE_BACKING_PERCENTAGE
             )
         );
         vm.mockCall(
@@ -769,6 +803,10 @@ contract GenericNativeConverterTest is Test {
         deal(address(underlyingToken), migrator, amount);
         underlyingToken.approve(address(nativeConverter), amount);
         backingOnLayerY = nativeConverter.convert(amount, recipient);
+
+        uint256 maxNonMigratableBacking = backingOnLayerY * MAX_NON_MIGRATABLE_BACKING_PERCENTAGE / 1e18;
+        vm.expectRevert(NativeConverter.NonMigratableBackingThresholdReached.selector);
+        nativeConverter.migrateBackingToLayerX(backingOnLayerY + 1 - maxNonMigratableBacking);
 
         uint256 amountToMigrate = amount / 2; // try sending half of the backing to layer X
 
