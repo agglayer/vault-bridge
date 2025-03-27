@@ -74,6 +74,9 @@ contract VaultBridgeTokenInitializer is VaultBridgeToken, IVaultBridgeTokenIniti
 
         // Roles
         _grantRole(DEFAULT_ADMIN_ROLE, owner_);
+        _grantRole(PAUSER_ROLE, owner_);
+        _grantRole(REBALANCER_ROLE, owner_);
+        _grantRole(YIELD_COLLECTOR_ROLE, owner_);
 
         // Approve the yield vault and LxLy Bridge.
         IERC20(underlyingToken_).forceApprove(yieldVault_, type(uint256).max);
