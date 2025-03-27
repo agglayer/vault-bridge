@@ -198,6 +198,7 @@ contract VbETHTest is GenericVaultBridgeTokenTest {
     }
 
     function test_rebalanceReserve_above() public override {
+        // TODO: Find a way to test this
         // Disabled due to external vault slippage on deposit
     }
 
