@@ -34,7 +34,7 @@ contract GenericVaultBridgeTokenTest is Test {
     uint256 internal constant MAX_MINIMUM_RESERVE_PERCENTAGE = 1e18;
     uint256 internal constant MINIMUM_YIELD_VAULT_DEPOSIT = 1e12;
     bytes32 internal constant RESERVE_ASSET_STORAGE =
-        hex"ed23de664e59f2cbf6ba852da776346da171cf53c9d06b116fea0fc5ee912502";
+        hex"0bb25252701cf32638570970f607d30c3e6cb5d951ee6c3cd06f6d3f41890302";
 
     uint256 stateBeforeInitialize;
     uint256 mainnetFork;
