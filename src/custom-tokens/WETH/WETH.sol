@@ -45,7 +45,7 @@ contract WETH is CustomToken {
         uint8 originalUnderlyingTokenDecimals_,
         address lxlyBridge_,
         address nativeConverter_
-    ) external reinitializer(2) {
+    ) external reinitializer(3) {
         // Reinitialize the inherited contracts.
         __CustomToken_init(owner_, name_, symbol_, originalUnderlyingTokenDecimals_, lxlyBridge_, nativeConverter_);
     }

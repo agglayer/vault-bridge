@@ -3,23 +3,17 @@ pragma solidity 0.8.28;
 
 contract MockVault {
     mapping(address => bool) admin;
-    uint256 public maxDeposit;
-    uint256 public maxWithdraw;
+    uint256 private _maxDeposit;
+    uint256 private _maxWithdraw;
     mapping(address => uint256) public balanceOf;
 
-    bool inited;
-
-    constructor() {}
+    constructor(address _admin) {
+        admin[_admin] = true;
+    }
 
     modifier onlyAdmin() {
         require(admin[msg.sender]);
         _;
-    }
-
-    function init(address _admin) external {
-        require(inited == false);
-        admin[_admin] = true;
-        inited = true;
     }
 
     function convertToAssets(uint256 amount) external pure returns (uint256) {
@@ -31,11 +25,19 @@ contract MockVault {
     }
 
     function setMaxDeposit(uint256 amount) external onlyAdmin {
-        maxDeposit = amount;
+        _maxDeposit = amount;
     }
 
     function setMaxWithdraw(uint256 amount) external onlyAdmin {
-        maxWithdraw = amount;
+        _maxWithdraw = amount;
+    }
+
+    function maxDeposit(address user) external view returns (uint256) {
+        return _maxDeposit;
+    }
+
+    function maxWithdraw(address user) external view returns (uint256) {
+        return _maxWithdraw;
     }
 
     function setAdmin(address user) external onlyAdmin {
