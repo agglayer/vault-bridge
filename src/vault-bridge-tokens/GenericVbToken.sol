@@ -2,7 +2,7 @@
 pragma solidity 0.8.28;
 
 // Main functionality.
-import {VaultBridgeToken, NativeConverterInfo} from "../VaultBridgeToken.sol";
+import {VaultBridgeToken, NativeConverterInfo, InitDataStruct} from "../VaultBridgeToken.sol";
 
 // Other functionality.
 import {ITransferFeeUtils} from "../etc/ITransferFeeUtils.sol";
@@ -15,35 +15,9 @@ contract GenericVbToken is VaultBridgeToken {
         _disableInitializers();
     }
 
-    function initialize(
-        address owner_,
-        string calldata name_,
-        string calldata symbol_,
-        address underlyingToken_,
-        uint256 minimumReservePercentage_,
-        address yieldVault_,
-        address yieldRecipient_,
-        address lxlyBridge_,
-        NativeConverterInfo[] calldata nativeConverters_,
-        uint256 minimumYieldVaultDeposit_,
-        address transferFeeUtil_,
-        address initializer_
-    ) external initializer {
+    function initialize(InitDataStruct calldata data_, address initializer_) external initializer {
         // Initialize the base implementation.
-        __VaultBridgeToken_init(
-            owner_,
-            name_,
-            symbol_,
-            underlyingToken_,
-            minimumReservePercentage_,
-            yieldVault_,
-            yieldRecipient_,
-            lxlyBridge_,
-            nativeConverters_,
-            minimumYieldVaultDeposit_,
-            transferFeeUtil_,
-            initializer_
-        );
+        __VaultBridgeToken_init(data_, initializer_);
     }
 
     // -----================= ::: INFO ::: =================-----

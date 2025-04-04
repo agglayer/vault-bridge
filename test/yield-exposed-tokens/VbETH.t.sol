@@ -2,7 +2,7 @@
 pragma solidity 0.8.28;
 
 import {VbETH} from "src/vault-bridge-tokens/vbETH/VbETH.sol";
-import {VaultBridgeToken, PausableUpgradeable} from "src/VaultBridgeToken.sol";
+import {VaultBridgeToken, PausableUpgradeable, InitDataStruct, NativeConverterInfo} from "src/VaultBridgeToken.sol";
 import {ILxLyBridge} from "src/etc/ILxLyBridge.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {IWETH9} from "src/etc/IWETH9.sol";
@@ -38,29 +38,32 @@ contract VbETHTest is GenericVaultBridgeTokenTest {
         // Deploy implementation
         vbToken = GenericVbToken(address(new VbETH()));
         vbTokenImplementation = address(vbToken);
+        initDataStruct = InitDataStruct({
+            owner: owner,
+            name: name,
+            symbol: symbol,
+            underlyingToken: asset,
+            minimumReservePercentage: minimumReservePercentage,
+            yieldVault: address(vbTokenVault),
+            yieldRecipient: yieldRecipient,
+            lxlyBridge: LXLY_BRIDGE,
+            minimumYieldVaultDeposit: MINIMUM_YIELD_VAULT_DEPOSIT,
+            transferFeeUtil: address(0)
+        });
+
         stateBeforeInitialize = vm.snapshotState();
 
         // prepare calldata
-        bytes memory initData = abi.encodeCall(
-            vbETH.initialize,
-            (
-                owner, // owner
-                name, // name
-                symbol, // symbol
-                asset, // underlying token
-                minimumReservePercentage,
-                address(vbTokenVault), // Use our deployed Morpho vault
-                yieldRecipient, // mock yield recipient
-                LXLY_BRIDGE,
-                nativeConverter, // mock migration manager
-                MINIMUM_YIELD_VAULT_DEPOSIT,
-                address(0), // transfer fee util
-                initializer
-            )
-        );
+        bytes memory initData = abi.encodeCall(vbETH.initialize, (initDataStruct, initializer));
 
         // deploy proxy and initialize implementation
         vbToken = GenericVbToken(_proxify(address(vbTokenImplementation), address(this), initData));
+
+        vm.prank(owner);
+        NativeConverterInfo[] memory nativeConverter = new NativeConverterInfo[](1);
+        nativeConverter[0] = NativeConverterInfo({layerYLxlyId: NETWORK_ID_L2, nativeConverter: nativeConverterAddress});
+        vbToken.setNativeConverters(nativeConverter);
+
         vbETH = VbETH(address(vbToken));
 
         vm.label(address(vbTokenVault), "WETH Vault");
