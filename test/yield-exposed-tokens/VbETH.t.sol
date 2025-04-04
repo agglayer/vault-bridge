@@ -2,7 +2,7 @@
 pragma solidity 0.8.28;
 
 import {VbETH} from "src/vault-bridge-tokens/vbETH/VbETH.sol";
-import {VaultBridgeToken, PausableUpgradeable, InitDataStruct} from "src/VaultBridgeToken.sol";
+import {VaultBridgeToken, PausableUpgradeable, InitDataStruct, NativeConverterInfo} from "src/VaultBridgeToken.sol";
 import {ILxLyBridge} from "src/etc/ILxLyBridge.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {IWETH9} from "src/etc/IWETH9.sol";
@@ -47,7 +47,6 @@ contract VbETHTest is GenericVaultBridgeTokenTest {
             yieldVault: address(vbTokenVault),
             yieldRecipient: yieldRecipient,
             lxlyBridge: LXLY_BRIDGE,
-            nativeConverters: nativeConverter,
             minimumYieldVaultDeposit: MINIMUM_YIELD_VAULT_DEPOSIT,
             transferFeeUtil: address(0)
         });
@@ -59,6 +58,12 @@ contract VbETHTest is GenericVaultBridgeTokenTest {
 
         // deploy proxy and initialize implementation
         vbToken = GenericVbToken(_proxify(address(vbTokenImplementation), address(this), initData));
+
+        vm.prank(owner);
+        NativeConverterInfo[] memory nativeConverter = new NativeConverterInfo[](1);
+        nativeConverter[0] = NativeConverterInfo({layerYLxlyId: NETWORK_ID_L2, nativeConverter: nativeConverterAddress});
+        vbToken.setNativeConverters(nativeConverter);
+
         vbETH = VbETH(address(vbToken));
 
         vm.label(address(vbTokenVault), "WETH Vault");

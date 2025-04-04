@@ -255,7 +255,6 @@ contract IntegrationTest is Test, ZkEVMCommon {
     // extra contracts
     IMetaMorpho vbTokenVault;
     MockNativeConverter nativeConverter;
-    NativeConverterInfo[] nativeConverterStruct;
 
     // dummy addresses
     address recipient = makeAddr("recipient");
@@ -357,9 +356,6 @@ contract IntegrationTest is Test, ZkEVMCommon {
         uint256 nativeConverterNonce = vm.getNonce(address(this)) + 6;
         address nativeConverterAddr = vm.computeCreateAddress(address(this), nativeConverterNonce);
 
-        nativeConverterStruct.push(
-            NativeConverterInfo({layerYLxlyId: NETWORK_ID_Y, nativeConverter: nativeConverterAddr})
-        );
         address initializer = address(new VaultBridgeTokenInitializer());
 
         // deploy vbToken
@@ -374,7 +370,6 @@ contract IntegrationTest is Test, ZkEVMCommon {
             yieldVault: address(vbTokenVault),
             yieldRecipient: yieldRecipient,
             lxlyBridge: LXLY_BRIDGE_X,
-            nativeConverters: nativeConverterStruct,
             minimumYieldVaultDeposit: 10,
             transferFeeUtil: address(0)
         });
@@ -387,6 +382,11 @@ contract IntegrationTest is Test, ZkEVMCommon {
             )
         );
         vbToken = MockVbToken(_proxify(address(vbToken), address(this), vbTokenInitData));
+
+        vm.prank(owner);
+        NativeConverterInfo[] memory nativeConverters = new NativeConverterInfo[](1);
+        nativeConverters[0] = NativeConverterInfo({layerYLxlyId: NETWORK_ID_Y, nativeConverter: nativeConverterAddr});
+        vbToken.setNativeConverters(nativeConverters);
 
         //////////////////////////////////////////////////////////////
         // Switch to Layer Y

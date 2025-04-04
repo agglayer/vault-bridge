@@ -2,7 +2,7 @@
 pragma solidity ^0.8.28;
 
 import {GenericVbToken} from "src/vault-bridge-tokens/GenericVbToken.sol";
-import {VaultBridgeToken, InitDataStruct} from "src/VaultBridgeToken.sol";
+import {VaultBridgeToken, InitDataStruct, NativeConverterInfo} from "src/VaultBridgeToken.sol";
 import {TransferFeeUtilsVbUSDT} from "src/vault-bridge-tokens/vbUSDT/TransferFeeUtilsVbUSDT.sol";
 
 import {IMetaMorpho} from "test/interfaces/IMetaMorpho.sol";
@@ -61,7 +61,6 @@ contract VbUSDTTest is GenericVaultBridgeTokenTest {
             yieldVault: address(vbTokenVault),
             yieldRecipient: yieldRecipient,
             lxlyBridge: LXLY_BRIDGE,
-            nativeConverters: nativeConverter,
             minimumYieldVaultDeposit: MINIMUM_YIELD_VAULT_DEPOSIT,
             transferFeeUtil: address(transferFeeUtil)
         });
@@ -69,6 +68,12 @@ contract VbUSDTTest is GenericVaultBridgeTokenTest {
 
         bytes memory initData = abi.encodeCall(vbToken.initialize, (initDataStruct, initializer));
         vbToken = GenericVbToken(_proxify(address(vbToken), address(this), initData));
+
+        vm.prank(owner);
+        NativeConverterInfo[] memory nativeConverter = new NativeConverterInfo[](1);
+        nativeConverter[0] = NativeConverterInfo({layerYLxlyId: NETWORK_ID_L2, nativeConverter: nativeConverterAddress});
+        vbToken.setNativeConverters(nativeConverter);
+
         vbUSDT = VbUSDTHarness(address(vbToken));
 
         vm.label(address(transferFeeUtil), "Transfer Fee Util");
