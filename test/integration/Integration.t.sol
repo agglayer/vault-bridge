@@ -24,29 +24,11 @@ contract MockVbToken is VaultBridgeToken {
     }
 
     function initialize(
-        address owner_,
-        string calldata name_,
-        string calldata symbol_,
-        address underlyingToken_,
-        uint256 minimumReservePercentage_,
-        address yieldVault_,
-        address yieldRecipient_,
-        address lxlyBridge_,
-        NativeConverterInfo[] calldata nativeConverters_,
+        InitDataStruct calldata data_,
         address initializer_
     ) external initializer {
         __VaultBridgeToken_init(
-            owner_,
-            name_,
-            symbol_,
-            underlyingToken_,
-            minimumReservePercentage_,
-            yieldVault_,
-            yieldRecipient_,
-            lxlyBridge_,
-            nativeConverters_,
-            10,
-            address(0),
+            data_,
             initializer_
         );
     }
@@ -382,18 +364,25 @@ contract IntegrationTest is Test, ZkEVMCommon {
 
         // deploy vbToken
         vbToken = new MockVbToken();
+
+        InitDataStruct memory initDataStruct = InitDataStruct({
+            owner: owner,
+            name: VBTOKEN_NAME,
+            symbol: VBTOKEN_SYMBOL,
+            underlyingToken: address(underlyingAsset),
+            minimumReservePercentage: MINIMUM_RESERVE_PERCENTAGE,
+            yieldVault: address(vbTokenVault),
+            yieldRecipient: yieldRecipient,
+            lxlyBridge: LXLY_BRIDGE_X,
+            nativeConverters: nativeConverterStruct,
+            minimumYieldVaultDeposit: 10,
+            transferFeeUtil: address(0)
+        });
+
         bytes memory vbTokenInitData = abi.encodeCall(
             vbToken.initialize,
             (
-                owner,
-                VBTOKEN_NAME,
-                VBTOKEN_SYMBOL,
-                address(underlyingAsset),
-                MINIMUM_RESERVE_PERCENTAGE,
-                address(vbTokenVault),
-                yieldRecipient,
-                LXLY_BRIDGE_X,
-                nativeConverterStruct,
+                initDataStruct,
                 initializer
             )
         );

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.28;
 
 import {GenericVbToken} from "src/vault-bridge-tokens/GenericVbToken.sol";
-import {VaultBridgeToken} from "src/VaultBridgeToken.sol";
+import {VaultBridgeToken, InitDataStruct} from "src/VaultBridgeToken.sol";
 import {TransferFeeUtilsVbUSDT} from "src/vault-bridge-tokens/vbUSDT/TransferFeeUtilsVbUSDT.sol";
 
 import {IMetaMorpho} from "test/interfaces/IMetaMorpho.sol";
@@ -51,24 +51,23 @@ contract VbUSDTTest is GenericVaultBridgeTokenTest {
 
         vbToken = GenericVbToken(address(new VbUSDTHarness()));
         vbTokenImplementation = address(vbToken);
+
+        initDataStruct = InitDataStruct({
+            owner: owner,
+            name: name,
+            symbol: symbol,
+            underlyingToken: asset,
+            minimumReservePercentage: minimumReservePercentage,
+            yieldVault: address(vbTokenVault),
+            yieldRecipient: yieldRecipient,
+            lxlyBridge: LXLY_BRIDGE,
+            nativeConverters: nativeConverter,
+            minimumYieldVaultDeposit: MINIMUM_YIELD_VAULT_DEPOSIT,
+            transferFeeUtil: address(transferFeeUtil)
+        });
         stateBeforeInitialize = vm.snapshotState();
-        bytes memory initData = abi.encodeCall(
-            vbToken.initialize,
-            (
-                owner,
-                name,
-                symbol,
-                asset,
-                minimumReservePercentage,
-                address(vbTokenVault),
-                yieldRecipient,
-                LXLY_BRIDGE,
-                nativeConverter,
-                MINIMUM_YIELD_VAULT_DEPOSIT,
-                address(transferFeeUtil),
-                initializer
-            )
-        );
+
+        bytes memory initData = abi.encodeCall(vbToken.initialize, (initDataStruct, initializer));
         vbToken = GenericVbToken(_proxify(address(vbToken), address(this), initData));
         vbUSDT = VbUSDTHarness(address(vbToken));
 
