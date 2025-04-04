@@ -32,7 +32,6 @@ struct InitDataStruct {
     address yieldVault;
     address yieldRecipient;
     address lxlyBridge;
-    NativeConverterInfo[] nativeConverters;
     uint256 minimumYieldVaultDeposit;
     address transferFeeUtil;
 }

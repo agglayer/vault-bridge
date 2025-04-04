@@ -50,13 +50,6 @@ contract VaultBridgeTokenInitializer is VaultBridgeToken, IVaultBridgeTokenIniti
         $.yieldRecipient = data_.yieldRecipient;
         $.lxlyId = ILxLyBridge(data_.lxlyBridge).networkID();
         $.lxlyBridge = ILxLyBridge(data_.lxlyBridge);
-        for (uint256 i; i < data_.nativeConverters.length; ++i) {
-            // Check the input.
-            require(data_.nativeConverters[i].layerYLxlyId != $.lxlyId, InvalidNativeConverters());
-
-            // Set Native Converter.
-            $.nativeConverters[data_.nativeConverters[i].layerYLxlyId] = data_.nativeConverters[i].nativeConverter;
-        }
         $.minimumYieldVaultDeposit = data_.minimumYieldVaultDeposit;
         $.transferFeeUtil = data_.transferFeeUtil;
 

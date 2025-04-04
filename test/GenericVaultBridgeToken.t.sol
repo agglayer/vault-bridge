@@ -48,8 +48,6 @@ contract GenericVaultBridgeTokenTest is Test {
     address asset;
 
     address nativeConverterAddress = makeAddr("nativeConverter");
-    NativeConverterInfo[] nativeConverter =
-        [NativeConverterInfo({layerYLxlyId: NETWORK_ID_L2, nativeConverter: nativeConverterAddress})];
 
     address recipient = makeAddr("recipient");
     address owner = makeAddr("owner");
@@ -103,7 +101,6 @@ contract GenericVaultBridgeTokenTest is Test {
             yieldVault: address(vbTokenVault),
             yieldRecipient: yieldRecipient,
             lxlyBridge: LXLY_BRIDGE,
-            nativeConverters: nativeConverter,
             minimumYieldVaultDeposit: MINIMUM_YIELD_VAULT_DEPOSIT,
             transferFeeUtil: address(0)
         });
@@ -111,6 +108,10 @@ contract GenericVaultBridgeTokenTest is Test {
 
         bytes memory initData = abi.encodeCall(vbToken.initialize, (initDataStruct, initializer));
         vbToken = GenericVbToken(_proxify(address(vbTokenImplementation), address(this), initData));
+        vm.prank(owner);
+        NativeConverterInfo[] memory nativeConverter = new NativeConverterInfo[](1);
+        nativeConverter[0] = NativeConverterInfo({layerYLxlyId: NETWORK_ID_L2, nativeConverter: nativeConverterAddress});
+        vbToken.setNativeConverters(nativeConverter);
 
         vm.label(address(vbTokenVault), "vbToken Vault");
         vm.label(address(vbToken), "vbToken");
@@ -194,13 +195,6 @@ contract GenericVaultBridgeTokenTest is Test {
         initDataStruct.lxlyBridge = address(0);
         initData = abi.encodeCall(vbToken.initialize, (initDataStruct, initializer));
         vm.expectRevert(VaultBridgeToken.InvalidLxLyBridge.selector);
-        vbToken = GenericVbToken(_proxify(vbTokenImplementation, address(this), initData));
-        vm.revertToState(stateBeforeInitialize);
-
-        nativeConverter = [NativeConverterInfo({layerYLxlyId: NETWORK_ID_L1, nativeConverter: nativeConverterAddress})];
-        initDataStruct.nativeConverters = nativeConverter;
-        initData = abi.encodeCall(vbToken.initialize, (initDataStruct, initializer));
-        vm.expectRevert(VaultBridgeToken.InvalidNativeConverters.selector);
         vbToken = GenericVbToken(_proxify(vbTokenImplementation, address(this), initData));
         vm.revertToState(stateBeforeInitialize);
     }
