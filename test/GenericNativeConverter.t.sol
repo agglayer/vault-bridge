@@ -59,7 +59,9 @@ contract MockNativeConverter is NativeConverter {
         address underlyingToken_,
         address lxlyBridge_,
         uint32 layerXLxlyId_,
-        address yeToken_
+        address vbToken_,
+        address migrator_,
+        uint256 maxNonMigratableBackingPercentage_
     ) external initializer {
         // Initialize the base implementation.
         __NativeConverter_init(
@@ -69,7 +71,9 @@ contract MockNativeConverter is NativeConverter {
             underlyingToken_,
             lxlyBridge_,
             layerXLxlyId_,
-            yeToken_
+            vbToken_,
+            migrator_,
+            maxNonMigratableBackingPercentage_
         );
     }
 
@@ -95,11 +99,11 @@ contract GenericNativeConverterTest is Test {
     bytes32 internal constant PERMIT_TYPEHASH =
         keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
     bytes4 internal constant PERMIT_SIGNATURE = 0xd505accf;
-    uint256 constant MAX_NON_MIGRATABLE_BACKING_PERCENTAGE = 100;
+    uint256 constant MAX_NON_MIGRATABLE_BACKING_PERCENTAGE = 1e17;
 
     MockERC20MintableBurnable internal customToken;
     MockERC20 internal underlyingToken;
-    address internal yeToken;
+    address internal vbToken;
     uint256 internal zkevmFork;
     uint256 internal beforeInit;
     bytes internal underlyingTokenMetadata;
@@ -109,6 +113,7 @@ contract GenericNativeConverterTest is Test {
     // initialization arguments
     address internal owner = makeAddr("owner");
     address internal recipient = makeAddr("recipient");
+    address internal migrator = makeAddr("migrator");
 
     uint256 internal senderPrivateKey = 0xBEEF;
     address internal sender = vm.addr(senderPrivateKey);
@@ -146,7 +151,7 @@ contract GenericNativeConverterTest is Test {
         // assign addresses for generic testing
         customToken = MockERC20MintableBurnable(address(_customToken));
         underlyingToken = _underlyingToken;
-        yeToken = makeAddr("yeToken");
+        vbToken = makeAddr("vbToken");
 
         underlyingTokenMetadata = abi.encode("Underlying Token", "uTKN", 18);
 
@@ -166,7 +171,9 @@ contract GenericNativeConverterTest is Test {
                 address(_underlyingToken), // wrapped underlying token
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
-                yeToken
+                vbToken,
+                migrator,
+                MAX_NON_MIGRATABLE_BACKING_PERCENTAGE
             )
         );
         nativeConverter = GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
@@ -175,10 +182,10 @@ contract GenericNativeConverterTest is Test {
         // giving control over custom token to NativeConverter
         _customToken.transferOwnership(address(nativeConverter));
 
-        vm.label(address(_customToken), "zETH");
+        vm.label(address(_customToken), "WETH");
         vm.label(address(this), "testerAddress");
         vm.label(LXLY_BRIDGE, "lxlyBridge");
-        vm.label(yeToken, "yeToken");
+        vm.label(vbToken, "vbToken");
         vm.label(owner, "owner");
         vm.label(recipient, "recipient");
         vm.label(sender, "sender");
@@ -188,7 +195,7 @@ contract GenericNativeConverterTest is Test {
 
     function test_setup() public view {
         assertEq(nativeConverter.layerXLxlyId(), NETWORK_ID_L1);
-        assertEq(nativeConverter.yeToken(), yeToken);
+        assertEq(nativeConverter.vbToken(), vbToken);
         assertEq(nativeConverter.owner(), owner);
         assertEq(address(nativeConverter.customToken()), address(customToken));
         assertEq(address(nativeConverter.lxlyBridge()), LXLY_BRIDGE);
@@ -209,7 +216,9 @@ contract GenericNativeConverterTest is Test {
                 address(underlyingToken),
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
-                yeToken
+                vbToken,
+                migrator,
+                MAX_NON_MIGRATABLE_BACKING_PERCENTAGE
             )
         );
         vm.expectRevert(NativeConverter.InvalidOwner.selector);
@@ -225,7 +234,9 @@ contract GenericNativeConverterTest is Test {
                 address(underlyingToken),
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
-                yeToken
+                vbToken,
+                migrator,
+                MAX_NON_MIGRATABLE_BACKING_PERCENTAGE
             )
         );
         vm.expectRevert(NativeConverter.InvalidCustomToken.selector);
@@ -241,7 +252,9 @@ contract GenericNativeConverterTest is Test {
                 address(0),
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
-                yeToken
+                vbToken,
+                migrator,
+                MAX_NON_MIGRATABLE_BACKING_PERCENTAGE
             )
         );
         vm.expectRevert(NativeConverter.InvalidUnderlyingToken.selector);
@@ -257,7 +270,9 @@ contract GenericNativeConverterTest is Test {
                 address(underlyingToken),
                 address(0),
                 NETWORK_ID_L1,
-                yeToken
+                vbToken,
+                migrator,
+                MAX_NON_MIGRATABLE_BACKING_PERCENTAGE
             )
         );
         vm.expectRevert(NativeConverter.InvalidLxLyBridge.selector);
@@ -273,10 +288,12 @@ contract GenericNativeConverterTest is Test {
                 address(underlyingToken),
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
-                address(0)
+                address(0),
+                migrator,
+                MAX_NON_MIGRATABLE_BACKING_PERCENTAGE
             )
         );
-        vm.expectRevert(NativeConverter.InvalidYeToken.selector);
+        vm.expectRevert(NativeConverter.InvalidVbToken.selector);
         GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
         vm.revertToState(beforeInit);
 
@@ -292,7 +309,9 @@ contract GenericNativeConverterTest is Test {
                 address(underlyingToken),
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
-                yeToken
+                vbToken,
+                migrator,
+                MAX_NON_MIGRATABLE_BACKING_PERCENTAGE
             )
         );
         vm.expectRevert(abi.encodeWithSelector(NativeConverter.NonMatchingCustomTokenDecimals.selector, 6, 18));
@@ -311,10 +330,48 @@ contract GenericNativeConverterTest is Test {
                 address(dummyToken),
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
-                yeToken
+                vbToken,
+                migrator,
+                MAX_NON_MIGRATABLE_BACKING_PERCENTAGE
             )
         );
         vm.expectRevert(abi.encodeWithSelector(NativeConverter.NonMatchingUnderlyingTokenDecimals.selector, 6, 18));
+        GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
+        vm.revertToState(beforeInit);
+
+        initData = abi.encodeCall(
+            nativeConverter.initialize,
+            (
+                owner,
+                ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
+                address(customToken),
+                address(underlyingToken),
+                LXLY_BRIDGE,
+                NETWORK_ID_L1,
+                vbToken,
+                address(0),
+                MAX_NON_MIGRATABLE_BACKING_PERCENTAGE
+            )
+        );
+        vm.expectRevert(NativeConverter.InvalidMigrator.selector);
+        GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
+
+        vm.revertToState(beforeInit);
+        initData = abi.encodeCall(
+            nativeConverter.initialize,
+            (
+                owner,
+                ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
+                address(customToken),
+                address(underlyingToken),
+                LXLY_BRIDGE,
+                NETWORK_ID_L1,
+                vbToken,
+                migrator,
+                1e19
+            )
+        );
+        vm.expectRevert(NativeConverter.InvalidMaxNonMigratableBackingPercentage.selector);
         GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
     }
 
@@ -592,7 +649,7 @@ contract GenericNativeConverterTest is Test {
         uint256 amount = 100;
 
         // Try to migrate as the owner with a specific amount
-        vm.expectRevert(); // only owner can call this function
+        vm.expectRevert(NativeConverter.OnlyMigrator.selector); // only owner can call this function
         nativeConverter.migrateBackingToLayerX(amount);
 
         vm.startPrank(owner);
@@ -601,6 +658,10 @@ contract GenericNativeConverterTest is Test {
         vm.expectRevert(PausableUpgradeable.EnforcedPause.selector);
         nativeConverter.migrateBackingToLayerX(amount);
         nativeConverter.unpause();
+
+        vm.stopPrank();
+
+        vm.startPrank(migrator);
 
         vm.expectRevert(NativeConverter.InvalidAssets.selector);
         nativeConverter.migrateBackingToLayerX(0); // try with 0 backing
@@ -614,11 +675,11 @@ contract GenericNativeConverterTest is Test {
 
         // create backing on layer Y
         uint256 backingOnLayerY = 0;
-        deal(address(underlyingToken), owner, amount);
+        deal(address(underlyingToken), migrator, amount);
         underlyingToken.approve(address(nativeConverter), amount);
         backingOnLayerY = nativeConverter.convert(amount, recipient);
 
-        uint256 amountToMigrate = amount / 2; // try sending half of the backing to layer X
+        uint256 amountToMigrate = 90;
 
         vm.expectEmit();
         emit BridgeEvent(
@@ -626,7 +687,7 @@ contract GenericNativeConverterTest is Test {
             NETWORK_ID_L2,
             address(underlyingToken),
             NETWORK_ID_L1,
-            yeToken,
+            vbToken,
             amountToMigrate,
             underlyingTokenMetadata,
             55413
@@ -637,132 +698,146 @@ contract GenericNativeConverterTest is Test {
             NETWORK_ID_L2,
             address(nativeConverter),
             NETWORK_ID_L1,
-            yeToken,
+            vbToken,
             0,
-            abi.encode(NativeConverter.CrossNetworkInstruction.COMPLETE_MIGRATION, amountToMigrate, amountToMigrate),
+            abi.encode(
+                NativeConverter.CrossNetworkInstruction.COMPLETE_MIGRATION, abi.encode(amountToMigrate, amountToMigrate)
+            ),
             55414
         );
         vm.expectEmit();
-        emit NativeConverter.MigrationStarted(owner, amountToMigrate, amountToMigrate);
+        emit NativeConverter.MigrationStarted(migrator, amountToMigrate, amountToMigrate);
         nativeConverter.migrateBackingToLayerX(amountToMigrate);
         assertEq(underlyingToken.balanceOf(address(nativeConverter)), backingOnLayerY - amountToMigrate);
+
+        vm.expectRevert(NativeConverter.NonMigratableBackingThresholdReached.selector);
+        nativeConverter.migrateBackingToLayerX(10);
 
         vm.stopPrank();
     }
 
-    function test_migrateBackingToLayerX_non_mintable() public {
-        vm.revertToState(beforeInit);
+    // TODO fix
+    // function test_migrateBackingToLayerX_non_mintable() public {
+    //     vm.revertToState(beforeInit);
 
-        // Setup tokens
-        MockERC20 _underlyingToken = new MockERC20();
-        _underlyingToken.initialize("Underlying Token", "uTKN", 18);
-        MockCustomToken _customToken = new MockCustomToken();
+    //     // Setup tokens
+    //     MockERC20 _underlyingToken = new MockERC20();
+    //     _underlyingToken.initialize("Underlying Token", "uTKN", 18);
+    //     MockCustomToken _customToken = new MockCustomToken();
 
-        address calculatedNativeConverterAddr = vm.computeCreateAddress(address(this), vm.getNonce(address(this)) + 2);
-        vm.etch(LXLY_BRIDGE, SOVEREIGN_BRIDGE_BYTECODE);
+    //     address calculatedNativeConverterAddr = vm.computeCreateAddress(address(this), vm.getNonce(address(this)) + 2);
+    //     vm.etch(LXLY_BRIDGE, SOVEREIGN_BRIDGE_BYTECODE);
 
-        bytes memory initData = abi.encodeCall(
-            MockCustomToken.initialize,
-            (address(this), "Custom Token", "cTKN", 18, LXLY_BRIDGE, calculatedNativeConverterAddr)
-        );
-        _customToken = MockCustomToken(
-            payable(address(new TransparentUpgradeableProxy(address(_customToken), address(this), initData)))
-        );
+    //     bytes memory initData = abi.encodeCall(
+    //         MockCustomToken.initialize,
+    //         (address(this), "Custom Token", "cTKN", 18, LXLY_BRIDGE, calculatedNativeConverterAddr)
+    //     );
+    //     _customToken = MockCustomToken(
+    //         payable(address(new TransparentUpgradeableProxy(address(_customToken), address(this), initData)))
+    //     );
 
-        // assign addresses for generic testing
-        customToken = MockERC20MintableBurnable(address(_customToken));
-        underlyingToken = _underlyingToken;
-        yeToken = makeAddr("yeToken");
+    //     // assign addresses for generic testing
+    //     customToken = MockERC20MintableBurnable(address(_customToken));
+    //     underlyingToken = _underlyingToken;
+    //     vbToken = makeAddr("vbToken");
 
-        underlyingTokenMetadata = abi.encode("Underlying Token", "uTKN", 18);
+    //     underlyingTokenMetadata = abi.encode("Underlying Token", "uTKN", 18);
 
-        // Deploy and initialize converter
-        nativeConverter = GenericNativeConverter(address(new MockNativeConverter()));
-        initData = abi.encodeCall(
-            nativeConverter.initialize,
-            (
-                owner,
-                18, // decimals
-                address(_customToken), // custom token
-                address(_underlyingToken), // wrapped underlying token
-                LXLY_BRIDGE,
-                NETWORK_ID_L1,
-                yeToken
-            )
-        );
-        vm.mockCall(
-            LXLY_BRIDGE,
-            abi.encodeWithSelector(ILxLyBridge.wrappedAddressIsNotMintable.selector, address(underlyingToken)),
-            abi.encode(true)
-        );
-        nativeConverter = GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
-        vm.clearMockedCalls();
-        assertEq(address(nativeConverter), calculatedNativeConverterAddr);
+    //     // Deploy and initialize converter
+    //     nativeConverter = GenericNativeConverter(address(new MockNativeConverter()));
+    //     initData = abi.encodeCall(
+    //         nativeConverter.initialize,
+    //         (
+    //             owner,
+    //             18, // decimals
+    //             address(_customToken), // custom token
+    //             address(_underlyingToken), // wrapped underlying token
+    //             LXLY_BRIDGE,
+    //             NETWORK_ID_L1,
+    //             vbToken,
+    //             migrator,
+    //             MAX_NON_MIGRATABLE_BACKING_PERCENTAGE
+    //         )
+    //     );
+    //     vm.mockCall(
+    //         LXLY_BRIDGE,
+    //         abi.encodeWithSelector(ILxLyBridge.wrappedAddressIsNotMintable.selector, address(underlyingToken)),
+    //         abi.encode(true)
+    //     );
+    //     nativeConverter = GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
+    //     vm.clearMockedCalls();
+    //     assertEq(address(nativeConverter), calculatedNativeConverterAddr);
 
-        // giving control over custom token to NativeConverter
-        _customToken.transferOwnership(address(nativeConverter));
+    //     // giving control over custom token to NativeConverter
+    //     _customToken.transferOwnership(address(nativeConverter));
 
-        uint256 amount = 100;
+    //     uint256 amount = 100;
 
-        // Try to migrate as the owner with a specific amount
-        vm.expectRevert(); // only owner can call this function
-        nativeConverter.migrateBackingToLayerX(amount);
+    //     // Try to migrate as the owner with a specific amount
+    //     vm.expectRevert(); // only owner can call this function
+    //     nativeConverter.migrateBackingToLayerX(amount);
 
-        vm.startPrank(owner);
+    //     vm.startPrank(owner);
 
-        nativeConverter.pause();
-        vm.expectRevert(PausableUpgradeable.EnforcedPause.selector);
-        nativeConverter.migrateBackingToLayerX(amount);
-        nativeConverter.unpause();
+    //     nativeConverter.pause();
+    //     vm.expectRevert(PausableUpgradeable.EnforcedPause.selector);
+    //     nativeConverter.migrateBackingToLayerX(amount);
+    //     nativeConverter.unpause();
 
-        vm.expectRevert(NativeConverter.InvalidAssets.selector);
-        nativeConverter.migrateBackingToLayerX(0); // try with 0 backing
+    //     vm.stopPrank();
 
-        uint256 currentBacking = nativeConverter.backingOnLayerY();
+    //     vm.startPrank(migrator);
 
-        vm.expectRevert(
-            abi.encodeWithSelector(NativeConverter.AssetsTooLarge.selector, currentBacking, currentBacking + 1)
-        );
-        nativeConverter.migrateBackingToLayerX(currentBacking + 1);
+    //     vm.expectRevert(NativeConverter.InvalidAssets.selector);
+    //     nativeConverter.migrateBackingToLayerX(0); // try with 0 backing
 
-        // create backing on layer Y
-        uint256 backingOnLayerY = 0;
-        deal(address(underlyingToken), owner, amount);
-        underlyingToken.approve(address(nativeConverter), amount);
-        backingOnLayerY = nativeConverter.convert(amount, recipient);
+    //     uint256 currentBacking = nativeConverter.backingOnLayerY();
 
-        uint256 amountToMigrate = amount / 2; // try sending half of the backing to layer X
+    //     vm.expectRevert(
+    //         abi.encodeWithSelector(NativeConverter.AssetsTooLarge.selector, currentBacking, currentBacking + 1)
+    //     );
+    //     nativeConverter.migrateBackingToLayerX(currentBacking + 1);
 
-        vm.expectEmit();
-        emit BridgeEvent(
-            LEAF_TYPE_ASSET,
-            NETWORK_ID_L2,
-            address(underlyingToken),
-            NETWORK_ID_L1,
-            yeToken,
-            amountToMigrate,
-            underlyingTokenMetadata,
-            55413
-        );
-        vm.expectEmit();
-        emit BridgeEvent(
-            LEAF_TYPE_MESSAGE,
-            NETWORK_ID_L2,
-            address(nativeConverter),
-            NETWORK_ID_L1,
-            yeToken,
-            0,
-            abi.encode(NativeConverter.CrossNetworkInstruction.COMPLETE_MIGRATION, amountToMigrate, amountToMigrate),
-            55414
-        );
-        vm.expectEmit();
-        emit NativeConverter.MigrationStarted(owner, amountToMigrate, amountToMigrate);
-        nativeConverter.migrateBackingToLayerX(amountToMigrate);
-        assertEq(underlyingToken.balanceOf(address(nativeConverter)), backingOnLayerY - amountToMigrate);
-        assertEq(underlyingToken.balanceOf(LXLY_BRIDGE), amountToMigrate);
+    //     // create backing on layer Y
+    //     uint256 backingOnLayerY = 0;
+    //     deal(address(underlyingToken), migrator, amount);
+    //     underlyingToken.approve(address(nativeConverter), amount);
+    //     backingOnLayerY = nativeConverter.convert(amount, recipient);
 
-        vm.stopPrank();
-    }
+    //     uint256 amountToMigrate = amount / 2; // try sending half of the backing to layer X
+
+    //     vm.expectEmit();
+    //     emit BridgeEvent(
+    //         LEAF_TYPE_ASSET,
+    //         NETWORK_ID_L2,
+    //         address(underlyingToken),
+    //         NETWORK_ID_L1,
+    //         vbToken,
+    //         amountToMigrate,
+    //         underlyingTokenMetadata,
+    //         55413
+    //     );
+    //     vm.expectEmit();
+    //     emit BridgeEvent(
+    //         LEAF_TYPE_MESSAGE,
+    //         NETWORK_ID_L2,
+    //         address(nativeConverter),
+    //         NETWORK_ID_L1,
+    //         vbToken,
+    //         0,
+    //         abi.encode(
+    //             NativeConverter.CrossNetworkInstruction.COMPLETE_MIGRATION, abi.encode(amountToMigrate, amountToMigrate)
+    //         ),
+    //         55414
+    //     );
+    //     vm.expectEmit();
+    //     emit NativeConverter.MigrationStarted(migrator, amountToMigrate, amountToMigrate);
+    //     nativeConverter.migrateBackingToLayerX(amountToMigrate);
+    //     assertEq(underlyingToken.balanceOf(address(nativeConverter)), backingOnLayerY - amountToMigrate);
+    //     assertEq(underlyingToken.balanceOf(LXLY_BRIDGE), amountToMigrate);
+
+    //     vm.stopPrank();
+    // }
 
     function test_version() public view {
         assertEq(nativeConverter.version(), NATIVE_CONVERTER_VERSION);

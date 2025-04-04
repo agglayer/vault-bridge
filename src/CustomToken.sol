@@ -14,7 +14,7 @@ import {IVersioned} from "./etc/IVersioned.sol";
 /// @title Custom Token
 /// @notice A Custom Token is an ERC-20 token deployed on Layer Ys to represent the native version of the original underlying token from Layer X on Layer Y.
 /// @dev A base contract used to create Custom Tokens.
-/// @dev Custom Token MUST be custom mapped to the corresponding yeToken on LxLy Bridge on Layer Y and MUST give the minting and burning permission to LxLy Bridge and Native Converter. It MAY have a transfer fee.
+/// @dev Custom Token MUST be custom mapped to the corresponding vbToken on LxLy Bridge on Layer Y and MUST give the minting and burning permission to LxLy Bridge and Native Converter. It MAY have a transfer fee.
 abstract contract CustomToken is
     Initializable,
     OwnableUpgradeable,
@@ -152,13 +152,13 @@ abstract contract CustomToken is
 
     /// @notice Mints Custom Tokens to the recipient.
     /// @notice This function can be called by LxLy Bridge and Native Converter only.
-    function mint(address account, uint256 value) external onlyMinterBurner whenNotPaused {
+    function mint(address account, uint256 value) external whenNotPaused onlyMinterBurner {
         _mint(account, value);
     }
 
     /// @notice Burns Custom Tokens from a holder.
     /// @notice This function can be called by LxLy Bridge and Native Converter only.
-    function burn(address account, uint256 value) external onlyMinterBurner whenNotPaused {
+    function burn(address account, uint256 value) external whenNotPaused onlyMinterBurner {
         _burn(account, value);
     }
 

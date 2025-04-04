@@ -9,7 +9,7 @@ import {IVersioned} from "../etc/IVersioned.sol";
 
 /// @title Generic Native Converter
 /// @dev This contract can be used to deploy Native Converters that do not require any customization.
-abstract contract GenericNativeConverter is NativeConverter {
+contract GenericNativeConverter is NativeConverter {
     constructor() {
         _disableInitializers();
     }
@@ -21,7 +21,9 @@ abstract contract GenericNativeConverter is NativeConverter {
         address underlyingToken_,
         address lxlyBridge_,
         uint32 layerXLxlyId_,
-        address yeToken_
+        address vbToken_,
+        address migrator_,
+        uint256 maxNonMigratableBackingPercentage_
     ) external initializer {
         // Initialize the base implementation.
         __NativeConverter_init(
@@ -31,7 +33,9 @@ abstract contract GenericNativeConverter is NativeConverter {
             underlyingToken_,
             lxlyBridge_,
             layerXLxlyId_,
-            yeToken_
+            vbToken_,
+            migrator_,
+            maxNonMigratableBackingPercentage_
         );
     }
 

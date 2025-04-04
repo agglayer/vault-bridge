@@ -5,6 +5,9 @@ libs = ["dependencies"]
 via-ir = true
 verbosity = 2
 ffi = true
+optimizer = true
+optimizer_runs = 200
+
 remappings = [
     "@openzeppelin-contracts-upgradeable/=dependencies/@openzeppelin-contracts-upgradeable-5.1.0/",
     "@openzeppelin-contracts/=dependencies/@openzeppelin-contracts-5.1.0/",
@@ -13,12 +16,12 @@ remappings = [
 ]
 
 [rpc_endpoints]
-mainnet = "https://mainnet.infura.io/v3/${INFURA_TOKEN}"
-mainnet_test = "https://eth-pokt.nodies.app"
+mainnet = "wss://mainnet.gateway.tenderly.co"
 sepolia = "https://sepolia.infura.io/v3/${INFURA_TOKEN}"
 polygon_pos = "https://polygon-mainnet.infura.io/v3/${INFURA_TOKEN}"
 polygon_zkevm = "https://zkevm-rpc.com"
 polygon_zkevm_testnet = "https://rpc.public.zkevm-test.net"
+tatara = "https://rpc.tatara.katanarpc.com/${TATARA_TOKEN}"
 
 [dependencies]
 forge-std = { version = "1.9.4" }
