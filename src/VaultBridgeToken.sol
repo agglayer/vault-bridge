@@ -1152,7 +1152,7 @@ abstract contract VaultBridgeToken is
         }
     }
 
-    /// @notice Drains the current vault as far as possible(uint256.MAX) or for a selected amount. 
+    /// @notice Drains the current vault as far as possible(uint256.MAX) or for a selected amount.
     /// @notice Make sure to disable deposits by setting minimumYieldVaultDeposit to uint256.MAX
     /// @notice This function can be called by the owner only.
     function drainVault(uint256 amountToDrain_, bool exact) external onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant {
