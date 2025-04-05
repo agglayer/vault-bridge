@@ -5,7 +5,7 @@ import {GenericVbToken} from "src/vault-bridge-tokens/GenericVbToken.sol";
 import {VaultBridgeToken} from "src/VaultBridgeToken.sol";
 import {TransferFeeUtilsVbUSDT} from "src/vault-bridge-tokens/vbUSDT/TransferFeeUtilsVbUSDT.sol";
 
-import {IMetaMorpho} from "test/interfaces/IMetaMorpho.sol";
+import {TestVault} from "test/etc/TestVault.sol";
 import {
     GenericVaultBridgeTokenTest,
     GenericVbToken,
@@ -29,7 +29,6 @@ contract VbUSDTTest is GenericVaultBridgeTokenTest {
     using stdStorage for StdStorage;
 
     address internal constant USDT = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
-    address internal constant USDT_VAULT = 0x8CB3649114051cA5119141a34C200D65dc0Faa73;
 
     VbUSDTHarness vbUSDT;
     TransferFeeUtilsVbUSDT transferFeeUtil;
@@ -38,7 +37,7 @@ contract VbUSDTTest is GenericVaultBridgeTokenTest {
         mainnetFork = vm.createSelectFork("mainnet");
 
         asset = USDT;
-        vbTokenVault = IMetaMorpho(USDT_VAULT);
+        vbTokenVault = new TestVault(asset);
         version = "1.0.0";
         name = "Vault USDT";
         symbol = "vbUSDT";
@@ -47,6 +46,8 @@ contract VbUSDTTest is GenericVaultBridgeTokenTest {
         minimumReservePercentage = 1e17;
         initializer = address(new VaultBridgeTokenInitializer());
 
+        vbTokenVault.setMaxDeposit(MAX_DEPOSIT);
+        vbTokenVault.setMaxWithdraw(MAX_WITHDRAW);
         transferFeeUtil = new TransferFeeUtilsVbUSDT(owner, asset);
 
         vbToken = GenericVbToken(address(new VbUSDTHarness()));

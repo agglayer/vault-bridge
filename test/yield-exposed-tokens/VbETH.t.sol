@@ -8,7 +8,7 @@ import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {IWETH9} from "src/etc/IWETH9.sol";
 import {GenericVaultBridgeTokenTest, GenericVbToken, IERC20, SafeERC20} from "test/GenericVaultBridgeToken.t.sol";
 import {VaultBridgeTokenInitializer} from "src/VaultBridgeTokenInitializer.sol";
-import {IMetaMorpho} from "test/interfaces/IMetaMorpho.sol";
+import {TestVault} from "test/etc/TestVault.sol";
 import {ILxLyBridge as _ILxLyBridge} from "test/interfaces/ILxLyBridge.sol";
 import {WETHNativeConverter} from "src/custom-tokens/WETH/WETHNativeConverter.sol";
 
@@ -18,7 +18,6 @@ contract VbETHTest is GenericVaultBridgeTokenTest {
     VbETH public vbETH;
     address public morphoVault;
 
-    address constant WETH_METAMORPHO = 0x78Fc2c2eD1A4cDb5402365934aE5648aDAd094d0;
     address constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     uint32 constant ZKEVM_NETWORK_ID = 1; // zkEVM
 
@@ -26,7 +25,7 @@ contract VbETHTest is GenericVaultBridgeTokenTest {
         mainnetFork = vm.createSelectFork("mainnet");
 
         asset = WETH;
-        vbTokenVault = IMetaMorpho(WETH_METAMORPHO);
+        vbTokenVault = new TestVault(asset);
         version = "1.0.0";
         name = "Vault Bridge ETH";
         symbol = "vbETH";
@@ -34,6 +33,9 @@ contract VbETHTest is GenericVaultBridgeTokenTest {
         vbTokenMetaData = abi.encode(name, symbol, decimals);
         minimumReservePercentage = 1e17;
         initializer = address(new VaultBridgeTokenInitializer());
+
+        vbTokenVault.setMaxDeposit(MAX_DEPOSIT);
+        vbTokenVault.setMaxWithdraw(MAX_WITHDRAW);
 
         // Deploy implementation
         vbToken = GenericVbToken(address(new VbETH()));
@@ -148,7 +150,7 @@ contract VbETHTest is GenericVaultBridgeTokenTest {
         assertEq(vbETH.balanceOf(address(this)), amount); // shares minted to the sender
         assertApproxEqAbs(vbETH.totalAssets(), amount, 2); // allow for rounding
 
-        uint256 reserveAmount = (amount * minimumReservePercentage) / MAX_MINIMUM_RESERVE_PERCENTAGE;
+        uint256 reserveAmount = _calculateReserveAssets(amount, vbTokenVault.maxDeposit(address(vbToken)));
         assertApproxEqAbs(vbETH.reservedAssets(), reserveAmount, 2); // allow for rounding
     }
 

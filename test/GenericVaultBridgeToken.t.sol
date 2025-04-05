@@ -9,10 +9,11 @@ import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transpa
 import {VaultBridgeToken, PausableUpgradeable, NativeConverterInfo, Initializable} from "src/VaultBridgeToken.sol";
 import {VaultBridgeTokenInitializer} from "src/VaultBridgeTokenInitializer.sol";
 
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
-import {IMetaMorpho} from "test/interfaces/IMetaMorpho.sol";
+import {TestVault} from "test/etc/TestVault.sol";
 import {ILxLyBridge as _ILxLyBridge} from "test/interfaces/ILxLyBridge.sol";
 
 contract GenericVaultBridgeTokenTest is Test {
@@ -28,15 +29,16 @@ contract GenericVaultBridgeTokenTest is Test {
         keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
     bytes4 constant PERMIT_SIGNATURE = 0xd505accf;
     address internal constant TEST_TOKEN = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
-    address internal constant TEST_TOKEN_VAULT = 0xBEEF01735c132Ada46AA9aA4c54623cAA92A64CB;
     uint256 internal constant MAX_MINIMUM_RESERVE_PERCENTAGE = 1e18;
+    uint256 internal constant MAX_DEPOSIT = 10e18;
+    uint256 internal constant MAX_WITHDRAW = 10e18;
     uint256 internal constant MINIMUM_YIELD_VAULT_DEPOSIT = 1e12;
     bytes32 internal constant RESERVE_ASSET_STORAGE =
         hex"0bb25252701cf32638570970f607d30c3e6cb5d951ee6c3cd06f6d3f41890302";
 
     uint256 stateBeforeInitialize;
     uint256 mainnetFork;
-    IMetaMorpho vbTokenVault;
+    TestVault vbTokenVault;
     GenericVbToken vbToken;
     address vbTokenImplementation;
     address asset;
@@ -76,7 +78,7 @@ contract GenericVaultBridgeTokenTest is Test {
         mainnetFork = vm.createSelectFork("mainnet");
 
         asset = TEST_TOKEN;
-        vbTokenVault = IMetaMorpho(TEST_TOKEN_VAULT);
+        vbTokenVault = new TestVault(asset);
         version = "1.0.0";
         name = "Vault Bridge USDC";
         symbol = "vbUSDC";
@@ -84,6 +86,9 @@ contract GenericVaultBridgeTokenTest is Test {
         vbTokenMetaData = abi.encode(name, symbol, decimals);
         minimumReservePercentage = 1e17;
         initializer = address(new VaultBridgeTokenInitializer());
+
+        vbTokenVault.setMaxDeposit(MAX_DEPOSIT);
+        vbTokenVault.setMaxWithdraw(MAX_WITHDRAW);
 
         vbToken = new GenericVbToken();
         vbTokenImplementation = address(vbToken);
@@ -352,7 +357,7 @@ contract GenericVaultBridgeTokenTest is Test {
     }
 
     function test_deposit_revert() public {
-        uint256 amount = 100 ether;
+        uint256 amount = 1 ether;
 
         bytes memory callData = abi.encodeCall(vbToken.deposit, (amount, recipient));
         _testPauseUnpause(owner, address(vbToken), callData);
@@ -369,6 +374,22 @@ contract GenericVaultBridgeTokenTest is Test {
 
         vm.expectRevert(VaultBridgeToken.InvalidReceiver.selector);
         vbToken.deposit(amount, address(vbToken));
+
+        IERC20(asset).forceApprove(address(vbToken), amount);
+        uint256 reserveAssets = _calculateReserveAssets(amount, vbTokenVault.maxDeposit(address(vbToken)));
+        uint256 slippageAmount = Math.mulDiv((amount - reserveAssets), 0.011e18, 1e18); // 1.1% slippage
+        vbTokenVault.setSlippage(true, slippageAmount);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                VaultBridgeToken.InsufficientYieldVaultSharesMinted.selector,
+                amount - reserveAssets,
+                amount - reserveAssets - slippageAmount
+            )
+        );
+        vbToken.deposit(amount, recipient);
+
+        vm.stopPrank();
     }
 
     function test_deposit_amount_gt_max_deposit() public {
@@ -392,7 +413,7 @@ contract GenericVaultBridgeTokenTest is Test {
         uint256 reserveAssetsAfterDeposit = _calculateReserveAssets(amount, vaultMaxDeposit);
 
         assertEq(IERC20(asset).balanceOf(address(vbToken)), reserveAssetsAfterDeposit); // reserve assets increased
-        assertGt(IERC20(vbTokenVault).balanceOf(address(vbToken)), 0); // shares locked in the vault
+        assertGt(vbTokenVault.balanceOf(address(vbToken)), 0); // shares locked in the vault
         assertEq(vbToken.balanceOf(recipient), sharesToBeMinted); // shares minted to the recipient
     }
 
@@ -417,7 +438,7 @@ contract GenericVaultBridgeTokenTest is Test {
         uint256 reserveAssets = (amount * minimumReservePercentage) / MAX_MINIMUM_RESERVE_PERCENTAGE;
 
         assertEq(IERC20(asset).balanceOf(address(vbToken)), reserveAssets); // reserve assets increased
-        assertGt(IERC20(vbTokenVault).balanceOf(address(vbToken)), 0); // shares locked in the vault
+        assertGt(vbTokenVault.balanceOf(address(vbToken)), 0); // shares locked in the vault
         assertEq(vbToken.balanceOf(recipient), sharesToBeMinted); // shares minted to the recipient
     }
 
@@ -437,7 +458,7 @@ contract GenericVaultBridgeTokenTest is Test {
         vm.stopPrank();
 
         assertEq(IERC20(asset).balanceOf(address(vbToken)), amount); // All assets are reserved and non are deposited in the vault
-        assertEq(IERC20(vbTokenVault).balanceOf(address(vbToken)), 0); // No assets deposited in the vault
+        assertEq(vbTokenVault.balanceOf(address(vbToken)), 0); // No assets deposited in the vault
         assertEq(vbToken.balanceOf(recipient), sharesToBeMinted); // shares minted to the recipient
     }
 
