@@ -33,10 +33,18 @@ contract MockVault {
     }
 
     function maxDeposit(address user) external view returns (uint256) {
+        // silence the compiler
+        {
+            user;
+        }
         return _maxDeposit;
     }
 
     function maxWithdraw(address user) external view returns (uint256) {
+        // silence the compiler
+        {
+            user;
+        }
         return _maxWithdraw;
     }
 
@@ -45,10 +53,21 @@ contract MockVault {
     }
 
     function deposit(uint256 amount, address user) external pure returns (uint256) {
+        // silence the compiler
+        {
+            amount;
+            user;
+        }
         return 0;
     }
 
     function withdraw(uint256 amount, address receiver, address user) external pure returns (uint256) {
+        // silence the compiler
+        {
+            amount;
+            receiver;
+            user;
+        }
         return 0;
     }
 }
