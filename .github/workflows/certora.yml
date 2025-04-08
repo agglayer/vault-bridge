@@ -1,0 +1,83 @@
+name: test
+
+on: pull_request
+
+env:
+  FOUNDRY_PROFILE: ci
+  CONFIGS: | 
+    certora/confs/setup/sanity_CommonAdminOwner.conf
+
+jobs:
+  typecheck:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      statuses: write
+      pull-requests: write
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: install bun
+        run: |
+          curl -fsSL https://bun.sh/install | bash
+          echo "BUN_INSTALL=\"${HOME}/.bun\"" >> $GITHUB_ENV
+          echo "${HOME}/.bun/bin" >> $GITHUB_PATH
+
+      - name: bun install
+        run: |
+          echo $PATH
+          bun install
+          forge soldeer install
+
+      - name: run configs
+        uses: Certora/certora-run-action@v1
+        with:
+          use-alpha: true
+          configurations: ${{ env.CONFIGS }}
+          solc-versions: 0.8.28
+          solc-remove-version-prefix: "0."
+          job-name: "Type-checked rules"
+          certora-key: ${{ secrets.CERTORAKEY }}
+          compilation-steps-only: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  check:
+    runs-on: ubuntu-latest
+    needs: typecheck
+    permissions:
+      contents: read
+      statuses: write
+      pull-requests: write
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: install bun
+        run: |
+          curl -fsSL https://bun.sh/install | bash
+          echo "BUN_INSTALL=\"${HOME}/.bun\"" >> $GITHUB_ENV
+          echo "${HOME}/.bun/bin" >> $GITHUB_PATH
+
+      - name: bun install
+        run: |
+          echo $PATH
+          bun install
+          forge soldeer install
+
+      - name: run configs
+        uses: Certora/certora-run-action@v1
+        with:
+          use-alpha: true
+          configurations: ${{ env.CONFIGS }}
+          solc-versions: 0.8.28
+          solc-remove-version-prefix: "0."
+          job-name: "Verified Rules"
+          certora-key: ${{ secrets.CERTORAKEY }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
