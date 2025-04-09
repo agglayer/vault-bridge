@@ -20,11 +20,13 @@ jobs:
         with:
           submodules: recursive
 
+      - name: install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
       - name: install bun
-        run: |
-          curl -fsSL https://bun.sh/install | bash
-          echo "BUN_INSTALL=\"${HOME}/.bun\"" >> $GITHUB_ENV
-          echo "${HOME}/.bun/bin" >> $GITHUB_PATH
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
 
       - name: bun install
         run: |
