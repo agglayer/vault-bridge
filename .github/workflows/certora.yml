@@ -6,6 +6,7 @@ env:
   FOUNDRY_PROFILE: ci
   CONFIGS: | 
     certora/confs/setup/sanity_CommonAdminOwner.conf
+    certora/confs/setup/sanity_YieldExposedTokenMock.conf
 
 jobs:
   check:
