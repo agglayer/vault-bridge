@@ -1,5 +1,5 @@
 import { YieldExposedToken } from "src/YieldExposedToken.sol";
 
-contract YieldExposedTokenMock is YieldExposedToken {
+contract YieldExposedTokenHarness is YieldExposedToken {
 
 }
