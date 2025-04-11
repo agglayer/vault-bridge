@@ -2,10 +2,10 @@ using IERC20PlusMock as IERC20PlusMock;
 using Vault as Vault;
 
 methods {
-    function YieldExposedTokenHarness.token() external
-        returns (address) => CVL_token();
-    function YieldExposedTokenHarness.yieldGeneratingVault() external
-        returns (address) => CVL_vault();
+    //function YieldExposedTokenHarness.token() external
+    //    returns (address) => CVL_token();
+    //function YieldExposedTokenHarness.yieldGeneratingVault() external
+    //    returns (address) => CVL_vault();
 
     function YieldExposedTokenHarness.balanceOf(address) external
         returns (uint256) => NONDET;
