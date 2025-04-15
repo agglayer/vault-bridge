@@ -36,7 +36,7 @@ jobs:
       - name: run configs
         uses: Certora/certora-run-action@v1
         with:
-          use-beta: true
+          use-alpha: true
           configurations: ${{ env.CONFIGS }}
           solc-versions: 0.8.28
           solc-remove-version-prefix: "0."
