@@ -9,4 +9,5 @@ function _.balanceOf(address) external => DISPATCHER(true);
 function _.convertToAssets(uint256) external => DISPATCHER(true);
 function _.maxWithdraw(address) external => DISPATCHER(true);
 function _.approve(address,uint256) external => DISPATCHER(true);
+function _.assetsAfterTransferFee(uint256) external => DISPATCHER(true);
 }
