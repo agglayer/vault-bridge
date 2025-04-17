@@ -7,7 +7,7 @@ methods {
     function _.mint(address,uint256) external => DISPATCHER(true);
     function _.approve(address,uint256) external => DISPATCHER(true);
     function _.totalSupply() external => DISPATCHER(true);
-    
+
     // dispatch to ILxLyBridge
     function _.networkID() external => DISPATCHER(true);
     function _.bridgeAsset(
