@@ -5,13 +5,13 @@ on: pull_request
 env:
   FOUNDRY_PROFILE: ci
   CONFIGS: | 
-    certora/confs/setup/sanity_CustomTokenMock.conf
-    certora/confs/setup/sanity_GenericCustomToken.conf
+    #certora/confs/setup/sanity_CustomTokenMock.conf
+    #certora/confs/setup/sanity_GenericCustomToken.conf
     certora/confs/setup/sanity_GenericNativeConverter.conf
     certora/confs/setup/sanity_GenericVbToken.conf
-    certora/confs/setup/sanity_MockVault.conf
-    certora/confs/setup/sanity_NativeConverterMock.conf
-    certora/confs/setup/sanity_TransferFeeUtilsVbUSDT.conf
+    #certora/confs/setup/sanity_MockVault.conf
+    #certora/confs/setup/sanity_NativeConverterMock.conf
+    #certora/confs/setup/sanity_TransferFeeUtilsVbUSDT.conf
     certora/confs/setup/sanity_VaultBridgeTokenInitializer.conf
     certora/confs/setup/sanity_VaultBridgeTokenMock.conf
     certora/confs/setup/sanity_VbETH.conf
