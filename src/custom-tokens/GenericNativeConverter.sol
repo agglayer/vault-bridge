@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
-pragma solidity 0.8.28;
+pragma solidity 0.8.29;
 
 // Main functionality.
 import {NativeConverter} from "../NativeConverter.sol";
@@ -22,8 +22,7 @@ contract GenericNativeConverter is NativeConverter {
         address lxlyBridge_,
         uint32 layerXLxlyId_,
         address vbToken_,
-        address migrator_,
-        uint256 maxNonMigratableBackingPercentage_
+        uint256 nonMigratableBackingPercentage_
     ) external initializer {
         // Initialize the base implementation.
         __NativeConverter_init(
@@ -34,8 +33,7 @@ contract GenericNativeConverter is NativeConverter {
             lxlyBridge_,
             layerXLxlyId_,
             vbToken_,
-            migrator_,
-            maxNonMigratableBackingPercentage_
+            nonMigratableBackingPercentage_
         );
     }
 

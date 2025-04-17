@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
-pragma solidity 0.8.28;
+pragma solidity 0.8.29;
+
+// @todo REVIEW.
 
 // @todo Remove `SafeERC20`, `IERC20`.
 import {NativeConverter, SafeERC20, IERC20} from "../../NativeConverter.sol";
@@ -29,8 +31,7 @@ contract WETHNativeConverter is NativeConverter {
         address lxlyBridge_,
         uint32 layerXNetworkId_,
         address vbToken_,
-        address migrator_,
-        uint256 maxNonMigratableBackingPercentage_
+        uint256 nonMigratableBackingPercentage_
     ) external initializer {
         // Initialize the base implementation.
         __NativeConverter_init(
@@ -41,8 +42,7 @@ contract WETHNativeConverter is NativeConverter {
             lxlyBridge_,
             layerXNetworkId_,
             vbToken_,
-            migrator_,
-            maxNonMigratableBackingPercentage_
+            nonMigratableBackingPercentage_
         );
 
         weth = WETH(payable(customToken_));
@@ -57,8 +57,7 @@ contract WETHNativeConverter is NativeConverter {
         address lxlyBridge_,
         uint32 layerXNetworkId_,
         address vbToken_,
-        address migrator_,
-        uint256 maxNonMigratableBackingPercentage_
+        uint256 nonMigratableBackingPercentage_
     ) external reinitializer(3) {
         underlyingToken().forceApprove(address(lxlyBridge()), 0);
 
@@ -71,8 +70,7 @@ contract WETHNativeConverter is NativeConverter {
             lxlyBridge_,
             layerXNetworkId_,
             vbToken_,
-            migrator_,
-            maxNonMigratableBackingPercentage_
+            nonMigratableBackingPercentage_
         );
 
         weth = WETH(payable(customToken_));
@@ -85,7 +83,7 @@ contract WETHNativeConverter is NativeConverter {
     /// @notice It is known that this can lead to WETH not being able to perform withdrawals, because of a lack of gas backing.
     /// @notice However, this is acceptable, because WETH is a vault backed token so its backing should actually be staked.
     /// @notice Users can still bridge WETH back to Layer X to receive wETH or ETH.
-    function migrateGasBackingToLayerX(uint256 amount) external whenNotPaused onlyOwner {
+    function migrateGasBackingToLayerX(uint256 amount) external whenNotPaused onlyRole(MIGRATOR_ROLE) nonReentrant {
         // Check the input.
         require(amount > 0, InvalidAssets());
         require(amount <= address(weth).balance, AssetsTooLarge(address(weth).balance, amount));

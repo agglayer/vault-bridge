@@ -1,0 +1,10 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
+pragma solidity 0.8.29;
+
+// Main functionality.
+import {GenericNativeConverter} from "../GenericNativeConverter.sol";
+
+/// @title VbWBTC Native Converter
+/// @dev No customization is required.
+/// @dev This contract does not need to be deployed. You can point `VbWBTCNativeConverter` proxy to `GenericNativeConverter` instead.
+contract VbWBTCNativeConverter is GenericNativeConverter {}

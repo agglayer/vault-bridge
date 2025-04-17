@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
-pragma solidity 0.8.28;
+pragma solidity 0.8.29;
 
 // Main functionality.
 import {ERC20PermitUpgradeable} from
@@ -7,7 +7,7 @@ import {ERC20PermitUpgradeable} from
 
 // Other functionality.
 import {Initializable} from "@openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
-import {OwnableUpgradeable} from "@openzeppelin-contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {AccessControlUpgradeable} from "@openzeppelin-contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import {PausableUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/PausableUpgradeable.sol";
 import {IVersioned} from "./etc/IVersioned.sol";
 
@@ -17,7 +17,7 @@ import {IVersioned} from "./etc/IVersioned.sol";
 /// @dev Custom Token MUST be custom mapped to the corresponding vbToken on LxLy Bridge on Layer Y and MUST give the minting and burning permission to LxLy Bridge and Native Converter. It MAY have a transfer fee.
 abstract contract CustomToken is
     Initializable,
-    OwnableUpgradeable,
+    AccessControlUpgradeable,
     PausableUpgradeable,
     ERC20PermitUpgradeable,
     IVersioned
@@ -31,10 +31,15 @@ abstract contract CustomToken is
         address nativeConverter;
     }
 
+    // @todo Change the namespace. If upgrading the testnet contracts, add a reinitializer and clear the old slots using assembly.
+    // @todo This has been modified from `0x5bbe451cf8915ac9b43b69d5987da5a42549d90a2c7cab500dae45ea6889c900`, which was incorrect. If upgrading the testnet contracts, add a reinitializer and clear the old slots using assembly.
     /// @dev The storage slot at which Custom Token storage starts, following the EIP-7201 standard.
     /// @dev Calculated as `keccak256(abi.encode(uint256(keccak256("0xpolygon.storage.CustomToken")) - 1)) & ~bytes32(uint256(0xff))`.
     bytes32 private constant _CUSTOM_TOKEN_STORAGE =
-        hex"5bbe451cf8915ac9b43b69d5987da5a42549d90a2c7cab500dae45ea6889c900";
+        hex"7c85b7b2d9fd038d6192406f4d8c0b3abd3ba313fe130017505dbec645b26600";
+
+    // Basic roles.
+    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
 
     // Errors.
     error Unauthorized();
@@ -78,8 +83,12 @@ abstract contract CustomToken is
         // Initialize the inherited contracts.
         __ERC20_init(name_, symbol_);
         __ERC20Permit_init(name_);
-        __Ownable_init(owner_);
+        __AccessControl_init();
         __Pausable_init();
+
+        // Grant the basic roles.
+        _grantRole(DEFAULT_ADMIN_ROLE, owner_);
+        _grantRole(PAUSER_ROLE, owner_);
 
         // Initialize the storage.
         $.decimals = originalUnderlyingTokenDecimals_;
@@ -165,14 +174,14 @@ abstract contract CustomToken is
     // -----================= ::: ADMIN ::: =================-----
 
     /// @notice Prevents usage of functions with the `whenNotPaused` modifier.
-    /// @notice This function can be called by the owner only.
-    function pause() external onlyOwner {
+    /// @notice This function can be called by the pauser only.
+    function pause() external onlyRole(PAUSER_ROLE) {
         _pause();
     }
 
     /// @notice Allows usage of functions with the `whenNotPaused` modifier.
     /// @notice This function can be called by the owner only.
-    function unpause() external onlyOwner {
+    function unpause() external onlyRole(DEFAULT_ADMIN_ROLE) {
         _unpause();
     }
 }

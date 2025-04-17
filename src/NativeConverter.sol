@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
-pragma solidity 0.8.28;
+pragma solidity 0.8.29;
 
 // Other functionality.
 import {Initializable} from "@openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
-import {OwnableUpgradeable} from "@openzeppelin-contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {AccessControlUpgradeable} from "@openzeppelin-contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import {PausableUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/PausableUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import {ERC20PermitUser} from "./etc/ERC20PermitUser.sol";
@@ -24,7 +24,7 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 /// @dev This contract MUST have mint and burn permission on Custom Token. Please refer to `CustomToken.sol` for more information.
 abstract contract NativeConverter is
     Initializable,
-    OwnableUpgradeable,
+    AccessControlUpgradeable,
     PausableUpgradeable,
     ReentrancyGuardUpgradeable,
     ERC20PermitUser,
@@ -40,7 +40,7 @@ abstract contract NativeConverter is
         CUSTOM
     }
 
-    /// @dev Storage of the Native Converter contract.
+    /// @dev Storage of Native Converter contract.
     /// @dev It's implemented on a custom ERC-7201 namespace to reduce the risk of storage collisions when using with upgradeable contracts.
     /// @custom:storage-location erc7201:0xpolygon.storage.NativeConverter
     struct NativeConverterStorage {
@@ -52,14 +52,20 @@ abstract contract NativeConverter is
         ILxLyBridge lxlyBridge;
         uint32 layerXLxlyId;
         address vbToken;
-        address migrator;
-        uint256 maxNonMigratableBackingPercentage;
+        // @todo Remove. If upgrading the testnet contracts, add a reinitializer and clear the old slots using assembly.
+        address __OUTDATED__migrator;
+        uint256 nonMigratableBackingPercentage;
     }
 
+    // @todo Change the namespace. If upgrading the testnet contracts, add a reinitializer and clear the old slots using assembly.
     /// @dev The storage slot at which Native Converter storage starts, following the EIP-7201 standard.
     /// @dev Calculated as `keccak256(abi.encode(uint256(keccak256("0xpolygon.storage.NativeConverter")) - 1)) & ~bytes32(uint256(0xff))`.
     bytes32 private constant _NATIVE_CONVERTER_STORAGE =
         hex"b6887066a093cfbb0ec14b46507f657825a892fd6a4c4a1ef4fc83e8c7208c00";
+
+    // Basic roles.
+    bytes32 public constant MIGRATOR_ROLE = keccak256("MIGRATOR_ROLE");
+    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
 
     // Errors.
     error InvalidOwner();
@@ -68,29 +74,26 @@ abstract contract NativeConverter is
     error InvalidLxLyBridge();
     error InvalidLayerXLxlyId();
     error InvalidVbToken();
-    error InvalidMigrator();
     error NonMatchingCustomTokenDecimals(uint8 customTokenDecimals, uint8 originalUnderlyingTokenDecimals);
     error NonMatchingUnderlyingTokenDecimals(uint8 underlyingTokenDecimals, uint8 originalUnderlyingTokenDecimals);
     error InvalidAssets();
     error InvalidReceiver();
     error InvalidPermitData();
     error InvalidShares();
-    error InvalidMaxNonMigratableBackingPercentage();
+    error InvalidNonMigratableBackingPercentage();
     error AssetsTooLarge(uint256 availableAssets, uint256 requestedAssets);
-    error NonMigratableBackingThresholdReached();
     error InvalidDestinationNetworkId();
     error OnlyMigrator();
 
     // Events.
     event MigrationStarted(address indexed initiator, uint256 indexed mintedCustomToken, uint256 migratedBacking);
-    event MaxNonMigratableBackingPercentageSet(uint256 maxNonMigratableBackingPercentage);
+    event NonMigratableBackingPercentageSet(uint256 nonMigratableBackingPercentage);
 
     /// @param originalUnderlyingTokenDecimals_ The number of decimals of the original underlying token on Layer X. The `customToken` and `underlyingToken` MUST have the same number of decimals as the original underlying token. @note (ATTENTION) The decimals of the `customToken` and `underlyingToken` will default to 18 if they revert.
     /// @param customToken_ The token custom mapped to vbToken on LxLy Bridge on Layer Y. Native Converter must be able to mint and burn this token. Please refer to `CustomToken.sol` for more information.
     /// @param underlyingToken_ The token that represents the original underlying token on Layer Y. @note IMPORTANT: This token MUST be either the bridge-wrapped version of the original underlying token, or the original underlying token must be custom mapped to this token on LxLy Bridge on Layer Y.
     /// @param vbToken_ The address of vbToken on Layer X.
-    /// @param migrator_ The address of the migrator contract.
-    /// @param maxNonMigratableBackingPercentage_ 1e18 is 100%. The percentage of the backing which should always remain in the native converter.
+    /// @param nonMigratableBackingPercentage_ The percentage of backing that should remain in Native Converter after a migration, based on the total supply of Custom Token. 1e18 is 100%. It is possible to game the system by manipulating the total supply of Custom Token, so this is a soft limit.
     function __NativeConverter_init(
         address owner_,
         uint8 originalUnderlyingTokenDecimals_,
@@ -99,8 +102,7 @@ abstract contract NativeConverter is
         address lxlyBridge_,
         uint32 layerXLxlyId_,
         address vbToken_,
-        address migrator_,
-        uint256 maxNonMigratableBackingPercentage_
+        uint256 nonMigratableBackingPercentage_
     ) internal onlyInitializing {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
 
@@ -111,8 +113,7 @@ abstract contract NativeConverter is
         require(lxlyBridge_ != address(0), InvalidLxLyBridge());
         require(layerXLxlyId_ != ILxLyBridge(lxlyBridge_).networkID(), InvalidLxLyBridge());
         require(vbToken_ != address(0), InvalidVbToken());
-        require(migrator_ != address(0), InvalidMigrator());
-        require(maxNonMigratableBackingPercentage_ <= 1e18, InvalidMaxNonMigratableBackingPercentage());
+        require(nonMigratableBackingPercentage_ <= 1e18, InvalidNonMigratableBackingPercentage());
 
         // Check Custom Token's decimals.
         uint8 customTokenDecimals;
@@ -141,9 +142,14 @@ abstract contract NativeConverter is
         );
 
         // Initialize the inherited contracts.
-        __Ownable_init(owner_);
+        __AccessControl_init();
         __Pausable_init();
         __ReentrancyGuard_init();
+
+        // Grant the basic roles.
+        _grantRole(DEFAULT_ADMIN_ROLE, owner_);
+        _grantRole(MIGRATOR_ROLE, owner_);
+        _grantRole(PAUSER_ROLE, owner_);
 
         // Initialize the storage.
         $.customToken = CustomToken(customToken_);
@@ -153,8 +159,7 @@ abstract contract NativeConverter is
         $.lxlyBridge = ILxLyBridge(lxlyBridge_);
         $.layerXLxlyId = layerXLxlyId_;
         $.vbToken = vbToken_;
-        $.migrator = migrator_;
-        $.maxNonMigratableBackingPercentage = maxNonMigratableBackingPercentage_;
+        $.nonMigratableBackingPercentage = nonMigratableBackingPercentage_;
 
         // Approve LxLy Bridge.
         $.underlyingToken.forceApprove(address($.lxlyBridge), type(uint256).max);
@@ -205,17 +210,12 @@ abstract contract NativeConverter is
         return $.vbToken;
     }
 
-    /// @notice The address of the migrator contract.
-    function migrator() public view returns (address) {
+    /// @notice The percentage of backing that should remain in Native Converter after a migration, based on the total supply of Custom Token.
+    /// @dev It is possible to game the system by manipulating the total supply of Custom Token, so this is a soft limit.
+    /// @return 1e18 is 100%.
+    function nonMigratableBackingPercentage() public view returns (uint256) {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
-        return $.migrator;
-    }
-
-    /// @notice The percentage of the non-migratable backing on Layer Y.
-    /// @notice 1e18 is 100%.
-    function maxNonMigratableBackingPercentage() public view returns (uint256) {
-        NativeConverterStorage storage $ = _getNativeConverterStorage();
-        return $.maxNonMigratableBackingPercentage;
+        return $.nonMigratableBackingPercentage;
     }
 
     /// @dev Returns a pointer to the ERC-7201 storage namespace.
@@ -225,7 +225,7 @@ abstract contract NativeConverter is
         }
     }
 
-    // -----================= ::: PSEUDO ERC-4626 ::: =================-----
+    // -----================= ::: PSEUDO-ERC-4626 ::: =================-----
 
     /// @notice Deposit a specific amount of the underlying token and get Custom Token.
     /// @param assets The amount of the underlying token to convert to Custom Token.
@@ -463,29 +463,32 @@ abstract contract NativeConverter is
 
     // -----================= ::: NATIVE CONVERTER ::: =================-----
 
+    /// @notice The maximum amount of backing that can be migrated to Layer X.
+    function migratableBacking() public view returns (uint256) {
+        NativeConverterStorage storage $ = _getNativeConverterStorage();
+
+        // Calculate the non-migratable backing.
+        uint256 nonMigratableBacking = Math.mulDiv(customToken().totalSupply(), $.nonMigratableBackingPercentage, 1e18);
+
+        // Return the amount of backing that can be migrated.
+        return $.backingOnLayerY > nonMigratableBacking ? $.backingOnLayerY - nonMigratableBacking : 0;
+    }
+
     /// @notice Migrates a specific amount of backing to Layer X.
     /// @notice This action provides vbToken liquidity on LxLy Bridge on Layer X.
     /// @notice The bridged asset and message must be claimed manually on LxLy Bridge on Layer X to complete the migration.
-    /// @notice This function can be called by the owner only.
+    /// @notice This function can be called by the migrator only.
     /// @notice The migration can be completed by anyone on Layer X.
-    /// @dev Consider calling this function periodically - anyone will be able to complete a migration on Layer X.
-    function migrateBackingToLayerX(uint256 assets) external whenNotPaused nonReentrant {
-        require(msg.sender == migrator(), OnlyMigrator());
-
+    /// @dev Consider calling this function periodically; anyone can complete a migration on Layer X.
+    function migrateBackingToLayerX(uint256 assets) external whenNotPaused onlyRole(MIGRATOR_ROLE) nonReentrant {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
 
-        // Check the input.
+        // Cache the migratable backing.
+        uint256 migratableBacking_ = migratableBacking();
+
+        // Check the inputs.
         require(assets > 0, InvalidAssets());
-        require(assets <= $.backingOnLayerY, AssetsTooLarge($.backingOnLayerY, assets));
-
-        // Calculate the max non-migratable backing.
-        uint256 totalToken = customToken().totalSupply();
-        uint256 maxNonMigratableBacking = Math.mulDiv(totalToken, $.maxNonMigratableBackingPercentage, 1e18);
-
-        require(maxNonMigratableBacking < $.backingOnLayerY, NonMigratableBackingThresholdReached());
-
-        uint256 migrateable = $.backingOnLayerY - maxNonMigratableBacking;
-        assets = assets > migrateable ? migrateable : assets;
+        require(assets <= migratableBacking_, AssetsTooLarge(migratableBacking_, assets));
 
         // Update the backing data.
         $.backingOnLayerY -= assets;
@@ -523,47 +526,40 @@ abstract contract NativeConverter is
         emit MigrationStarted(msg.sender, shares, assets);
     }
 
-    // -----================= ::: ADMIN ::: =================-----
-
-    /// @notice Prevents usage of functions with the `whenNotPaused` modifier.
+    /// @notice Sets the percentage of backing that should remain in Native Converter after a migration, based on the total supply of Custom Token.
+    /// @notice It is possible to game the system by manipulating the total supply of Custom Token, so this is a soft limit.
     /// @notice This function can be called by the owner only.
-    function pause() external onlyOwner nonReentrant {
-        _pause();
-    }
-
-    /// @notice Allows usage of functions with the `whenNotPaused` modifier.
-    /// @notice This function can be called by the owner only.
-    function unpause() external onlyOwner nonReentrant {
-        _unpause();
-    }
-
-    /// @notice Sets the migrator contract address.
-    /// @notice This function can be called by the owner only.
-    /// @param migrator_ The address of the migrator contract.
-    function setMigrator(address migrator_) external onlyOwner {
-        NativeConverterStorage storage $ = _getNativeConverterStorage();
-        $.migrator = migrator_;
-    }
-
-    /// @notice Sets the max non-migratable backing percentage.
-    /// @param maxNonMigratableBackingPercentage_ The max non-migratable backing percentage.
-    /// @notice This function can be called by the owner only.
-    function setMaxNonMigratableBackingPercentage(uint256 maxNonMigratableBackingPercentage_)
+    /// @param nonMigratableBackingPercentage_ 1e18 is 100%.
+    function setNonMigratableBackingPercentage(uint256 nonMigratableBackingPercentage_)
         external
         whenNotPaused
-        onlyOwner
+        onlyRole(DEFAULT_ADMIN_ROLE)
         nonReentrant
     {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
 
         // Check the input.
-        require(maxNonMigratableBackingPercentage_ <= 1e18, InvalidMaxNonMigratableBackingPercentage());
+        require(nonMigratableBackingPercentage_ <= 1e18, InvalidNonMigratableBackingPercentage());
 
         // Set the non-migratable backing percentage.
-        $.maxNonMigratableBackingPercentage = maxNonMigratableBackingPercentage_;
+        $.nonMigratableBackingPercentage = nonMigratableBackingPercentage_;
 
         // Emit the event.
-        emit MaxNonMigratableBackingPercentageSet(maxNonMigratableBackingPercentage_);
+        emit NonMigratableBackingPercentageSet(nonMigratableBackingPercentage_);
+    }
+
+    // -----================= ::: ADMIN ::: =================-----
+
+    /// @notice Prevents usage of functions with the `whenNotPaused` modifier.
+    /// @notice This function can be called by the pauser only.
+    function pause() external onlyRole(PAUSER_ROLE) nonReentrant {
+        _pause();
+    }
+
+    /// @notice Allows usage of functions with the `whenNotPaused` modifier.
+    /// @notice This function can be called by the owner only.
+    function unpause() external onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant {
+        _unpause();
     }
 
     // -----================= ::: DEVELOPER ::: =================-----

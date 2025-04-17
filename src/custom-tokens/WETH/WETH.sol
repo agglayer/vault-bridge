@@ -1,16 +1,19 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
-pragma solidity 0.8.28;
+pragma solidity 0.8.29;
+
+// @todo REVIEW.
 
 import {CustomToken} from "../../CustomToken.sol";
 import {IWETH9} from "../../etc/IWETH9.sol";
 import {IVersioned} from "../../etc/IVersioned.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 
 // TODO
 // - make upgradeable to enable potential future ETH staking plans
 
 /// @title WETH
 /// @dev based on https://github.com/gnosis/canonical-weth/blob/master/contracts/WETH9.sol
-contract WETH is CustomToken {
+contract WETH is CustomToken, ReentrancyGuardUpgradeable {
     error AssetsTooLarge(uint256 availableAssets, uint256 requestedAssets);
 
     event Deposit(address indexed from, uint256 value);
@@ -50,21 +53,25 @@ contract WETH is CustomToken {
         __CustomToken_init(owner_, name_, symbol_, originalUnderlyingTokenDecimals_, lxlyBridge_, nativeConverter_);
     }
 
-    function bridgeBackingToLayerX(uint256 amount) external onlyNativeConverter {
+    function bridgeBackingToLayerX(uint256 amount) external whenNotPaused onlyNativeConverter nonReentrant {
         (bool success,) = nativeConverter().call{value: amount}("");
         require(success);
     }
 
-    receive() external payable {
-        deposit();
+    receive() external payable whenNotPaused nonReentrant {
+        _deposit();
     }
 
-    function deposit() public payable {
+    function deposit() external payable whenNotPaused nonReentrant {
+        _deposit();
+    }
+
+    function _deposit() internal {
         _mint(msg.sender, msg.value);
         emit Deposit(msg.sender, msg.value);
     }
 
-    function withdraw(uint256 value) external {
+    function withdraw(uint256 value) external whenNotPaused nonReentrant {
         _burn(msg.sender, value);
         uint256 availableAssets = address(this).balance;
         require(availableAssets >= value, AssetsTooLarge(availableAssets, value));

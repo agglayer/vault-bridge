@@ -6,7 +6,7 @@ via-ir = true
 verbosity = 2
 ffi = true
 optimizer = true
-optimizer_runs = 200
+optimizer_runs = 999999
 
 remappings = [
     "@openzeppelin-contracts-upgradeable/=dependencies/@openzeppelin-contracts-upgradeable-5.1.0/",

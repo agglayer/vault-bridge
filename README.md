@@ -1,3 +1,8 @@
+> [!NOTE]
+> This readme needs to be updated. Also, some NatSpec may be outdated.
+
+<br>
+
 <h1 align="center">🌾 Vault Bridge Token</h1>
 
 <div align="center">

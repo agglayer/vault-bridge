@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
-pragma solidity 0.8.28;
+pragma solidity 0.8.29;
 
-import {VaultBridgeToken, NativeConverterInfo} from "../../VaultBridgeToken.sol";
+// @todo REVIEW.
+
+import {VaultBridgeToken} from "../../VaultBridgeToken.sol";
 import {IWETH9} from "../../etc/IWETH9.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {IVersioned} from "../../etc/IVersioned.sol";
@@ -19,35 +21,12 @@ contract VbETH is VaultBridgeToken {
         _disableInitializers();
     }
 
-    function initialize(
-        address owner_,
-        string calldata name_,
-        string calldata symbol_,
-        address underlyingToken_,
-        uint256 minimumReservePercentage_,
-        address yieldVault_,
-        address yieldRecipient_,
-        address lxlyBridge_,
-        NativeConverterInfo[] calldata nativeConverters_,
-        uint256 minimumYieldVaultDeposit_,
-        address transferFeeUtil_,
-        address initializer_
-    ) external initializer {
+    function initialize(address initializer_, VaultBridgeToken.InitializationParameters calldata initParams)
+        external
+        initializer
+    {
         // Initialize the base implementation.
-        __VaultBridgeToken_init(
-            owner_,
-            name_,
-            symbol_,
-            underlyingToken_,
-            minimumReservePercentage_,
-            yieldVault_,
-            yieldRecipient_,
-            lxlyBridge_,
-            nativeConverters_,
-            minimumYieldVaultDeposit_,
-            transferFeeUtil_,
-            initializer_
-        );
+        __VaultBridgeToken_init(initializer_, initParams);
     }
 
     /// @dev deposit ETH to get vbETH
@@ -118,16 +97,6 @@ contract VbETH is VaultBridgeToken {
 
             _completeMigration(originNetwork, shares, assets);
         }
-    }
-
-    /// @dev WETH does not have a transfer fee.
-    function _assetsAfterTransferFee(uint256 assetsBeforeTransferFee) internal pure override returns (uint256) {
-        return assetsBeforeTransferFee;
-    }
-
-    /// @dev WETH does not have a transfer fee.
-    function _assetsBeforeTransferFee(uint256 minimumAssetsAfterTransferFee) internal pure override returns (uint256) {
-        return minimumAssetsAfterTransferFee;
     }
 
     /// @inheritdoc IVersioned

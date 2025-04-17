@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
-pragma solidity 0.8.28;
+pragma solidity 0.8.29;
 
 /// @title ERC-20 Permit User
 /// @dev Mimics the behavior of LxLy Bridge for validating and using ERC-20 permits.
