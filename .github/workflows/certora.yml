@@ -39,8 +39,8 @@ jobs:
 
       - name: bun install
         run: |
-          bun install
           forge soldeer install
+          bun install || true
 
       - name: run configs
         uses: Certora/certora-run-action@v1
