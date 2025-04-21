@@ -1334,7 +1334,7 @@ abstract contract VaultBridgeToken is
     // -----================= ::: UNDERLYING TOKEN ::: =================-----
 
     // @todo Document.
-    function _assetsAfterTransferFee(uint256 assetsBeforeTransferFee) internal view returns (uint256) {
+    function _assetsAfterTransferFee(uint256 assetsBeforeTransferFee) internal virtual view returns (uint256) {
         VaultBridgeTokenStorage storage $ = _getVaultBridgeTokenStorage();
 
         // If the transfer fee calculator is set, there is a transfer fee.
@@ -1347,7 +1347,7 @@ abstract contract VaultBridgeToken is
     }
 
     // @todo Document.
-    function _assetsBeforeTransferFee(uint256 minimumAssetsAfterTransferFee) internal view returns (uint256) {
+    function _assetsBeforeTransferFee(uint256 minimumAssetsAfterTransferFee) internal virtual view returns (uint256) {
         VaultBridgeTokenStorage storage $ = _getVaultBridgeTokenStorage();
 
         // If the transfer fee calculator is set, there is a transfer fee.

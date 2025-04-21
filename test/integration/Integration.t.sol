@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
-pragma solidity ^0.8.28;
+pragma solidity ^0.8.29;
 
 import "forge-std/Test.sol";
 import "src/VaultBridgeToken.sol";
@@ -23,30 +23,12 @@ contract MockVbToken is VaultBridgeToken {
     }
 
     function initialize(
-        address owner_,
-        string calldata name_,
-        string calldata symbol_,
-        address underlyingToken_,
-        uint256 minimumReservePercentage_,
-        address yieldVault_,
-        address yieldRecipient_,
-        address lxlyBridge_,
-        NativeConverterInfo[] calldata nativeConverters_,
-        address initializer_
+        address initializer_,
+        InitializationParameters calldata initParams
     ) external initializer {
         __VaultBridgeToken_init(
-            owner_,
-            name_,
-            symbol_,
-            underlyingToken_,
-            minimumReservePercentage_,
-            yieldVault_,
-            yieldRecipient_,
-            lxlyBridge_,
-            nativeConverters_,
-            10,
-            address(0),
-            initializer_
+            initializer_,
+            initParams
         );
     }
 
@@ -88,7 +70,6 @@ contract MockNativeConverter is NativeConverter {
         address lxlyBridge_,
         uint32 layerXLxlyId_,
         address vbToken_,
-        address migrator_,
         uint256 maxNonMigratableBackingPercentage_
     ) external initializer {
         // Initialize the base implementation.
@@ -100,7 +81,6 @@ contract MockNativeConverter is NativeConverter {
             lxlyBridge_,
             layerXLxlyId_,
             vbToken_,
-            migrator_,
             maxNonMigratableBackingPercentage_
         );
     }
@@ -266,7 +246,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
     // extra contracts
     TestVault vbTokenVault;
     MockNativeConverter nativeConverter;
-    NativeConverterInfo[] nativeConverterStruct;
+    VaultBridgeToken.NativeConverterConfiguration[] nativeConverterStruct;
 
     // dummy addresses
     address recipient = makeAddr("recipient");
@@ -297,6 +277,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
     string internal constant VBTOKEN_NAME = "Vault Bridge Token";
     string internal constant VBTOKEN_SYMBOL = "VBTK";
     uint8 internal constant VBTOKEN_DECIMALS = 18;
+    uint256 internal constant MINIMUM_YIELD_VAULT_DEPOSIT = 1e18;
     bytes vbTokenMetaData = abi.encode(VBTOKEN_NAME, VBTOKEN_SYMBOL, VBTOKEN_DECIMALS);
 
     // custom token
@@ -365,26 +346,28 @@ contract IntegrationTest is Test, ZkEVMCommon {
         address nativeConverterAddr = vm.computeCreateAddress(address(this), nativeConverterNonce);
 
         nativeConverterStruct.push(
-            NativeConverterInfo({layerYLxlyId: NETWORK_ID_Y, nativeConverter: nativeConverterAddr})
+            VaultBridgeToken.NativeConverterConfiguration({layerYLxlyId: NETWORK_ID_Y, nativeConverter: nativeConverterAddr})
         );
         address initializer = address(new VaultBridgeTokenInitializer());
 
         // deploy vbToken
         vbToken = new MockVbToken();
+        VaultBridgeToken.InitializationParameters memory initParams = VaultBridgeToken.InitializationParameters({
+            owner: owner,
+            name: VBTOKEN_NAME,
+            symbol: VBTOKEN_SYMBOL,
+            underlyingToken: address(underlyingAsset),
+            minimumReservePercentage: MINIMUM_RESERVE_PERCENTAGE,
+            yieldVault: address(vbTokenVault),
+            yieldRecipient: yieldRecipient,
+            lxlyBridge: LXLY_BRIDGE_X,
+            nativeConverters: nativeConverterStruct,
+            minimumYieldVaultDeposit: MINIMUM_YIELD_VAULT_DEPOSIT,
+            transferFeeCalculator: address(0)
+        });
         bytes memory vbTokenInitData = abi.encodeCall(
             vbToken.initialize,
-            (
-                owner,
-                VBTOKEN_NAME,
-                VBTOKEN_SYMBOL,
-                address(underlyingAsset),
-                MINIMUM_RESERVE_PERCENTAGE,
-                address(vbTokenVault),
-                yieldRecipient,
-                LXLY_BRIDGE_X,
-                nativeConverterStruct,
-                initializer
-            )
+            (initializer, initParams)
         );
         vbToken = MockVbToken(_proxify(address(vbToken), address(this), vbTokenInitData));
 
@@ -442,7 +425,6 @@ contract IntegrationTest is Test, ZkEVMCommon {
                 LXLY_BRIDGE_Y,
                 NETWORK_ID_X,
                 address(vbToken),
-                migrator,
                 MAX_NON_MIGRATABLE_BACKING_PERCENTAGE
             )
         );
@@ -1109,8 +1091,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
             _claimPayload.exitRootLayerY,
             _claimPayload.destinationAddress,
             _claimPayload.amount,
-            recipient,
-            _claimPayload.metadata
+            recipient
         );
 
         assertEq(vbToken.underlyingToken().balanceOf(recipient), _claimPayload.amount);

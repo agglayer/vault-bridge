@@ -1,21 +1,21 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
-pragma solidity ^0.8.28;
+pragma solidity ^0.8.29;
 
-import {GenericVbToken} from "src/vault-bridge-tokens/GenericVbToken.sol";
+import {GenericVaultBridgeToken} from "src/vault-bridge-tokens/GenericVaultBridgeToken.sol";
 import {VaultBridgeToken} from "src/VaultBridgeToken.sol";
-import {TransferFeeUtilsVbUSDT} from "src/vault-bridge-tokens/vbUSDT/TransferFeeUtilsVbUSDT.sol";
+import {USDTTransferFeeCalculator} from "src/vault-bridge-tokens/vbUSDT/USDTTransferFeeCalculator.sol";
 
 import {TestVault} from "test/etc/TestVault.sol";
 import {
     GenericVaultBridgeTokenTest,
-    GenericVbToken,
+    GenericVaultBridgeToken,
     console,
     stdStorage,
     StdStorage
 } from "test/GenericVaultBridgeToken.t.sol";
 import {VaultBridgeTokenInitializer} from "src/VaultBridgeTokenInitializer.sol";
 
-contract VbUSDTHarness is GenericVbToken {
+contract VbUSDTHarness is GenericVaultBridgeToken {
     function exposed_assetsAfterTransferFee(uint256 assetsBeforeTransferFee) public view returns (uint256) {
         return _assetsAfterTransferFee(assetsBeforeTransferFee);
     }
@@ -31,7 +31,7 @@ contract VbUSDTTest is GenericVaultBridgeTokenTest {
     address internal constant USDT = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
 
     VbUSDTHarness vbUSDT;
-    TransferFeeUtilsVbUSDT transferFeeUtil;
+    USDTTransferFeeCalculator transferFeeUtil;
 
     function setUp() public override {
         mainnetFork = vm.createSelectFork("mainnet");
@@ -48,29 +48,29 @@ contract VbUSDTTest is GenericVaultBridgeTokenTest {
 
         vbTokenVault.setMaxDeposit(MAX_DEPOSIT);
         vbTokenVault.setMaxWithdraw(MAX_WITHDRAW);
-        transferFeeUtil = new TransferFeeUtilsVbUSDT(owner, asset);
+        transferFeeUtil = new USDTTransferFeeCalculator(asset);
 
-        vbToken = GenericVbToken(address(new VbUSDTHarness()));
+        vbToken = GenericVaultBridgeToken(address(new VbUSDTHarness()));
         vbTokenImplementation = address(vbToken);
         stateBeforeInitialize = vm.snapshotState();
+        VaultBridgeToken.InitializationParameters memory initParams = VaultBridgeToken.InitializationParameters({
+            owner: owner,
+            name: name,
+            symbol: symbol,
+            underlyingToken: asset,
+            minimumReservePercentage: minimumReservePercentage,
+            yieldVault: address(vbTokenVault),
+            yieldRecipient: yieldRecipient,
+            lxlyBridge: LXLY_BRIDGE,
+            nativeConverters: nativeConverter,
+            minimumYieldVaultDeposit: MINIMUM_YIELD_VAULT_DEPOSIT,
+            transferFeeCalculator: address(transferFeeUtil)
+        });
         bytes memory initData = abi.encodeCall(
             vbToken.initialize,
-            (
-                owner,
-                name,
-                symbol,
-                asset,
-                minimumReservePercentage,
-                address(vbTokenVault),
-                yieldRecipient,
-                LXLY_BRIDGE,
-                nativeConverter,
-                MINIMUM_YIELD_VAULT_DEPOSIT,
-                address(transferFeeUtil),
-                initializer
-            )
+            (initializer, initParams)
         );
-        vbToken = GenericVbToken(_proxify(address(vbToken), address(this), initData));
+        vbToken = GenericVaultBridgeToken(_proxify(address(vbToken), address(this), initData));
         vbUSDT = VbUSDTHarness(address(vbToken));
 
         vm.label(address(transferFeeUtil), "Transfer Fee Util");
@@ -94,39 +94,7 @@ contract VbUSDTTest is GenericVaultBridgeTokenTest {
         // USDT has no permit function.
     }
 
-    function test_transferFeeUtil() public {
-        assertEq(vbUSDT.transferFeeUtil(), address(transferFeeUtil));
-        assertEq(transferFeeUtil.cachedBasisPointsRate(), 0);
-        assertEq(transferFeeUtil.cachedMaximumFee(), 0);
-
-        vm.expectRevert(); // Only owner can recache transfer fee parameters.
-        transferFeeUtil.recacheUsdtTransferFeeParameters();
-
-        vm.prank(owner);
-        transferFeeUtil.recacheUsdtTransferFeeParameters();
-        assertEq(TransferFeeUtilsVbUSDT(vbUSDT.transferFeeUtil()).cachedBasisPointsRate(), 0);
-        assertEq(TransferFeeUtilsVbUSDT(vbUSDT.transferFeeUtil()).cachedMaximumFee(), 0);
-    }
-
-    function test_assetsAfterTransferFee() public {
-        _writeTransferFeeUtilStorage(1000, 5); // 5% fee
-        assertEq(vbUSDT.exposed_assetsAfterTransferFee(100), 95);
-    }
-
-    function test_assetBeforeTransferFee() public {
-        uint256 state = vm.snapshotState();
-        _writeTransferFeeUtilStorage(1000, 5); // 5% fee
-        assertEq(vbUSDT.exposed_assetsBeforeTransferFee(95), 100);
-
-        vm.revertToState(state);
-        _writeTransferFeeUtilStorage(250, 5); // 2.5% fee
-        assertEq(vbUSDT.exposed_assetsBeforeTransferFee(95), 97);
-    }
-
-    function _writeTransferFeeUtilStorage(uint256 basisPointsRate, uint256 maximumFee) internal {
-        stdstore.target(address(transferFeeUtil)).sig("cachedBasisPointsRate()").checked_write(basisPointsRate);
-        stdstore.target(address(transferFeeUtil)).sig("cachedMaximumFee()").checked_write(maximumFee);
-        assertEq(TransferFeeUtilsVbUSDT(vbUSDT.transferFeeUtil()).cachedBasisPointsRate(), basisPointsRate);
-        assertEq(TransferFeeUtilsVbUSDT(vbUSDT.transferFeeUtil()).cachedMaximumFee(), maximumFee);
+    function test_transferFeeUtil() public view {
+        assertEq(address(vbUSDT.transferFeeCalculator()), address(transferFeeUtil));
     }
 }

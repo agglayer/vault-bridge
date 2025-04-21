@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.28;
+pragma solidity 0.8.29;
 
 import {VbETH} from "src/vault-bridge-tokens/vbETH/VbETH.sol";
 import {VaultBridgeToken, PausableUpgradeable} from "src/VaultBridgeToken.sol";
 import {ILxLyBridge} from "src/etc/ILxLyBridge.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {IWETH9} from "src/etc/IWETH9.sol";
-import {GenericVaultBridgeTokenTest, GenericVbToken, IERC20, SafeERC20} from "test/GenericVaultBridgeToken.t.sol";
+import {GenericVaultBridgeTokenTest, GenericVaultBridgeToken, IERC20, SafeERC20} from "test/GenericVaultBridgeToken.t.sol";
 import {VaultBridgeTokenInitializer} from "src/VaultBridgeTokenInitializer.sol";
 import {TestVault} from "test/etc/TestVault.sol";
 import {ILxLyBridge as _ILxLyBridge} from "test/interfaces/ILxLyBridge.sol";
@@ -38,31 +38,31 @@ contract VbETHTest is GenericVaultBridgeTokenTest {
         vbTokenVault.setMaxWithdraw(MAX_WITHDRAW);
 
         // Deploy implementation
-        vbToken = GenericVbToken(address(new VbETH()));
+        vbToken = GenericVaultBridgeToken(address(new VbETH()));
         vbTokenImplementation = address(vbToken);
         stateBeforeInitialize = vm.snapshotState();
 
         // prepare calldata
+        VaultBridgeToken.InitializationParameters memory initParams = VaultBridgeToken.InitializationParameters({
+            owner: owner,
+            name: name,
+            symbol: symbol,
+            underlyingToken: asset,
+            minimumReservePercentage: minimumReservePercentage,
+            yieldVault: address(vbTokenVault),
+            yieldRecipient: yieldRecipient,
+            lxlyBridge: LXLY_BRIDGE,
+            nativeConverters: nativeConverter,
+            minimumYieldVaultDeposit: MINIMUM_YIELD_VAULT_DEPOSIT,
+            transferFeeCalculator: address(0)
+        });
         bytes memory initData = abi.encodeCall(
             vbETH.initialize,
-            (
-                owner, // owner
-                name, // name
-                symbol, // symbol
-                asset, // underlying token
-                minimumReservePercentage,
-                address(vbTokenVault), // Use our deployed Morpho vault
-                yieldRecipient, // mock yield recipient
-                LXLY_BRIDGE,
-                nativeConverter, // mock migration manager
-                MINIMUM_YIELD_VAULT_DEPOSIT,
-                address(0), // transfer fee util
-                initializer
-            )
+            (initializer, initParams)
         );
 
         // deploy proxy and initialize implementation
-        vbToken = GenericVbToken(_proxify(address(vbTokenImplementation), address(this), initData));
+        vbToken = GenericVaultBridgeToken(_proxify(address(vbTokenImplementation), address(this), initData));
         vbETH = VbETH(address(vbToken));
 
         vm.label(address(vbTokenVault), "WETH Vault");
