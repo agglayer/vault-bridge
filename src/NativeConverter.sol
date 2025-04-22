@@ -16,6 +16,7 @@ import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 // External contracts.
 import {CustomToken} from "./CustomToken.sol";
 import {ILxLyBridge} from "./etc/ILxLyBridge.sol";
+import {MigrationManager} from "./MigrationManager.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
@@ -33,12 +34,6 @@ abstract contract NativeConverter is
     // Libraries.
     using SafeERC20 for IERC20;
     using SafeERC20 for CustomToken;
-
-    /// @dev Used in cross-network communication.
-    enum CrossNetworkInstruction {
-        COMPLETE_MIGRATION,
-        CUSTOM
-    }
 
     /// @dev Storage of Native Converter contract.
     /// @dev It's implemented on a custom ERC-7201 namespace to reduce the risk of storage collisions when using with upgradeable contracts.
@@ -519,7 +514,7 @@ abstract contract NativeConverter is
             $.layerXLxlyId,
             $.vbToken,
             true,
-            abi.encode(CrossNetworkInstruction.COMPLETE_MIGRATION, abi.encode(shares, assets))
+            abi.encode(MigrationManager.CrossNetworkInstruction.COMPLETE_MIGRATION, abi.encode(shares, assets))
         );
 
         // Emit the event.

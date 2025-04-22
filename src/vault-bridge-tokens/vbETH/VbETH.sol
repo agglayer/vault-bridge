@@ -13,10 +13,6 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 contract VbETH is VaultBridgeToken {
     using SafeERC20 for IWETH9;
 
-    enum CustomCrossNetworkInstruction {
-        WRAP_COIN_AND_COMPLETE_MIGRATION
-    }
-
     constructor() {
         _disableInitializers();
     }
@@ -73,29 +69,6 @@ contract VbETH is VaultBridgeToken {
         } else {
             weth.safeTransferFrom(msg.sender, address(this), assets);
             return assets;
-        }
-    }
-
-    function _dispatchCustomCrossNetworkInstruction(
-        address originAddress,
-        uint32 originNetwork,
-        bytes memory customData
-    ) internal override {
-        IWETH9 weth = IWETH9(address(underlyingToken()));
-
-        (CustomCrossNetworkInstruction instruction, bytes memory instructionData) =
-            abi.decode(customData, (CustomCrossNetworkInstruction, bytes));
-
-        if (instruction == CustomCrossNetworkInstruction.WRAP_COIN_AND_COMPLETE_MIGRATION) {
-            require(originAddress != address(0), Unauthorized());
-            require(originAddress == nativeConverters(originNetwork), Unauthorized());
-
-            (uint256 shares, uint256 assets) = abi.decode(instructionData, (uint256, uint256));
-
-            // deposit ETH assets into WETH
-            weth.deposit{value: assets}();
-
-            _completeMigration(originNetwork, shares, assets);
         }
     }
 

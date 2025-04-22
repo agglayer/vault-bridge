@@ -40,6 +40,7 @@ contract VaultBridgeTokenInitializer is IVaultBridgeTokenInitializer, VaultBridg
         require(initParams.yieldVault != address(0), InvalidYieldVault());
         require(initParams.yieldRecipient != address(0), InvalidYieldRecipient());
         require(initParams.lxlyBridge != address(0), InvalidLxLyBridge());
+        require(initParams.migrationManager != address(0), InvalidMigrationManager());
 
         // Initialize the inherited contracts.
         __ERC20_init(initParams.name, initParams.symbol);
@@ -67,16 +68,9 @@ contract VaultBridgeTokenInitializer is IVaultBridgeTokenInitializer, VaultBridg
         $.yieldRecipient = initParams.yieldRecipient;
         $.lxlyId = ILxLyBridge(initParams.lxlyBridge).networkID();
         $.lxlyBridge = ILxLyBridge(initParams.lxlyBridge);
-        for (uint256 i; i < initParams.nativeConverters.length; ++i) {
-            // Check the input.
-            require(initParams.nativeConverters[i].layerYLxlyId != $.lxlyId, InvalidNativeConverters());
-
-            // Set Native Converter.
-            $.nativeConverters[initParams.nativeConverters[i].layerYLxlyId] =
-                initParams.nativeConverters[i].nativeConverter;
-        }
         $.minimumYieldVaultDeposit = initParams.minimumYieldVaultDeposit;
         $.transferFeeCalculator = ITransferFeeCalculator(initParams.transferFeeCalculator);
+        $.migrationManager = initParams.migrationManager;
 
         // Approve the yield vault and LxLy Bridge.
         IERC20(initParams.underlyingToken).forceApprove(initParams.yieldVault, type(uint256).max);

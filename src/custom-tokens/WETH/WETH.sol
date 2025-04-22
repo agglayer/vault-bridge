@@ -6,14 +6,13 @@ pragma solidity 0.8.29;
 import {CustomToken} from "../../CustomToken.sol";
 import {IWETH9} from "../../etc/IWETH9.sol";
 import {IVersioned} from "../../etc/IVersioned.sol";
-import {ReentrancyGuardUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 
 // TODO
 // - make upgradeable to enable potential future ETH staking plans
 
 /// @title WETH
 /// @dev based on https://github.com/gnosis/canonical-weth/blob/master/contracts/WETH9.sol
-contract WETH is CustomToken, ReentrancyGuardUpgradeable {
+contract WETH is CustomToken {
     error AssetsTooLarge(uint256 availableAssets, uint256 requestedAssets);
 
     event Deposit(address indexed from, uint256 value);

@@ -7,6 +7,7 @@ pragma solidity 0.8.29;
 import {NativeConverter, SafeERC20, IERC20} from "../../NativeConverter.sol";
 import {WETH} from "./WETH.sol";
 import {IVersioned} from "../../etc/IVersioned.sol";
+import {MigrationManager} from "../../MigrationManager.sol";
 
 /// @title WETH Native Converter
 contract WETHNativeConverter is NativeConverter {
@@ -14,10 +15,6 @@ contract WETHNativeConverter is NativeConverter {
     using SafeERC20 for IERC20;
 
     WETH weth;
-
-    enum CustomCrossNetworkInstruction {
-        WRAP_COIN_AND_COMPLETE_MIGRATION
-    }
 
     constructor() {
         _disableInitializers();
@@ -101,11 +98,8 @@ contract WETHNativeConverter is NativeConverter {
             address(vbToken()),
             true,
             abi.encode(
-                CrossNetworkInstruction.CUSTOM,
-                abi.encode(
-                    CustomCrossNetworkInstruction.WRAP_COIN_AND_COMPLETE_MIGRATION,
-                    abi.encode(amountOfCustomToken, amount)
-                )
+                MigrationManager.CrossNetworkInstruction.WRAP_COIN_AND_COMPLETE_MIGRATION,
+                abi.encode(amountOfCustomToken, amount)
             )
         );
 

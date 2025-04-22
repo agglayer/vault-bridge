@@ -9,6 +9,7 @@ import {ERC20PermitUpgradeable} from
 import {Initializable} from "@openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
 import {AccessControlUpgradeable} from "@openzeppelin-contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import {PausableUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/PausableUpgradeable.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import {IVersioned} from "./etc/IVersioned.sol";
 
 /// @title Custom Token
@@ -19,6 +20,7 @@ abstract contract CustomToken is
     Initializable,
     AccessControlUpgradeable,
     PausableUpgradeable,
+    ReentrancyGuardUpgradeable,
     ERC20PermitUpgradeable,
     IVersioned
 {
@@ -161,13 +163,13 @@ abstract contract CustomToken is
 
     /// @notice Mints Custom Tokens to the recipient.
     /// @notice This function can be called by LxLy Bridge and Native Converter only.
-    function mint(address account, uint256 value) external whenNotPaused onlyMinterBurner {
+    function mint(address account, uint256 value) external whenNotPaused onlyMinterBurner nonReentrant {
         _mint(account, value);
     }
 
     /// @notice Burns Custom Tokens from a holder.
     /// @notice This function can be called by LxLy Bridge and Native Converter only.
-    function burn(address account, uint256 value) external whenNotPaused onlyMinterBurner {
+    function burn(address account, uint256 value) external whenNotPaused onlyMinterBurner nonReentrant {
         _burn(account, value);
     }
 
@@ -175,13 +177,13 @@ abstract contract CustomToken is
 
     /// @notice Prevents usage of functions with the `whenNotPaused` modifier.
     /// @notice This function can be called by the pauser only.
-    function pause() external onlyRole(PAUSER_ROLE) {
+    function pause() external onlyRole(PAUSER_ROLE) nonReentrant {
         _pause();
     }
 
     /// @notice Allows usage of functions with the `whenNotPaused` modifier.
     /// @notice This function can be called by the owner only.
-    function unpause() external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function unpause() external onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant {
         _unpause();
     }
 }
