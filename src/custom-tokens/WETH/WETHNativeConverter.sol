@@ -27,8 +27,8 @@ contract WETHNativeConverter is NativeConverter {
         address underlyingToken_,
         address lxlyBridge_,
         uint32 layerXNetworkId_,
-        address vbToken_,
-        uint256 nonMigratableBackingPercentage_
+        uint256 nonMigratableBackingPercentage_,
+        address migrationManager_
     ) external initializer {
         // Initialize the base implementation.
         __NativeConverter_init(
@@ -38,8 +38,8 @@ contract WETHNativeConverter is NativeConverter {
             underlyingToken_,
             lxlyBridge_,
             layerXNetworkId_,
-            vbToken_,
-            nonMigratableBackingPercentage_
+            nonMigratableBackingPercentage_,
+            migrationManager_
         );
 
         weth = WETH(payable(customToken_));
@@ -53,8 +53,8 @@ contract WETHNativeConverter is NativeConverter {
         address underlyingToken_,
         address lxlyBridge_,
         uint32 layerXNetworkId_,
-        address vbToken_,
-        uint256 nonMigratableBackingPercentage_
+        uint256 nonMigratableBackingPercentage_,
+        address migrationManager_
     ) external reinitializer(3) {
         underlyingToken().forceApprove(address(lxlyBridge()), 0);
 
@@ -66,8 +66,8 @@ contract WETHNativeConverter is NativeConverter {
             underlyingToken_,
             lxlyBridge_,
             layerXNetworkId_,
-            vbToken_,
-            nonMigratableBackingPercentage_
+            nonMigratableBackingPercentage_,
+            migrationManager_
         );
 
         weth = WETH(payable(customToken_));
@@ -90,12 +90,14 @@ contract WETHNativeConverter is NativeConverter {
 
         // Taking lxlyBridge's gas balance here
         weth.bridgeBackingToLayerX(amount);
-        lxlyBridge().bridgeAsset{value: amount}(layerXLxlyId(), address(vbToken()), amount, address(0), true, "");
+        lxlyBridge().bridgeAsset{value: amount}(
+            layerXLxlyId(), address(migrationManager()), amount, address(0), true, ""
+        );
 
         // Bridge a message to Migration Manager on Layer X to complete the migration.
         lxlyBridge().bridgeMessage(
             layerXLxlyId(),
-            address(vbToken()),
+            address(migrationManager()),
             true,
             abi.encode(
                 MigrationManager.CrossNetworkInstruction.WRAP_COIN_AND_COMPLETE_MIGRATION,

@@ -161,7 +161,6 @@ abstract contract VaultBridgeToken is
     event YieldRecipientSet(address indexed yieldRecipient);
     event TransferFeeCalculatorSet(address transferFeeCalculator);
     event MinimumReservePercentageSet(uint256 minimumReservePercentage);
-    event MigrationManagerSet(address migrationManager);
 
     /// @dev Checks if the sender is the yield recipient.
     modifier onlyYieldRecipient() {
@@ -1169,25 +1168,6 @@ abstract contract VaultBridgeToken is
         $.minimumYieldVaultDeposit = minimumYieldVaultDeposit_;
     }
 
-    // @todo Document.
-    function setMigrationManager(address migrationManager_)
-        external
-        whenNotPaused
-        onlyRole(DEFAULT_ADMIN_ROLE)
-        nonReentrant
-    {
-        VaultBridgeTokenStorage storage $ = _getVaultBridgeTokenStorage();
-
-        // Check the input.
-        require(migrationManager_ != address(0), InvalidMigrationManager());
-
-        // Set the migration manager.
-        $.migrationManager = migrationManager_;
-
-        // Emit the event.
-        emit MigrationManagerSet(migrationManager_);
-    }
-
     /// @notice Calculates the amount of assets to reserve (as opposed to depositing into the yield vault) based on the current reserve and minimum reserve percentage.
     /// @dev @note (ATTENTION) Make any necessary changes to the reserve prior to using this function.
     /// @param assets The amount of the underlying token being deposited.
@@ -1308,6 +1288,7 @@ abstract contract VaultBridgeToken is
     // -----================= ::: UNDERLYING TOKEN ::: =================-----
 
     // @todo Document.
+    // @todo Remove `virtual`.
     function _assetsAfterTransferFee(uint256 assetsBeforeTransferFee) internal view virtual returns (uint256) {
         VaultBridgeTokenStorage storage $ = _getVaultBridgeTokenStorage();
 
@@ -1321,6 +1302,7 @@ abstract contract VaultBridgeToken is
     }
 
     // @todo Document.
+    // @todo Remove `virtual`.
     function _assetsBeforeTransferFee(uint256 minimumAssetsAfterTransferFee) internal view virtual returns (uint256) {
         VaultBridgeTokenStorage storage $ = _getVaultBridgeTokenStorage();
 

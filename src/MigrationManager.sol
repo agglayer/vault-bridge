@@ -126,7 +126,7 @@ contract MigrationManager is
     // @todo Redocument.
     /// @notice Tells which vbToken and the underlying token Native Converter on Layer Ys belongs to.
     /// @param nativeConverter The address of Native Converter on Layer Ys.
-    function nativeConvertConfigurations(uint32 layerYLxlyId, address nativeConverter)
+    function nativeConvertersConfiguration(uint32 layerYLxlyId, address nativeConverter)
         public
         view
         returns (TokenPair memory tokenPair)
