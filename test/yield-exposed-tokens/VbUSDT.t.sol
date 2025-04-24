@@ -7,6 +7,8 @@ import {USDTTransferFeeCalculator} from "src/vault-bridge-tokens/vbUSDT/USDTTran
 
 import {TestVault} from "test/etc/TestVault.sol";
 import {
+    IERC20,
+    SafeERC20,
     GenericVaultBridgeTokenTest,
     GenericVaultBridgeToken,
     console,
@@ -26,6 +28,7 @@ contract VbUSDTHarness is GenericVaultBridgeToken {
 }
 
 contract VbUSDTTest is GenericVaultBridgeTokenTest {
+    using SafeERC20 for IERC20;
     using stdStorage for StdStorage;
 
     address internal constant USDT = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
@@ -62,16 +65,18 @@ contract VbUSDTTest is GenericVaultBridgeTokenTest {
             yieldVault: address(vbTokenVault),
             yieldRecipient: yieldRecipient,
             lxlyBridge: LXLY_BRIDGE,
-            nativeConverters: nativeConverter,
+            migrationManager: migrationManager,
             minimumYieldVaultDeposit: MINIMUM_YIELD_VAULT_DEPOSIT,
             transferFeeCalculator: address(transferFeeUtil)
         });
-        bytes memory initData = abi.encodeCall(
-            vbToken.initialize,
-            (initializer, initParams)
-        );
+        bytes memory initData = abi.encodeCall(vbToken.initialize, (initializer, initParams));
         vbToken = GenericVaultBridgeToken(_proxify(address(vbToken), address(this), initData));
         vbUSDT = VbUSDTHarness(address(vbToken));
+
+        // fund the migration manager manually since the test is not using the actual migration manager
+        deal(asset, migrationManager, 10000000 ether);
+        vm.prank(migrationManager);
+        IERC20(asset).forceApprove(address(vbToken), 10000000 ether);
 
         vm.label(address(transferFeeUtil), "Transfer Fee Util");
         vm.label(address(vbTokenVault), "USDT Vault");
@@ -79,7 +84,7 @@ contract VbUSDTTest is GenericVaultBridgeTokenTest {
         vm.label(address(vbTokenImplementation), "vbUSDT Implementation");
         vm.label(address(this), "Default Address");
         vm.label(asset, "Underlying Asset");
-        vm.label(nativeConverterAddress, "Native Converter");
+        vm.label(migrationManager, "Migration Manager");
         vm.label(owner, "Owner");
         vm.label(recipient, "Recipient");
         vm.label(sender, "Sender");

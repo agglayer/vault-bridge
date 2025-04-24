@@ -712,7 +712,8 @@ abstract contract VaultBridgeToken is
         bytes32 rollupExitRoot,
         address destinationAddress,
         uint256 amount,
-        address receiver
+        address receiver,
+        bytes calldata metadata
     ) external whenNotPaused nonReentrant returns (uint256 assets) {
         VaultBridgeTokenStorage storage $ = _getVaultBridgeTokenStorage();
 
@@ -729,7 +730,7 @@ abstract contract VaultBridgeToken is
             $.lxlyId,
             destinationAddress,
             amount,
-            abi.encode(name(), symbol(), decimals())
+            metadata
         );
 
         // Set the return value.

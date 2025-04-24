@@ -4,11 +4,13 @@ pragma solidity ^0.8.29;
 import "forge-std/Test.sol";
 import "src/custom-tokens/GenericNativeConverter.sol";
 import "src/NativeConverter.sol";
+import "src/MigrationManager.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import {IERC20Errors} from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 
+import {IAccessControl} from "@openzeppelin-contracts/access/IAccessControl.sol";
 import {MockERC20} from "forge-std/mocks/MockERC20.sol";
 import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
@@ -59,8 +61,8 @@ contract MockNativeConverter is NativeConverter {
         address underlyingToken_,
         address lxlyBridge_,
         uint32 layerXLxlyId_,
-        address vbToken_,
-        uint256 maxNonMigratableBackingPercentage_
+        uint256 maxNonMigratableBackingPercentage_,
+        address migrationManager_
     ) external initializer {
         // Initialize the base implementation.
         __NativeConverter_init(
@@ -70,8 +72,8 @@ contract MockNativeConverter is NativeConverter {
             underlyingToken_,
             lxlyBridge_,
             layerXLxlyId_,
-            vbToken_,
-            maxNonMigratableBackingPercentage_
+            maxNonMigratableBackingPercentage_,
+            migrationManager_
         );
     }
 
@@ -101,17 +103,16 @@ contract GenericNativeConverterTest is Test {
 
     MockERC20MintableBurnable internal customToken;
     MockERC20 internal underlyingToken;
-    address internal vbToken;
     uint256 internal zkevmFork;
     uint256 internal beforeInit;
     bytes internal underlyingTokenMetadata;
+    address internal migrationManager;
 
     GenericNativeConverter internal nativeConverter;
 
     // initialization arguments
     address internal owner = makeAddr("owner");
     address internal recipient = makeAddr("recipient");
-    address internal migrator = makeAddr("migrator");
 
     uint256 internal senderPrivateKey = 0xBEEF;
     address internal sender = vm.addr(senderPrivateKey);
@@ -149,7 +150,7 @@ contract GenericNativeConverterTest is Test {
         // assign addresses for generic testing
         customToken = MockERC20MintableBurnable(address(_customToken));
         underlyingToken = _underlyingToken;
-        vbToken = makeAddr("vbToken");
+        migrationManager = makeAddr("migrationManager");
 
         underlyingTokenMetadata = abi.encode("Underlying Token", "uTKN", 18);
 
@@ -169,8 +170,8 @@ contract GenericNativeConverterTest is Test {
                 address(_underlyingToken), // wrapped underlying token
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
-                vbToken,
-                MAX_NON_MIGRATABLE_BACKING_PERCENTAGE
+                MAX_NON_MIGRATABLE_BACKING_PERCENTAGE,
+                migrationManager
             )
         );
         nativeConverter = GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
@@ -179,7 +180,7 @@ contract GenericNativeConverterTest is Test {
         vm.label(address(_customToken), "WETH");
         vm.label(address(this), "testerAddress");
         vm.label(LXLY_BRIDGE, "lxlyBridge");
-        vm.label(vbToken, "vbToken");
+        vm.label(migrationManager, "migrationManager");
         vm.label(owner, "owner");
         vm.label(recipient, "recipient");
         vm.label(sender, "sender");
@@ -189,7 +190,7 @@ contract GenericNativeConverterTest is Test {
 
     function test_setup() public view {
         assertEq(nativeConverter.layerXLxlyId(), NETWORK_ID_L1);
-        assertEq(nativeConverter.vbToken(), vbToken);
+        assertEq(address(nativeConverter.migrationManager()), migrationManager);
         assertEq(address(nativeConverter.customToken()), address(customToken));
         assertEq(address(nativeConverter.lxlyBridge()), LXLY_BRIDGE);
         assertEq(address(nativeConverter.underlyingToken()), address(underlyingToken));
@@ -199,7 +200,6 @@ contract GenericNativeConverterTest is Test {
         vm.revertToState(beforeInit);
 
         bytes memory initData;
-
         initData = abi.encodeCall(
             nativeConverter.initialize,
             (
@@ -209,13 +209,12 @@ contract GenericNativeConverterTest is Test {
                 address(underlyingToken),
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
-                vbToken,
-                MAX_NON_MIGRATABLE_BACKING_PERCENTAGE
+                MAX_NON_MIGRATABLE_BACKING_PERCENTAGE,
+                migrationManager
             )
         );
         vm.expectRevert(NativeConverter.InvalidOwner.selector);
         GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
-        vm.revertToState(beforeInit);
 
         initData = abi.encodeCall(
             nativeConverter.initialize,
@@ -226,13 +225,12 @@ contract GenericNativeConverterTest is Test {
                 address(underlyingToken),
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
-                vbToken,
-                MAX_NON_MIGRATABLE_BACKING_PERCENTAGE
+                MAX_NON_MIGRATABLE_BACKING_PERCENTAGE,
+                migrationManager
             )
         );
         vm.expectRevert(NativeConverter.InvalidCustomToken.selector);
         GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
-        vm.revertToState(beforeInit);
 
         initData = abi.encodeCall(
             nativeConverter.initialize,
@@ -243,13 +241,12 @@ contract GenericNativeConverterTest is Test {
                 address(0),
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
-                vbToken,
-                MAX_NON_MIGRATABLE_BACKING_PERCENTAGE
+                MAX_NON_MIGRATABLE_BACKING_PERCENTAGE,
+                migrationManager
             )
         );
         vm.expectRevert(NativeConverter.InvalidUnderlyingToken.selector);
         GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
-        vm.revertToState(beforeInit);
 
         initData = abi.encodeCall(
             nativeConverter.initialize,
@@ -260,30 +257,12 @@ contract GenericNativeConverterTest is Test {
                 address(underlyingToken),
                 address(0),
                 NETWORK_ID_L1,
-                vbToken,
-                MAX_NON_MIGRATABLE_BACKING_PERCENTAGE
+                MAX_NON_MIGRATABLE_BACKING_PERCENTAGE,
+                migrationManager
             )
         );
         vm.expectRevert(NativeConverter.InvalidLxLyBridge.selector);
         GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
-        vm.revertToState(beforeInit);
-
-        initData = abi.encodeCall(
-            nativeConverter.initialize,
-            (
-                owner,
-                ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
-                address(customToken),
-                address(underlyingToken),
-                LXLY_BRIDGE,
-                NETWORK_ID_L1,
-                address(0),
-                MAX_NON_MIGRATABLE_BACKING_PERCENTAGE
-            )
-        );
-        vm.expectRevert(NativeConverter.InvalidVbToken.selector);
-        GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
-        vm.revertToState(beforeInit);
 
         MockERC20 dummyToken = new MockERC20();
         dummyToken.initialize("Dummy Token", "DT", 6);
@@ -297,13 +276,12 @@ contract GenericNativeConverterTest is Test {
                 address(underlyingToken),
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
-                vbToken,
-                MAX_NON_MIGRATABLE_BACKING_PERCENTAGE
+                MAX_NON_MIGRATABLE_BACKING_PERCENTAGE,
+                migrationManager
             )
         );
         vm.expectRevert(abi.encodeWithSelector(NativeConverter.NonMatchingCustomTokenDecimals.selector, 6, 18));
         GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
-        vm.revertToState(beforeInit);
 
         dummyToken = new MockERC20();
         dummyToken.initialize("Dummy Token", "DT", 6);
@@ -317,13 +295,12 @@ contract GenericNativeConverterTest is Test {
                 address(dummyToken),
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
-                vbToken,
-                MAX_NON_MIGRATABLE_BACKING_PERCENTAGE
+                MAX_NON_MIGRATABLE_BACKING_PERCENTAGE,
+                migrationManager
             )
         );
         vm.expectRevert(abi.encodeWithSelector(NativeConverter.NonMatchingUnderlyingTokenDecimals.selector, 6, 18));
         GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
-        vm.revertToState(beforeInit);
 
         vm.revertToState(beforeInit);
         initData = abi.encodeCall(
@@ -335,11 +312,27 @@ contract GenericNativeConverterTest is Test {
                 address(underlyingToken),
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
-                vbToken,
-                1e19
+                1e19,
+                migrationManager
             )
         );
         vm.expectRevert(NativeConverter.InvalidNonMigratableBackingPercentage.selector);
+        GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
+
+        initData = abi.encodeCall(
+            nativeConverter.initialize,
+            (
+                owner,
+                ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
+                address(customToken),
+                address(underlyingToken),
+                LXLY_BRIDGE,
+                NETWORK_ID_L1,
+                MAX_NON_MIGRATABLE_BACKING_PERCENTAGE,
+                address(0)
+            )
+        );
+        vm.expectRevert(NativeConverter.InvalidMigrationManager.selector);
         GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
     }
 
@@ -617,7 +610,11 @@ contract GenericNativeConverterTest is Test {
         uint256 amount = 100;
 
         // Try to migrate as the owner with a specific amount
-        vm.expectRevert(NativeConverter.OnlyMigrator.selector); // only owner can call this function
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessControl.AccessControlUnauthorizedAccount.selector, address(this), nativeConverter.MIGRATOR_ROLE()
+            )
+        ); // only owner can call this function
         nativeConverter.migrateBackingToLayerX(amount);
 
         vm.startPrank(owner);
@@ -626,10 +623,6 @@ contract GenericNativeConverterTest is Test {
         vm.expectRevert(PausableUpgradeable.EnforcedPause.selector);
         nativeConverter.migrateBackingToLayerX(amount);
         nativeConverter.unpause();
-
-        vm.stopPrank();
-
-        vm.startPrank(migrator);
 
         vm.expectRevert(NativeConverter.InvalidAssets.selector);
         nativeConverter.migrateBackingToLayerX(0); // try with 0 backing
@@ -643,7 +636,7 @@ contract GenericNativeConverterTest is Test {
 
         // create backing on layer Y
         uint256 backingOnLayerY = 0;
-        deal(address(underlyingToken), migrator, amount);
+        deal(address(underlyingToken), owner, amount);
         underlyingToken.approve(address(nativeConverter), amount);
         backingOnLayerY = nativeConverter.convert(amount, recipient);
 
@@ -655,7 +648,7 @@ contract GenericNativeConverterTest is Test {
             NETWORK_ID_L2,
             address(underlyingToken),
             NETWORK_ID_L1,
-            vbToken,
+            migrationManager,
             amountToMigrate,
             underlyingTokenMetadata,
             55413
@@ -666,22 +659,22 @@ contract GenericNativeConverterTest is Test {
             NETWORK_ID_L2,
             address(nativeConverter),
             NETWORK_ID_L1,
-            vbToken,
+            migrationManager,
             0,
             abi.encode(
-                NativeConverter.CrossNetworkInstruction.COMPLETE_MIGRATION, abi.encode(amountToMigrate, amountToMigrate)
+                MigrationManager.CrossNetworkInstruction.COMPLETE_MIGRATION, abi.encode(amountToMigrate, amountToMigrate)
             ),
             55414
         );
         vm.expectEmit();
-        emit NativeConverter.MigrationStarted(migrator, amountToMigrate, amountToMigrate);
+        emit NativeConverter.MigrationStarted(owner, amountToMigrate, amountToMigrate);
         nativeConverter.migrateBackingToLayerX(amountToMigrate);
         assertEq(underlyingToken.balanceOf(address(nativeConverter)), backingOnLayerY - amountToMigrate);
 
         vm.stopPrank();
     }
 
-    // TODO fix
+    // @todo review this test
     // function test_migrateBackingToLayerX_non_mintable() public {
     //     vm.revertToState(beforeInit);
 
@@ -704,7 +697,7 @@ contract GenericNativeConverterTest is Test {
     //     // assign addresses for generic testing
     //     customToken = MockERC20MintableBurnable(address(_customToken));
     //     underlyingToken = _underlyingToken;
-    //     vbToken = makeAddr("vbToken");
+    //     migrationManager = makeAddr("migrationManager");
 
     //     underlyingTokenMetadata = abi.encode("Underlying Token", "uTKN", 18);
 
@@ -719,7 +712,7 @@ contract GenericNativeConverterTest is Test {
     //             address(_underlyingToken), // wrapped underlying token
     //             LXLY_BRIDGE,
     //             NETWORK_ID_L1,
-    //             vbToken,
+    //             migrationManager,
     //             migrator,
     //             MAX_NON_MIGRATABLE_BACKING_PERCENTAGE
     //         )
@@ -777,7 +770,7 @@ contract GenericNativeConverterTest is Test {
     //         NETWORK_ID_L2,
     //         address(underlyingToken),
     //         NETWORK_ID_L1,
-    //         vbToken,
+    //         migrationManager,
     //         amountToMigrate,
     //         underlyingTokenMetadata,
     //         55413
@@ -788,7 +781,7 @@ contract GenericNativeConverterTest is Test {
     //         NETWORK_ID_L2,
     //         address(nativeConverter),
     //         NETWORK_ID_L1,
-    //         vbToken,
+    //         migrationManager,
     //         0,
     //         abi.encode(
     //             NativeConverter.CrossNetworkInstruction.COMPLETE_MIGRATION, abi.encode(amountToMigrate, amountToMigrate)

@@ -96,7 +96,7 @@ contract MigrationManager is
         _disableInitializers();
     }
 
-    function initialize(address owner_, address lxlyBridge_) internal initializer {
+    function initialize(address owner_, address lxlyBridge_) external initializer {
         MigrationManagerStorage storage $ = _getMigrationManagerStorage();
 
         // Check the inputs.
@@ -169,12 +169,13 @@ contract MigrationManager is
             require(layerYLxlyId != $.lxlyBridge.networkID(), InvalidLayerYLxLyId());
             require(nativeConverter != address(0), InvalidNativeConverter());
 
+            TokenPair memory oldTokens = $.nativeConvertersConfiguration[layerYLxlyId][nativeConverter];
+
             // Map or override tokens.
             /* Set tokens. */
             if (vbToken != address(0)) {
                 // Cache the tokens.
                 IERC20 underlyingToken = VaultBridgeToken(vbToken).underlyingToken();
-                TokenPair memory oldTokens = $.nativeConvertersConfiguration[layerYLxlyId][nativeConverter];
 
                 // Check the input.
                 require(address(underlyingToken) != address(0), InvalidUnderlyingToken());
@@ -194,7 +195,9 @@ contract MigrationManager is
             /* Unset tokens. */
             else {
                 // Revoke the approval of vbToken.
-                $.nativeConvertersConfiguration[layerYLxlyId][nativeConverter].underlyingToken.forceApprove(vbToken, 0);
+                $.nativeConvertersConfiguration[layerYLxlyId][nativeConverter].underlyingToken.forceApprove(
+                    address(oldTokens.vbToken), 0
+                );
 
                 // Unset the tokens.
                 delete $.nativeConvertersConfiguration[layerYLxlyId][nativeConverter];
