@@ -22,7 +22,8 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 
 /// @title Native Converter
 /// @notice Native Converter lives on Layer Ys and converts the underlying token (usually the bridge-wrapped version of the original underlying token from Layer X) to Custom Token, and vice versa, on demand. It can also migrate backing for Custom Token it has minted to Layer X, where vbToken will be minted and locked in LxLy Bridge. Please refer to `migrateBackingToLayerX` for more information.
-/// @dev This contract MUST have mint and burn permission on Custom Token. Please refer to `CustomToken.sol` for more information.
+/// @dev @note (ATTENTION) This contract MUST have mint and burn permission on Custom Token. Please refer to `CustomToken.sol` for more information.
+/// @dev @note IMPORTANT: The underlying token MUST NOT be a rebasing token, and MUST NOT have transfer hooks (i.e., enable reentrancy).
 abstract contract NativeConverter is
     Initializable,
     AccessControlUpgradeable,
@@ -46,15 +47,15 @@ abstract contract NativeConverter is
         uint32 lxlyId;
         ILxLyBridge lxlyBridge;
         uint32 layerXLxlyId;
-        // @todo Remove. If upgrading the testnet contracts, add a reinitializer and clear the old slots using assembly.
+        // @todo Remove. If upgrading the testnet contracts, add a reinitializer and clean the slot using assembly.
         address __OUTDATED__vbToken;
-        // @todo Remove. If upgrading the testnet contracts, add a reinitializer and clear the old slots using assembly.
+        // @todo Remove. If upgrading the testnet contracts, add a reinitializer and clean the slot using assembly.
         address __OUTDATED__migrator;
         uint256 nonMigratableBackingPercentage;
         address migrationManager;
     }
 
-    // @todo Change the namespace. If upgrading the testnet contracts, add a reinitializer and clear the old slots using assembly.
+    // @todo Change the namespace. If upgrading the testnet contracts, add a reinitializer and clean the old slots using assembly.
     /// @dev The storage slot at which Native Converter storage starts, following the EIP-7201 standard.
     /// @dev Calculated as `keccak256(abi.encode(uint256(keccak256("0xpolygon.storage.NativeConverter")) - 1)) & ~bytes32(uint256(0xff))`.
     bytes32 private constant _NATIVE_CONVERTER_STORAGE =
@@ -176,7 +177,7 @@ abstract contract NativeConverter is
     }
 
     /// @notice The amount of the underlying token that backs Custom Token minted by Native Converter on Layer Y that has not been migrated to Layer X.
-    /// @dev The amount is used in accounting and may be different from Native Converter's underlying token balance. You may do as you wish with surplus underlying token balance, but you MUST NOT designate it as backing.
+    /// @dev The amount is used in accounting and may be different from Native Converter's underlying token balance. @note IMPORTANT: You may do as you wish with surplus underlying token balance, but you MUST NOT designate it as backing.
     function backingOnLayerY() public view returns (uint256) {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
         return $.backingOnLayerY;
@@ -208,7 +209,7 @@ abstract contract NativeConverter is
         return $.nonMigratableBackingPercentage;
     }
 
-    // @todo Document.
+    // @remind Document.
     function migrationManager() public view returns (MigrationManager) {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
         return MigrationManager($.migrationManager);
@@ -464,7 +465,8 @@ abstract contract NativeConverter is
         NativeConverterStorage storage $ = _getNativeConverterStorage();
 
         // Calculate the non-migratable backing.
-        uint256 nonMigratableBacking = Math.mulDiv(customToken().totalSupply(), $.nonMigratableBackingPercentage, 1e18);
+        uint256 nonMigratableBacking =
+            _convertToAssets(Math.mulDiv(customToken().totalSupply(), $.nonMigratableBackingPercentage, 1e18));
 
         // Return the amount of backing that can be migrated.
         return $.backingOnLayerY > nonMigratableBacking ? $.backingOnLayerY - nonMigratableBacking : 0;
