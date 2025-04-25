@@ -18,15 +18,28 @@ import {ILxLyBridge} from "./etc/ILxLyBridge.sol";
 import {ITransferFeeCalculator} from "./ITransferFeeCalculator.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-// @todo Document.
+// @remind Document.
 contract VaultBridgeTokenInitializer is IVaultBridgeTokenInitializer, VaultBridgeToken {
     // Libraries.
     using SafeERC20 for IERC20;
 
-    // @todo Document.
+    address immutable self;
+
+    constructor() {
+        self = address(this);
+    }
+
+    modifier onlyDelegateCall() {
+        require(address(this) != self, "Not delegate call");
+        _;
+    }
+
+    // @remind Document.
     function initialize(VaultBridgeToken.InitializationParameters calldata initParams)
         external
         override
+        onlyDelegateCall
+        nonReentrant
         returns (bool success)
     {
         VaultBridgeTokenStorage storage $ = _getVaultBridgeTokenStorage();

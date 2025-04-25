@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity 0.8.29;
 
+// @note (ATTENTION) NOT USED IN PRODUCTION CURRENTLY.
+
 // Main functionality.
 import {ITransferFeeCalculator} from "../../ITransferFeeCalculator.sol";
 
 // External contracts.
 import {IUSDT} from "../../etc/IUSDT.sol";
 
-// @todo Document.
+// @remind Document.
 contract USDTTransferFeeCalculator is ITransferFeeCalculator {
     /// @notice The USDT contract.
     IUSDT public immutable USDT;
@@ -25,8 +27,8 @@ contract USDTTransferFeeCalculator is ITransferFeeCalculator {
 
     // -----================= ::: TRANSFER FEE CALCULATOR ::: =================-----
 
-    // @todo Review.
-    // @todo Document.
+    // @follow-up Review. (See the audit report).
+    // @remind Document (the entire function).
     /// @inheritdoc ITransferFeeCalculator
     function assetsAfterTransferFee(uint256 assetsBeforeTransferFee_) external view override returns (uint256) {
         uint256 basisPointsRate = USDT.basisPointsRate();
@@ -44,8 +46,8 @@ contract USDTTransferFeeCalculator is ITransferFeeCalculator {
         return assetsBeforeTransferFee_ - fee;
     }
 
-    // @todo Review.
-    // @todo Document.
+    // @follow-up Review. (See the audit report).
+    // @remind Document (the entire function).
     /// @inheritdoc ITransferFeeCalculator
     function assetsBeforeTransferFee(uint256 minimumAssetsAfterTransferFee_) external view override returns (uint256) {
         uint256 basisPointsRate = USDT.basisPointsRate();

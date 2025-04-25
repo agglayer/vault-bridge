@@ -3,6 +3,9 @@ pragma solidity 0.8.29;
 
 // @todo REVIEW.
 
+/// @dev Main functionality.
+import {IBridgeMessageReceiver} from "./etc/IBridgeMessageReceiver.sol";
+
 /// @dev Other functionality.
 import {Initializable} from "@openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
 import {AccessControlUpgradeable} from "@openzeppelin-contracts-upgradeable/access/AccessControlUpgradeable.sol";
@@ -18,11 +21,12 @@ import {VaultBridgeToken} from "./VaultBridgeToken.sol";
 import {ILxLyBridge} from "./etc/ILxLyBridge.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-// @todo Redocument.
+// @remind Redocument.
 /// @title Migration Manager (singleton)
 /// @notice Migration Manager is a singleton contract that lives on Layer X.
 /// @notice Backing for custom tokens minted by Native Converters on Layer Ys can be migrated to Layer X using Migration Manager. Migration Manager completes migrations by calling `completeMigration` on the corresponidng vbToken, which mints vbToken and bridge them to address zero on the Layer Ys, effectively locking the backing in LxLy Bridge. Please refer to `onMessageReceived` for more information.
 contract MigrationManager is
+    IBridgeMessageReceiver,
     Initializable,
     AccessControlUpgradeable,
     PausableUpgradeable,
@@ -35,7 +39,7 @@ contract MigrationManager is
     /// @dev Used in cross-network communication.
     enum CrossNetworkInstruction {
         COMPLETE_MIGRATION,
-        WRAP_COIN_AND_COMPLETE_MIGRATION
+        WRAP_GAS_TOKEN_AND_COMPLETE_MIGRATION
     }
 
     /// @dev Used for mapping Native Converters to vbTokens.
@@ -53,15 +57,15 @@ contract MigrationManager is
             nativeConvertersConfiguration;
     }
 
-    // @todo Change the namespace. If upgrading the testnet contracts, add a reinitializer and clear the old slots using assembly.
+    // @todo Change the namespace. If upgrading the testnet contracts, add a reinitializer and clean the old slots using assembly.
     /// @dev The storage slot at which Migration Manager storage starts, following the EIP-7201 standard.
     /// @dev Calculated as `keccak256(abi.encode(uint256(keccak256("0xpolygon.storage.MigrationManager")) - 1)) & ~bytes32(uint256(0xff))`.
     bytes32 private constant _MIGRATION_MANAGER_STORAGE =
         hex"aec447ccc4dc1a1a20af7f847edd1950700343642e68dd8266b4de5e0e190a00";
 
-    // @todo Redocument.
-    /// @dev The function selector for wrapping Layer X's coin, following the WETH9 standard.
-    /// @dev (ATTENTION) If the method of wrapping the coin for your Layer X differs, you cannot use this contract.
+    // @remind Redocument.
+    /// @dev The function selector for wrapping Layer X's gas token, following the WETH9 standard.
+    /// @dev (ATTENTION) If the method of wrapping the gas token for your Layer X differs, you cannot use this contract.
     /// @dev Calculated as `bytes4(keccak256("deposit()"))`.
     bytes4 private constant _UNDERLYING_TOKEN_WRAP_SELECTOR = hex"d0e30db0";
 
@@ -72,12 +76,12 @@ contract MigrationManager is
     error InvalidOwner();
     error InvalidLxLyBridge();
     error InvalidVbToken();
-    error MismatchedInputsLengths(); // @todo Rename.
+    error NonMatchingInputLengths();
     error InvalidLayerYLxLyId();
     error InvalidNativeConverter();
     error InvalidUnderlyingToken();
     error Unauthorized();
-    error CannotWrapCoin();
+    error CannotWrapGasToken();
     error InsufficientUnderlyingTokenBalanceAfterWrapping(uint256 newBalance, uint256 expectedBalance);
 
     // Events.
@@ -123,7 +127,7 @@ contract MigrationManager is
         return $.lxlyBridge;
     }
 
-    // @todo Redocument.
+    // @remind Redocument.
     /// @notice Tells which vbToken and the underlying token Native Converter on Layer Ys belongs to.
     /// @param nativeConverter The address of Native Converter on Layer Ys.
     function nativeConvertersConfiguration(uint32 layerYLxlyId, address nativeConverter)
@@ -144,7 +148,7 @@ contract MigrationManager is
 
     // -----================= ::: MIGRATION MANAGER ::: =================-----
 
-    // @todo Redocument (the entire function).
+    // @remind Redocument (the entire function).
     /// @notice Maps Native Converter on Layer Ys to vbToken and underlying token on Layer X.
     /// @dev CAUTION! Misconfiguration could allow an attacker to gain unauthorized access to vbToken and other contracts.
     /// @notice This function can be called by the owner only.
@@ -158,7 +162,7 @@ contract MigrationManager is
         MigrationManagerStorage storage $ = _getMigrationManagerStorage();
 
         // Check the inputs.
-        require(layerYLxlyIds.length == nativeConverters.length, MismatchedInputsLengths());
+        require(layerYLxlyIds.length == nativeConverters.length, NonMatchingInputLengths());
 
         for (uint256 i; i < layerYLxlyIds.length; ++i) {
             // Cache the inputs.
@@ -208,7 +212,7 @@ contract MigrationManager is
         }
     }
 
-    // @todo Redocument (the entire function).
+    // @remind Redocument (the entire function).
     /// @dev Native Converters on a Layer Ys call both `bridgeAsset` and `bridgeMessage` on LxLy Bridge to `migrateBackingToLayerX`.
     /// @dev The asset must be claimed before the message on LxLy Bridge.
     /// @dev The message tells Migration Manager on Layer X how much custom token must be backed by vbToken, which is minted and bridged to address zero on the respective Layer Y. This action provides liquidity when bridging the custom token to from Layer Ys to Layer X and increments the pessimistic proof.
@@ -229,7 +233,7 @@ contract MigrationManager is
         /* Complete migration. */
         if (
             instruction == CrossNetworkInstruction.COMPLETE_MIGRATION
-                || instruction == CrossNetworkInstruction.WRAP_COIN_AND_COMPLETE_MIGRATION
+                || instruction == CrossNetworkInstruction.WRAP_GAS_TOKEN_AND_COMPLETE_MIGRATION
         ) {
             // Cache vbToken.
             VaultBridgeToken vbToken = $.nativeConvertersConfiguration[originNetwork][originAddress].vbToken;
@@ -240,15 +244,15 @@ contract MigrationManager is
             // Decode the amounts.
             (uint256 shares, uint256 assets) = abi.decode(instructionData, (uint256, uint256));
 
-            // Wrap the coin if instructed.
-            if (instruction == CrossNetworkInstruction.WRAP_COIN_AND_COMPLETE_MIGRATION) {
+            // Wrap the gas token if instructed.
+            if (instruction == CrossNetworkInstruction.WRAP_GAS_TOKEN_AND_COMPLETE_MIGRATION) {
                 // Cache the underlying token.
                 IERC20 underlyingToken = $.nativeConvertersConfiguration[originNetwork][originAddress].underlyingToken;
 
                 // Cache the previous balance.
                 uint256 previousBalance = underlyingToken.balanceOf(address(this));
 
-                // Wrap the coin.
+                // Wrap the gas token.
                 (bool ok,) =
                     address(underlyingToken).call{value: assets}(abi.encodePacked(_UNDERLYING_TOKEN_WRAP_SELECTOR));
 
@@ -257,7 +261,7 @@ contract MigrationManager is
                 uint256 newBalance = underlyingToken.balanceOf(address(this));
 
                 // Check the result.
-                require(ok, CannotWrapCoin());
+                require(ok, CannotWrapGasToken());
                 require(
                     newBalance == expectedBalance,
                     InsufficientUnderlyingTokenBalanceAfterWrapping(newBalance, expectedBalance)

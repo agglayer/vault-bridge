@@ -2,6 +2,7 @@
 pragma solidity 0.8.29;
 
 // @todo REVIEW.
+// @follow-up Consider checking whether the network's gas token is ETH, like in WETH and WETHNativeConverter.
 
 import {VaultBridgeToken} from "../../VaultBridgeToken.sol";
 import {IWETH9} from "../../etc/IWETH9.sol";
@@ -10,6 +11,7 @@ import {IVersioned} from "../../etc/IVersioned.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /// @title Vault Bridge gas token
+/// @dev CAUTION! As-is, this contract MUST NOT be used on a network if the gas token is not ETH.
 contract VbETH is VaultBridgeToken {
     using SafeERC20 for IWETH9;
 

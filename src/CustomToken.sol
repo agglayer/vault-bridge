@@ -15,7 +15,7 @@ import {IVersioned} from "./etc/IVersioned.sol";
 /// @title Custom Token
 /// @notice A Custom Token is an ERC-20 token deployed on Layer Ys to represent the native version of the original underlying token from Layer X on Layer Y.
 /// @dev A base contract used to create Custom Tokens.
-/// @dev Custom Token MUST be custom mapped to the corresponding vbToken on LxLy Bridge on Layer Y and MUST give the minting and burning permission to LxLy Bridge and Native Converter. It MAY have a transfer fee.
+/// @dev @note IMPROTANT: Custom Token MUST be custom mapped to the corresponding vbToken on LxLy Bridge on Layer Y and MUST give the minting and burning permission to LxLy Bridge and Native Converter. It MAY have a transfer fee.
 abstract contract CustomToken is
     Initializable,
     AccessControlUpgradeable,
@@ -33,8 +33,8 @@ abstract contract CustomToken is
         address nativeConverter;
     }
 
-    // @todo Change the namespace. If upgrading the testnet contracts, add a reinitializer and clear the old slots using assembly.
-    // @todo This has been modified from `0x5bbe451cf8915ac9b43b69d5987da5a42549d90a2c7cab500dae45ea6889c900`, which was incorrect. If upgrading the testnet contracts, add a reinitializer and clear the old slots using assembly.
+    // @todo Change the namespace. If upgrading the testnet contracts, add a reinitializer and clean the old slots using assembly.
+    // @todo The value has been modified from `0x5bbe451cf8915ac9b43b69d5987da5a42549d90a2c7cab500dae45ea6889c900`, which was incorrect. If upgrading the testnet contracts, add a reinitializer and clean the old slots using assembly.
     /// @dev The storage slot at which Custom Token storage starts, following the EIP-7201 standard.
     /// @dev Calculated as `keccak256(abi.encode(uint256(keccak256("0xpolygon.storage.CustomToken")) - 1)) & ~bytes32(uint256(0xff))`.
     bytes32 private constant _CUSTOM_TOKEN_STORAGE =

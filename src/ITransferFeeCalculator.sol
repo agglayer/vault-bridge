@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity 0.8.29;
 
-// @todo Document.
+// @remind Document.
 interface ITransferFeeCalculator {
-    // @todo Redocument.
+    // @remind Redocument.
     /// @notice Accounts for the transfer fee of the underlying token.
     /// @dev You must implement the same behavior as that of the underlying token for calculating the transfer fee.
     /// @dev If the underlying token does not have a transfer fee, the output must equal the input.
@@ -14,7 +14,7 @@ interface ITransferFeeCalculator {
     /// @dev Output: `98`
     function assetsAfterTransferFee(uint256 assetsBeforeTransferFee) external view returns (uint256);
 
-    // @todo Redocument.
+    // @remind Redocument.
     /// @notice Accounts for the transfer fee of the underlying token.
     /// @dev You must implement the same behavior as that of the underlying token for calculating the transfer fee.
     /// @dev If the underlying token does not have a transfer fee, the output must equal the input.

@@ -3,6 +3,8 @@ pragma solidity 0.8.29;
 
 interface ILxLyBridge {
     function networkID() external view returns (uint32);
+    function gasTokenAddress() external view returns (address);
+    function gasTokenNetwork() external view returns (uint32);
     function bridgeAsset(
         uint32 destinationNetwork,
         address destinationAddress,
