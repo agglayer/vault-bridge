@@ -387,7 +387,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
         customToken = new MockCustomToken();
         bytes memory customTokenInitData = abi.encodeCall(
             MockCustomToken(customToken).initialize,
-            (owner, CUSTOM_TOKEN_NAME, CUSTOM_TOKEN_SYMBOL, CUSTOM_TOKEN_DECIMALS, LXLY_BRIDGE_Y, nativeConverterAddr)
+            (owner, CUSTOM_TOKEN_NAME, CUSTOM_TOKEN_SYMBOL, CUSTOM_TOKEN_DECIMALS, LXLY_BRIDGE_Y, nativeConverters[0])
         );
         customToken = MockCustomToken(_proxify(address(customToken), address(this), customTokenInitData));
 

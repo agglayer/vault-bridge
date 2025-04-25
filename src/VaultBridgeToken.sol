@@ -715,19 +715,17 @@ abstract contract VaultBridgeToken is
         address receiver,
         bytes calldata metadata
     ) external whenNotPaused nonReentrant returns (uint256 assets) {
-        VaultBridgeTokenStorage storage $ = _getVaultBridgeTokenStorage();
-
         // Claim vbToken from LxLy Bridge.
         // @todo Review the hardcoded values.
-        $.lxlyBridge.claimAsset(
+        lxlyBridge().claimAsset(
             smtProofLocalExitRoot,
             smtProofRollupExitRoot,
             globalIndex,
             mainnetExitRoot,
             rollupExitRoot,
-            $.lxlyId,
+            lxlyId(),
             address(this),
-            $.lxlyId,
+            lxlyId(),
             destinationAddress,
             amount,
             metadata
