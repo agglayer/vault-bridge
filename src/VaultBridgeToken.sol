@@ -741,7 +741,7 @@ abstract contract VaultBridgeToken is
         assets = convertToAssets(amount);
 
         // Burn vbToken and unlock the underlying token.
-        uint256 redeemedShares = _withdraw(amount, receiver, destinationAddress);
+        uint256 redeemedShares = _withdraw(assets, receiver, destinationAddress);
 
         // Check the output.
         require(redeemedShares == amount, IncorrectAmountOfSharesRedeemed(redeemedShares, amount));

@@ -100,6 +100,8 @@ contract MigrationManager is
         _disableInitializers();
     }
 
+    receive() external payable {}
+
     function initialize(address owner_, address lxlyBridge_) external initializer {
         MigrationManagerStorage storage $ = _getMigrationManagerStorage();
 

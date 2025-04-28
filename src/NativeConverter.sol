@@ -212,7 +212,7 @@ abstract contract NativeConverter is
     // @remind Document.
     function migrationManager() public view returns (MigrationManager) {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
-        return MigrationManager($.migrationManager);
+        return MigrationManager(payable($.migrationManager));
     }
 
     /// @dev Returns a pointer to the ERC-7201 storage namespace.
@@ -383,61 +383,6 @@ abstract contract NativeConverter is
                 destinationNetworkId, receiver, assets, address($.underlyingToken), forceUpdateGlobalExitRoot, ""
             );
         }
-    }
-
-    /// @notice Burn a specific amount of Custom Token to unlock a respective amount of the underlying token.
-    /// @param shares The amount of Custom Token to deconvert to the underlying token.
-    /// @return assets The amount of the underlying token unlocked to the receiver.
-    /// @dev Uses EIP-2612 permit to transfer Custom Token from the sender to self.
-    function deconvertWithPermit(uint256 shares, address receiver, bytes calldata permitData)
-        external
-        whenNotPaused
-        nonReentrant
-        returns (uint256 assets)
-    {
-        NativeConverterStorage storage $ = _getNativeConverterStorage();
-        return _deconvertWithPermit(shares, permitData, $.lxlyId, receiver, false);
-    }
-
-    /// @notice Burn a specific amount of Custom Token to unlock a respective amount of the underlying token, and bridge it to another network.
-    /// @param shares The amount of Custom Token to deconvert to the underlying token.
-    /// @return assets The amount of the underlying token unlocked to the receiver.
-    /// @dev Uses EIP-2612 permit to transfer Custom Token from the sender to self.
-    function deconvertWithPermitAndBridge(
-        uint256 shares,
-        address receiver,
-        uint32 destinationNetworkId,
-        bool forceUpdateGlobalExitRoot,
-        bytes calldata permitData
-    ) external whenNotPaused nonReentrant returns (uint256 assets) {
-        NativeConverterStorage storage $ = _getNativeConverterStorage();
-
-        // Check the input.
-        require(destinationNetworkId != $.lxlyId, InvalidDestinationNetworkId());
-
-        return _deconvertWithPermit(shares, permitData, destinationNetworkId, receiver, forceUpdateGlobalExitRoot);
-    }
-
-    /// @notice Burn a specific amount of Custom Token to unlock a respective amount of the underlying token, and optionally bridge it to another network.
-    /// @param shares The amount of Custom Token to deconvert to the underlying token.
-    /// @return assets The amount of the underlying token unlocked to the receiver.
-    /// @dev Uses EIP-2612 permit to transfer Custom Token from the sender to self.
-    function _deconvertWithPermit(
-        uint256 shares,
-        bytes calldata permitData,
-        uint32 destinationNetworkId,
-        address receiver,
-        bool forceUpdateGlobalExitRoot
-    ) internal returns (uint256 assets) {
-        NativeConverterStorage storage $ = _getNativeConverterStorage();
-
-        // Check the input.
-        require(permitData.length > 0, InvalidPermitData());
-
-        // Use the permit.
-        _permit(address($.underlyingToken), assets, permitData);
-
-        return _deconvert(shares, destinationNetworkId, receiver, forceUpdateGlobalExitRoot);
     }
 
     /// @dev Tells how much a specific amount of underlying token is worth in Custom Token.
