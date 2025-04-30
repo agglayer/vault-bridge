@@ -1,23 +1,15 @@
-> [!NOTE]
-> This readme needs to be updated. Also, some NatSpec may be outdated.
+# Vault Bridge
 
-<br>
-
-<h1 align="center">🌾 Vault Bridge Token</h1>
-
-<div align="center">
-
-Vault Bridge Token is the core of the Stake The Bridge system. Built from the ground up to be reusable, it offers complete STB functionality out of the box, allowing you to create vbTokens in just a few lines of code.
-
-</div>
+Vault Bridge Token is the core of the Vault Bridge protocol. Built from the ground up to be reusable, it offers complete functionality out of the box, allowing you to create vbTokens in just a few lines of code.
 
 ## Overview
 
-The Stake The Bridge system is comprised of:
+The Vault Bridge protocl is comprised of:
 
-- Layer X
+- Layer X (the main network)
   - [Vault Bridge Token](#vault-bridged-token-)
-- Layer Y
+  - [Migration Manager (singleton)](#migration-manager-)
+- Layer Y (other networks)
   - [Custom Token](#custom-token-)
   - [Native Converter](#native-converter-)
 
@@ -29,7 +21,15 @@ A Vault Bridge Token is an
 - [ERC-4626](https://eips.ethereum.org/EIPS/eip-4626) vault
 - [LxLy Bridge](https://github.com/0xPolygonHermez/zkevm-contracts) extension
 
-enabling bridging of select assets, such as WBTC, WETH, USDC, USDT, and DAI, while producing yield.
+enabling bridging of select assets, such as WBTC, WETH, USDT, USDC, and USDS, while producing yield.
+
+### Migration Manager (singleton) [↗](src/MigrationManager.sol)
+
+The Migration Manager is a
+
+- [Vault Bridge Token](#vault-bridged-token-) dependency
+
+handling migration of backing from Native Converters.
 
 ### Custom Token [↗](src/CustomToken.sol)
 
@@ -37,7 +37,7 @@ A Custom Token is an
 
 - [ERC-20](https://eips.ethereum.org/EIPS/eip-20) token
 
-custom-mapped to vbToken on [LxLy Bridge](https://github.com/0xPolygonHermez/zkevm-contracts).
+an upgrade for [LxLy Bridge](https://github.com/0xPolygonHermez/zkevm-contracts)'s generic wrapped token.
 
 ### Native Converter [↗](src/NativeConverter.sol)
 
@@ -46,7 +46,7 @@ A Native Converter is a
 - pseudo [ERC-4626](https://eips.ethereum.org/EIPS/eip-4626) vault
 - [LxLy Bridge](https://github.com/0xPolygonHermez/zkevm-contracts) extension
 
-allowing conversion to, and deconversion of, Custom Token.
+allowing conversion to, and deconversion of, Custom Token, as well as migration of backing to Vault Bridge Token.
 
 ## Usage
 
@@ -59,7 +59,7 @@ foundryup
 #### Install
 
 ```
-forge soldeer install & bun install
+forge soldeer install & npm install
 ```
 
 #### Build
@@ -70,12 +70,6 @@ forge build
 
 #### Test
 
-Install dependencies:
-```
-npm i
-```
-
-Run tests:
 ```
 forge test
 ```
