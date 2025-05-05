@@ -1,12 +1,9 @@
 methods {
-    function _.decimals() external => DISPATCHER(true);
-    function _.burn(address,uint256) external => DISPATCHER(true);
-    function _.transfer(address,uint256) external => DISPATCHER(true);
-    function _.transferFrom(address,address,uint256) external => DISPATCHER(true);
-    function _.balanceOf(address) external => DISPATCHER(true);
-    function _.mint(address,uint256) external => DISPATCHER(true);
-    function _.approve(address,uint256) external => DISPATCHER(true);
-    function _.totalSupply() external => DISPATCHER(true);
+    // TODO: not sure which implementation to use here
+    //unresolved external in WETHNativeConverter.convertWithPermit(uint256,address,bytes) => DISPATCH [
+    //    _.permit(address,address,uint256,uint256,uint8,bytes32,bytes32),
+    //    _.permit(address,address,uint256,uint256,bool,uint8,bytes32,bytes32),
+    //] default HAVOC_ECF;
 
     // dispatch to ILxLyBridge
     function _.networkID() external => DISPATCHER(true);

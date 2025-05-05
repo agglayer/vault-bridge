@@ -16,7 +16,9 @@ env:
     certora/confs/setup/sanity_VaultBridgeTokenMock.conf
     certora/confs/setup/sanity_VbETH.conf
     certora/confs/setup/sanity_WETH.conf
-    certora/confs/setup/sanity_WETHNativeConverter.conf
+    certora/confs/WETHNativeConverter-other.conf
+    certora/confs/WETHNativeConverter-VbETH.conf
+    certora/confs/WETHNativeConverter-VbUSDT.conf
 
 jobs:
   check:
