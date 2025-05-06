@@ -46,6 +46,13 @@ jobs:
         run: |
           forge soldeer install
           bun install || true
+      
+      - name: setup bridge repo
+        run: |
+          git clone https://github.com/0xPolygonHermez/zkevm-contracts.git
+          cd zkevm-contracts/
+          git checkout v10.1.0-rc.1
+          npm install
 
       - name: run configs
         uses: Certora/certora-run-action@v1
