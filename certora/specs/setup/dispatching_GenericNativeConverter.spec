@@ -16,6 +16,12 @@ methods {
         _.permit(address,address,uint256,uint256,bool,uint8,bytes32,bytes32),
     ] default HAVOC_ECF;
 
+    function GenericNativeConverter.lxlyBridge() external returns (address) => CVL_lxlyBridge();
+    function NativeConverter.lxlyBridge() internal returns (address) => CVL_lxlyBridge();
+}
+
+function CVL_lxlyBridge() returns address {
+    return BridgeL2SovereignChain;
 }
 
 hook Sload address addr GenericNativeConverter.certoralink_StorageExtension_nativeConverterStorage.lxlyBridge {
