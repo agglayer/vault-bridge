@@ -56,7 +56,7 @@ jobs:
         with:
           use-alpha: true
           configurations: ${{ env.CONFIGS }}
-          solc-versions: 0.8.29
+          solc-versions: 0.8.28 0.8.29
           solc-remove-version-prefix: "0."
           job-name: "Verified Rules"
           certora-key: ${{ secrets.CERTORAKEY }}
