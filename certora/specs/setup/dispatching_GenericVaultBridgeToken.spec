@@ -9,10 +9,8 @@ methods {
         _.permit(address,address,uint256,uint256,uint8,bytes32,bytes32),
         _.permit(address,address,uint256,uint256,bool,uint8,bytes32,bytes32),
     ] default HAVOC_ECF;
-
-    function _.initialize(VaultBridgeToken.InitializationParameters) external => DISPATCHER(true);
 }
 
 hook Sload address addr GenericVaultBridgeToken.certoralink_StorageExtension_vaultBridgeTokenStorage.transferFeeCalculator {
-    require(addr == address(0));
+    require(addr == 0);
 }
