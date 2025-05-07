@@ -1,13 +1,12 @@
+import "../snippets/dispatching_PermitMock.spec";
+
 methods {
-function _.decimals() external => DISPATCHER(true);
-function _.maxDeposit(address) external => DISPATCHER(true);
-function _.deposit(uint256,address) external => DISPATCHER(true);
-function _.transfer(address,uint256) external => DISPATCHER(true);
-function _.withdraw(uint256,address,address) external => DISPATCHER(true);
-function _.transferFrom(address,address,uint256) external => DISPATCHER(true);
-function _.balanceOf(address) external => DISPATCHER(true);
-function _.convertToAssets(uint256) external => DISPATCHER(true);
-function _.maxWithdraw(address) external => DISPATCHER(true);
-function _.approve(address,uint256) external => DISPATCHER(true);
-function _.assetsAfterTransferFee(uint256) external => DISPATCHER(true);
+    unresolved external in WETHNativeConverter.depositWithPermit(uint256,address,bytes) => DISPATCH [
+        _.permit(address,address,uint256,uint256,uint8,bytes32,bytes32),
+        _.permit(address,address,uint256,uint256,bool,uint8,bytes32,bytes32),
+    ] default HAVOC_ECF;
+    unresolved external in WETHNativeConverter.depositWithPermitAndBridge(uint256,address,uint32,bool,bytes) => DISPATCH [
+        _.permit(address,address,uint256,uint256,uint8,bytes32,bytes32),
+        _.permit(address,address,uint256,uint256,bool,uint8,bytes32,bytes32),
+    ] default HAVOC_ECF;
 }
