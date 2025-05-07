@@ -10,7 +10,6 @@ env:
     certora/confs/setup/sanity_GenericNativeConverter.conf
     certora/confs/setup/sanity_GenericVbToken.conf
     certora/confs/setup/sanity_MockVault.conf
-    certora/confs/setup/sanity_NativeConverterMock.conf
     certora/confs/setup/sanity_TransferFeeUtilsVbUSDT.conf
     certora/confs/setup/sanity_VaultBridgeTokenInitializer.conf
     certora/confs/setup/sanity_VaultBridgeTokenMock.conf
@@ -19,6 +18,9 @@ env:
     certora/confs/GenericNativeConverter-other.conf
     certora/confs/GenericNativeConverter-VbETH.conf
     certora/confs/GenericNativeConverter-VbUSDT.conf
+    certora/confs/VaultBridgeToken-other.conf
+    certora/confs/VaultBridgeToken-VbETH.conf
+    certora/confs/VaultBridgeToken-VbUSDT.conf
     certora/confs/WETHNativeConverter-other.conf
     certora/confs/WETHNativeConverter-VbETH.conf
     certora/confs/WETHNativeConverter-VbUSDT.conf
