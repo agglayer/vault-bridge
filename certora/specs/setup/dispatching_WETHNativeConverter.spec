@@ -24,3 +24,7 @@ methods {
 function CVL_lxlyBridge() returns address {
     return BridgeL2SovereignChain;
 }
+
+hook Sload address addr WETHNativeConverter.certoralink_StorageExtension_nativeConverterStorage.lxlyBridge {
+    require(addr == BridgeL2SovereignChain);
+}
