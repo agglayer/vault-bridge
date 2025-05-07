@@ -6,17 +6,19 @@ env:
   FOUNDRY_PROFILE: ci
   CONFIGS: |
     certora/confs/GenericCustomToken.conf
-    certora/confs/GenericNativeConverter-other.conf
+    certora/confs/GenericNativeConverter-generic.conf
     certora/confs/GenericNativeConverter-VbETH.conf
     certora/confs/GenericNativeConverter-VbUSDT.conf
-    certora/confs/MigrationManager.conf
+    certora/confs/MigrationManager-generic.conf
+    certora/confs/MigrationManager-VbETH.conf
+    certora/confs/MigrationManager-VbUSDT.conf
     certora/confs/USDTTransferFeeCalculator.conf
-    certora/confs/VaultBridgeToken-other.conf
+    certora/confs/VaultBridgeToken-generic.conf
     certora/confs/VaultBridgeToken-VbETH.conf
     certora/confs/VaultBridgeToken-VbUSDT.conf
     certora/confs/VaultBridgeTokenInitializer.conf
     certora/confs/WETH.conf
-    certora/confs/WETHNativeConverter-other.conf
+    certora/confs/WETHNativeConverter-generic.conf
     certora/confs/WETHNativeConverter-VbETH.conf
     certora/confs/WETHNativeConverter-VbUSDT.conf
 
