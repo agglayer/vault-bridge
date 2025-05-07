@@ -1,2 +1,2 @@
-import "dispatching_CustomTokenMock.spec";
+import "dispatching_MigrationManager.spec";
 use builtin rule sanity filtered { f -> f.contract == currentContract }
