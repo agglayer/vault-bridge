@@ -12,7 +12,3 @@ methods {
 
     function _.initialize(VaultBridgeToken.InitializationParameters) external => DISPATCHER(true);
 }
-
-hook Sload address addr GenericVaultBridgeToken.certoralink_StorageExtension_vaultBridgeTokenStorage.transferFeeCalculator {
-    require(addr == address(0));
-}
