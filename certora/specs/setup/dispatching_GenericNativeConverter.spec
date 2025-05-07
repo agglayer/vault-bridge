@@ -18,6 +18,6 @@ methods {
 
 }
 
-//hook Sload address addr certoralink_StorageExtension_lxlyBridge {
-//    require(addr == BridgeL2SovereignChain);
-//}
+hook Sload address addr GenericNativeConverter.certoralink_StorageExtension_nativeConverterStorage.lxlyBridge {
+    require(addr == BridgeL2SovereignChain);
+}
