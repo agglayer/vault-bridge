@@ -1,7 +1,13 @@
+import { CustomToken } from "src/CustomToken.sol";
 import { NativeConverter } from "src/NativeConverter.sol";
 import { VaultBridgeToken } from "src/VaultBridgeToken.sol";
 
 contract StorageExtension {
+    /**
+     * @custom:certoralink 0x7c85b7b2d9fd038d6192406f4d8c0b3abd3ba313fe130017505dbec645b26600
+     */
+    CustomToken.CustomTokenStorage customTokenStorage;
+
     /**
      * @custom:certoralink 0xb6887066a093cfbb0ec14b46507f657825a892fd6a4c4a1ef4fc83e8c7208c00
      */
