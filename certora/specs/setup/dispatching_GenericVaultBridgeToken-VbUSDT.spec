@@ -9,6 +9,4 @@ methods {
         _.permit(address,address,uint256,uint256,uint8,bytes32,bytes32),
         _.permit(address,address,uint256,uint256,bool,uint8,bytes32,bytes32),
     ] default HAVOC_ECF;
-
-    function _.initialize(VaultBridgeToken.InitializationParameters) external => DISPATCHER(true);
 }
