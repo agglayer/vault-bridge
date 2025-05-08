@@ -7,14 +7,14 @@ env:
   CONFIGS: |
     certora/confs/GenericCustomToken.conf
     certora/confs/GenericNativeConverter.conf
+    certora/confs/GenericVaultBridgeToken.conf
+    certora/confs/GenericVaultBridgeToken-VbUSDT.conf
     certora/confs/MigrationManager-generic.conf
     certora/confs/MigrationManager-VbETH.conf
     certora/confs/MigrationManager-VbUSDT.conf
     certora/confs/USDTTransferFeeCalculator.conf
-    certora/confs/VaultBridgeToken-generic.conf
-    certora/confs/VaultBridgeToken-VbETH.conf
-    certora/confs/VaultBridgeToken-VbUSDT.conf
     certora/confs/VaultBridgeTokenInitializer.conf
+    certora/confs/VbETH.conf
     certora/confs/WETH.conf
     certora/confs/WETHNativeConverter.conf
 
