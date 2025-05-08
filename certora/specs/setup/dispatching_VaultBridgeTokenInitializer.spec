@@ -11,6 +11,6 @@ methods {
     ] default HAVOC_ECF;
 }
 
-hook Sload address addr VaultBridgeTokenInitializer.nativeConverterStorage.transferFeeCalculator {
+hook Sload address addr VaultBridgeTokenInitializer.vaultBridgeTokenStorage.transferFeeCalculator {
     require(addr == 0);
 }
