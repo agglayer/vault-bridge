@@ -10,7 +10,3 @@ methods {
         _.permit(address,address,uint256,uint256,bool,uint8,bytes32,bytes32),
     ] default HAVOC_ECF;
 }
-
-hook Sload address addr VaultBridgeTokenInitializer.nativeConverterStorage.transferFeeCalculator {
-    require(addr == 0);
-}
