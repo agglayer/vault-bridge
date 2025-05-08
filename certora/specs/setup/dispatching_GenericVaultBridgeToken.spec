@@ -11,6 +11,6 @@ methods {
     ] default HAVOC_ECF;
 }
 
-hook Sload address addr GenericVaultBridgeToken.certoralink_StorageExtension_vaultBridgeTokenStorage.transferFeeCalculator {
+hook Sload address addr GenericVaultBridgeToken.vaultBridgeTokenStorage.transferFeeCalculator {
     require(addr == 0);
 }
