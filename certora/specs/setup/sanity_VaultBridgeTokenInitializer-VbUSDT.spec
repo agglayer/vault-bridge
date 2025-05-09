@@ -2,7 +2,6 @@ import "dispatching_VaultBridgeTokenInitializer-VbUSDT.spec";
 
 using BridgeL2SovereignChain as BridgeL2SovereignChain;
 using MockERC20 as MockERC20;
-using USDTTransferFeeCalculator as USDTTransferFeeCalculator;
 
 use builtin rule sanity filtered { f ->
     f.contract == currentContract &&
