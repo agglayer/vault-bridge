@@ -11,7 +11,7 @@ methods {
     ] default HAVOC_ECF;
 
     function _.bridgeAsset(uint32,address,uint256,address,bool,bytes) external => DISPATCHER(true);
-    
+    function _.updateExitRoot(bytes32) external => DISPATCHER(true);
 }
 
 hook Sload address addr VbETH.vaultBridgeTokenStorage.transferFeeCalculator {
