@@ -1,3 +1,4 @@
+import "../snippets/dispatching_Bridge.spec";
 import "../snippets/dispatching_PermitMock.spec";
 
 using BridgeL2SovereignChain as BridgeL2SovereignChain;
@@ -18,10 +19,6 @@ methods {
 
     function GenericNativeConverter.lxlyBridge() external returns (address) => CVL_lxlyBridge();
     function NativeConverter.lxlyBridge() internal returns (address) => CVL_lxlyBridge();
-
-    function _.bridgeAsset(uint32,address,uint256,address,bool,bytes) external => DISPATCHER(true);
-    function _.bridgeMessage(uint32,address,bool,bytes) external => DISPATCHER(true);
-    function _.updateExitRoot(bytes32) external => DISPATCHER(true);
 }
 
 function CVL_lxlyBridge() returns address {
