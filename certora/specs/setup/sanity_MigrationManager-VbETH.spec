@@ -1,5 +1,7 @@
 import "dispatching_MigrationManager.spec";
 
+using VbETH as VbETH;
+
 use builtin rule sanity filtered { f ->
     f.contract == currentContract && 
     f.selector != sig:configureNativeConverters(uint32[],address[],address).selector
