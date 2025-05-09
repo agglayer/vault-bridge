@@ -1,5 +1,7 @@
 import "dispatching_MigrationManager-VbUSDT.spec";
 
+using VbUSDT as VbUSDT;
+
 use builtin rule sanity filtered { f ->
     f.contract == currentContract && 
     f.selector != sig:configureNativeConverters(uint32[],address[],address).selector
