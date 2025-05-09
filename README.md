@@ -7,7 +7,7 @@ Vault Bridge Token is the core of the Vault Bridge protocol. Built from the grou
 
 ## Overview
 
-The Vault Bridge protocl is comprised of:
+The Vault Bridge protocol is comprised of:
 
 - Layer X (the main network)
   - [Vault Bridge Token](#vault-bridge-token-)
@@ -50,6 +50,12 @@ A Native Converter is a
 - [LxLy Bridge](https://github.com/0xPolygonHermez/zkevm-contracts) extension
 
 allowing conversion to, and deconversion of, Custom Token, as well as migration of backing to Vault Bridge Token.
+
+## Documentation
+
+Please see NatSpec documentation inside of the files.
+
+Please see `@note` documentation for important information.
 
 ## Usage
 

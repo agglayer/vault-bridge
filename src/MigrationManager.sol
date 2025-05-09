@@ -50,18 +50,17 @@ contract MigrationManager is
 
     /// @dev Storage of the Migration Manager contract.
     /// @dev It's implemented on a custom ERC-7201 namespace to reduce the risk of storage collisions when using with upgradeable contracts.
-    /// @custom:storage-location erc7201:0xpolygon.storage.MigrationManager
+    /// @custom:storage-location erc7201:agglayer.vault-bridge.MigrationManager.storage
     struct MigrationManagerStorage {
         ILxLyBridge lxlyBridge;
         mapping(uint32 layerYLxLyId => mapping(address nativeConverter => TokenPair tokenPair))
             nativeConvertersConfiguration;
     }
 
-    // @todo Change the namespace. If upgrading the testnet contracts, add a reinitializer and clean the old slots using assembly.
     /// @dev The storage slot at which Migration Manager storage starts, following the EIP-7201 standard.
-    /// @dev Calculated as `keccak256(abi.encode(uint256(keccak256("0xpolygon.storage.MigrationManager")) - 1)) & ~bytes32(uint256(0xff))`.
+    /// @dev Calculated as `keccak256(abi.encode(uint256(keccak256("agglayer.vault-bridge.MigrationManager.storage")) - 1)) & ~bytes32(uint256(0xff))`.
     bytes32 private constant _MIGRATION_MANAGER_STORAGE =
-        hex"aec447ccc4dc1a1a20af7f847edd1950700343642e68dd8266b4de5e0e190a00";
+        hex"30cf29e424d82bdf294fbec113ef39ac73137edfdb802b37ef3fc9ad433c5000";
 
     // @remind Redocument.
     /// @dev The function selector for wrapping Layer X's gas token, following the WETH9 standard.

@@ -8,24 +8,19 @@ import {IWETH9} from "../../etc/IWETH9.sol";
 import {IVersioned} from "../../etc/IVersioned.sol";
 import {ILxLyBridge} from "../../etc/ILxLyBridge.sol";
 
-// @todo Waiting for a confirmation on what the following comment means before removing it.
-// TODO
-// - make upgradeable to enable potential future ETH staking plans
-
 /// @title WETH
 /// @dev based on https://github.com/gnosis/canonical-weth/blob/master/contracts/WETH9.sol
 contract WETH is CustomToken {
     /// @dev Storage of WETH contract.
     /// @dev It's implemented on a custom ERC-7201 namespace to reduce the risk of storage collisions when using with upgradeable contracts.
-    /// @custom:storage-location erc7201:0xpolygon.storage.WETH
+    /// @custom:storage-location erc7201:agglayer.vault-bridge.WETH.storage
     struct WETHStorage {
         bool _gasTokenIsEth;
     }
 
-    // @todo Change the namespace. If upgrading the testnet contracts, add a reinitializer and clean the old slots using assembly.
     /// @dev The storage slot at which WETH storage starts, following the EIP-7201 standard.
-    /// @dev Calculated as `keccak256(abi.encode(uint256(keccak256("0xpolygon.storage.WETH")) - 1)) & ~bytes32(uint256(0xff))`.
-    bytes32 private constant _WETH_STORAGE = hex"6d4cb2d05573f65a3f078817242fe7f4fc2dbdfbcc81ab3f1b74c8991c679300";
+    /// @dev Calculated as `keccak256(abi.encode(uint256(keccak256("agglayer.vault-bridge.WETH.storage")) - 1)) & ~bytes32(uint256(0xff))`.
+    bytes32 private constant _WETH_STORAGE = hex"df8caff5d0161908572492829df972cd19b1aabe3c3078d95299408cd561dc00";
 
     error AssetsTooLarge(uint256 availableAssets, uint256 requestedAssets);
     error FunctionNotSupportedOnThisNetwork();
@@ -47,14 +42,14 @@ contract WETH is CustomToken {
         _;
     }
 
-    function initialize(
+    function reinitialize(
         address owner_,
         string calldata name_,
         string calldata symbol_,
         uint8 originalUnderlyingTokenDecimals_,
         address lxlyBridge_,
         address nativeConverter_
-    ) external initializer {
+    ) external virtual reinitializer(2) {
         WETHStorage storage $ = _getWETHStorage();
 
         // Initialize the inherited contracts.
@@ -69,21 +64,6 @@ contract WETH is CustomToken {
             $.slot := _WETH_STORAGE
         }
     }
-
-    /*
-    // @todo Remove. (Required for the testnet).
-    function reinitialize(
-        address owner_,
-        string calldata name_,
-        string calldata symbol_,
-        uint8 originalUnderlyingTokenDecimals_,
-        address lxlyBridge_,
-        address nativeConverter_
-    ) external reinitializer(3) {
-        // Reinitialize the inherited contracts.
-        __CustomToken_init(owner_, name_, symbol_, originalUnderlyingTokenDecimals_, lxlyBridge_, nativeConverter_);
-    }
-    */
 
     function bridgeBackingToLayerX(uint256 amount)
         external

@@ -26,19 +26,17 @@ abstract contract CustomToken is
 {
     /// @dev Storage of Custom Token contract.
     /// @dev It's implemented on a custom ERC-7201 namespace to reduce the risk of storage collisions when using with upgradeable contracts.
-    /// @custom:storage-location erc7201:0xpolygon.storage.CustomToken
+    /// @custom:storage-location erc7201:agglayer.vault-bridge.CustomToken.storage
     struct CustomTokenStorage {
         uint8 decimals;
         address lxlyBridge;
         address nativeConverter;
     }
 
-    // @todo Change the namespace. If upgrading the testnet contracts, add a reinitializer and clean the old slots using assembly.
-    // @todo The value has been modified from `0x5bbe451cf8915ac9b43b69d5987da5a42549d90a2c7cab500dae45ea6889c900`, which was incorrect. If upgrading the testnet contracts, add a reinitializer and clean the old slots using assembly.
     /// @dev The storage slot at which Custom Token storage starts, following the EIP-7201 standard.
-    /// @dev Calculated as `keccak256(abi.encode(uint256(keccak256("0xpolygon.storage.CustomToken")) - 1)) & ~bytes32(uint256(0xff))`.
+    /// @dev Calculated as `keccak256(abi.encode(uint256(keccak256("agglayer.vault-bridge.CustomToken.storage")) - 1)) & ~bytes32(uint256(0xff))`.
     bytes32 private constant _CUSTOM_TOKEN_STORAGE =
-        hex"7c85b7b2d9fd038d6192406f4d8c0b3abd3ba313fe130017505dbec645b26600";
+        hex"0300d81ec8b5c42d6bd2cedd81ce26f1003c52753656b7512a8eef168b702500";
 
     // Basic roles.
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
@@ -85,6 +83,7 @@ abstract contract CustomToken is
         // Initialize the inherited contracts.
         __ERC20_init(name_, symbol_);
         __ERC20Permit_init(name_);
+        __Nonces_init();
         __AccessControl_init();
         __Pausable_init();
         __ReentrancyGuard_init();

@@ -15,7 +15,6 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {ILxLyBridge} from "./etc/ILxLyBridge.sol";
-import {ITransferFeeCalculator} from "./ITransferFeeCalculator.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 // @remind Document.
@@ -41,6 +40,7 @@ contract VaultBridgeTokenInitializer is IVaultBridgeTokenInitializer, VaultBridg
         external
         override
         onlyDelegateCall
+        onlyInitializing
         nonReentrant
         returns (bool success)
     {
@@ -56,10 +56,12 @@ contract VaultBridgeTokenInitializer is IVaultBridgeTokenInitializer, VaultBridg
         require(initParams.yieldRecipient != address(0), InvalidYieldRecipient());
         require(initParams.lxlyBridge != address(0), InvalidLxLyBridge());
         require(initParams.migrationManager != address(0), InvalidMigrationManager());
+        require(initParams.yieldVaultMaximumSlippagePercentage <= 1e18, InvalidYieldVaultMaximumSlippagePercentage());
 
         // Initialize the inherited contracts.
         __ERC20_init(initParams.name, initParams.symbol);
         __ERC20Permit_init(initParams.name);
+        __Nonces_init();
         __AccessControl_init();
         __Pausable_init();
         __ReentrancyGuard_init();
@@ -84,7 +86,6 @@ contract VaultBridgeTokenInitializer is IVaultBridgeTokenInitializer, VaultBridg
         $.lxlyId = ILxLyBridge(initParams.lxlyBridge).networkID();
         $.lxlyBridge = ILxLyBridge(initParams.lxlyBridge);
         $.minimumYieldVaultDeposit = initParams.minimumYieldVaultDeposit;
-        $.transferFeeCalculator = ITransferFeeCalculator(initParams.transferFeeCalculator);
         $.migrationManager = initParams.migrationManager;
 
         // Approve the yield vault and LxLy Bridge.

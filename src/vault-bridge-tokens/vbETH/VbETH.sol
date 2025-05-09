@@ -1,10 +1,7 @@
 //
 pragma solidity 0.8.29;
 
-// @todo REVIEW.
-// @follow-up Consider checking whether the network's gas token is ETH, like in WETH and WETHNativeConverter.
-
-import {VaultBridgeToken} from "../../VaultBridgeToken.sol";
+import {VaultBridgeToken, ILxLyBridge} from "../../VaultBridgeToken.sol";
 import {IWETH9} from "../../etc/IWETH9.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {IVersioned} from "../../etc/IVersioned.sol";
@@ -15,6 +12,8 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 contract VbETH is VaultBridgeToken {
     using SafeERC20 for IWETH9;
 
+    error ContractNotSupportedOnThisNetwork();
+
     constructor() {
         _disableInitializers();
     }
@@ -23,6 +22,12 @@ contract VbETH is VaultBridgeToken {
         external
         initializer
     {
+        require(
+            ILxLyBridge(initParams.lxlyBridge).gasTokenAddress() == address(0)
+                && ILxLyBridge(initParams.lxlyBridge).gasTokenNetwork() == 0,
+            ContractNotSupportedOnThisNetwork()
+        );
+
         // Initialize the base implementation.
         __VaultBridgeToken_init(initializer_, initParams);
     }
@@ -61,16 +66,14 @@ contract VbETH is VaultBridgeToken {
         require(mintedShares == shares, IncorrectAmountOfSharesMinted(mintedShares, shares));
     }
 
-    function _receiveUnderlyingToken(address, uint256 assets) internal override returns (uint256) {
+    function _receiveUnderlyingToken(address, uint256 assets) internal override {
         IWETH9 weth = IWETH9(address(underlyingToken()));
 
         if (msg.value > 0) {
             // deposit everything, excess funds will be refunded in WETH
             weth.deposit{value: msg.value}();
-            return msg.value;
         } else {
             weth.safeTransferFrom(msg.sender, address(this), assets);
-            return assets;
         }
     }
 

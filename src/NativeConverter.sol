@@ -38,28 +38,22 @@ abstract contract NativeConverter is
 
     /// @dev Storage of Native Converter contract.
     /// @dev It's implemented on a custom ERC-7201 namespace to reduce the risk of storage collisions when using with upgradeable contracts.
-    /// @custom:storage-location erc7201:0xpolygon.storage.NativeConverter
+    /// @custom:storage-location erc7201:agglayer.vault-bridge.NativeConverter.storage
     struct NativeConverterStorage {
         CustomToken customToken;
         IERC20 underlyingToken;
-        bool _underlyingTokenIsNotMintable;
         uint256 backingOnLayerY;
         uint32 lxlyId;
         ILxLyBridge lxlyBridge;
         uint32 layerXLxlyId;
-        // @todo Remove. If upgrading the testnet contracts, add a reinitializer and clean the slot using assembly.
-        address __OUTDATED__vbToken;
-        // @todo Remove. If upgrading the testnet contracts, add a reinitializer and clean the slot using assembly.
-        address __OUTDATED__migrator;
         uint256 nonMigratableBackingPercentage;
         address migrationManager;
     }
 
-    // @todo Change the namespace. If upgrading the testnet contracts, add a reinitializer and clean the old slots using assembly.
     /// @dev The storage slot at which Native Converter storage starts, following the EIP-7201 standard.
-    /// @dev Calculated as `keccak256(abi.encode(uint256(keccak256("0xpolygon.storage.NativeConverter")) - 1)) & ~bytes32(uint256(0xff))`.
+    /// @dev Calculated as `keccak256(abi.encode(uint256(keccak256("agglayer.vault-bridge.NativeConverter.storage")) - 1)) & ~bytes32(uint256(0xff))`.
     bytes32 private constant _NATIVE_CONVERTER_STORAGE =
-        hex"b6887066a093cfbb0ec14b46507f657825a892fd6a4c4a1ef4fc83e8c7208c00";
+        hex"a14770e0debfe4b8406a01c33ee3a7bbe0acc66b3bde7c71854bf7d080a9c600";
 
     // Basic roles.
     bytes32 public constant MIGRATOR_ROLE = keccak256("MIGRATOR_ROLE");
@@ -151,7 +145,6 @@ abstract contract NativeConverter is
         // Initialize the storage.
         $.customToken = CustomToken(customToken_);
         $.underlyingToken = IERC20(underlyingToken_);
-        $._underlyingTokenIsNotMintable = ILxLyBridge(lxlyBridge_).wrappedAddressIsNotMintable(underlyingToken_);
         $.lxlyId = ILxLyBridge(lxlyBridge_).networkID();
         $.lxlyBridge = ILxLyBridge(lxlyBridge_);
         $.layerXLxlyId = layerXLxlyId_;
@@ -440,22 +433,7 @@ abstract contract NativeConverter is
         uint256 shares = _convertToShares(assets);
 
         // Bridge the backing to Migration Manager on Layer X.
-        /* If the underlying token is not mintable by LxLy Bridge, we need to check for a transfer fee. */
-        if ($._underlyingTokenIsNotMintable) {
-            // Cache the balance.
-            uint256 balanceBefore = $.underlyingToken.balanceOf(address($.lxlyBridge));
-
-            // Bridge.
-            // @note IMPORTANT: Make sure the underlying token you are integrating does not enable reentrancy on `transferFrom`.
-            $.lxlyBridge.bridgeAsset($.layerXLxlyId, $.migrationManager, assets, address($.underlyingToken), true, "");
-
-            // Calculate the bridged amount.
-            assets = $.underlyingToken.balanceOf(address($.lxlyBridge)) - balanceBefore;
-        }
-        /* If the underlying token is mintable by LxLy Bridge, it will be burned (not transferred). */
-        else {
-            $.lxlyBridge.bridgeAsset($.layerXLxlyId, $.migrationManager, assets, address($.underlyingToken), true, "");
-        }
+        $.lxlyBridge.bridgeAsset($.layerXLxlyId, $.migrationManager, assets, address($.underlyingToken), true, "");
 
         // Bridge a message to Migration Manager on Layer X to complete the migration.
         $.lxlyBridge.bridgeMessage(

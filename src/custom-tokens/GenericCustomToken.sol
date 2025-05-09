@@ -14,14 +14,14 @@ contract GenericCustomToken is CustomToken {
         _disableInitializers();
     }
 
-    function initialize(
+    function reinitialize(
         address owner_,
         string calldata name_,
         string calldata symbol_,
         uint8 originalUnderlyingTokenDecimals_,
         address lxlyBridge_,
         address nativeConverter_
-    ) external initializer {
+    ) external virtual reinitializer(2) {
         // Initialize the base implementation.
         __CustomToken_init(owner_, name_, symbol_, originalUnderlyingTokenDecimals_, lxlyBridge_, nativeConverter_);
     }
