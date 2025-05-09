@@ -1,6 +1,6 @@
 import "dispatching_MigrationManager-VbUSDT.spec";
 
-using VbUSDT as VbUSDT;
+using GenericVaultBridgeToken as GenericVaultBridgeToken;
 
 use builtin rule sanity filtered { f ->
     f.contract == currentContract && 
@@ -12,7 +12,7 @@ rule sanity_configureNativeConverters() {
 
     uint32[] layerYLxlyIds;
     address[] nativeConverters;
-    address vbToken = VbUSDT;
+    address vbToken = GenericVaultBridgeToken;
 
     configureNativeConverters(e, layerYLxlyIds, nativeConverters, vbToken);
 
