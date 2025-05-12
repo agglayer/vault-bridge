@@ -1,7 +1,7 @@
 import "dispatching_VaultBridgeTokenInitializer.spec";
 
 using BridgeL2SovereignChain as BridgeL2SovereignChain;
-using MockERC20 as MockERC20;
+using TokenMock as TokenMock;
 
 use builtin rule sanity filtered { f ->
     f.contract == currentContract &&
@@ -13,7 +13,7 @@ rule sanity_initialize() {
 
     VaultBridgeToken.InitializationParameters ip;
     require(ip.lxlyBridge == BridgeL2SovereignChain);
-    require(ip.underlyingToken == MockERC20);
+    require(ip.underlyingToken == TokenMock);
     require(ip.transferFeeCalculator == 0);
 
     initialize(e, ip);
