@@ -26,7 +26,7 @@ contract StorageExtension {
     VaultBridgeToken.VaultBridgeTokenStorage vaultBridgeTokenStorage;
 
     /**
-     * @custom:certoralink f9565ea242552c2a1a216404344b0c8f6a3093382a21dd5bd6f5dc2ff1934d00
+     * @custom:certoralink 0xf9565ea242552c2a1a216404344b0c8f6a3093382a21dd5bd6f5dc2ff1934d00
      */
     WETHNativeConverter.WETHNativeConverterStorage wETHNativeConverterStorage;
 }
