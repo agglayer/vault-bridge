@@ -14,7 +14,6 @@ rule sanity_initialize() {
     VaultBridgeToken.InitializationParameters ip;
     require(ip.lxlyBridge == BridgeL2SovereignChain);
     require(ip.underlyingToken == TokenMock);
-    require(ip.transferFeeCalculator == 0);
 
     initialize(e, ip);
 

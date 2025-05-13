@@ -12,7 +12,6 @@ rule sanity_initialize() {
 
     address initializer = VaultBridgeTokenInitializer;
     VaultBridgeToken.InitializationParameters ip;
-    require(ip.transferFeeCalculator == 0);
 
     initialize(e, initializer, ip);
 
