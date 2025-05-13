@@ -2,6 +2,7 @@ import { CustomToken } from "src/CustomToken.sol";
 import { MigrationManager } from "src/MigrationManager.sol";
 import { NativeConverter } from "src/NativeConverter.sol";
 import { VaultBridgeToken } from "src/VaultBridgeToken.sol";
+import { WETHNativeConverter } from "src/custom-tokens/WETH/WETHNativeConverter.sol";
 
 contract StorageExtension {
     /**
@@ -23,4 +24,9 @@ contract StorageExtension {
      * @custom:certoralink 0x0bb25252701cf32638570970f607d30c3e6cb5d951ee6c3cd06f6d3f41890300
      */
     VaultBridgeToken.VaultBridgeTokenStorage vaultBridgeTokenStorage;
+
+    /**
+     * @custom:certoralink f9565ea242552c2a1a216404344b0c8f6a3093382a21dd5bd6f5dc2ff1934d00
+     */
+    WETHNativeConverter.WETHNativeConverterStorage wETHNativeConverterStorage;
 }
