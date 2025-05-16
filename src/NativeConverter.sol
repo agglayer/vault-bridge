@@ -38,28 +38,22 @@ abstract contract NativeConverter is
 
     /// @dev Storage of Native Converter contract.
     /// @dev It's implemented on a custom ERC-7201 namespace to reduce the risk of storage collisions when using with upgradeable contracts.
-    /// @custom:storage-location erc7201:0xpolygon.storage.NativeConverter
+    /// @custom:storage-location erc7201:agglayer.vault-bridge.NativeConverter.storage
     struct NativeConverterStorage {
         CustomToken customToken;
         IERC20 underlyingToken;
-        bool _underlyingTokenIsNotMintable;
         uint256 backingOnLayerY;
         uint32 lxlyId;
         ILxLyBridge lxlyBridge;
         uint32 layerXLxlyId;
-        // @todo Remove. If upgrading the testnet contracts, add a reinitializer and clean the slot using assembly.
-        address __OUTDATED__vbToken;
-        // @todo Remove. If upgrading the testnet contracts, add a reinitializer and clean the slot using assembly.
-        address __OUTDATED__migrator;
         uint256 nonMigratableBackingPercentage;
         address migrationManager;
     }
 
-    // @todo Change the namespace. If upgrading the testnet contracts, add a reinitializer and clean the old slots using assembly.
     /// @dev The storage slot at which Native Converter storage starts, following the EIP-7201 standard.
-    /// @dev Calculated as `keccak256(abi.encode(uint256(keccak256("0xpolygon.storage.NativeConverter")) - 1)) & ~bytes32(uint256(0xff))`.
+    /// @dev Calculated as `keccak256(abi.encode(uint256(keccak256("agglayer.vault-bridge.NativeConverter.storage")) - 1)) & ~bytes32(uint256(0xff))`.
     bytes32 private constant _NATIVE_CONVERTER_STORAGE =
-        hex"b6887066a093cfbb0ec14b46507f657825a892fd6a4c4a1ef4fc83e8c7208c00";
+        hex"a14770e0debfe4b8406a01c33ee3a7bbe0acc66b3bde7c71854bf7d080a9c600";
 
     // Basic roles.
     bytes32 public constant MIGRATOR_ROLE = keccak256("MIGRATOR_ROLE");
@@ -84,7 +78,7 @@ abstract contract NativeConverter is
     error OnlyMigrator();
 
     // Events.
-    event MigrationStarted(address indexed initiator, uint256 indexed mintedCustomToken, uint256 migratedBacking);
+    event MigrationStarted(uint256 indexed mintedCustomToken, uint256 indexed migratedBacking);
     event NonMigratableBackingPercentageSet(uint256 nonMigratableBackingPercentage);
 
     /// @param originalUnderlyingTokenDecimals_ The number of decimals of the original underlying token on Layer X. The `customToken` and `underlyingToken` MUST have the same number of decimals as the original underlying token. @note (ATTENTION) The decimals of the `customToken` and `underlyingToken` will default to 18 if they revert.
@@ -142,6 +136,8 @@ abstract contract NativeConverter is
         __AccessControl_init();
         __Pausable_init();
         __ReentrancyGuard_init();
+        __Context_init();
+        __ERC165_init();
 
         // Grant the basic roles.
         _grantRole(DEFAULT_ADMIN_ROLE, owner_);
@@ -151,15 +147,11 @@ abstract contract NativeConverter is
         // Initialize the storage.
         $.customToken = CustomToken(customToken_);
         $.underlyingToken = IERC20(underlyingToken_);
-        $._underlyingTokenIsNotMintable = ILxLyBridge(lxlyBridge_).wrappedAddressIsNotMintable(underlyingToken_);
         $.lxlyId = ILxLyBridge(lxlyBridge_).networkID();
         $.lxlyBridge = ILxLyBridge(lxlyBridge_);
         $.layerXLxlyId = layerXLxlyId_;
         $.migrationManager = migrationManager_;
         $.nonMigratableBackingPercentage = nonMigratableBackingPercentage_;
-
-        // Approve LxLy Bridge.
-        $.underlyingToken.forceApprove(address($.lxlyBridge), type(uint256).max);
     }
 
     // -----================= ::: STORAGE ::: =================-----
@@ -440,22 +432,7 @@ abstract contract NativeConverter is
         uint256 shares = _convertToShares(assets);
 
         // Bridge the backing to Migration Manager on Layer X.
-        /* If the underlying token is not mintable by LxLy Bridge, we need to check for a transfer fee. */
-        if ($._underlyingTokenIsNotMintable) {
-            // Cache the balance.
-            uint256 balanceBefore = $.underlyingToken.balanceOf(address($.lxlyBridge));
-
-            // Bridge.
-            // @note IMPORTANT: Make sure the underlying token you are integrating does not enable reentrancy on `transferFrom`.
-            $.lxlyBridge.bridgeAsset($.layerXLxlyId, $.migrationManager, assets, address($.underlyingToken), true, "");
-
-            // Calculate the bridged amount.
-            assets = $.underlyingToken.balanceOf(address($.lxlyBridge)) - balanceBefore;
-        }
-        /* If the underlying token is mintable by LxLy Bridge, it will be burned (not transferred). */
-        else {
-            $.lxlyBridge.bridgeAsset($.layerXLxlyId, $.migrationManager, assets, address($.underlyingToken), true, "");
-        }
+        $.lxlyBridge.bridgeAsset($.layerXLxlyId, $.migrationManager, assets, address($.underlyingToken), true, "");
 
         // Bridge a message to Migration Manager on Layer X to complete the migration.
         $.lxlyBridge.bridgeMessage(
@@ -466,7 +443,7 @@ abstract contract NativeConverter is
         );
 
         // Emit the event.
-        emit MigrationStarted(msg.sender, shares, assets);
+        emit MigrationStarted(shares, assets);
     }
 
     /// @notice Sets the percentage of backing that should remain in Native Converter after a migration, based on the total supply of Custom Token.
@@ -475,7 +452,6 @@ abstract contract NativeConverter is
     /// @param nonMigratableBackingPercentage_ 1e18 is 100%.
     function setNonMigratableBackingPercentage(uint256 nonMigratableBackingPercentage_)
         external
-        whenNotPaused
         onlyRole(DEFAULT_ADMIN_ROLE)
         nonReentrant
     {
@@ -491,27 +467,12 @@ abstract contract NativeConverter is
         emit NonMigratableBackingPercentageSet(nonMigratableBackingPercentage_);
     }
 
-    // -----================= ::: ADMIN ::: =================-----
-
-    /// @notice Prevents usage of functions with the `whenNotPaused` modifier.
-    /// @notice This function can be called by the pauser only.
-    function pause() external onlyRole(PAUSER_ROLE) nonReentrant {
-        _pause();
-    }
-
-    /// @notice Allows usage of functions with the `whenNotPaused` modifier.
-    /// @notice This function can be called by the owner only.
-    function unpause() external onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant {
-        _unpause();
-    }
-
-    // -----================= ::: DEVELOPER ::: =================-----
+    // -----================= ::: UNDERLYING TOKEN ::: =================-----
 
     /// @notice Transfers the underlying token from an external account to itself.
-    /// @dev This function can be overridden to implement custom transfer logic.
     /// @dev @note CAUTION! This function MUST NOT introduce reentrancy/cross-entrancy vulnerabilities.
     /// @return receivedValue The amount of the underlying actually received (e.g., after transfer fees).
-    function _receiveUnderlyingToken(address from, uint256 value) internal virtual returns (uint256 receivedValue) {
+    function _receiveUnderlyingToken(address from, uint256 value) private returns (uint256 receivedValue) {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
 
         // Cache the balance.
@@ -526,13 +487,26 @@ abstract contract NativeConverter is
     }
 
     /// @notice Transfers the underlying token to an external account.
-    /// @dev This function can be overridden to implement custom transfer logic.
     /// @dev @note CAUTION! This function MUST NOT introduce reentrancy/cross-entrancy vulnerabilities.
-    function _sendUnderlyingToken(address to, uint256 value) internal virtual {
+    function _sendUnderlyingToken(address to, uint256 value) private {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
 
         // Transfer.
         // @note IMPORTANT: Make sure the underlying token you are integrating does not enable reentrancy on `transfer`.
         $.underlyingToken.safeTransfer(to, value);
+    }
+
+    // -----================= ::: ADMIN ::: =================-----
+
+    /// @notice Prevents usage of functions with the `whenNotPaused` modifier.
+    /// @notice This function can be called by the pauser only.
+    function pause() external onlyRole(PAUSER_ROLE) nonReentrant {
+        _pause();
+    }
+
+    /// @notice Allows usage of functions with the `whenNotPaused` modifier.
+    /// @notice This function can be called by the owner only.
+    function unpause() external onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant {
+        _unpause();
     }
 }

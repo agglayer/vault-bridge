@@ -1,10 +1,7 @@
 //
 pragma solidity 0.8.29;
 
-// @todo REVIEW.
-
-// @todo Remove `SafeERC20`, `IERC20`. (Required for the reinitializer).
-import {NativeConverter, SafeERC20, IERC20} from "../../NativeConverter.sol";
+import {NativeConverter, Math} from "../../NativeConverter.sol";
 import {WETH} from "./WETH.sol";
 import {IVersioned} from "../../etc/IVersioned.sol";
 import {MigrationManager} from "../../MigrationManager.sol";
@@ -12,27 +9,24 @@ import {ILxLyBridge} from "../../etc/ILxLyBridge.sol";
 
 /// @title WETH Native Converter
 contract WETHNativeConverter is NativeConverter {
-    // @todo Remove. (Required for the reinitializer).
-    using SafeERC20 for IERC20;
-
     /// @dev Storage of WETHNativeConverter contract.
     /// @dev It's implemented on a custom ERC-7201 namespace to reduce the risk of storage collisions when using with upgradeable contracts.
-    /// @custom:storage-location erc7201:0xpolygon.storage.WETH
+    /// @custom:storage-location erc7201:agglayer.vault-bridge.WETHNativeConverter.storage
     struct WETHNativeConverterStorage {
         WETH _weth;
         bool _gasTokenIsEth;
+        uint256 nonMigratableGasBackingPercentage;
     }
 
-    // @todo Change the namespace. If upgrading the testnet contracts, add a reinitializer and clean the old slots using assembly.
     /// @dev The storage slot at which WETHNativeConverter storage starts, following the EIP-7201 standard.
-    /// @dev Calculated as `keccak256(abi.encode(uint256(keccak256("0xpolygon.storage.WETHNativeConverter")) - 1)) & ~bytes32(uint256(0xff))`.
+    /// @dev Calculated as `keccak256(abi.encode(uint256(keccak256("agglayer.vault-bridge.WETHNativeConverter.storage")) - 1)) & ~bytes32(uint256(0xff))`.
     bytes32 private constant _WETH_NATIVE_CONVERTER_STORAGE =
-        hex"bf2d0f52fc90c2e373874d27ef2034a489f8af72128c9dcedd13ea84d2ba4700";
+        hex"f9565ea242552c2a1a216404344b0c8f6a3093382a21dd5bd6f5dc2ff1934d00";
 
     error FunctionNotSupportedOnThisNetwork();
+    error InvalidNonMigratableGasBackingPercentage();
 
-    // @todo Remove. If upgrading the testnet contracts, add a reinitializer and clean the slot using assembly.
-    WETH __OUTDATED__weth;
+    event NonMigratableGasBackingPercentageSet(uint256 nonMigratableGasBackingPercentage_);
 
     modifier onlyIfGasTokenIsEth() {
         WETHNativeConverterStorage storage $ = _getWETHNativeConverterStorage();
@@ -52,7 +46,8 @@ contract WETHNativeConverter is NativeConverter {
         address lxlyBridge_,
         uint32 layerXNetworkId_,
         uint256 nonMigratableBackingPercentage_,
-        address migrationManager_
+        address migrationManager_,
+        uint256 nonMigratableGasBackingPercentage_
     ) external initializer {
         WETHNativeConverterStorage storage $ = _getWETHNativeConverterStorage();
 
@@ -68,9 +63,17 @@ contract WETHNativeConverter is NativeConverter {
             migrationManager_
         );
 
+        require(nonMigratableGasBackingPercentage_ <= 1e18, InvalidNonMigratableBackingPercentage());
+
         $._weth = WETH(payable(customToken_));
         $._gasTokenIsEth =
             ILxLyBridge(lxlyBridge_).gasTokenAddress() == address(0) && ILxLyBridge(lxlyBridge_).gasTokenNetwork() == 0;
+        $.nonMigratableGasBackingPercentage = nonMigratableGasBackingPercentage_;
+    }
+
+    function nonMigratableGasBackingPercentage() public view returns (uint256) {
+        WETHNativeConverterStorage storage $ = _getWETHNativeConverterStorage();
+        return $.nonMigratableGasBackingPercentage;
     }
 
     function _getWETHNativeConverterStorage() private pure returns (WETHNativeConverterStorage storage $) {
@@ -79,35 +82,16 @@ contract WETHNativeConverter is NativeConverter {
         }
     }
 
-    /*
-    // @todo Remove. (Required for the testnet).
-    function reinitialize(
-        address owner_,
-        uint8 originalUnderlyingTokenDecimals_,
-        address customToken_,
-        address underlyingToken_,
-        address lxlyBridge_,
-        uint32 layerXNetworkId_,
-        uint256 nonMigratableBackingPercentage_,
-        address migrationManager_
-    ) external reinitializer(3) {
-        underlyingToken().forceApprove(address(lxlyBridge()), 0);
+    function migratableGasBacking() public view returns (uint256) {
+        WETHNativeConverterStorage storage $ = _getWETHNativeConverterStorage();
 
-        // Reinitialize the base implementation.
-        __NativeConverter_init(
-            owner_,
-            originalUnderlyingTokenDecimals_,
-            customToken_,
-            underlyingToken_,
-            lxlyBridge_,
-            layerXNetworkId_,
-            nonMigratableBackingPercentage_,
-            migrationManager_
-        );
+        uint256 nonMigratableGasBacking =
+            _convertToAssets(Math.mulDiv(customToken().totalSupply(), $.nonMigratableGasBackingPercentage, 1e18));
 
-        weth = WETH(payable(customToken_));
+        uint256 gasBalance = address(customToken()).balance;
+
+        return gasBalance > nonMigratableGasBacking ? gasBalance - nonMigratableGasBacking : 0;
     }
-    */
 
     /// @dev This special function allows the NativeConverter owner to migrate the gas backing of the WETH Custom Token
     /// @dev It simply takes the amount of gas token from the WETH contract
@@ -126,13 +110,11 @@ contract WETHNativeConverter is NativeConverter {
         WETHNativeConverterStorage storage $ = _getWETHNativeConverterStorage();
         WETH weth = $._weth;
 
-        uint256 migratableBacking_ = migratableBacking();
+        uint256 migratableGasBacking_ = migratableGasBacking();
 
         // Check the input.
         require(amount > 0, InvalidAssets());
-        // @follow-up Consider implementing a better limit.
-        require(amount <= migratableBacking_, AssetsTooLarge(migratableBacking_, amount));
-        require(amount <= address(weth).balance, AssetsTooLarge(address(weth).balance, amount));
+        require(amount <= migratableGasBacking_, AssetsTooLarge(migratableGasBacking_, amount));
 
         // Precalculate the amount of Custom Token for which backing is being migrated.
         uint256 amountOfCustomToken = _convertToShares(amount);
@@ -155,13 +137,30 @@ contract WETHNativeConverter is NativeConverter {
         );
 
         // Emit the event.
-        emit MigrationStarted(msg.sender, amountOfCustomToken, amount);
+        emit MigrationStarted(amountOfCustomToken, amount);
     }
 
-    receive() external payable whenNotPaused onlyIfGasTokenIsEth nonReentrant {}
+    receive() external payable whenNotPaused onlyIfGasTokenIsEth {}
+
+    function setNonMigratableGasBackingPercentage(uint256 nonMigratableGasBackingPercentage_)
+        external
+        onlyRole(DEFAULT_ADMIN_ROLE)
+        nonReentrant
+    {
+        WETHNativeConverterStorage storage $ = _getWETHNativeConverterStorage();
+
+        // Check the input.
+        require(nonMigratableGasBackingPercentage_ <= 1e18, InvalidNonMigratableGasBackingPercentage());
+
+        // Set the non-migratable backing percentage.
+        $.nonMigratableGasBackingPercentage = nonMigratableGasBackingPercentage_;
+
+        // Emit the event.
+        emit NonMigratableGasBackingPercentageSet(nonMigratableGasBackingPercentage_);
+    }
 
     /// @inheritdoc IVersioned
     function version() external pure virtual returns (string memory) {
-        return "1.0.0";
+        return "0.5.0";
     }
 }

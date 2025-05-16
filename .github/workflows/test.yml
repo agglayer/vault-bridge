@@ -38,7 +38,7 @@ jobs:
         run: |
           forge --version
           forge soldeer install
-          forge build
+          forge build --sizes
         id: build
 
       - name: Install dependencies
