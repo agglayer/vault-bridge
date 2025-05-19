@@ -36,7 +36,7 @@ forge-std = { version = "1.9.4" }
 "@openzeppelin-contracts" = { version = "5.1.0" }
 "@openzeppelin-contracts-upgradeable" = { version = "5.1.0" }
 
-[soldeer]
+[profile.soldeer]
 remappings_generate = true
 remappings_version = false
 remappings_location = "config"
