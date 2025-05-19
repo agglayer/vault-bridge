@@ -26,3 +26,4 @@ lcov.info
 # certora
 .certora_internal/
 zkevm-contracts/
+emv-*/*
