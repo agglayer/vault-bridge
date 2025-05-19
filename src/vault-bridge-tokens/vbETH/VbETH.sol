@@ -13,7 +13,7 @@ contract VbETH is VaultBridgeToken {
     using SafeERC20 for IWETH9;
 
     error ContractNotSupportedOnThisNetwork();
-    error InsufficientMessageValue(uint256 messageValue, uint256 requiredValue);
+    error IncorrectMsgValue(uint256 msgValue, uint256 requestedAssets);
 
     constructor() {
         _disableInitializers();
@@ -35,7 +35,9 @@ contract VbETH is VaultBridgeToken {
 
     /// @dev deposit ETH to get vbETH
     function depositGasToken(address receiver) external payable whenNotPaused nonReentrant returns (uint256 shares) {
-        (shares,) = _deposit(msg.value, lxlyId(), receiver, false, 0);
+        (shares,) = _depositUsingCustomReceivingFunction(
+            _receiveUnderlyingTokenViaMsgValue, msg.value, lxlyId(), receiver, false, 0
+        );
     }
 
     /// @dev deposit ETH to get vbETH and bridge to an L2
@@ -44,7 +46,14 @@ contract VbETH is VaultBridgeToken {
         uint32 destinationNetworkId,
         bool forceUpdateGlobalExitRoot
     ) external payable whenNotPaused nonReentrant returns (uint256 shares) {
-        (shares,) = _deposit(msg.value, destinationNetworkId, destinationAddress, forceUpdateGlobalExitRoot, 0);
+        (shares,) = _depositUsingCustomReceivingFunction(
+            _receiveUnderlyingTokenViaMsgValue,
+            msg.value,
+            destinationNetworkId,
+            destinationAddress,
+            forceUpdateGlobalExitRoot,
+            0
+        );
     }
 
     function mintWithGasToken(uint256 shares, address receiver)
@@ -55,28 +64,37 @@ contract VbETH is VaultBridgeToken {
         returns (uint256 assets)
     {
         require(shares > 0, InvalidShares());
-        // The receiver is checked in the `_deposit` function.
+        // The receiver is checked in the `_depositUsingCustomReceivingFunction` function.
 
         // Mint vbToken to the receiver.
         uint256 mintedShares;
         (mintedShares, assets) =
         // msg.value is used as assets value, if it exceeds shares value, WETH will be refunded
-         _deposit(msg.value, lxlyId(), receiver, false, shares);
+        _depositUsingCustomReceivingFunction(
+            _receiveUnderlyingTokenViaMsgValue, msg.value, lxlyId(), receiver, false, shares
+        );
 
         // Check the output.
         require(mintedShares == shares, IncorrectAmountOfSharesMinted(mintedShares, shares));
     }
 
-    function _receiveUnderlyingToken(address, uint256 assets) internal override {
+    function _receiveUnderlyingTokenViaMsgValue(address from, uint256 assets) internal {
+        assert(from == msg.sender);
+
+        require(msg.value == assets, IncorrectMsgValue(msg.value, assets));
+
         IWETH9 weth = IWETH9(address(underlyingToken()));
 
-        if (msg.value > 0) {
-            require(msg.value >= assets, InsufficientMessageValue(msg.value, assets));
-            // deposit everything, excess funds will be refunded in WETH
-            weth.deposit{value: msg.value}();
-        } else {
-            weth.safeTransferFrom(msg.sender, address(this), assets);
-        }
+        uint256 balanceBefore = weth.balanceOf(address(this));
+
+        // deposit everything, excess funds will be refunded in WETH
+        weth.deposit{value: msg.value}();
+
+        uint256 balanceAfter = weth.balanceOf(address(this));
+
+        uint256 receivedAssets = balanceAfter - balanceBefore;
+
+        require(receivedAssets == assets, InsufficientUnderlyingTokenReceived(receivedAssets, assets));
     }
 
     /// @inheritdoc IVersioned

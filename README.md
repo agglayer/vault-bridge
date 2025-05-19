@@ -1,5 +1,5 @@
 > [!IMPORTANT]
-> You are viewing a **development version** of the codebase. Some documentation may be outdated.
+> You are viewing a development version of the codebase.
 
 # Vault Bridge
 

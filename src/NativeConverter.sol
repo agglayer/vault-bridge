@@ -152,9 +152,6 @@ abstract contract NativeConverter is
         $.layerXLxlyId = layerXLxlyId_;
         $.migrationManager = migrationManager_;
         $.nonMigratableBackingPercentage = nonMigratableBackingPercentage_;
-
-        // Approve LxLy Bridge.
-        $.underlyingToken.forceApprove(address($.lxlyBridge), type(uint256).max);
     }
 
     // -----================= ::: STORAGE ::: =================-----
@@ -470,27 +467,12 @@ abstract contract NativeConverter is
         emit NonMigratableBackingPercentageSet(nonMigratableBackingPercentage_);
     }
 
-    // -----================= ::: ADMIN ::: =================-----
-
-    /// @notice Prevents usage of functions with the `whenNotPaused` modifier.
-    /// @notice This function can be called by the pauser only.
-    function pause() external onlyRole(PAUSER_ROLE) nonReentrant {
-        _pause();
-    }
-
-    /// @notice Allows usage of functions with the `whenNotPaused` modifier.
-    /// @notice This function can be called by the owner only.
-    function unpause() external onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant {
-        _unpause();
-    }
-
-    // -----================= ::: DEVELOPER ::: =================-----
+    // -----================= ::: UNDERLYING TOKEN ::: =================-----
 
     /// @notice Transfers the underlying token from an external account to itself.
-    /// @dev This function can be overridden to implement custom transfer logic.
     /// @dev @note CAUTION! This function MUST NOT introduce reentrancy/cross-entrancy vulnerabilities.
     /// @return receivedValue The amount of the underlying actually received (e.g., after transfer fees).
-    function _receiveUnderlyingToken(address from, uint256 value) internal virtual returns (uint256 receivedValue) {
+    function _receiveUnderlyingToken(address from, uint256 value) private returns (uint256 receivedValue) {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
 
         // Cache the balance.
@@ -505,13 +487,26 @@ abstract contract NativeConverter is
     }
 
     /// @notice Transfers the underlying token to an external account.
-    /// @dev This function can be overridden to implement custom transfer logic.
     /// @dev @note CAUTION! This function MUST NOT introduce reentrancy/cross-entrancy vulnerabilities.
-    function _sendUnderlyingToken(address to, uint256 value) internal virtual {
+    function _sendUnderlyingToken(address to, uint256 value) private {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
 
         // Transfer.
         // @note IMPORTANT: Make sure the underlying token you are integrating does not enable reentrancy on `transfer`.
         $.underlyingToken.safeTransfer(to, value);
+    }
+
+    // -----================= ::: ADMIN ::: =================-----
+
+    /// @notice Prevents usage of functions with the `whenNotPaused` modifier.
+    /// @notice This function can be called by the pauser only.
+    function pause() external onlyRole(PAUSER_ROLE) nonReentrant {
+        _pause();
+    }
+
+    /// @notice Allows usage of functions with the `whenNotPaused` modifier.
+    /// @notice This function can be called by the owner only.
+    function unpause() external onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant {
+        _unpause();
     }
 }

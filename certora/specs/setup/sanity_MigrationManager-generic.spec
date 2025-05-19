@@ -14,6 +14,8 @@ rule sanity_configureNativeConverters() {
     address[] nativeConverters;
     address vbToken = GenericVaultBridgeToken;
 
+    require(layerYLxlyIds.length > 0);
+
     configureNativeConverters(e, layerYLxlyIds, nativeConverters, vbToken);
 
     satisfy(true);

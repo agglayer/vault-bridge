@@ -64,8 +64,9 @@ contract VaultBridgeTokenInitializer is IVaultBridgeTokenInitializer, VaultBridg
         __AccessControl_init();
         __Pausable_init();
         __ReentrancyGuardTransient_init();
-        __Nonces_init();
+        __Context_init();
         __ERC165_init();
+        __Nonces_init();
 
         // Grant the basic roles.
         _grantRole(DEFAULT_ADMIN_ROLE, initParams.owner);
