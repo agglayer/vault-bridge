@@ -4,4 +4,7 @@ methods {
     function _.claimAsset(bytes32[32],bytes32[32],uint256,bytes32,bytes32,uint32,address,uint32,address,uint256,bytes) external => DISPATCHER(true);
     function _.networkID() external => DISPATCHER(true);
     function _.updateExitRoot(bytes32) external => DISPATCHER(true);
+
+    function _.onMessageReceived(address,uint32,bytes) external => DISPATCHER(true);
+    function _.globalExitRootMap(bytes32) external => DISPATCHER(true);
 }
