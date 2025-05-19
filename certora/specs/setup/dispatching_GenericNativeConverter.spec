@@ -6,6 +6,7 @@ using GenericCustomToken as GenericCustomToken;
 
 methods {
 
+    function GenericNativeConverter.customToken() external returns (address) => CVL_customToken();
     function NativeConverter.customToken() internal returns (address) => CVL_customToken();
     function GenericNativeConverter.lxlyBridge() external returns (address) => CVL_lxlyBridge();
     function NativeConverter.lxlyBridge() internal returns (address) => CVL_lxlyBridge();
