@@ -11,6 +11,7 @@ env:
     certora/confs/MigrationManager-generic.conf
     certora/confs/MigrationManager-VbETH.conf
     certora/confs/VaultBridgeTokenInitializer.conf
+    certora/confs/VaultBridgeTokenPart2.conf
     certora/confs/VbETH.conf
     certora/confs/WETH.conf
     certora/confs/WETHNativeConverter.conf
