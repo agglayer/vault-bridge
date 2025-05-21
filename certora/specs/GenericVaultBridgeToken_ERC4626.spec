@@ -1,54 +1,6 @@
 import "setup/dispatching_GenericVaultBridgeToken.spec";
-
-using TokenMock as ERC20a; 
-//using DummyERC20B as ERC20b; 
-
-/*
-    Declaration of methods that are used in the rules. envfree indicate that
-    the method is not dependent on the environment (msg.value, msg.sender).
-    Methods that are not declared here are assumed to be dependent on env.
-*/
-methods {
-    function name() external returns string envfree;
-    function symbol() external returns string envfree;
-    function decimals() external returns uint8 envfree;
-    function asset() external returns address envfree;
-
-    function totalSupply() external returns uint256 envfree;
-    function balanceOf(address) external returns uint256 envfree;
-    function nonces(address) external returns uint256 envfree;
-    function totalAssets() external returns uint256 envfree;
-    //function userAssets(address) external returns uint256 envfree;
-    function convertToShares(uint256) external returns uint256 envfree;
-    function convertToAssets(uint256) external returns uint256 envfree;
-    function previewDeposit(uint256) external returns uint256 envfree;
-    function previewMint(uint256) external returns uint256 envfree;
-    function previewWithdraw(uint256) external returns uint256 envfree;
-    function previewRedeem(uint256) external returns uint256 envfree;
-    function maxDeposit(address) external returns uint256 envfree;
-    function maxMint(address) external returns uint256 envfree;
-    function maxWithdraw(address) external returns uint256 envfree;
-    function maxRedeem(address) external returns uint256 envfree;
-
-    //function permit(address,address,uint256,uint256,uint8,bytes32,bytes32) external;
-    //function DOMAIN_SEPARATOR() external returns bytes32;
-
-    //// #ERC20 methods
-    function _.balanceOf(address) external  => DISPATCHER(true);
-    function _.transfer(address,uint256) external  => DISPATCHER(true);
-    function _.transferFrom(address,address,uint256) external => DISPATCHER(true);
-
-    function ERC20a.balanceOf(address) external returns uint256 envfree;
-    function ERC20a.allowance(address, address) external returns uint256 envfree;
-    function ERC20a.transferFrom(address,address,uint256) external returns bool;
-
-    // function ERC20b.allowance(address, address) external returns uint256 envfree;
-}
-
-function userAssets(address a) returns uint256
-{
-    return ERC20a.balanceOf(a);
-}
+import "dispatching_ERC4626.spec";
+import "GenericVaultBridgeToken_helpers.spec";
 
 ////////////////////////////////////////////////////////////////////////////////
 ////           Dynamic Calls                                               /////
@@ -249,10 +201,14 @@ rule totalsMonotonicity() {
         "equal size changes to totalSupply must yield equal size changes to totalAssets";
 }
 
-rule underlyingCannotChange() {
+rule underlyingCannotChange(method f, env e) 
+filtered {
+    f -> !excludedMethod(f)
+}
+{
     address originalAsset = asset();
 
-    method f; env e; calldataarg args;
+    calldataarg args;
     f(e, args);
 
     address newAsset = asset();
@@ -399,8 +355,6 @@ filtered {
         "an owner's shares must decrease if and only if the receiver's assets increase";
 }
 
-
-
 ////////////////////////////////////////////////////////////////////////////////
 ////                        # helpers and miscellaneous                //////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -408,7 +362,6 @@ filtered {
 definition noSupplyIfNoAssetsDef() returns bool = 
     ( userAssets(currentContract) == 0 => totalSupply() == 0 ) &&
     ( totalAssets() == 0 <=> ( totalSupply() == 0 ));
-
 
 function safeAssumptions(env e, address receiver, address owner) {
     require currentContract != asset(); // Although this is not disallowed, we assume the contract's underlying asset is not the contract itself
@@ -424,65 +377,6 @@ function safeAssumptions(env e, address receiver, address owner) {
     require ( (receiver != owner => balanceOf(owner) + balanceOf(receiver) <= totalSupply())  && 
                 balanceOf(receiver) <= totalSupply() &&
                 balanceOf(owner) <= totalSupply());
-}
-
-
-// A helper function to set the receiver 
-function callReceiverFunctions(method f, env e, address receiver) {
-    uint256 amount;
-    if (f.selector == sig:deposit(uint256,address).selector) {
-        deposit(e, amount, receiver);
-    } else if (f.selector == sig:mint(uint256,address).selector) {
-        mint(e, amount, receiver);
-    } else if (f.selector == sig:withdraw(uint256,address,address).selector) {
-        address owner;
-        withdraw(e, amount, receiver, owner);
-    } else if (f.selector == sig:redeem(uint256,address,address).selector) {
-        address owner;
-        redeem(e, amount, receiver, owner);
-    } else {
-        calldataarg args;
-        f(e, args);
-    }
-}
-
-
-function callContributionMethods(env e, method f, uint256 assets, uint256 shares, address receiver) {
-    if (f.selector == sig:deposit(uint256,address).selector) {
-        deposit(e, assets, receiver);
-    }
-    if (f.selector == sig:mint(uint256,address).selector) {
-        mint(e, shares, receiver);
-    }
-}
-
-function callReclaimingMethods(env e, method f, uint256 assets, uint256 shares, address receiver, address owner) {
-    if (f.selector == sig:withdraw(uint256,address,address).selector) {
-        withdraw(e, assets, receiver, owner);
-    }
-    if (f.selector == sig:redeem(uint256,address,address).selector) {
-        redeem(e, shares, receiver, owner);
-    }
-}
-
-function callFunctionsWithReceiverAndOwner(env e, method f, uint256 assets, uint256 shares, address receiver, address owner) {
-    if (f.selector == sig:withdraw(uint256,address,address).selector) {
-        withdraw(e, assets, receiver, owner);
-    }
-    if (f.selector == sig:redeem(uint256,address,address).selector) {
-        redeem(e, shares, receiver, owner);
-    } 
-    if (f.selector == sig:deposit(uint256,address).selector) {
-        deposit(e, assets, receiver);
-    }
-    if (f.selector == sig:mint(uint256,address).selector) {
-        mint(e, shares, receiver);
-    }
-     if (f.selector == sig:transferFrom(address,address,uint256).selector) {
-        transferFrom(e, owner, receiver, shares);
-    }
-    else {
-        calldataarg args;
-        f(e, args);
-    }
+    
+    requireLinking();
 }

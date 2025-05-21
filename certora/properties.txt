@@ -1,0 +1,11 @@
+properties
+
+ERC4626 - all
+VBT.Token == yieldVault.Token
+roles are never zero. (admin, owner, recepient, rebalancer, pauser...)
+minimumReservePercentage <= 1e18
+yieldVault != 0
+totalAssets == deposited + reserve should only decrease via withdraw, redeem
+reservePercentage() <= 100% ..??
+
+rebalance doesn't affect totalAssets
