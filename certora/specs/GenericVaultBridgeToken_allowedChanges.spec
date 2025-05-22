@@ -43,6 +43,16 @@ definition canDecreaseTotalSupply(method f) returns bool =
 definition canIncreaseTotalSupply(method f) returns bool =
     false;
 
+rule minimumReservePercentageLTe18(method f, env e)
+{
+    uint minimumReservePercentageBefore = minimumReservePercentage(e);
+    calldataarg args;
+    f(e, args);
+    uint minimumReservePercentageAfter = minimumReservePercentage(e);
+    assert minimumReservePercentageBefore <= 10^18 => 
+        minimumReservePercentageAfter <= 10^18;
+}
+
 function requireNonSceneSender(env e)
 {
     require e.msg.sender != currentContract;

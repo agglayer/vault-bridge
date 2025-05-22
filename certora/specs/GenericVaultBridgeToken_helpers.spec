@@ -4,7 +4,6 @@ import "GenericVaultBridgeToken_methods.spec";
 //using DummyERC20B as ERC20b; 
 using TestVault as yieldVaultContract;
 
-
 function userAssets(address a) returns uint256
 {
     return ERC20a.balanceOf(a);
@@ -13,6 +12,7 @@ function userAssets(address a) returns uint256
 function requireLinking() 
 {
     require yieldVault() == yieldVaultContract;
+    require VaultBridgeTokenPart2.yieldVault() == yieldVaultContract;
 }
 
 // A helper function to set the receiver 

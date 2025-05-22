@@ -1,4 +1,5 @@
 using TokenMock as ERC20a; 
+using VaultBridgeTokenPart2 as VaultBridgeTokenPart2;
 
 /*
     Declaration of methods that are used in the rules. envfree indicate that
@@ -31,6 +32,7 @@ methods {
     //function DOMAIN_SEPARATOR() external returns bytes32;
 
     function yieldVault() external returns (address) envfree;
+    function VaultBridgeTokenPart2.yieldVault() external returns (address) envfree;
 
     //// #ERC20 methods
     function _.balanceOf(address) external  => DISPATCHER(true);

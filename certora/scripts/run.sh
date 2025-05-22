@@ -4,4 +4,4 @@ certoraRun certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridg
 
 certoraRun certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GenericVaultBridgeToken_ERC4626.spec --msg erc4626_underlaying --rule underlyingCannotChange 
 
-certoraRun certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GenericVaultBridgeToken_allowedChanges.spec --parametric_contracts GenericVaultBridgeToken --msg canDecreaseTotalAssets --rule onlyAllowedMethodsMayChangeTotalAssets
+certoraRun certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GenericVaultBridgeToken_allowedChanges.spec --msg canDecreaseTotalAssets --rule onlyAllowedMethodsMayChangeTotalAssets
