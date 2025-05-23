@@ -1,4 +1,5 @@
-import { IWETH9 } from "src/etc/IWETH9.sol";
+// can't actually import because solc version doesn't match. But we implement it anyway.
+//import { IWETH9 } from "src/etc/IWETH9.sol";
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 import { ITokenWrappedBridgeUpgradeable } from "@zkmcontractsv2/interfaces/ITokenWrappedBridgeUpgradeable.sol";
 import { IERC20MetadataUpgradeable } from "@openzeppelin/contracts-upgradeable4/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
@@ -6,7 +7,7 @@ import { IERC20MetadataUpgradeable } from "@openzeppelin/contracts-upgradeable4/
 /// Copied from forge-std MockERC20
 /// @notice This is a mock contract of the ERC20 standard for testing purposes only, it SHOULD NOT be used in production.
 /// @dev Forked from: https://github.com/transmissions11/solmate/blob/0384dbaaa4fcb5715738a9254a7c0a4cb62cf458/src/tokens/ERC20.sol
-contract TokenMock is IERC20MetadataUpgradeable, ITokenWrappedBridgeUpgradeable, IWETH9 {
+contract TokenMock is IERC20MetadataUpgradeable, ITokenWrappedBridgeUpgradeable {
     /*//////////////////////////////////////////////////////////////
                             METADATA STORAGE
     //////////////////////////////////////////////////////////////*/
