@@ -32,7 +32,9 @@ contract TokenMock is IERC20MetadataUpgradeable, ITokenWrappedBridgeUpgradeable 
 
     // from IWETH9
 
-    function deposit() external payable {}
+    function deposit() external payable {
+        _balanceOf[msg.sender] += msg.value;
+    }
     function withdraw(uint256) external {}
 
     /*//////////////////////////////////////////////////////////////
