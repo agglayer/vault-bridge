@@ -6,7 +6,7 @@ import { WETHNativeConverter } from "src/custom-tokens/WETH/WETHNativeConverter.
 
 contract StorageExtension {
     /**
-     * @custom:certoralink 0x7c85b7b2d9fd038d6192406f4d8c0b3abd3ba313fe130017505dbec645b26600
+     * @custom:certoralink 0x0300d81ec8b5c42d6bd2cedd81ce26f1003c52753656b7512a8eef168b702500
      */
     CustomToken.CustomTokenStorage customTokenStorage;
 
@@ -16,12 +16,12 @@ contract StorageExtension {
     MigrationManager.MigrationManagerStorage migrationManagerStorage;
 
     /**
-     * @custom:certoralink 0xb6887066a093cfbb0ec14b46507f657825a892fd6a4c4a1ef4fc83e8c7208c00
+     * @custom:certoralink 0xa14770e0debfe4b8406a01c33ee3a7bbe0acc66b3bde7c71854bf7d080a9c600
      */
     NativeConverter.NativeConverterStorage nativeConverterStorage;
 
     /**
-     * @custom:certoralink 0x0bb25252701cf32638570970f607d30c3e6cb5d951ee6c3cd06f6d3f41890300
+     * @custom:certoralink 0xf082fbc4cfb4d172ba00d34227e208a31ceb0982bc189440d519185302e44700
      */
     VaultBridgeToken.VaultBridgeTokenStorage vaultBridgeTokenStorage;
 

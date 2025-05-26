@@ -1,3 +1,5 @@
+// can't actually import because solc version doesn't match. But we implement it anyway.
+//import { IWETH9 } from "src/etc/IWETH9.sol";
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 import { ITokenWrappedBridgeUpgradeable } from "@zkmcontractsv2/interfaces/ITokenWrappedBridgeUpgradeable.sol";
 import { IERC20MetadataUpgradeable } from "@openzeppelin/contracts-upgradeable4/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
@@ -27,6 +29,13 @@ contract TokenMock is IERC20MetadataUpgradeable, ITokenWrappedBridgeUpgradeable 
     function decimals() external view override returns (uint8) {
         return _decimals;
     }
+
+    // from IWETH9
+
+    function deposit() external payable {
+        _balanceOf[msg.sender] += msg.value;
+    }
+    function withdraw(uint256) external {}
 
     /*//////////////////////////////////////////////////////////////
                               ERC20 STORAGE
