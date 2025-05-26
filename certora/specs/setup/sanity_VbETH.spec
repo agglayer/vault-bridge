@@ -1,6 +1,5 @@
 import "dispatching_VbETH.spec";
 
-using BridgeL2SovereignChain as BridgeL2SovereignChain;
 using VaultBridgeTokenInitializer as VaultBridgeTokenInitializer;
 
 use builtin rule sanity filtered { f ->
@@ -13,7 +12,6 @@ rule sanity_initialize() {
 
     address initializer = VaultBridgeTokenInitializer;
     VaultBridgeToken.InitializationParameters ip;
-    require(ip.lxlyBridge == BridgeL2SovereignChain);
 
     initialize(e, initializer, ip);
 

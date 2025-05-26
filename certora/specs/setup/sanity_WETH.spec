@@ -1,6 +1,5 @@
 import "dispatching_WETH.spec";
 
-using BridgeL2SovereignChain as BridgeL2SovereignChain;
 using WETHNativeConverter as WETHNativeConverter;
 
 use builtin rule sanity filtered { f ->
@@ -15,7 +14,7 @@ rule sanity_reinitialize() {
     string name_;
     string symbol_;
     uint8 originalUnderlyingTokenDecimals_;
-    address lxlyBridge_ = BridgeL2SovereignChain;
+    address lxlyBridge_;
     address nativeConverter_ = WETHNativeConverter;
 
     reinitialize(e, owner_, name_, symbol_, originalUnderlyingTokenDecimals_, lxlyBridge_, nativeConverter_);
