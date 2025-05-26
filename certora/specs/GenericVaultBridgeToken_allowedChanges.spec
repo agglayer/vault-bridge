@@ -43,6 +43,45 @@ definition canDecreaseTotalSupply(method f) returns bool =
 definition canIncreaseTotalSupply(method f) returns bool =
     false;
 
+rule onlyAllowedMethodsMayChangeStakedAssets(method f, env e)
+    filtered { f -> !f.isView && !excludedMethod(f) }
+{
+    requireNonSceneSender(e);
+    requireLinking();
+    uint256 stakedAssetsBefore = stakedAssets();
+    calldataarg args;
+    f(e, args);
+    uint256 stakedAssetsAfter = stakedAssets();
+    assert stakedAssetsAfter > stakedAssetsBefore => canIncreaseStakedAssets(f);
+    assert stakedAssetsAfter < stakedAssetsBefore => canDecreaseStakedAssets(f);
+}
+
+definition canDecreaseStakedAssets(method f) returns bool =
+    false;
+
+definition canIncreaseStakedAssets(method f) returns bool =
+    false;
+
+
+rule onlyAllowedMethodsMayChangeReservedAssets(method f, env e)
+    filtered { f -> !f.isView && !excludedMethod(f) }
+{
+    requireNonSceneSender(e);
+    requireLinking();
+    uint256 reservedAssetsBefore = reservedAssets();
+    calldataarg args;
+    f(e, args);
+    uint256 reservedAssetsAfter = reservedAssets();
+    assert reservedAssetsAfter > reservedAssetsBefore => canIncreaseStakedAssets(f);
+    assert reservedAssetsAfter < reservedAssetsBefore => canDecreaseStakedAssets(f);
+}
+
+definition canDecreaseReservedAssets(method f) returns bool =
+    false;
+
+definition canIncreaseReservedAssets(method f) returns bool =
+    false;
+
 rule minimumReservePercentageLTe18(method f, env e)
 {
     uint minimumReservePercentageBefore = minimumReservePercentage(e);
@@ -53,8 +92,31 @@ rule minimumReservePercentageLTe18(method f, env e)
         minimumReservePercentageAfter <= 10^18;
 }
 
-function requireNonSceneSender(env e)
+rule noActivityWhenPaused(method f, env e)
+    filtered {f -> !f.isView}
 {
-    require e.msg.sender != currentContract;
-    require !hasRole(e, DEFAULT_ADMIN_ROLE(e), e.msg.sender);
+    bool paused = paused();
+    calldataarg args;
+    f@withrevert(e, args);
+    assert paused => lastReverted;
+}
+
+//_simulateWithdraw(x, true) == x or revert 
+rule integrityOf_simulateWithdraw_force(env e)
+{   
+    uint256 assets;
+    uint256 res = _simulateWithdraw(e, assets, true);
+    assert res == assets;
+}
+
+//_withdrawFromYieldVault(x, exact=true, ...) == (_, x)
+rule integrityOf_withdrawFromYieldVault_exact(env e)
+{
+    uint256 assets; bool exact; address receiver;
+    uint256 originalTotalSupply; uint256 originalUncollectedYield; uint256 originalReservedAssets;
+    
+    uint256 receivedAssets;
+    (_, receivedAssets) = _withdrawFromYieldVault(e, assets, exact, receiver, 
+        originalTotalSupply, originalUncollectedYield, originalReservedAssets);
+    assert exact == true => receivedAssets == assets;
 }

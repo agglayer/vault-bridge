@@ -1,11 +1,83 @@
 properties
 
-ERC4626 - all
+ERC4626 - all                           DONE
 VBT.Token == yieldVault.Token
 roles are never zero. (admin, owner, recepient, rebalancer, pauser...)
-minimumReservePercentage <= 1e18
+only one address can have the role ??
+minimumReservePercentage <= 1e18        DONE
 yieldVault != 0
-totalAssets == deposited + reserve should only decrease via withdraw, redeem
+totalAssets == deposited + reserve should only decrease via withdraw, redeem    DONE
 reservePercentage() <= 100% ..??
+_simulateWithdraw(x, true) == x or revert       DONE
+reservedAssets must be up-to-date when calling _simulateWithdraw (how do we check this efficiently ?)
+reserve should never end up being unbalanced after a public method / an invariant..?
+intergrity of public methods
+integrity of pausing (cannot change anything while paused)                           DONE
+"non reentrant" is checked for all public methods
+_withdrawFromYieldVault(x, exact=true, ...) == (_, x)   DONE
 
-rebalance doesn't affect totalAssets
+solvencyCheck should hold at all times. the checks:
+---------------------
+Math.mulDiv(
+    convertToAssets(originalTotalSupply + originalUncollectedYield) - originalReservedAssets,
+    burnedYieldVaultShares, assets) 
+    <= 
+Math.mulDiv(yieldVaultSharesBalanceBefore, 1e18 + $.yieldVaultMaximumSlippagePercentage, 1e18),
+---------------------
+Math.mulDiv(
+    convertToAssets(totalSupply() + yield()) - reservedAssets(), 
+    burnedYieldVaultShares, maxWithdraw_)
+    <= 
+Math.mulDiv($.yieldVault.balanceOf(address(this)), 1e18 + $.yieldVaultMaximumSlippagePercentage, 1e18);
+---------------------
+solvencyCheckPassed = stakedAssets() - oldStakedAssets
+    >= 
+Math.mulDiv(assets, 1e18 - $.yieldVaultMaximumSlippagePercentage, 1e18);
+---------------------
+
+preview_ never reverts
+preview_ is pesimistic for the user     DONE
+max_ provide tight bounds, i.e. maxF == x => F(x) will not revert and F(x+1) will revert
+methods dont revert even when convertToAssets is not an identity (e.g. check redeem)
+
+rebalance doesn't affect totalAssets        DONE
+
+what is lxlyBridge.claimAsset supposed to do?? change some balances?
+    let's verify this individually and assume it later
+_rebalanceReserve( force=true) => reserve is balanced afterwards
+
+_depositIntoYieldVault increases stakedAssets(), i.e., increases yieldVault.balanceOf(this), DONE
+
+yieldVault.balanceOf(this) cannot increase by more that minimumYieldVaultDeposit via a single call (as long as it was balanced before)
+
+_withdrawFromYieldVault decreases stakedAssets()        DONE
+
+
+
+
+//////////////
+
+zhruba 5 hodin drzi,
+nedelaji high frequency, spis minuty
+
+jak velka firma
+11 lidi
+5 AI + 5 SW, 3 lidi delaji RL
+fond na kajmanskych ostrovech, zacinal sam se svyma penezma
+python + java (malo), vlastni infrastruktura, lokalni GPU, AWS, je to pres image, da se nasadit i do cloudu, RLLib od rey bytorch lightining
+
+co maji
+s ucitelem, time series data, predikce, 
+jen technicka data??
+obchodni strategie, pak nakupni modul
+od 2018 maji prumerne 50% rocne cisteho
+prvni duvod je vysoka volatilita vynosu.
+pri male volatilite nemaji tolik prilezitosti - jine krypto ?? co je ten prvni duvod??
+
+co hledaji
+chteji udelat end-to-end RL??
+ted je to expertni system
+firefish
+
+jaky typ spoluprace
+

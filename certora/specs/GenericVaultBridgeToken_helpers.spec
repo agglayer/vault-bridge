@@ -52,6 +52,12 @@ function callReclaimingMethods(env e, method f, uint256 assets, uint256 shares, 
     }
 }
 
+function requireNonSceneSender(env e)
+{
+    require e.msg.sender != currentContract;
+    require !hasRole(e, DEFAULT_ADMIN_ROLE(e), e.msg.sender);
+}
+
 function callFunctionsWithReceiverAndOwner(env e, method f, uint256 assets, uint256 shares, address receiver, address owner) {
     if (f.selector == sig:withdraw(uint256,address,address).selector) {
         withdraw(e, assets, receiver, owner);
