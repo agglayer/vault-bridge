@@ -3,7 +3,7 @@ import "dispatching_MigrationManager.spec";
 using VbETH as VbETH;
 
 methods {
-    function _.underlyingToken() external => VbETH.underlyingToken();
+    function _.underlyingToken() external returns (address) => VbETH.underlyingToken();
 }
 
 use builtin rule sanity filtered { f ->
