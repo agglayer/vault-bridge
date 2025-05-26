@@ -55,29 +55,5 @@ _withdrawFromYieldVault decreases stakedAssets()        DONE
 
 
 
-//////////////
-
-zhruba 5 hodin drzi,
-nedelaji high frequency, spis minuty
-
-jak velka firma
-11 lidi
-5 AI + 5 SW, 3 lidi delaji RL
-fond na kajmanskych ostrovech, zacinal sam se svyma penezma
-python + java (malo), vlastni infrastruktura, lokalni GPU, AWS, je to pres image, da se nasadit i do cloudu, RLLib od rey bytorch lightining
-
-co maji
-s ucitelem, time series data, predikce, 
-jen technicka data??
-obchodni strategie, pak nakupni modul
-od 2018 maji prumerne 50% rocne cisteho
-prvni duvod je vysoka volatilita vynosu.
-pri male volatilite nemaji tolik prilezitosti - jine krypto ?? co je ten prvni duvod??
-
-co hledaji
-chteji udelat end-to-end RL??
-ted je to expertni system
 firefish
-
-jaky typ spoluprace
 
