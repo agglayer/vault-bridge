@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: LicenseRef-PolygonLabs-Open-Attribution OR LicenseRef-PolygonLabs-Source-Available
+// Vault Bridge (last updated v0.6.0) (VaultBridgeTokenInitializer.sol)
+
 pragma solidity 0.8.29;
 
 // Main functionality.
 import {IVaultBridgeTokenInitializer} from "./etc/IVaultBridgeTokenInitializer.sol";
 import {VaultBridgeToken} from "./VaultBridgeToken.sol";
-
-// Other functionality.
-import {IVersioned} from "./etc/IVersioned.sol";
 
 // Libraries.
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -91,12 +90,5 @@ contract VaultBridgeTokenInitializer is IVaultBridgeTokenInitializer, VaultBridg
         // Approve the yield vault and LxLy Bridge.
         IERC20(initParams.underlyingToken).forceApprove(initParams.yieldVault, type(uint256).max);
         _approve(address(this), address(initParams.lxlyBridge), type(uint256).max);
-    }
-
-    // -----================= ::: INFO ::: =================-----
-
-    /// @inheritdoc IVersioned
-    function version() external pure returns (string memory) {
-        return "0.6.0";
     }
 }

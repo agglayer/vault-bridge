@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: LicenseRef-PolygonLabs-Open-Attribution OR LicenseRef-PolygonLabs-Source-Available
+// Vault Bridge (last updated v0.6.0) (NativeConverter.sol)
+
 pragma solidity 0.8.29;
 
 // Other functionality.
@@ -7,7 +9,7 @@ import {AccessControlUpgradeable} from "@openzeppelin-contracts-upgradeable/acce
 import {PausableUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/PausableUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import {ERC20PermitUser} from "./etc/ERC20PermitUser.sol";
-import {IVersioned} from "./etc/IVersioned.sol";
+import {Versioned} from "./etc/Versioned.sol";
 
 // Libraries.
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -31,7 +33,7 @@ abstract contract NativeConverter is
     PausableUpgradeable,
     ReentrancyGuardUpgradeable,
     ERC20PermitUser,
-    IVersioned
+    Versioned
 {
     // Libraries.
     using SafeERC20 for IERC20;

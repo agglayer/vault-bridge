@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: LicenseRef-PolygonLabs-Open-Attribution OR LicenseRef-PolygonLabs-Source-Available
+// Vault Bridge (last updated v0.6.0) (custom-tokens/WETH/WETHNativeConverter.sol)
+
 pragma solidity 0.8.29;
 
 import {NativeConverter, Math} from "../../NativeConverter.sol";
 import {WETH} from "./WETH.sol";
-import {IVersioned} from "../../etc/IVersioned.sol";
 import {MigrationManager} from "../../MigrationManager.sol";
 import {ILxLyBridge} from "../../etc/ILxLyBridge.sol";
 
@@ -158,10 +159,5 @@ contract WETHNativeConverter is NativeConverter {
 
         // Emit the event.
         emit NonMigratableGasBackingPercentageSet(nonMigratableGasBackingPercentage_);
-    }
-
-    /// @inheritdoc IVersioned
-    function version() external pure virtual returns (string memory) {
-        return "0.6.0";
     }
 }

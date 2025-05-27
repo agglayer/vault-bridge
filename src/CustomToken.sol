@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: LicenseRef-PolygonLabs-Open-Attribution OR LicenseRef-PolygonLabs-Source-Available
+// Vault Bridge (last updated v0.6.0) (CustomToken.sol)
+
 pragma solidity 0.8.29;
 
 // Main functionality.
@@ -10,7 +12,7 @@ import {Initializable} from "@openzeppelin-contracts-upgradeable/proxy/utils/Ini
 import {AccessControlUpgradeable} from "@openzeppelin-contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import {PausableUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/PausableUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
-import {IVersioned} from "./etc/IVersioned.sol";
+import {Versioned} from "./etc/Versioned.sol";
 
 /// @title Custom Token
 /// @author See https://github.com/agglayer/vault-bridge
@@ -23,7 +25,7 @@ abstract contract CustomToken is
     PausableUpgradeable,
     ReentrancyGuardUpgradeable,
     ERC20PermitUpgradeable,
-    IVersioned
+    Versioned
 {
     /// @dev Storage of Custom Token contract.
     /// @dev It's implemented on a custom ERC-7201 namespace to reduce the risk of storage collisions when using with upgradeable contracts.
