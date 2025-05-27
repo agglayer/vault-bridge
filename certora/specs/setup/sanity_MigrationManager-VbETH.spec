@@ -3,6 +3,7 @@ import "dispatching_MigrationManager.spec";
 using VbETH as VbETH;
 
 methods {
+    function VbETH.underlyingToken() external returns (address) envfree;
     function _.underlyingToken() external => VbETH.underlyingToken() expect (address);
 }
 
