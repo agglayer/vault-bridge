@@ -177,6 +177,9 @@ abstract contract CustomToken is
         onlyLxlyBridgeAndNativeConverter
         nonReentrant
     {
+        // @remind Document.
+        if (account == address(0)) return;
+
         _mint(account, value);
     }
 
