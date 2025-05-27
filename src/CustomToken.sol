@@ -179,7 +179,9 @@ abstract contract CustomToken is
         onlyLxlyBridgeAndNativeConverter
         nonReentrant
     {
-        // @remind Document.
+        // @remind Redocument.
+        // When we migrate backing to Lx, we end up sending tokens to address(0) here.
+        // These need to be claimable so the bridge accounting is correct and we allow it here by not reverting.
         if (account == address(0)) return;
 
         _mint(account, value);

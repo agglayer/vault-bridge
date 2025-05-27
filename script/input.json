@@ -77,7 +77,54 @@
         }
     },
     "747474": {
-        
+        "vbETH": {
+            "customToken": "0xEE7D8BCFb72bC1880D0Cf19822eB0A2e6577aB62",
+            "underlyingToken": "0x815955d051C6262C16c720b19D735426254Bec5B",
+            "owner": "0x2De242e27386e224E5fbF110EA8406d5B70740ec",
+            "name": "Vault Bridge ETH",
+            "symbol": "vbETH",
+            "decimals": 18,
+            "nonMigratableGasBackingPercentage": 0
+        },
+        "vbUSDC": {
+            "customToken": "0x203A662b0BD271A6ed5a60EdFbd04bFce608FD36",
+            "underlyingToken": "0xfd415D011FfaA8e6f17fa753CdB080d1dE266784",
+            "owner": "0x2De242e27386e224E5fbF110EA8406d5B70740ec",
+            "name": "Vault Bridge USDC",
+            "symbol": "vbUSDC",
+            "decimals": 6,
+            "nonMigratableBackingPercentage": 2
+        },
+        "vbUSDT": {
+            "customToken": "0x2DCa96907fde857dd3D816880A0df407eeB2D2F2",
+            "underlyingToken": "0xf44e3BCB7A2461CC08185E127B324f2486a74E20",
+            "owner": "0x2De242e27386e224E5fbF110EA8406d5B70740ec",
+            "name": "Vault Bridge USDT",
+            "symbol": "vbUSDT",
+            "decimals": 6,
+            "nonMigratableBackingPercentage": 2
+        },
+        "vbWBTC": {
+            "customToken": "0x0913DA6Da4b42f538B445599b46Bb4622342Cf52",
+            "underlyingToken": "0xB33e43A3F276e8e75792b941bccC996EcB2c0bBD",
+            "owner": "0x2De242e27386e224E5fbF110EA8406d5B70740ec",
+            "name": "Vault Bridge WBTC",
+            "symbol": "vbWBTC",
+            "decimals": 8,
+            "nonMigratableBackingPercentage": 1
+        },
+        "vbUSDS": {
+            "customToken": "0x62D6A123E8D19d06d68cf0d2294F9A3A0362c6b3",
+            "underlyingToken": "0x2134866886ce784fE2E0DE819118E4D32b4Be32C",
+            "owner": "0x2De242e27386e224E5fbF110EA8406d5B70740ec",
+            "name": "Vault Bridge USDS",
+            "symbol": "vbUSDS",
+            "decimals": 18,
+            "nonMigratableBackingPercentage": 1
+        },
+        "migrationManager": "0x417d01B64Ea30C4E163873f3a1f77b727c689e02",
+        "polygonEngineeringMultisig": "0x4e981bAe8E3cd06Ca911ffFE5504B2653ac1C38a",
+        "lxlyBridge": "0x2a3DD3EB832aF982ec71669E178424b10Dca2EDe"
     },
     "31337": {
         "proxyAdmin": "0x0000c6A4e8C654dF65503CBb0eDc82B4Ce9158e6",
