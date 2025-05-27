@@ -9,6 +9,6 @@ methods {
     function _.bridgeMessage(uint32,address,bool,bytes) external => NONDET;
 
     // from bridge
-    function _.onMessageReceived(address,uint32,bytes) external => DISPATCHER(true);
+    //function _.onMessageReceived(address,uint32,bytes) external => DISPATCHER(true);
     function _.globalExitRootMap(bytes32) external => NONDET;
 }
