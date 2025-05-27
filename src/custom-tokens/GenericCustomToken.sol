@@ -33,6 +33,6 @@ contract GenericCustomToken is CustomToken {
 
     /// @inheritdoc IVersioned
     function version() external pure virtual returns (string memory) {
-        return "0.5.1";
+        return "0.6.0";
     }
 }
