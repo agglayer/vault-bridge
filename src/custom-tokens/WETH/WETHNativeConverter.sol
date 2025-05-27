@@ -162,6 +162,6 @@ contract WETHNativeConverter is NativeConverter {
 
     /// @inheritdoc IVersioned
     function version() external pure virtual returns (string memory) {
-        return "0.5.0";
+        return "0.6.0";
     }
 }

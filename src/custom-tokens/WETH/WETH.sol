@@ -98,6 +98,6 @@ contract WETH is CustomToken {
 
     /// @inheritdoc IVersioned
     function version() public pure returns (string memory) {
-        return "0.5.1";
+        return "0.6.0";
     }
 }
