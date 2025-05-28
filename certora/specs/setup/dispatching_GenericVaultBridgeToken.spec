@@ -1,6 +1,8 @@
 import "../snippets/dispatching_Bridge.spec";
 import "../snippets/dispatching_permit.spec";
 
+using TokenMock as TokenMock;
+
 methods {
     unresolved external in MigrationManager.onMessageReceived(address,uint32,bytes) => DISPATCH [
         TokenMock.balanceOf(address),
