@@ -1,6 +1,7 @@
 import "dispatching_MigrationManager.spec";
 
 using VbETH as VbETH;
+using VaultBridgeTokenPart2 as VaultBridgeTokenPart2;
 
 methods {
     function _.completeMigration(uint32 o, uint256 s, uint256 a) external with(env e) => CVL_completeMigration(e, o, s, a) expect void;
@@ -9,7 +10,7 @@ methods {
 }
 
 function CVL_completeMigration(env e, uint32 o, uint256 s, uint256 a) {
-    VbETH.completeMigration(e, o, s, a);
+    VaultBridgeTokenPart2.completeMigration(e, o, s, a);
 }
 function CVL_underlyingToken() returns address {
     return VbETH.underlyingToken();
