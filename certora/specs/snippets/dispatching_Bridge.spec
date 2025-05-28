@@ -7,6 +7,7 @@ methods {
     function _.claimAsset(bytes32[32],bytes32[32],uint256,bytes32,bytes32,uint32,address,uint32,address,uint256,bytes) external => NONDET;
     function _.claimMessage(bytes32[32],bytes32[32],uint256,bytes32,bytes32,uint32,address,uint32,address,uint256,bytes) external => NONDET;
     function _.bridgeMessage(uint32,address,bool,bytes) external => NONDET;
+    function _.wrappedAddressIsNotMintable(address) external => NONDET;
 
     // from bridge
     //function _.onMessageReceived(address,uint32,bytes) external => DISPATCHER(true);

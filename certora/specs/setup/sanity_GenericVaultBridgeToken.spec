@@ -14,15 +14,9 @@ rule underlyingCannotChange() {
 
     env e;
     method f;
-    if (f.selector == sig:MigrationManager.configureNativeConverters(uint32[],address[],address).selector) {
-        uint32[] layerYLxlyIds;
-        address[] nativeConverters;
-        address vbToken = GenericVaultBridgeToken;
-        MigrationManager.configureNativeConverters(e, layerYLxlyIds, nativeConverters, vbToken);
-    } else {
-        calldataarg args;
-        f(e, args);
-    }
+    calldataarg args;
+    f(e, args);
+
     address newAsset = asset();
 
     assert originalAsset == newAsset,
