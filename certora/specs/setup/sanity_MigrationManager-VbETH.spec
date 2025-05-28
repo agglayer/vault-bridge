@@ -4,7 +4,11 @@ using VbETH as VbETH;
 
 methods {
     function VbETH.underlyingToken() external returns (address) envfree;
-    function _.underlyingToken() external => VbETH.underlyingToken() expect (address);
+    function _.underlyingToken() external => CVL_underlyingToken() expect (address);
+}
+
+function CVL_underlyingToken() returns address {
+    return VbETH.underlyingToken();
 }
 
 use builtin rule sanity filtered { f ->
