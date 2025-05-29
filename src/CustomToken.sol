@@ -32,6 +32,8 @@ abstract contract CustomToken is
         uint8 decimals;
         address lxlyBridge;
         address nativeConverter;
+        string originalName;
+        string originalSymbol;
     }
 
     /// @dev The storage slot at which Custom Token storage starts, following the EIP-7201 standard.
@@ -83,8 +85,18 @@ abstract contract CustomToken is
         require(bytes(name_).length > 0, InvalidName());
         require(bytes(symbol_).length > 0, InvalidSymbol());
         require(originalUnderlyingTokenDecimals_ > 0, InvalidOriginalUnderlyingTokenDecimals());
+        assert(originalUnderlyingTokenDecimals_ == decimals());
         require(lxlyBridge_ != address(0), InvalidLxLyBridge());
         require(nativeConverter_ != address(0), InvalidNativeConverter());
+
+        // Archive the original name and symbol.
+        if (bytes($.originalName).length == 0 && bytes($.originalSymbol).length == 0) {
+            assert(bytes(name()).length != 0);
+            assert(bytes(symbol()).length != 0);
+
+            $.originalName = name();
+            $.originalSymbol = symbol();
+        }
 
         // Initialize the inherited contracts.
         __ERC20_init(name_, symbol_);
@@ -135,6 +147,30 @@ abstract contract CustomToken is
     }
 
     // -----================= ::: ERC-20 ::: =================-----
+
+    // @remind Documenet.
+    function name() public view virtual override returns (string memory) {
+        CustomTokenStorage storage $ = _getCustomTokenStorage();
+
+        if (msg.sender == $.lxlyBridge) {
+            // Return the original name when called by LxLy Bridge.
+            return $.originalName;
+        }
+
+        return super.name();
+    }
+
+    // @remind Documenet.
+    function symbol() public view virtual override returns (string memory) {
+        CustomTokenStorage storage $ = _getCustomTokenStorage();
+
+        if (msg.sender == $.lxlyBridge) {
+            // Return the original symbol when called by LxLy Bridge.
+            return $.originalSymbol;
+        }
+
+        return super.symbol();
+    }
 
     /// @dev Pausable ERC-20 `transfer` function.
     function transfer(address to, uint256 value) public virtual override whenNotPaused returns (bool) {
