@@ -1,5 +1,6 @@
 using TokenMock as ERC20a; 
-using VaultBridgeTokenPart2 as VaultBridgeTokenPart2;
+using GenericVaultBridgeToken as GenericVaultBridgeToken;
+//using VaultBridgeTokenPart2 as VaultBridgeTokenPart2;
 
 /*
     Declaration of methods that are used in the rules. envfree indicate that
@@ -32,8 +33,20 @@ methods {
     //function DOMAIN_SEPARATOR() external returns bytes32;
 
     function yieldVault() external returns (address) envfree;
-    function VaultBridgeTokenPart2.yieldVault() external returns (address) envfree;
-
+    function yieldRecipient() external returns (address) envfree;
+    
+    //function VaultBridgeTokenPart2.yieldVault() external returns (address) envfree;
+    function stakedAssets() external returns (uint256) envfree;
+    function reservedAssets() external returns (uint256) envfree;
+    function paused() external returns (bool) envfree;
+    
+    function reservePercentage() external returns (uint256) envfree;
+    function minimumReservePercentage() external returns (uint256) envfree;
+    function minimumYieldVaultDeposit() external returns (uint256) envfree;
+    function yieldVaultMaximumSlippagePercentage() external returns (uint256) envfree;
+    function migrationFeesFund() external returns (uint256) envfree;
+    
+    
     //// #ERC20 methods
     function _.balanceOf(address) external  => DISPATCHER(true);
     function _.transfer(address,uint256) external  => DISPATCHER(true);
@@ -42,6 +55,11 @@ methods {
     function ERC20a.balanceOf(address) external returns uint256 envfree;
     function ERC20a.allowance(address, address) external returns uint256 envfree;
     function ERC20a.transferFrom(address,address,uint256) external returns bool;
+    function ERC20a.totalSupply() external returns uint256 envfree;
 
     // function ERC20b.allowance(address, address) external returns uint256 envfree;
+
+    // function _.eip712Domain() => NONDET DELETE;
+    function GenericVaultBridgeToken.eip712Domain() external returns (bytes1, string, string, uint256, address, bytes32, uint256[]) => NONDET DELETE;
+
 }

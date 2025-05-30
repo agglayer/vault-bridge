@@ -1,6 +1,6 @@
-import "setup/dispatching_GenericVaultBridgeToken.spec";
-import "dispatching_ERC4626.spec";
-import "GenericVaultBridgeToken_helpers.spec";
+//import "setup/dispatching_GenericVaultBridgeToken.spec";
+//import "dispatching_ERC4626.spec";
+import "GenericVaultBridgeToken_basicInvariants.spec";
 
 ////////////////////////////////////////////////////////////////////////////////
 ////           Dynamic Calls                                               /////
@@ -11,7 +11,9 @@ persistent ghost bool delegatecallMade;
 
 
 hook CALL(uint g, address addr, uint value, uint argsOffset, uint argsLength, uint retOffset, uint retLength) uint rc {
-    if (addr != currentContract.asset()) {
+    if (addr != currentContract.asset() &&
+        addr != currentContract.yieldVault()) 
+    {
         callMade = true;
     }
 }
@@ -24,13 +26,12 @@ hook DELEGATECALL(uint g, address addr, uint argsOffset, uint argsLength, uint r
 This rule proves there are no instances in the code in which the user can act as the contract.
 By proving this rule we can safely assume in our spec that e.msg.sender != currentContract.
 */
-rule noDynamicCalls {
-    method f;
-    env e;
-    calldataarg args;
-
+rule noDynamicCalls(method f, env e)
+    filtered {f -> !f.isView }
+{
     require !callMade && !delegatecallMade;
 
+    calldataarg args;
     f(e, args);
 
     assert !callMade && !delegatecallMade;
@@ -140,50 +141,47 @@ invariant assetsMoreThanSupply()
         }
     }
 
-invariant noAssetsIfNoSupply() 
-    (userAssets(currentContract) == 0 => totalSupply() == 0) &&
-    (totalAssets() == 0 => (totalSupply() == 0)) {
+invariant noBalanceIfNoSupply() 
+    userAssets(currentContract) == 0 => totalSupply() == 0
+    {
         preserved with (env e) {
             address any;
             safeAssumptions(e, any, e.msg.sender);
         }
-    }
+}
 
-invariant noSupplyIfNoAssets()
-    noSupplyIfNoAssetsDef()     // see defition in "helpers and miscellaneous" section
+invariant noAssetsIfNoSupply() 
+    totalAssets() == 0 => (totalSupply() == 0)
+    {
+        preserved with (env e) {
+            address any;
+            safeAssumptions(e, any, e.msg.sender);
+        }
+}
+
+invariant noSupplyIfNoBalance()
+    userAssets(currentContract) == 0 => totalSupply() == 0 
     {
         preserved with (env e) {
             safeAssumptions(e, _, e.msg.sender);
         }
-    }
-
-
-
-ghost mathint sumOfBalances {
-    init_state axiom sumOfBalances == 0;
 }
 
-// TODO
-// hook Sstore balances[KEY address addy] uint256 newValue (uint256 oldValue)  {
-//     sumOfBalances = sumOfBalances + newValue - oldValue;
-// }
-
-// hook Sload uint256 val balances[KEY address addy]  {
-//     require sumOfBalances >= val;
-// }
-
-invariant totalSupplyIsSumOfBalances()
-    totalSupply() == sumOfBalances;
-
-
+invariant noSupplyIfNoAssets()
+    totalAssets() == 0 => totalSupply() == 0
+    {
+        preserved with (env e) {
+            safeAssumptions(e, _, e.msg.sender);
+        }
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 ////                    #     State Transition                             /////
 ////////////////////////////////////////////////////////////////////////////////
 
-
-rule totalsMonotonicity() {
-    method f; env e; calldataarg args;
+rule totalsMonotonicity(method f, env e)
+    filtered { f -> !f.isView }
+{
     require e.msg.sender != currentContract; 
     uint256 totalSupplyBefore = totalSupply();
     uint256 totalAssetsBefore = totalAssets();
@@ -221,7 +219,6 @@ filtered {
 ////                    #   High Level                                    /////
 ////////////////////////////////////////////////////////////////////////////////
 
-
 rule dustFavorsTheHouse(uint assetsIn )
 {
     env e;
@@ -230,12 +227,12 @@ rule dustFavorsTheHouse(uint assetsIn )
     safeAssumptions(e,e.msg.sender,e.msg.sender);
     uint256 totalSupplyBefore = totalSupply();
 
-    uint balanceBefore = ERC20a.balanceOf(currentContract);
+    uint balanceBefore = require_uint256(ERC20a.balanceOf(currentContract) + stakedAssets());
 
     uint shares = deposit(e,assetsIn, e.msg.sender);
     uint assetsOut = redeem(e,shares,e.msg.sender,e.msg.sender);
 
-    uint balanceAfter = ERC20a.balanceOf(currentContract);
+    uint balanceAfter = require_uint256(ERC20a.balanceOf(currentContract) + stakedAssets());
 
     assert balanceAfter >= balanceBefore;
 }
@@ -244,12 +241,10 @@ rule dustFavorsTheHouse(uint assetsIn )
 ////                       #   Risk Analysis                           /////////
 ////////////////////////////////////////////////////////////////////////////////
 
-
 invariant vaultSolvency()
     totalAssets() >= totalSupply()  && userAssets(currentContract) >= totalAssets()  {
       preserved with(env e){
             requireInvariant zeroAllowanceOnAssets(e.msg.sender);
-            requireInvariant totalSupplyIsSumOfBalances();
             require e.msg.sender != currentContract;
             require currentContract != asset(); 
         }
@@ -359,13 +354,9 @@ filtered {
 ////                        # helpers and miscellaneous                //////////
 ////////////////////////////////////////////////////////////////////////////////
 
-definition noSupplyIfNoAssetsDef() returns bool = 
-    ( userAssets(currentContract) == 0 => totalSupply() == 0 ) &&
-    ( totalAssets() == 0 <=> ( totalSupply() == 0 ));
-
 function safeAssumptions(env e, address receiver, address owner) {
+    requireAllInvariants();
     require currentContract != asset(); // Although this is not disallowed, we assume the contract's underlying asset is not the contract itself
-    requireInvariant totalSupplyIsSumOfBalances();
     requireInvariant vaultSolvency();
     requireInvariant noAssetsIfNoSupply();
     requireInvariant noSupplyIfNoAssets();
