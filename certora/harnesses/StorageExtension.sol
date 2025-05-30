@@ -11,7 +11,7 @@ contract StorageExtension {
     CustomToken.CustomTokenStorage customTokenStorage;
 
     /**
-     * @custom:certoralink 0xaec447ccc4dc1a1a20af7f847edd1950700343642e68dd8266b4de5e0e190a00
+     * @custom:certoralink 0x30cf29e424d82bdf294fbec113ef39ac73137edfdb802b37ef3fc9ad433c5000
      */
     MigrationManager.MigrationManagerStorage migrationManagerStorage;
 

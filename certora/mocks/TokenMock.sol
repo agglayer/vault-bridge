@@ -166,6 +166,11 @@ contract TokenMock is IERC20MetadataUpgradeable, ITokenWrappedBridgeUpgradeable 
         emit Approval(owner, spender, value);
     }
 
+    // DAI style permit
+    function permit(address owner, address spender, uint256 nonce, uint256 expiry, bool allowed, uint8 v, bytes32 r, bytes32 s) public {
+        permit(owner, spender, nonce, expiry, v, r, s);
+    }
+
     function DOMAIN_SEPARATOR() public view virtual returns (bytes32) {
         return _pureChainId() == INITIAL_CHAIN_ID ? INITIAL_DOMAIN_SEPARATOR : computeDomainSeparator();
     }
