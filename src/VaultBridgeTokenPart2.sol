@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: LicenseRef-PolygonLabs-Open-Attribution OR LicenseRef-PolygonLabs-Source-Available
+// Vault Bridge (last updated v0.6.0) (VaultBridgeTokenPart2.sol)
+
 pragma solidity 0.8.29;
 
 // Main functionality.
 import {VaultBridgeToken} from "./VaultBridgeToken.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
-
-// Other functionality.
-import {IVersioned} from "./etc/IVersioned.sol";
 
 // Libraries.
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -350,12 +349,5 @@ contract VaultBridgeTokenPart2 is VaultBridgeToken {
     /// @notice This function can be called by the owner only.
     function unpause() external onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant {
         _unpause();
-    }
-
-    // -----================= ::: INFO ::: =================-----
-
-    /// @inheritdoc IVersioned
-    function version() external pure override returns (string memory) {
-        return "0.5.0";
     }
 }

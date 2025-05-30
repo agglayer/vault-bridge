@@ -59,7 +59,7 @@ contract VbETHTest is GenericVaultBridgeTokenTest {
         lxlyBridgeMock = new LXLYBridgeMock();
         asset = WETH;
         vbTokenVault = new TestVault(asset);
-        version = "0.5.0";
+        version = "0.6.0";
         name = "Vault Bridge ETH";
         symbol = "vbETH";
         decimals = 18;
