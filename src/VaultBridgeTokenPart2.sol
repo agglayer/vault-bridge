@@ -13,6 +13,7 @@ import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
 // External contracts.
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SPECIAL_INSTRUCTION_SKIP_MINTING} from "./CustomToken.sol";
 
 // @remind Document.
 /// @title Vault Bridge Token: Part 2 (singleton)
@@ -168,10 +169,11 @@ contract VaultBridgeTokenPart2 is VaultBridgeToken {
         // Update the reserve.
         $.reservedAssets += assetsToReserve;
 
-        // Mint vbToken to self and bridge it to address zero on the origin network.
-        // The vbToken will not be claimable on the origin network, but provides liquidity when bridging from Layer Ys to Layer X and increments the pessimistic proof.
+        // @remind Redocument.
+        // Mint vbToken to self and bridge it to `SPECIAL_INSTRUCTION_SKIP_MINTING` on the origin network.
+        // The vbToken will not be minted on the origin network, but provides liquidity when bridging from Layer Ys to Layer X and increments the pessimistic proof.
         _mint(address(this), shares);
-        $.lxlyBridge.bridgeAsset(originNetwork, address(0), shares, address(this), true, "");
+        $.lxlyBridge.bridgeAsset(originNetwork, SPECIAL_INSTRUCTION_SKIP_MINTING, shares, address(this), true, "");
 
         // Emit the ERC-4626 event.
         emit IERC4626.Deposit(msg.sender, address(this), assets, shares);

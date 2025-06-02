@@ -177,8 +177,10 @@ abstract contract CustomToken is
         onlyLxlyBridgeAndNativeConverter
         nonReentrant
     {
-        // @remind Document.
-        if (account == address(0)) return;
+        // @remind Redocument.
+        // When we migrate backing to Lx, we end up sending tokens to SPECIAL_INSTRUCTION_SKIP_MINTING here.
+        // These need to be claimable so the bridge accounting is correct and we allow it here by not reverting.
+        if (account == SPECIAL_INSTRUCTION_SKIP_MINTING) return;
 
         _mint(account, value);
     }
@@ -208,3 +210,7 @@ abstract contract CustomToken is
         _unpause();
     }
 }
+
+// @remind Document.
+address constant SPECIAL_INSTRUCTION_SKIP_MINTING =
+    address(uint160(uint256(keccak256("SPECIAL_INSTRUCTION_SKIP_MINTING"))));
