@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: LicenseRef-PolygonLabs-Open-Attribution OR LicenseRef-PolygonLabs-Source-Available
+// Vault Bridge (last updated v0.6.0) (MigrationManager.sol)
+
 pragma solidity 0.8.29;
 
 /// @dev Main functionality.
@@ -10,7 +12,7 @@ import {AccessControlUpgradeable} from "@openzeppelin-contracts-upgradeable/acce
 import {PausableUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/PausableUpgradeable.sol";
 import {ReentrancyGuardTransientUpgradeable} from
     "@openzeppelin-contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
-import {IVersioned} from "./etc/IVersioned.sol";
+import {Versioned} from "./etc/Versioned.sol";
 
 /// @dev Libraries.
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -32,7 +34,7 @@ contract MigrationManager is
     AccessControlUpgradeable,
     PausableUpgradeable,
     ReentrancyGuardTransientUpgradeable,
-    IVersioned
+    Versioned
 {
     // Libraries.
     using SafeERC20 for IERC20;
@@ -299,12 +301,5 @@ contract MigrationManager is
     /// @notice This function can be called by the owner only.
     function unpause() external onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant {
         _unpause();
-    }
-
-    // -----================= ::: INFO ::: =================-----
-
-    /// @inheritdoc IVersioned
-    function version() external pure returns (string memory) {
-        return "0.5.0";
     }
 }

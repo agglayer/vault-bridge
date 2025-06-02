@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: LicenseRef-PolygonLabs-Open-Attribution OR LicenseRef-PolygonLabs-Source-Available
+// Vault Bridge (last updated v0.6.0) (custom-tokens/WETH/WETH.sol)
+
 pragma solidity 0.8.29;
 
 import {CustomToken} from "../../CustomToken.sol";
 import {IWETH9} from "../../etc/IWETH9.sol";
-import {IVersioned} from "../../etc/IVersioned.sol";
 import {ILxLyBridge} from "../../etc/ILxLyBridge.sol";
 
 /// @title WETH
@@ -94,10 +95,5 @@ contract WETH is CustomToken {
         require(availableAssets >= value, AssetsTooLarge(availableAssets, value));
         payable(msg.sender).transfer(value);
         emit Withdrawal(msg.sender, value);
-    }
-
-    /// @inheritdoc IVersioned
-    function version() public pure returns (string memory) {
-        return "0.5.0";
     }
 }

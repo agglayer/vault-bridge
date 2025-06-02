@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: LicenseRef-PolygonLabs-Open-Attribution OR LicenseRef-PolygonLabs-Source-Available
+// Vault Bridge (last updated v0.6.0) (VaultBridgeToken.sol)
+
 pragma solidity 0.8.29;
 
 // @remind UPDATE DOCUMENTATION.
@@ -16,7 +18,7 @@ import {PausableUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/Pau
 import {ReentrancyGuardTransientUpgradeable} from
     "@openzeppelin-contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
 import {ERC20PermitUser} from "./etc/ERC20PermitUser.sol";
-import {IVersioned} from "./etc/IVersioned.sol";
+import {Versioned} from "./etc/Versioned.sol";
 
 // Libraries.
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -44,7 +46,7 @@ abstract contract VaultBridgeToken is
     IERC4626,
     ERC20PermitUpgradeable,
     ERC20PermitUser,
-    IVersioned
+    Versioned
 {
     // Libraries.
     using SafeERC20 for IERC20;
