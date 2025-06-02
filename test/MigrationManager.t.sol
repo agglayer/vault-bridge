@@ -227,7 +227,7 @@ contract MigrationManagerTest is Test {
         migrationManager.onMessageReceived(nativeConverter, NETWORK_ID_Y, bytes(""));
 
         bytes memory data = abi.encode(
-            MigrationManager.CrossNetworkInstruction.WRAP_GAS_TOKEN_AND_COMPLETE_MIGRATION, abi.encode(100, 100)
+            MigrationManager.CrossNetworkInstruction._1_WRAP_GAS_TOKEN_AND_COMPLETE_MIGRATION, abi.encode(100, 100)
         );
 
         // test unset vbToken
@@ -278,7 +278,7 @@ contract MigrationManagerTest is Test {
         deal(address(lxlyBridge), 100);
 
         bytes memory data = abi.encode(
-            MigrationManager.CrossNetworkInstruction.WRAP_GAS_TOKEN_AND_COMPLETE_MIGRATION, abi.encode(100, 100)
+            MigrationManager.CrossNetworkInstruction._1_WRAP_GAS_TOKEN_AND_COMPLETE_MIGRATION, abi.encode(100, 100)
         );
 
         vm.prank(address(lxlyBridge));
@@ -287,7 +287,7 @@ contract MigrationManagerTest is Test {
         );
         assertTrue(success);
 
-        data = abi.encode(MigrationManager.CrossNetworkInstruction.COMPLETE_MIGRATION, abi.encode(100, 100));
+        data = abi.encode(MigrationManager.CrossNetworkInstruction._0_COMPLETE_MIGRATION, abi.encode(100, 100));
 
         vm.prank(address(lxlyBridge));
         (success,) = address(migrationManager).call(

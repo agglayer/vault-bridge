@@ -538,7 +538,7 @@ contract GenericNativeConverterTest is Test {
             migrationManager,
             0,
             abi.encode(
-                MigrationManager.CrossNetworkInstruction.COMPLETE_MIGRATION,
+                MigrationManager.CrossNetworkInstruction._0_COMPLETE_MIGRATION,
                 abi.encode(amountToMigrate, amountToMigrate)
             ),
             55414
