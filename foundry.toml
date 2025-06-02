@@ -2,44 +2,36 @@
 src = "src"
 out = "out"
 libs = ["dependencies"]
-via-ir = true
-verbosity = 2
-ffi = true
-optimizer = true
-optimizer_runs = 833
-
-fs_permissions = [
-  { access = "read", path = "script/input.json" },
-]
-
 remappings = [
     "@openzeppelin-contracts-upgradeable/=dependencies/@openzeppelin-contracts-upgradeable-5.1.0/",
     "@openzeppelin-contracts/=dependencies/@openzeppelin-contracts-5.1.0/",
     "@openzeppelin/contracts/=dependencies/@openzeppelin-contracts-5.1.0/",
     "forge-std/=dependencies/forge-std-1.9.4/src",
 ]
+via-ir = true
+optimizer = true
+optimizer_runs = 833
+verbosity = 2
+ffi = true
+dynamic_test_linking = true
+fs_permissions = [
+  { access = "read", path = "script/input.json" },
+]
 
-[rpc_endpoints]
-mainnet = "wss://mainnet.gateway.tenderly.co"
-sepolia = "https://sepolia.gateway.tenderly.co"
-polygon_pos = "https://polygon-mainnet.infura.io/v3/${INFURA_TOKEN}"
-polygon_zkevm = "https://zkevm-rpc.com"
-polygon_zkevm_testnet = "https://rpc.public.zkevm-test.net"
-tatara = "https://rpc.tatara.katanarpc.com/${TATARA_TOKEN}"
-katana = "https://rpc.katanarpc.com/${KATANA_TOKEN}"
-
-[etherscan]
-mainnet = { key = "${API_KEY}" }
-sepolia = { key = "${API_KEY}" }
+[soldeer]
+remappings_location = "config"
+remappings_generate = true
+remappings_version = false
 
 [dependencies]
 forge-std = { version = "1.9.4" }
 "@openzeppelin-contracts" = { version = "5.1.0" }
 "@openzeppelin-contracts-upgradeable" = { version = "5.1.0" }
 
-[soldeer]
-remappings_generate = true
-remappings_version = false
-remappings_location = "config"
+[rpc_endpoints]
+mainnet = "wss://mainnet.gateway.tenderly.co"
+katana = "https://rpc.katanarpc.com/${KATANA_TOKEN}"
+sepolia = "https://sepolia.gateway.tenderly.co"
+tatara = "https://rpc.tatara.katanarpc.com/${TATARA_TOKEN}"
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
