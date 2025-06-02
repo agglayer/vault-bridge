@@ -312,7 +312,7 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
             migrationManager,
             0,
             abi.encode(
-                MigrationManager.CrossNetworkInstruction.WRAP_GAS_TOKEN_AND_COMPLETE_MIGRATION,
+                MigrationManager.CrossNetworkInstruction._1_WRAP_GAS_TOKEN_AND_COMPLETE_MIGRATION,
                 abi.encode(amountToMigrate, amountToMigrate)
             ),
             55414

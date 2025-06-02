@@ -41,8 +41,8 @@ contract MigrationManager is
 
     /// @dev Used in cross-network communication.
     enum CrossNetworkInstruction {
-        COMPLETE_MIGRATION,
-        WRAP_GAS_TOKEN_AND_COMPLETE_MIGRATION
+        _0_COMPLETE_MIGRATION,
+        _1_WRAP_GAS_TOKEN_AND_COMPLETE_MIGRATION
     }
 
     /// @dev Used for mapping Native Converters to vbTokens.
@@ -248,8 +248,8 @@ contract MigrationManager is
         // Dispatch.
         /* Complete migration. */
         if (
-            instruction == CrossNetworkInstruction.COMPLETE_MIGRATION
-                || instruction == CrossNetworkInstruction.WRAP_GAS_TOKEN_AND_COMPLETE_MIGRATION
+            instruction == CrossNetworkInstruction._0_COMPLETE_MIGRATION
+                || instruction == CrossNetworkInstruction._1_WRAP_GAS_TOKEN_AND_COMPLETE_MIGRATION
         ) {
             // Cache vbToken.
             VaultBridgeToken vbToken = $.nativeConvertersConfiguration[originNetwork][originAddress].vbToken;
@@ -261,7 +261,7 @@ contract MigrationManager is
             (uint256 shares, uint256 assets) = abi.decode(instructionData, (uint256, uint256));
 
             // Wrap the gas token if instructed.
-            if (instruction == CrossNetworkInstruction.WRAP_GAS_TOKEN_AND_COMPLETE_MIGRATION) {
+            if (instruction == CrossNetworkInstruction._1_WRAP_GAS_TOKEN_AND_COMPLETE_MIGRATION) {
                 // Cache the underlying token.
                 IERC20 underlyingToken = $.nativeConvertersConfiguration[originNetwork][originAddress].underlyingToken;
 

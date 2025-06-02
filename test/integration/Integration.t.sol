@@ -601,7 +601,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
             destinationAddress: address(migrationManager),
             amount: 0,
             metadata: abi.encode(
-                MigrationManager.CrossNetworkInstruction.COMPLETE_MIGRATION, abi.encode(amountToMigrate, amountToMigrate)
+                MigrationManager.CrossNetworkInstruction._0_COMPLETE_MIGRATION, abi.encode(amountToMigrate, amountToMigrate)
             )
         });
 

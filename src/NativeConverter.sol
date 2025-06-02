@@ -16,7 +16,7 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
 // External contracts.
-import {CustomToken} from "./CustomToken.sol";
+import {CustomToken, SPECIAL_INSTRUCTION_SKIP_MINTING} from "./CustomToken.sol";
 import {ILxLyBridge} from "./etc/ILxLyBridge.sol";
 import {MigrationManager} from "./MigrationManager.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -237,6 +237,7 @@ abstract contract NativeConverter is
         // Check the inputs.
         require(assets > 0, InvalidAssets());
         require(receiver != address(0), InvalidReceiver());
+        require(receiver != SPECIAL_INSTRUCTION_SKIP_MINTING, InvalidReceiver());
 
         // Transfer the underlying token from the sender to self.
         assets = _receiveUnderlyingToken(msg.sender, assets);
@@ -353,6 +354,7 @@ abstract contract NativeConverter is
         // Check the inputs.
         require(shares > 0, InvalidShares());
         require(receiver != address(0), InvalidReceiver());
+        require(receiver != SPECIAL_INSTRUCTION_SKIP_MINTING, InvalidReceiver());
 
         // Switch to the underlying token.
         // Set the return value.
@@ -444,7 +446,7 @@ abstract contract NativeConverter is
             $.layerXLxlyId,
             $.migrationManager,
             true,
-            abi.encode(MigrationManager.CrossNetworkInstruction.COMPLETE_MIGRATION, abi.encode(shares, assets))
+            abi.encode(MigrationManager.CrossNetworkInstruction._0_COMPLETE_MIGRATION, abi.encode(shares, assets))
         );
 
         // Emit the event.
