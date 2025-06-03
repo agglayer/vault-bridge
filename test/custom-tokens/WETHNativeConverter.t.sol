@@ -14,7 +14,7 @@ import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import {PausableUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/PausableUpgradeable.sol";
 
-import {GenericNativeConverterTest} from "../GenericNativeConverter.t.sol";
+import {CustomGlobalExitRootManager, GenericNativeConverterTest} from "../GenericNativeConverter.t.sol";
 import {WETHNativeConverter} from "../../src/custom-tokens/WETH/WETHNativeConverter.sol";
 import {GenericNativeConverter, NativeConverter} from "../../src/custom-tokens/GenericNativeConverter.sol";
 import {MigrationManager} from "../../src/MigrationManager.sol";
@@ -52,14 +52,14 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
     WETHNativeConverter internal wETHConverter;
 
     function setUp() public override {
-        zkevmFork = vm.createSelectFork("polygon_zkevm", 19164969);
-
         // Setup tokens
         wWETH = new MockERC20MintableBurnable();
         wWETH.initialize("Wrapped WETH", "wWETH", 18);
         wETH = new WETH();
+        CustomGlobalExitRootManager _globalExitRootManager = new CustomGlobalExitRootManager();
         address calculatedNativeConverterAddr = vm.computeCreateAddress(address(this), vm.getNonce(address(this)) + 2);
         vm.etch(LXLY_BRIDGE, SOVEREIGN_BRIDGE_BYTECODE);
+        _setLxlyBridgeAttributes(NETWORK_ID_L2, address(_globalExitRootManager), LXLY_BRIDGE);
         bytes memory initData = abi.encodeCall(
             WETH.reinitialize, (address(this), "wETH", "wETH", 18, LXLY_BRIDGE, calculatedNativeConverterAddr)
         );
@@ -185,6 +185,23 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
         vm.expectRevert(NativeConverter.InvalidLxLyBridge.selector);
         GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
 
+        initData = abi.encodeCall(
+            WETHNativeConverter.initialize,
+            (
+                owner,
+                ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
+                address(customToken),
+                address(underlyingToken),
+                LXLY_BRIDGE,
+                NETWORK_ID_L2,
+                MAX_NON_MIGRATABLE_BACKING_PERCENTAGE,
+                migrationManager,
+                MAX_NON_MIGRATABLE_GAS_BACKING_PERCENTAGE
+            )
+        );
+        vm.expectRevert(NativeConverter.InvalidLxLyBridge.selector);
+        GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
+
         MockERC20 dummyToken = new MockERC20();
         dummyToken.initialize("Dummy Token", "DT", 6);
 
@@ -301,7 +318,7 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
 
         vm.expectEmit();
         emit BridgeEvent(
-            LEAF_TYPE_ASSET, NETWORK_ID_L1, address(0x00), NETWORK_ID_L1, migrationManager, amountToMigrate, "", 55413
+            LEAF_TYPE_ASSET, NETWORK_ID_L1, address(0x00), NETWORK_ID_L1, migrationManager, amountToMigrate, "", 0
         );
         vm.expectEmit();
         emit BridgeEvent(
@@ -315,7 +332,7 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
                 MigrationManager.CrossNetworkInstruction._1_WRAP_GAS_TOKEN_AND_COMPLETE_MIGRATION,
                 abi.encode(amountToMigrate, amountToMigrate)
             ),
-            55414
+            1
         );
         vm.expectEmit();
         emit NativeConverter.MigrationStarted(amountToMigrate, amountToMigrate);
