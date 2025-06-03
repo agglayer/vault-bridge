@@ -649,6 +649,8 @@ contract IntegrationTest is Test, ZkEVMCommon {
         assertGt(vbTokenTotalSupplyAfter, vbTokenTotalSupplyBefore);
     }
 
+    // @todo add test for SPECIAL_INSTRUCTION_SKIP_MINTING
+
     function _depositAndBridgeLayerX(address _sender, uint256 _amount, LeafPayload memory _leaf) internal {
         // make sure we are on Layer X
         assertEq(vm.activeFork(), forkIdLayerX);
