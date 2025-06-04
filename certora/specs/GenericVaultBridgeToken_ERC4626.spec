@@ -1,7 +1,7 @@
 //import "setup/dispatching_GenericVaultBridgeToken.spec";
 //import "dispatching_ERC4626.spec";
-import "GenericVaultBridgeToken_storageSnapshot.spec";
-import "GenericVaultBridgeToken_ERC4626_invariants.spec";
+//import "GenericVaultBridgeToken_storageSnapshot.spec";
+import "GenericVaultBridgeToken_basicInvariants.spec";
 
 persistent ghost bool callMade;
 persistent ghost bool delegatecallMade;
@@ -226,13 +226,13 @@ rule totalsMonotonicity(method f, env e)
     uint256 totalAssetsBefore = totalAssets();
     address receiver; address owner;
     safeAssumptions(e, receiver, owner);
-    snapshotStorage(0);
+    //snapshotStorage(0);
     callFunctionsWithReceiverAndOwner2(e, f, receiver, owner);
 
     uint256 totalSupplyAfter = totalSupply();
     uint256 totalAssetsAfter = totalAssets();
     
-    snapshotStorage(1);
+    //snapshotStorage(1);
     // possibly assert totalSupply and totalAssets must not change in opposite directions
     assert totalSupplyBefore < totalSupplyAfter  <=> totalAssetsBefore < totalAssetsAfter,
         "if totalSupply changes by a larger amount, the corresponding change in totalAssets must remain the same or grow";
