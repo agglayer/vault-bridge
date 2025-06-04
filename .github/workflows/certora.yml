@@ -5,15 +5,15 @@ on: pull_request
 env:
   FOUNDRY_PROFILE: ci
   CONFIGS: |
-    # certora/confs/GenericCustomToken.conf
-    # certora/confs/GenericNativeConverter.conf
+# certora/confs/GenericCustomToken.conf
+# certora/confs/GenericNativeConverter.conf
     certora/confs/GenericVaultBridgeToken.conf
-    # certora/confs/MigrationManager-generic.conf
-    # certora/confs/MigrationManager-VbETH.conf
-    # certora/confs/VaultBridgeTokenInitializer.conf
-    # certora/confs/VbETH.conf
-    # certora/confs/WETH.conf
-    # certora/confs/WETHNativeConverter.conf
+# certora/confs/MigrationManager-generic.conf
+# certora/confs/MigrationManager-VbETH.conf
+# certora/confs/VaultBridgeTokenInitializer.conf
+# certora/confs/VbETH.conf
+# certora/confs/WETH.conf
+# certora/confs/WETHNativeConverter.conf
 
 jobs:
   check:
