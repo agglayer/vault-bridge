@@ -4,7 +4,7 @@ on: pull_request
 
 env:
   FOUNDRY_PROFILE: ci
-  CONFIGS: |
+  CONFIGS:
 # certora/confs/GenericCustomToken.conf
 # certora/confs/GenericNativeConverter.conf
     certora/confs/GenericVaultBridgeToken.conf
