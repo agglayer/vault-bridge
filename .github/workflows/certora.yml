@@ -5,8 +5,6 @@ on: pull_request
 env:
   FOUNDRY_PROFILE: ci
   CONFIGS:
-# certora/confs/GenericCustomToken.conf
-# certora/confs/GenericNativeConverter.conf
     certora/confs/GenericVaultBridgeToken.conf --rule noDynamicCalls
     certora/confs/GenericVaultBridgeToken.conf --rule conversionOfZero
     certora/confs/GenericVaultBridgeToken.conf --rule convertToAssetsWeakAdditivity
@@ -28,13 +26,6 @@ env:
     certora/confs/GenericVaultBridgeToken.conf --rule contributingProducesShares
     certora/confs/GenericVaultBridgeToken.conf --rule onlyContributionMethodsReduceAssets
     certora/confs/GenericVaultBridgeToken.conf --rule reclaimingProducesAssets
-# certora/confs/MigrationManager-generic.conf
-# certora/confs/MigrationManager-VbETH.conf
-# certora/confs/VaultBridgeTokenInitializer.conf
-# certora/confs/VbETH.conf
-# certora/confs/WETH.conf
-# certora/confs/WETHNativeConverter.conf
-
 jobs:
   check:
     runs-on: ubuntu-latest
