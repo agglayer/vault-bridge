@@ -5,7 +5,7 @@ import "GenericVaultBridgeToken_helpers.spec";
 
 function requireAllInvariants()
 {
-    requireInvariant reserveBacked;
+    //requireInvariant reserveBacked;
     requireInvariant minimumReservePercentageLimit;
 }
 

@@ -16,6 +16,7 @@ persistent ghost uint256 totalAssets0;
 persistent ghost uint256 totalSupply0; 
 persistent ghost uint256 stakedAssets0;
 persistent ghost uint256 reservedAssets0;
+persistent ghost uint256 yieldVaultShares0;
 
 persistent ghost address underlyingToken1;
 persistent ghost uint256 minimumReservePercentage1;
@@ -26,6 +27,7 @@ persistent ghost uint256 totalAssets1;
 persistent ghost uint256 totalSupply1; 
 persistent ghost uint256 stakedAssets1;
 persistent ghost uint256 reservedAssets1;
+persistent ghost uint256 yieldVaultShares1;
 
 function snapshotStorage(uint256 index)
 {
@@ -40,6 +42,7 @@ function snapshotStorage(uint256 index)
         totalSupply0 = totalSupply();
         stakedAssets0 = stakedAssets();
         reservedAssets0 = reservedAssets();
+        yieldVaultShares0 = yieldVaultContract.balanceOf(GenericVaultBridgeToken);
     }
         
     underlyingToken1 = asset();
@@ -51,5 +54,6 @@ function snapshotStorage(uint256 index)
     totalSupply1 = totalSupply();
     stakedAssets1 = stakedAssets();
     reservedAssets1 = reservedAssets();
+    yieldVaultShares1 = yieldVaultContract.balanceOf(GenericVaultBridgeToken);
     
 }
