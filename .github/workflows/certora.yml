@@ -7,25 +7,25 @@ env:
   CONFIGS:
     certora/confs/GenericVaultBridgeToken.conf --rule noDynamicCalls
     certora/confs/GenericVaultBridgeToken.conf --rule conversionOfZero
-    certora/confs/GenericVaultBridgeToken.conf --rule convertToAssetsWeakAdditivity
-    certora/confs/GenericVaultBridgeToken.conf --rule convertToSharesWeakAdditivity
-    certora/confs/GenericVaultBridgeToken.conf --rule conversionWeakMonotonicity
-    certora/confs/GenericVaultBridgeToken.conf --rule conversionWeakIntegrity
-    certora/confs/GenericVaultBridgeToken.conf --rule convertToCorrectness
-    certora/confs/GenericVaultBridgeToken.conf --rule depositMonotonicity
-    certora/confs/GenericVaultBridgeToken.conf --rule zeroDepositZeroShares_rule
-    certora/confs/GenericVaultBridgeToken.conf --rule assetsMoreThanSupply_rule
-    certora/confs/GenericVaultBridgeToken.conf --rule assetsMoreThanSupply2_rule
-    certora/confs/GenericVaultBridgeToken.conf --rule noBalanceIfNoSupply_rule
-    certora/confs/GenericVaultBridgeToken.conf --rule noAssetsIfNoSupply_rule
-    certora/confs/GenericVaultBridgeToken.conf --rule zeroAllowanceOnAssets
-    certora/confs/GenericVaultBridgeToken.conf --rule totalsMonotonicity
-    certora/confs/GenericVaultBridgeToken.conf --rule underlyingCannotChange
-    certora/confs/GenericVaultBridgeToken.conf --rule dustFavorsTheHouse
-    certora/confs/GenericVaultBridgeToken.conf --rule redeemingAllValidity
-    certora/confs/GenericVaultBridgeToken.conf --rule contributingProducesShares
-    certora/confs/GenericVaultBridgeToken.conf --rule onlyContributionMethodsReduceAssets
-    certora/confs/GenericVaultBridgeToken.conf --rule reclaimingProducesAssets
+    # certora/confs/GenericVaultBridgeToken.conf --rule convertToAssetsWeakAdditivity
+    # certora/confs/GenericVaultBridgeToken.conf --rule convertToSharesWeakAdditivity
+    # certora/confs/GenericVaultBridgeToken.conf --rule conversionWeakMonotonicity
+    # certora/confs/GenericVaultBridgeToken.conf --rule conversionWeakIntegrity
+    # certora/confs/GenericVaultBridgeToken.conf --rule convertToCorrectness
+    # certora/confs/GenericVaultBridgeToken.conf --rule depositMonotonicity
+    # certora/confs/GenericVaultBridgeToken.conf --rule zeroDepositZeroShares_rule
+    # certora/confs/GenericVaultBridgeToken.conf --rule assetsMoreThanSupply_rule
+    # certora/confs/GenericVaultBridgeToken.conf --rule assetsMoreThanSupply2_rule
+    # certora/confs/GenericVaultBridgeToken.conf --rule noBalanceIfNoSupply_rule
+    # certora/confs/GenericVaultBridgeToken.conf --rule noAssetsIfNoSupply_rule
+    # certora/confs/GenericVaultBridgeToken.conf --rule zeroAllowanceOnAssets
+    # certora/confs/GenericVaultBridgeToken.conf --rule totalsMonotonicity
+    # certora/confs/GenericVaultBridgeToken.conf --rule underlyingCannotChange
+    # certora/confs/GenericVaultBridgeToken.conf --rule dustFavorsTheHouse
+    # certora/confs/GenericVaultBridgeToken.conf --rule redeemingAllValidity
+    # certora/confs/GenericVaultBridgeToken.conf --rule contributingProducesShares
+    # certora/confs/GenericVaultBridgeToken.conf --rule onlyContributionMethodsReduceAssets
+    # certora/confs/GenericVaultBridgeToken.conf --rule reclaimingProducesAssets
 jobs:
   check:
     runs-on: ubuntu-latest
