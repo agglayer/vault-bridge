@@ -1,16 +1,17 @@
 //import "setup/dispatching_GenericVaultBridgeToken.spec";
 //import "dispatching_ERC4626.spec";
-import "GenericVaultBridgeToken_basicInvariants.spec";
+import "GenericVaultBridgeToken_ERC4626.spec";
 
 rule onlyAllowedMethodsMayChangeTotalAssets(method f, env e)
     filtered {f -> !excludedMethod(f) }
 {
-    totalSuppliesMoreThanBalances(e.msg.sender, currentContract);
-    requireNonSceneSender(e);
-    requireLinking();
+    require e.msg.sender != currentContract; 
+    address receiver; address owner;
+    safeAssumptions(e, receiver, owner);
     uint256 totalAssetsBefore = totalAssets();
-    calldataarg args;
-    f(e, args);
+
+    callFunctionsWithReceiverAndOwner2(e, f, receiver, owner);
+
     uint256 totalAssetsAfter = totalAssets();
     satisfy totalAssetsAfter == totalAssetsBefore;
     assert totalAssetsAfter > totalAssetsBefore => canIncreaseTotalAssets(f);
@@ -32,12 +33,13 @@ definition canIncreaseTotalAssets(method f) returns bool =
 rule onlyAllowedMethodsMayChangeTotalSupply(method f, env e)
     filtered {f -> !excludedMethod(f) }
 {
-    totalSuppliesMoreThanBalances(e.msg.sender, currentContract);
-    requireNonSceneSender(e);
-    requireLinking();
+    require e.msg.sender != currentContract; 
+    address receiver; address owner;
+    safeAssumptions(e, receiver, owner);
+
     uint256 totalSupplyBefore = totalSupply();
-    calldataarg args;
-    f(e, args);
+    callFunctionsWithReceiverAndOwner2(e, f, receiver, owner);
+
     uint256 totalSupplyAfter = totalSupply();
     assert totalSupplyAfter > totalSupplyBefore => canIncreaseTotalSupply(f);
     assert totalSupplyAfter < totalSupplyBefore => canDecreaseTotalSupply(f);
@@ -58,12 +60,13 @@ definition canIncreaseTotalSupply(method f) returns bool =
 rule onlyAllowedMethodsMayChangeStakedAssets(method f, env e)
     filtered {f -> !excludedMethod(f) }
 {
-    totalSuppliesMoreThanBalances(e.msg.sender, currentContract);
-    requireNonSceneSender(e);
-    requireLinking();
+    require e.msg.sender != currentContract; 
+    address receiver; address owner;
+    safeAssumptions(e, receiver, owner);
+
     uint256 stakedAssetsBefore = stakedAssets();
-    calldataarg args;
-    f(e, args);
+    callFunctionsWithReceiverAndOwner2(e, f, receiver, owner);
+
     uint256 stakedAssetsAfter = stakedAssets();
     assert stakedAssetsAfter > stakedAssetsBefore => canIncreaseStakedAssets(f);
     assert stakedAssetsAfter < stakedAssetsBefore => canDecreaseStakedAssets(f);
@@ -85,12 +88,13 @@ definition canIncreaseStakedAssets(method f) returns bool =
 rule onlyAllowedMethodsMayChangeReservedAssets(method f, env e)
     filtered {f -> !excludedMethod(f) }
 {
-    totalSuppliesMoreThanBalances(e.msg.sender, currentContract);
-    requireNonSceneSender(e);
-    requireLinking();
+    require e.msg.sender != currentContract; 
+    address receiver; address owner;
+    safeAssumptions(e, receiver, owner);
+
     uint256 reservedAssetsBefore = reservedAssets();
-    calldataarg args;
-    f(e, args);
+    callFunctionsWithReceiverAndOwner2(e, f, receiver, owner);
+
     uint256 reservedAssetsAfter = reservedAssets();
     assert reservedAssetsAfter > reservedAssetsBefore => canIncreaseStakedAssets(f);
     assert reservedAssetsAfter < reservedAssetsBefore => canDecreaseStakedAssets(f);
@@ -111,6 +115,7 @@ definition canIncreaseReservedAssets(method f) returns bool =
     f.selector == sig:mint(uint256,address).selector ||
     f.selector == sig:rebalanceReserve().selector;
 
+// todo should not be needed anymore
 rule minimumReservePercentageLTe18(method f, env e)
     filtered {f -> !excludedMethod(f) }
 {
