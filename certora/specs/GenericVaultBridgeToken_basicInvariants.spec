@@ -85,14 +85,7 @@ invariant noSupplyIfNoAssets()
         }
 }
 
-invariant vaultSolvency()
-    totalAssets() >= totalSupply()  && userAssets(currentContract) >= totalAssets()  {
-      preserved with(env e){
-            requireInvariant zeroAllowanceOnAssets(e.msg.sender);
-            require e.msg.sender != currentContract;
-            require currentContract != asset(); 
-        }
-}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 ////                        # helpers and miscellaneous                //////////

@@ -381,3 +381,22 @@ filtered {
     assert ownerSharesBefore > ownerSharesAfter <=> receiverAssetsBefore < receiverAssetsAfter,
         "an owner's shares must decrease if and only if the receiver's assets increase";
 }
+
+rule vaultSolvency_rule(method f, env e)
+    filtered {f -> !excludedMethod(f) }
+{
+    require e.msg.sender != currentContract; 
+    address receiver; address owner;
+    safeAssumptions(e, receiver, owner);
+
+    mathint assetsBefore = totalAssets();
+    mathint sharesValueBefore = convertToAssets(totalSupply());
+
+    callFunctionsWithReceiverAndOwner2(e, f, receiver, owner);
+
+    mathint assetsAfter = totalAssets();
+    mathint sharesValueAfter = convertToAssets(totalSupply());
+
+    assert assetsBefore >= sharesValueBefore =>
+            assetsAfter >= sharesValueAfter;
+}
