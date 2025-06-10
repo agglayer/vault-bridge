@@ -4,7 +4,7 @@ import "GenericVaultBridgeToken_basicInvariants.spec";
 import "GenericVaultBridgeToken_storageSnapshot.spec";
 
 methods {
-    function VaultBridgeToken._rebalanceReserve(bool force, bool allowRebalanceDown) internal => rebalanceCVL(force, allowRebalanceDown);
+    // function VaultBridgeToken._rebalanceReserve(bool force, bool allowRebalanceDown) internal => rebalanceCVL(force, allowRebalanceDown);
 }
 
 
@@ -49,5 +49,11 @@ rule staysBalanced(method f, env e)
     bool balancedAfter = isBalanced();
     snapshotStorage(1);
     assert balancedBefore => (balancedAfter || rebalanceWasCalled);
+}
+
+rule balancedAfterRebalance(env e)
+{
+    _rebalanceReserve(e, false, false);
+    assert isBalanced();
 }
 

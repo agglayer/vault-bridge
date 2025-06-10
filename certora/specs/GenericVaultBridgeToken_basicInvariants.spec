@@ -1,12 +1,23 @@
 //import "setup/dispatching_GenericVaultBridgeToken.spec";
 import "bridgeSummary.spec";
 import "GenericVaultBridgeToken_helpers.spec";
-//import "./snippets/dispatching_permit.spec";
+import "./tokenMockBalances.spec";
+import "./GVBTBalances.spec";
 
 function requireAllInvariants()
 {
     //requireInvariant reserveBacked;
     requireInvariant minimumReservePercentageLimit;
+    requireInvariant sumOfBalancesGVBTStartsAtZero;
+    requireInvariant sumOfBalancesGVBTGrowsCorrectly;
+    requireInvariant sumOfBalancesGVBTMonotone;
+    requireInvariant sumOfBalancesGVBTEqualsTotalSupply;
+
+    requireInvariant sumOfBalancesStartsAtZero;
+    requireInvariant sumOfBalancesGrowsCorrectly;
+    requireInvariant sumOfBalancesMonotone;
+    requireInvariant sumOfBalancesEqualsTotalSupply;
+
 }
 
 invariant reserveBacked()
@@ -14,6 +25,7 @@ invariant reserveBacked()
     filtered { f -> !excludedMethod(f) }
     {
         preserved with (env e) {
+            requireLinking();
             requireNonSceneSender(e);
             requireAllInvariants();
         }
@@ -25,6 +37,7 @@ invariant totalSupplyAccounted()
     filtered { f -> !excludedMethod(f) }
     {
         preserved with (env e) {
+            requireLinking();
             requireNonSceneSender(e);
             requireAllInvariants();
         }
@@ -97,12 +110,16 @@ function safeAssumptions(env e, address receiver, address owner) {
     //requireInvariant vaultSolvency();
     //requireInvariant noAssetsIfNoSupply();
     //requireInvariant noSupplyIfNoAssets();
-    requireInvariant assetsMoreThanSupply();        //verified as a rule assetsMoreThanSupply_rule
+    requireInvariant assetsMoreThanSupply();        //verified as a rule assetsMoreThanSupply_rule 
 
     //require e.msg.sender != currentContract;  // This is proved by rule noDynamicCalls
     //requireInvariant zeroAllowanceOnAssets(e.msg.sender);
 
-    totalSuppliesMoreThanFourBalances(e.msg.sender, receiver, owner, currentContract);
+    //totalSuppliesMoreThanFourBalances(e.msg.sender, receiver, owner, currentContract);
     
     requireLinking();
 }
+
+
+
+
