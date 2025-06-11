@@ -53,6 +53,7 @@ rule staysBalanced(method f, env e)
 
 rule balancedAfterRebalance(env e)
 {
+    safeAssmuptions(e, e.msg.sender);
     _rebalanceReserve(e, false, false);
     assert isBalanced();
 }

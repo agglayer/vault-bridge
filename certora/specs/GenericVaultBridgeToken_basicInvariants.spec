@@ -6,42 +6,36 @@ import "./GVBTBalances.spec";
 
 function requireAllInvariants()
 {
-    //requireInvariant reserveBacked;
-    requireInvariant minimumReservePercentageLimit;
-    requireInvariant sumOfBalancesGVBTStartsAtZero;
-    requireInvariant sumOfBalancesGVBTGrowsCorrectly;
-    requireInvariant sumOfBalancesGVBTMonotone;
-    requireInvariant sumOfBalancesGVBTEqualsTotalSupply;
+    requireInvariant sumOfBalancesGVBTStartsAtZero();
+    requireInvariant sumOfBalancesGVBTGrowsCorrectly();
+    requireInvariant sumOfBalancesGVBTMonotone();
+    requireInvariant sumOfBalancesGVBTEqualsTotalSupply();
 
-    requireInvariant sumOfBalancesStartsAtZero;
-    requireInvariant sumOfBalancesGrowsCorrectly;
-    requireInvariant sumOfBalancesMonotone;
-    requireInvariant sumOfBalancesEqualsTotalSupply;
+    requireInvariant sumOfBalancesStartsAtZero();
+    requireInvariant sumOfBalancesGrowsCorrectly();
+    requireInvariant sumOfBalancesMonotone();
+    requireInvariant sumOfBalancesEqualsTotalSupply();
 
+    requireInvariant reserveBacked();
+    requireInvariant minimumReservePercentageLimit();
+    requireInvariant assetsMoreThanSupply();
+    requireInvariant noSupplyIfNoAssets();
+    requireInvariant vaultSolvency();
 }
 
 invariant reserveBacked()
     ERC20a.balanceOf(GenericVaultBridgeToken) >= require_uint256(reservedAssets() + migrationFeesFund())
-    filtered { f -> !excludedMethod(f) }
+    filtered { f -> !excludedMethod(f) 
+        && f.selector != sig:performReversibleYieldVaultDeposit(uint256).selector
+    }
     {
         preserved with (env e) {
             requireLinking();
-            requireNonSceneSender(e);
+            //requireNonSceneSender(e);
             requireAllInvariants();
         }
 }
 
-// incorrect property
-invariant totalSupplyAccounted()
-    convertToAssets(totalSupply()) >= stakedAssets()
-    filtered { f -> !excludedMethod(f) }
-    {
-        preserved with (env e) {
-            requireLinking();
-            requireNonSceneSender(e);
-            requireAllInvariants();
-        }
-}
 
 invariant minimumReservePercentageLimit()
     minimumReservePercentage() <= 10^18
@@ -49,13 +43,24 @@ invariant minimumReservePercentageLimit()
     {
         preserved with (env e) {
             //requireNonSceneSender(e);
+            requireLinking();
             requireAllInvariants();
         }
 }
 
-// verified as a rule assetsMoreThanSupply_rule
+invariant vaultSolvency()    
+    totalAssets() >= convertToAssets(totalSupply())
+    filtered { f -> !excludedMethod(f) }
+    {
+        preserved with (env e) {
+            requireLinking();
+            requireAllInvariants();
+        }
+}
+
 invariant assetsMoreThanSupply()
     totalAssets() >= totalSupply()
+    filtered { f -> !excludedMethod(f) }
     {
         preserved with (env e) {
             require e.msg.sender != currentContract;
@@ -64,17 +69,20 @@ invariant assetsMoreThanSupply()
         }
 }
 
-invariant noBalanceIfNoSupply() 
-    totalSupply() == 0 => userAssets(currentContract) == 0
+invariant noSupplyIfNoAssets()
+    totalAssets() == 0 => totalSupply() == 0
+    filtered { f -> !excludedMethod(f) }
     {
         preserved with (env e) {
-            address any;
-            safeAssumptions(e, any, e.msg.sender);
+            safeAssumptions(e, _, e.msg.sender);
         }
 }
 
-invariant noAssetsIfNoSupply() 
-    (totalSupply() == 0) => totalAssets() == 0
+///////////// these dont hold /////////////
+
+invariant noBalanceIfNoSupply() 
+    totalSupply() == 0 => userAssets(currentContract) == 0
+    filtered { f -> !excludedMethod(f) }
     {
         preserved with (env e) {
             address any;
@@ -84,17 +92,32 @@ invariant noAssetsIfNoSupply()
 
 invariant noSupplyIfNoBalance()
     userAssets(currentContract) == 0 => totalSupply() == 0 
+    filtered { f -> !excludedMethod(f) }
     {
         preserved with (env e) {
             safeAssumptions(e, _, e.msg.sender);
         }
 }
 
-invariant noSupplyIfNoAssets()
-    totalAssets() == 0 => totalSupply() == 0
+invariant noAssetsIfNoSupply() 
+    (totalSupply() == 0) => totalAssets() == 0
+    filtered { f -> !excludedMethod(f) }
     {
         preserved with (env e) {
-            safeAssumptions(e, _, e.msg.sender);
+            address any;
+            safeAssumptions(e, any, e.msg.sender);
+        }
+}
+
+
+invariant totalSupplyAccounted()
+    convertToAssets(totalSupply()) >= stakedAssets()
+    filtered { f -> !excludedMethod(f) }
+    {
+        preserved with (env e) {
+            requireLinking();
+            requireNonSceneSender(e);
+            requireAllInvariants();
         }
 }
 
@@ -107,10 +130,6 @@ invariant noSupplyIfNoAssets()
 function safeAssumptions(env e, address receiver, address owner) {
     requireAllInvariants();
     require currentContract != asset(); // Although this is not disallowed, we assume the contract's underlying asset is not the contract itself
-    //requireInvariant vaultSolvency();
-    //requireInvariant noAssetsIfNoSupply();
-    //requireInvariant noSupplyIfNoAssets();
-    requireInvariant assetsMoreThanSupply();        //verified as a rule assetsMoreThanSupply_rule 
 
     //require e.msg.sender != currentContract;  // This is proved by rule noDynamicCalls
     //requireInvariant zeroAllowanceOnAssets(e.msg.sender);

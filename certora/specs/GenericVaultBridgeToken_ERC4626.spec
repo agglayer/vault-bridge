@@ -188,6 +188,7 @@ rule noBalanceIfNoSupply_rule(method f, env e)
         (supplyAfter == 0 => balanceAfter == 0);
 }
 
+// doesn't hold. withdraw can violate
 rule noAssetsIfNoSupply_rule(method f, env e) 
     filtered { f -> !excludedMethod(f) }
 {
@@ -221,7 +222,7 @@ invariant zeroAllowanceOnAssets(address user)
 rule totalsMonotonicity(method f, env e)
     filtered { f -> !excludedMethod(f) }
 {
-    require e.msg.sender != currentContract; 
+    //require e.msg.sender != currentContract; 
     uint256 totalSupplyBefore = totalSupply();
     uint256 totalAssetsBefore = totalAssets();
     address receiver; address owner;
@@ -385,7 +386,7 @@ filtered {
 rule vaultSolvency_rule(method f, env e)
     filtered {f -> !excludedMethod(f) }
 {
-    require e.msg.sender != currentContract; 
+    //require e.msg.sender != currentContract; 
     address receiver; address owner;
     safeAssumptions(e, receiver, owner);
 

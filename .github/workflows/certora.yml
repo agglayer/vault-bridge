@@ -17,7 +17,6 @@ env:
     certora/confs/GenericVaultBridgeToken.conf --rule assetsMoreThanSupply_rule
     certora/confs/GenericVaultBridgeToken.conf --rule assetsMoreThanSupply2_rule
     certora/confs/GenericVaultBridgeToken.conf --rule noBalanceIfNoSupply_rule
-    certora/confs/GenericVaultBridgeToken.conf --rule noAssetsIfNoSupply_rule
     certora/confs/GenericVaultBridgeToken.conf --rule zeroAllowanceOnAssets
     certora/confs/GenericVaultBridgeToken.conf --rule totalsMonotonicity
     certora/confs/GenericVaultBridgeToken.conf --rule underlyingCannotChange

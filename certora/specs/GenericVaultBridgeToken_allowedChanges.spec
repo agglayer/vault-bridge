@@ -5,7 +5,7 @@ import "GenericVaultBridgeToken_ERC4626.spec";
 rule onlyAllowedMethodsMayChangeTotalAssets(method f, env e)
     filtered {f -> !excludedMethod(f) }
 {
-    require e.msg.sender != currentContract; 
+    //require e.msg.sender != currentContract; 
     address receiver; address owner;
     safeAssumptions(e, receiver, owner);
     uint256 totalAssetsBefore = totalAssets();
@@ -33,7 +33,7 @@ definition canIncreaseTotalAssets(method f) returns bool =
 rule onlyAllowedMethodsMayChangeTotalSupply(method f, env e)
     filtered {f -> !excludedMethod(f) }
 {
-    require e.msg.sender != currentContract; 
+    //require e.msg.sender != currentContract; 
     address receiver; address owner;
     safeAssumptions(e, receiver, owner);
 
@@ -60,7 +60,7 @@ definition canIncreaseTotalSupply(method f) returns bool =
 rule onlyAllowedMethodsMayChangeStakedAssets(method f, env e)
     filtered {f -> !excludedMethod(f) }
 {
-    require e.msg.sender != currentContract; 
+    //require e.msg.sender != currentContract; 
     address receiver; address owner;
     safeAssumptions(e, receiver, owner);
 
@@ -88,7 +88,7 @@ definition canIncreaseStakedAssets(method f) returns bool =
 rule onlyAllowedMethodsMayChangeReservedAssets(method f, env e)
     filtered {f -> !excludedMethod(f) }
 {
-    require e.msg.sender != currentContract; 
+    //require e.msg.sender != currentContract; 
     address receiver; address owner;
     safeAssumptions(e, receiver, owner);
 
@@ -119,6 +119,7 @@ definition canIncreaseReservedAssets(method f) returns bool =
 rule minimumReservePercentageLTe18(method f, env e)
     filtered {f -> !excludedMethod(f) }
 {
+    requireLinking();
     uint minimumReservePercentageBefore = minimumReservePercentage(e);
     calldataarg args;
     f(e, args);
@@ -130,6 +131,7 @@ rule minimumReservePercentageLTe18(method f, env e)
 rule noActivityWhenPaused(method f, env e)
     filtered {f -> !excludedMethod(f) }
 {
+    requireLinking();
     bool paused = paused();
     calldataarg args;
     f@withrevert(e, args);
