@@ -1,0 +1,76 @@
+name: test
+
+on: pull_request
+
+env:
+  FOUNDRY_PROFILE: ci
+  CONFIGS: |
+    certora/confs/GenericVaultBridgeToken.conf --rule noDynamicCalls
+    certora/confs/GenericVaultBridgeToken.conf --rule conversionOfZero
+    certora/confs/GenericVaultBridgeToken.conf --rule convertToAssetsWeakAdditivity
+    certora/confs/GenericVaultBridgeToken.conf --rule convertToSharesWeakAdditivity
+    certora/confs/GenericVaultBridgeToken.conf --rule conversionWeakMonotonicity
+    certora/confs/GenericVaultBridgeToken.conf --rule conversionWeakIntegrity
+    certora/confs/GenericVaultBridgeToken.conf --rule convertToCorrectness
+    certora/confs/GenericVaultBridgeToken.conf --rule depositMonotonicity
+    certora/confs/GenericVaultBridgeToken.conf --rule zeroDepositZeroShares_rule
+    certora/confs/GenericVaultBridgeToken.conf --rule assetsMoreThanSupply_rule
+    certora/confs/GenericVaultBridgeToken.conf --rule assetsMoreThanSupply2_rule
+    certora/confs/GenericVaultBridgeToken.conf --rule noBalanceIfNoSupply_rule
+    certora/confs/GenericVaultBridgeToken.conf --rule zeroAllowanceOnAssets
+    certora/confs/GenericVaultBridgeToken.conf --rule totalsMonotonicity
+    certora/confs/GenericVaultBridgeToken.conf --rule underlyingCannotChange
+    certora/confs/GenericVaultBridgeToken.conf --rule dustFavorsTheHouse
+    certora/confs/GenericVaultBridgeToken.conf --rule redeemingAllValidity
+    certora/confs/GenericVaultBridgeToken.conf --rule contributingProducesShares
+    certora/confs/GenericVaultBridgeToken.conf --rule onlyContributionMethodsReduceAssets
+    certora/confs/GenericVaultBridgeToken.conf --rule reclaimingProducesAssets
+    certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GenericVaultBridgeToken_basicInvariants.spec --rule reserveBacked
+    certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GenericVaultBridgeToken_basicInvariants.spec --rule minimumReservePercentageLimit
+    certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GenericVaultBridgeToken_allowedChanges.spec --rule onlyAllowedMethodsMayChangeTotalAssets
+    certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GenericVaultBridgeToken_allowedChanges.spec --rule onlyAllowedMethodsMayChangeTotalSupply
+    certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GenericVaultBridgeToken_allowedChanges.spec --rule onlyAllowedMethodsMayChangeStakedAssets
+    certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GenericVaultBridgeToken_allowedChanges.spec --rule onlyAllowedMethodsMayChangeReservedAssets
+    certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GenericVaultBridgeToken_allowedChanges.spec --rule noActivityWhenPaused
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      statuses: write
+      pull-requests: write
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: install foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - name: install bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: bun install
+        run: |
+          forge soldeer install
+          bun install || true
+      
+      - name: setup bridge repo
+        run: |
+          git clone https://github.com/0xPolygonHermez/zkevm-contracts.git
+          cd zkevm-contracts/
+          git checkout v10.1.0-rc.1
+          npm install
+
+      - name: run configs
+        uses: Certora/certora-run-action@v1
+        with:
+#          use-alpha: true
+          configurations: ${{ env.CONFIGS }}
+          solc-versions: 0.8.28 0.8.29
+          solc-remove-version-prefix: "0."
+          job-name: "Verified Rules"
+          certora-key: ${{ secrets.CERTORAKEY }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
