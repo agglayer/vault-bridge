@@ -20,15 +20,16 @@ solvencyCheck should hold at all times. the checks:
 ---------------------
 Math.mulDiv(
     convertToAssets(originalTotalSupply + originalUncollectedYield) - originalReservedAssets,
-    burnedYieldVaultShares, assets) 
+    a, assets) 
     <= 
-Math.mulDiv(yieldVaultSharesBalanceBefore, 1e18 + $.yieldVaultMaximumSlippagePercentage, 1e18),
+Math.mulDiv(yieldVault.balanceOf(address(this), 1e18 + $.yieldVaultMaximumSlippagePercentage, 1e18),
 ---------------------
 Math.mulDiv(
     convertToAssets(totalSupply() + yield()) - reservedAssets(), 
     burnedYieldVaultShares, maxWithdraw_)
     <= 
-Math.mulDiv($.yieldVault.balanceOf(address(this)), 1e18 + $.yieldVaultMaximumSlippagePercentage, 1e18);
+Math.mulDiv(yieldVault.balanceOf(address(this)), 1e18 + $.yieldVaultMaximumSlippagePercentage, 1e18);
+// where burnedYieldVaultShares = $.yieldVault.withdraw(maxWithdraw_, receiver, address(this));
 ---------------------
 solvencyCheckPassed = stakedAssets() - oldStakedAssets
     >= 
@@ -58,3 +59,143 @@ _withdrawFromYieldVault decreases stakedAssets()        DONE
 //// 
 
 make a ticket about the struct link lxlyBridge
+
+todo: exclude the initialize method and fallback
+
+todo there are calls in safeERC20Upgradeable that we MUST summarise. why is it not a standard part of the setup?
+e.g. forcaApprove -> _callOptionalReturnBool
+
+build cache not working..
+
+can I use a manual dispatcher in invariants?? to pose conditions on inputs
+
+where's the project page on monday??
+    https://certora.monday.com/boards/1980501591/views/30599899
+
+mutations.. in the report? effort?
+
+use the google doc, put in ideas for improvements of any process
+
+
+
+-------------------------------------------
+
+github app 
+
+CI pradigm > tests > native support on github > yml > we can leverage this for running rules
+we don't run on github > the yml only "starts" the jobs > our app does the rest (runs, collects results, presents them)
+    - nespotrebovava to github servery a jejich cas, penize
+
+ukazka..
+ - yml, sekce, udalosti, 
+ - github > actions
+ - vysledek via logs, via PR comment
+ - udela to peknou tabulku v PR, doporucuju pouzivat pri PR!
+
+use cases:
+    super pro testovani
+    "CI" (update setup, might break previous rules), not for developing individual rule
+    run per rule for hard rules TODO ukazat silo
+    large scale experiments
+    reruns                      https://github.com/Certora/silo-contracts-v2-mirror/pull/56#pullrequestreview-2838916463
+    da se pouzit i pro zakazniky kdyz mergujeme jako dukaz spravnosti pravidel  https://github.com/silo-finance/silo-contracts-v2/pull/1067#issuecomment-2857697401
+
+technicke veci
+    allows to incorporate munging scripts - ukazat VS code
+    ??? basics for future improvements, e.g. export to report, to monday, cleanup (highlight rules that were NOT run), 
+
+how to debug / mozne problemy
+debug via actions, logs
+
+format: 
+    |
+    nepouzivat --msg
+    whitespaces are important spaces and newlines
+    learn the format little bit, RnD mentors can help
+
+share via "odpovedet".. nebo copy link
+
+------------------------------------------------------------------------------------
+
+warp:
+
+init:
+formal starts 20.6.
+FV rerunning what we have
+two weeks for formal, 2 weeks for audit
+try ranger
+
+--------------
+scope:
+
+    focus on the matching engine!
+    also _execute() method (should just perform any given method)
+    algorithms for computing exponents have NOT changed
+    they're also interested in reducing space of the DS and gas optimizations
+
+----------------------
+research.js = file with the same logic as yul in js, also for other files, can run in browser
+exchange-test.js
+also tests .js 
+    test util = mini client implementation, shows how it is used
+    exchange.yul = main file
+    warpbook.yul = more_magic == main entry point
+    
+    util/ : away implementation, price encoding, etc. .. mostly out of scope
+    there's an .md file that explains a lot of the logic
+
+    match orders, insert_order, remove_order methods,
+    cancelClear, orderClear, 
+    order gets created, checked against the book and potentialy matched,
+    
+    remove does the delivery of funds (after being matched)
+
+
+changes since the last audit:
+    matching engine: there's a tip optimization added since last time
+        some suff is evaluated lazyly
+    bug fixes in some view functions (not really "bugs", just design changes)
+    
+    clearsigning: when approving, you need to trust the server..?? e.g. decimals are trusted or hardcoded
+        as part of the calldata you can include decimals and other data.. also other important data so the local valet have everything and can verify
+        just a small thing: dont focus the audit on this
+
+    added owner, etc. you can do proxy contracts, for better composability (divide the functionality to multiple contracts)
+
+why didnt they deploy already??
+confidentiality? can they hide the code on the chain??
+
+
+
+
+
+
+
+
+
+
+
+
+-------------------------------------------
+
+
+alza 200    x5
+LM6KR83EES
+J9DH3ZN2MC
+JSH6EWVNX9
+JNRFM8F3MN
+E5KYZ5FA3T
+
+alza 500    x2
+ACSHHC64RJ
+RS9A6PXSDN
+
+alza 1000   x5
+89N2B42ADP
+AQHYH5GZ2Z
+BP4CR8GDWR
+W7PAXHNE6R
+CPQYYV9AC2
+
+kaufland 3x1000 se nestahlo
+kaufland 2x500 se stahlo

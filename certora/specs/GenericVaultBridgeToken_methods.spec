@@ -40,6 +40,7 @@ methods {
     
     //function VaultBridgeTokenPart2.yieldVault() external returns (address) envfree;
     function stakedAssets() external returns (uint256) envfree;
+    function yield() external returns (uint256) envfree;
     function getNetCollectedYield() external returns (uint256) envfree;
     function reservedAssets() external returns (uint256) envfree;
     function paused() external returns (bool) envfree;

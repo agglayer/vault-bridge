@@ -147,7 +147,6 @@ rule assetsMoreThanSupply_rule(method f, env e)
 
 // also takes into account the yieldRecepient. This is important as the YR can call burn and the prover thinks it can actually burn all shares
 // in fact, it can only burn it's own shares that's a like an "excess" so the important properties should still hold afterwards
-// TODO..
 rule assetsMoreThanSupply2_rule(method f, env e)
     filtered { f -> !excludedMethod(f) }
 {
