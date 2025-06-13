@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: LicenseRef-PolygonLabs-Open-Attribution OR LicenseRef-PolygonLabs-Source-Available
+// Vault Bridge (last updated v1.0.0) (custom-tokens/WETH/WETH.sol)
+
 pragma solidity 0.8.29;
 
 import {CustomToken} from "../../CustomToken.sol";
 import {IWETH9} from "../../etc/IWETH9.sol";
-import {IVersioned} from "../../etc/IVersioned.sol";
 import {ILxLyBridge} from "../../etc/ILxLyBridge.sol";
 
 /// @title WETH
@@ -43,16 +44,14 @@ contract WETH is CustomToken {
 
     function reinitialize(
         address owner_,
-        string calldata name_,
-        string calldata symbol_,
         uint8 originalUnderlyingTokenDecimals_,
         address lxlyBridge_,
         address nativeConverter_
-    ) external virtual reinitializer(2) {
+    ) external reinitializer(2) {
         WETHStorage storage $ = _getWETHStorage();
 
         // Initialize the inherited contracts.
-        __CustomToken_init(owner_, name_, symbol_, originalUnderlyingTokenDecimals_, lxlyBridge_, nativeConverter_);
+        __CustomToken_init(owner_, originalUnderlyingTokenDecimals_, lxlyBridge_, nativeConverter_);
 
         $._gasTokenIsEth =
             ILxLyBridge(lxlyBridge_).gasTokenAddress() == address(0) && ILxLyBridge(lxlyBridge_).gasTokenNetwork() == 0;
@@ -94,10 +93,5 @@ contract WETH is CustomToken {
         require(availableAssets >= value, AssetsTooLarge(availableAssets, value));
         payable(msg.sender).transfer(value);
         emit Withdrawal(msg.sender, value);
-    }
-
-    /// @inheritdoc IVersioned
-    function version() public pure returns (string memory) {
-        return "0.5.0";
     }
 }

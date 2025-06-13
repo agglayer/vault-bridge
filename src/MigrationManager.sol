@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: LicenseRef-PolygonLabs-Open-Attribution OR LicenseRef-PolygonLabs-Source-Available
+// Vault Bridge (last updated v1.0.0) (MigrationManager.sol)
+
 pragma solidity 0.8.29;
 
 /// @dev Main functionality.
@@ -10,7 +12,7 @@ import {AccessControlUpgradeable} from "@openzeppelin-contracts-upgradeable/acce
 import {PausableUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/PausableUpgradeable.sol";
 import {ReentrancyGuardTransientUpgradeable} from
     "@openzeppelin-contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
-import {IVersioned} from "./etc/IVersioned.sol";
+import {Versioned} from "./etc/Versioned.sol";
 
 /// @dev Libraries.
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -20,6 +22,7 @@ import {VaultBridgeToken} from "./VaultBridgeToken.sol";
 import {VaultBridgeTokenPart2} from "./VaultBridgeTokenPart2.sol";
 import {ILxLyBridge} from "./etc/ILxLyBridge.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IWETH9} from "./etc/IWETH9.sol";
 
 // @remind Redocument.
 /// @title Migration Manager (singleton)
@@ -32,15 +35,15 @@ contract MigrationManager is
     AccessControlUpgradeable,
     PausableUpgradeable,
     ReentrancyGuardTransientUpgradeable,
-    IVersioned
+    Versioned
 {
     // Libraries.
     using SafeERC20 for IERC20;
 
     /// @dev Used in cross-network communication.
     enum CrossNetworkInstruction {
-        COMPLETE_MIGRATION,
-        WRAP_GAS_TOKEN_AND_COMPLETE_MIGRATION
+        _0_COMPLETE_MIGRATION,
+        _1_WRAP_GAS_TOKEN_AND_COMPLETE_MIGRATION
     }
 
     /// @dev Used for mapping Native Converters to vbTokens.
@@ -57,6 +60,7 @@ contract MigrationManager is
         uint32 _lxlyId;
         mapping(uint32 layerYLxLyId => mapping(address nativeConverter => TokenPair tokenPair))
             nativeConvertersConfiguration;
+        IWETH9 _wrappedGasToken;
     }
 
     /// @dev The storage slot at which Migration Manager storage starts, following the EIP-7201 standard.
@@ -64,19 +68,13 @@ contract MigrationManager is
     bytes32 private constant _MIGRATION_MANAGER_STORAGE =
         hex"30cf29e424d82bdf294fbec113ef39ac73137edfdb802b37ef3fc9ad433c5000";
 
-    // @remind Redocument.
-    /// @dev The function selector for wrapping Layer X's gas token, following the WETH9 standard.
-    /// @dev (ATTENTION) If the method of wrapping the gas token for your Layer X differs, you cannot use this contract.
-    /// @dev Calculated as `bytes4(keccak256("deposit()"))`.
-    bytes4 private constant _UNDERLYING_TOKEN_WRAP_SELECTOR = hex"d0e30db0";
-
     // Basic roles.
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
 
     // Errors.
     error InvalidOwner();
     error InvalidLxLyBridge();
-    error InvalidVbToken();
+    error InvalidWrappedGasToken();
     error NonMatchingInputLengths();
     error InvalidLayerYLxLyId();
     error InvalidNativeConverter();
@@ -105,12 +103,13 @@ contract MigrationManager is
         _disableInitializers();
     }
 
-    function initialize(address owner_, address lxlyBridge_) external initializer {
+    function initialize(address owner_, address lxlyBridge_, address wrappedGasToken_) external initializer {
         MigrationManagerStorage storage $ = _getMigrationManagerStorage();
 
         // Check the inputs.
         require(owner_ != address(0), InvalidOwner());
         require(lxlyBridge_ != address(0), InvalidLxLyBridge());
+        require(wrappedGasToken_ != address(0), InvalidWrappedGasToken());
 
         // Initialize the inherited contracts.
         __AccessControl_init();
@@ -126,6 +125,7 @@ contract MigrationManager is
         // Initialize the storage.
         $.lxlyBridge = ILxLyBridge(lxlyBridge_);
         $._lxlyId = $.lxlyBridge.networkID();
+        $._wrappedGasToken = IWETH9(wrappedGasToken_);
     }
 
     // -----================= ::: SOLIDITY ::: =================-----
@@ -246,8 +246,8 @@ contract MigrationManager is
         // Dispatch.
         /* Complete migration. */
         if (
-            instruction == CrossNetworkInstruction.COMPLETE_MIGRATION
-                || instruction == CrossNetworkInstruction.WRAP_GAS_TOKEN_AND_COMPLETE_MIGRATION
+            instruction == CrossNetworkInstruction._0_COMPLETE_MIGRATION
+                || instruction == CrossNetworkInstruction._1_WRAP_GAS_TOKEN_AND_COMPLETE_MIGRATION
         ) {
             // Cache vbToken.
             VaultBridgeToken vbToken = $.nativeConvertersConfiguration[originNetwork][originAddress].vbToken;
@@ -259,23 +259,23 @@ contract MigrationManager is
             (uint256 shares, uint256 assets) = abi.decode(instructionData, (uint256, uint256));
 
             // Wrap the gas token if instructed.
-            if (instruction == CrossNetworkInstruction.WRAP_GAS_TOKEN_AND_COMPLETE_MIGRATION) {
+            if (instruction == CrossNetworkInstruction._1_WRAP_GAS_TOKEN_AND_COMPLETE_MIGRATION) {
                 // Cache the underlying token.
                 IERC20 underlyingToken = $.nativeConvertersConfiguration[originNetwork][originAddress].underlyingToken;
+
+                require(address(underlyingToken) == address($._wrappedGasToken), Unauthorized());
 
                 // Cache the previous balance.
                 uint256 previousBalance = underlyingToken.balanceOf(address(this));
 
                 // Wrap the gas token.
-                (bool ok,) =
-                    address(underlyingToken).call{value: assets}(abi.encodePacked(_UNDERLYING_TOKEN_WRAP_SELECTOR));
+                $._wrappedGasToken.deposit{value: assets}();
 
                 // Cache the result.
                 uint256 expectedBalance = previousBalance + assets;
                 uint256 newBalance = underlyingToken.balanceOf(address(this));
 
                 // Check the result.
-                require(ok, CannotWrapGasToken());
                 require(
                     newBalance == expectedBalance,
                     InsufficientUnderlyingTokenBalanceAfterWrapping(newBalance, expectedBalance)
@@ -299,12 +299,5 @@ contract MigrationManager is
     /// @notice This function can be called by the owner only.
     function unpause() external onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant {
         _unpause();
-    }
-
-    // -----================= ::: INFO ::: =================-----
-
-    /// @inheritdoc IVersioned
-    function version() external pure returns (string memory) {
-        return "0.5.0";
     }
 }
