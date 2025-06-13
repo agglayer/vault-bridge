@@ -74,7 +74,7 @@ contract MigrationManager is
     // Errors.
     error InvalidOwner();
     error InvalidLxLyBridge();
-    error InvalidVbToken();
+    error InvalidWrappedGasToken();
     error NonMatchingInputLengths();
     error InvalidLayerYLxLyId();
     error InvalidNativeConverter();
@@ -109,6 +109,7 @@ contract MigrationManager is
         // Check the inputs.
         require(owner_ != address(0), InvalidOwner());
         require(lxlyBridge_ != address(0), InvalidLxLyBridge());
+        require(wrappedGasToken_ != address(0), InvalidWrappedGasToken());
 
         // Initialize the inherited contracts.
         __AccessControl_init();

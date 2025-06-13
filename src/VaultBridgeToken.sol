@@ -218,11 +218,6 @@ abstract contract VaultBridgeToken is
     // -----================= ::: SOLIDITY ::: =================-----
 
     // @remind Document (the entire function).
-    /**
-     * @dev Internal helper that simply relays the current call to the
-     *      implementation stored in `_vaultBridgeTokenPart2`.
-     *      REVERTS or RETURNS with the exact same data as the callee.
-     */
     function _delegateToPart2() private {
         VaultBridgeTokenStorage storage $ = _getVaultBridgeTokenStorage();
 
