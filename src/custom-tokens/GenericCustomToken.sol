@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: LicenseRef-PolygonLabs-Open-Attribution OR LicenseRef-PolygonLabs-Source-Available
-// Vault Bridge (last updated v0.6.0) (custom-tokens/GenericCustomToken.sol)
+// Vault Bridge (last updated v1.0.0) (custom-tokens/GenericCustomToken.sol)
 
 pragma solidity 0.8.29;
 
@@ -21,13 +21,11 @@ contract GenericCustomToken is CustomToken {
 
     function reinitialize(
         address owner_,
-        string calldata name_,
-        string calldata symbol_,
         uint8 originalUnderlyingTokenDecimals_,
         address lxlyBridge_,
         address nativeConverter_
-    ) external virtual reinitializer(2) {
+    ) external reinitializer(2) {
         // Initialize the base implementation.
-        __CustomToken_init(owner_, name_, symbol_, originalUnderlyingTokenDecimals_, lxlyBridge_, nativeConverter_);
+        __CustomToken_init(owner_, originalUnderlyingTokenDecimals_, lxlyBridge_, nativeConverter_);
     }
 }

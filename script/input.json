@@ -96,8 +96,7 @@
             "name": "Vault Bridge USDS",
             "symbol": "vbUSDS",
             "decimals": 18,
-            "nonMigratableBackingPercentage": 0.01e18,
-            "nativeConverter": "0x639f13D5f30B47c792b6851238c05D0b623C77DE"
+            "nonMigratableBackingPercentage": 0.01e18
         },
         "vbUSDT": {
             "customToken": "0x2DCa96907fde857dd3D816880A0df407eeB2D2F2",
@@ -106,8 +105,7 @@
             "name": "Vault Bridge USDT",
             "symbol": "vbUSDT",
             "decimals": 6,
-            "nonMigratableBackingPercentage": 0.02e18,
-            "nativeConverter": "0x053FA9b934b83E1E0ffc7e98a41aAdc3640bB462"
+            "nonMigratableBackingPercentage": 0.02e18
         },
         "vbUSDC": {
             "customToken": "0x203A662b0BD271A6ed5a60EdFbd04bFce608FD36",
@@ -116,8 +114,7 @@
             "name": "Vault Bridge USDC",
             "symbol": "vbUSDC",
             "decimals": 6,
-            "nonMigratableBackingPercentage": 0.02e18,
-            "nativeConverter": "0x97a3500083348A147F419b8a65717909762c389f"
+            "nonMigratableBackingPercentage": 0.02e18
         },
         "vbWBTC": {
             "customToken": "0x0913DA6Da4b42f538B445599b46Bb4622342Cf52",
@@ -126,8 +123,7 @@
             "name": "Vault Bridge WBTC",
             "symbol": "vbWBTC",
             "decimals": 8,
-            "nonMigratableBackingPercentage": 0.01e18,
-            "nativeConverter": "0xb00aa68b87256E2F22058fB2Ba3246EEc54A44fc"
+            "nonMigratableBackingPercentage": 0.01e18
         },
         "vbETH": {
             "customToken": "0xEE7D8BCFb72bC1880D0Cf19822eB0A2e6577aB62",
@@ -136,8 +132,7 @@
             "name": "Vault Bridge ETH",
             "symbol": "vbETH",
             "decimals": 18,
-            "nonMigratableGasBackingPercentage": 0.1e18,
-            "nativeConverter": "0xa6b0db1293144ebe9478b6a84f75dd651e45914a"
+            "nonMigratableGasBackingPercentage": 0.1e18
         },
         "migrationManager": "0x417d01B64Ea30C4E163873f3a1f77b727c689e02",
         "polygonEngineeringMultisig": "0x4e981bAe8E3cd06Ca911ffFE5504B2653ac1C38a",

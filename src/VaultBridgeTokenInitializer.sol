@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: LicenseRef-PolygonLabs-Open-Attribution OR LicenseRef-PolygonLabs-Source-Available
-// Vault Bridge (last updated v0.6.0) (VaultBridgeTokenInitializer.sol)
+// Vault Bridge (last updated v1.0.0) (VaultBridgeTokenInitializer.sol)
 
 pragma solidity 0.8.29;
 
@@ -52,6 +52,11 @@ contract VaultBridgeTokenInitializer is IVaultBridgeTokenInitializer, VaultBridg
         require(initParams.migrationManager != address(0), InvalidMigrationManager());
         require(initParams.yieldVaultMaximumSlippagePercentage <= 1e18, InvalidYieldVaultMaximumSlippagePercentage());
         require(initParams.vaultBridgeTokenPart2 != address(0), InvalidVaultBridgeTokenPart2());
+        require(
+            keccak256(bytes(VaultBridgeToken(initParams.vaultBridgeTokenPart2).version()))
+                == keccak256(bytes(version())),
+            InvalidVaultBridgeTokenPart2()
+        );
 
         // Initialize the inherited contracts.
         __ERC20_init(initParams.name, initParams.symbol);

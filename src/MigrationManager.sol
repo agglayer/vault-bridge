@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: LicenseRef-PolygonLabs-Open-Attribution OR LicenseRef-PolygonLabs-Source-Available
-// Vault Bridge (last updated v0.6.0) (MigrationManager.sol)
+// Vault Bridge (last updated v1.0.0) (MigrationManager.sol)
 
 pragma solidity 0.8.29;
 
@@ -22,6 +22,7 @@ import {VaultBridgeToken} from "./VaultBridgeToken.sol";
 import {VaultBridgeTokenPart2} from "./VaultBridgeTokenPart2.sol";
 import {ILxLyBridge} from "./etc/ILxLyBridge.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IWETH9} from "./etc/IWETH9.sol";
 
 // @remind Redocument.
 /// @title Migration Manager (singleton)
@@ -59,18 +60,13 @@ contract MigrationManager is
         uint32 _lxlyId;
         mapping(uint32 layerYLxLyId => mapping(address nativeConverter => TokenPair tokenPair))
             nativeConvertersConfiguration;
+        IWETH9 _wrappedGasToken;
     }
 
     /// @dev The storage slot at which Migration Manager storage starts, following the EIP-7201 standard.
     /// @dev Calculated as `keccak256(abi.encode(uint256(keccak256("agglayer.vault-bridge.MigrationManager.storage")) - 1)) & ~bytes32(uint256(0xff))`.
     bytes32 private constant _MIGRATION_MANAGER_STORAGE =
         hex"30cf29e424d82bdf294fbec113ef39ac73137edfdb802b37ef3fc9ad433c5000";
-
-    // @remind Redocument.
-    /// @dev The function selector for wrapping Layer X's gas token, following the WETH9 standard.
-    /// @dev (ATTENTION) If the method of wrapping the gas token for your Layer X differs, you cannot use this contract.
-    /// @dev Calculated as `bytes4(keccak256("deposit()"))`.
-    bytes4 private constant _UNDERLYING_TOKEN_WRAP_SELECTOR = hex"d0e30db0";
 
     // Basic roles.
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
@@ -107,7 +103,7 @@ contract MigrationManager is
         _disableInitializers();
     }
 
-    function initialize(address owner_, address lxlyBridge_) external initializer {
+    function initialize(address owner_, address lxlyBridge_, address wrappedGasToken_) external initializer {
         MigrationManagerStorage storage $ = _getMigrationManagerStorage();
 
         // Check the inputs.
@@ -128,6 +124,7 @@ contract MigrationManager is
         // Initialize the storage.
         $.lxlyBridge = ILxLyBridge(lxlyBridge_);
         $._lxlyId = $.lxlyBridge.networkID();
+        $._wrappedGasToken = IWETH9(wrappedGasToken_);
     }
 
     // -----================= ::: SOLIDITY ::: =================-----
@@ -265,19 +262,19 @@ contract MigrationManager is
                 // Cache the underlying token.
                 IERC20 underlyingToken = $.nativeConvertersConfiguration[originNetwork][originAddress].underlyingToken;
 
+                require(address(underlyingToken) == address($._wrappedGasToken), Unauthorized());
+
                 // Cache the previous balance.
                 uint256 previousBalance = underlyingToken.balanceOf(address(this));
 
                 // Wrap the gas token.
-                (bool ok,) =
-                    address(underlyingToken).call{value: assets}(abi.encodePacked(_UNDERLYING_TOKEN_WRAP_SELECTOR));
+                $._wrappedGasToken.deposit{value: assets}();
 
                 // Cache the result.
                 uint256 expectedBalance = previousBalance + assets;
                 uint256 newBalance = underlyingToken.balanceOf(address(this));
 
                 // Check the result.
-                require(ok, CannotWrapGasToken());
                 require(
                     newBalance == expectedBalance,
                     InsufficientUnderlyingTokenBalanceAfterWrapping(newBalance, expectedBalance)
