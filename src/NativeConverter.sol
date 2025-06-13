@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: LicenseRef-PolygonLabs-Open-Attribution OR LicenseRef-PolygonLabs-Source-Available
-// Vault Bridge (last updated v0.6.0) (NativeConverter.sol)
+// Vault Bridge (last updated v1.0.0) (NativeConverter.sol)
 
 pragma solidity 0.8.29;
 
@@ -16,7 +16,7 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
 // External contracts.
-import {CustomToken, SPECIAL_INSTRUCTION_SKIP_MINTING} from "./CustomToken.sol";
+import {CustomToken} from "./CustomToken.sol";
 import {ILxLyBridge} from "./etc/ILxLyBridge.sol";
 import {MigrationManager} from "./MigrationManager.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -51,6 +51,7 @@ abstract contract NativeConverter is
         uint32 layerXLxlyId;
         uint256 nonMigratableBackingPercentage;
         address migrationManager;
+        bool _underlyingTokenIsNotMintable;
     }
 
     /// @dev The storage slot at which Native Converter storage starts, following the EIP-7201 standard.
@@ -69,8 +70,7 @@ abstract contract NativeConverter is
     error InvalidLxLyBridge();
     error InvalidLayerXLxlyId();
     error InvalidMigrationManager();
-    error NonMatchingCustomTokenDecimals(uint8 customTokenDecimals, uint8 originalUnderlyingTokenDecimals);
-    error NonMatchingUnderlyingTokenDecimals(uint8 underlyingTokenDecimals, uint8 originalUnderlyingTokenDecimals);
+    error NonMatchingTokenDecimals(uint8 customTokenDecimals, uint8 underlyingTokenDecimals);
     error InvalidAssets();
     error InvalidReceiver();
     error InvalidPermitData();
@@ -86,13 +86,12 @@ abstract contract NativeConverter is
 
     // -----================= ::: SETUP ::: =================-----
 
-    /// @param originalUnderlyingTokenDecimals_ The number of decimals of the original underlying token on Layer X. The `customToken` and `underlyingToken` MUST have the same number of decimals as the original underlying token. @note (ATTENTION) The decimals of the `customToken` and `underlyingToken` will default to 18 if they revert.
+    /// @dev The `customToken` and `underlyingToken` MUST have the same number of decimals. @note (ATTENTION) The decimals of the `customToken` and `underlyingToken` will default to `18` if the calls revert.
     /// @param customToken_ The token custom mapped to vbToken on LxLy Bridge on Layer Y. Native Converter must be able to mint and burn this token. Please refer to `CustomToken.sol` for more information.
     /// @param underlyingToken_ The token that represents the original underlying token on Layer Y. @note IMPORTANT: This token MUST be either the bridge-wrapped version of the original underlying token, or the original underlying token must be custom mapped to this token on LxLy Bridge on Layer Y.
     /// @param nonMigratableBackingPercentage_ The percentage of backing that should remain in Native Converter after a migration, based on the total supply of Custom Token. 1e18 is 100%. It is possible to game the system by manipulating the total supply of Custom Token, so this is a soft limit.
     function __NativeConverter_init(
         address owner_,
-        uint8 originalUnderlyingTokenDecimals_,
         address customToken_,
         address underlyingToken_,
         address lxlyBridge_,
@@ -111,7 +110,7 @@ abstract contract NativeConverter is
         require(migrationManager_ != address(0), InvalidMigrationManager());
         require(nonMigratableBackingPercentage_ <= 1e18, InvalidNonMigratableBackingPercentage());
 
-        // Check Custom Token's decimals.
+        // Get Custom Token's decimals.
         uint8 customTokenDecimals;
         try IERC20Metadata(customToken_).decimals() returns (uint8 decimals) {
             customTokenDecimals = decimals;
@@ -119,12 +118,8 @@ abstract contract NativeConverter is
             // Default to 18 decimals.
             customTokenDecimals = 18;
         }
-        require(
-            customTokenDecimals == originalUnderlyingTokenDecimals_,
-            NonMatchingCustomTokenDecimals(customTokenDecimals, originalUnderlyingTokenDecimals_)
-        );
 
-        // Check the underlying token's decimals.
+        // Get the underlying token's decimals.
         uint8 underlyingTokenDecimals;
         try IERC20Metadata(underlyingToken_).decimals() returns (uint8 decimals_) {
             underlyingTokenDecimals = decimals_;
@@ -132,9 +127,11 @@ abstract contract NativeConverter is
             // Default to 18 decimals.
             underlyingTokenDecimals = 18;
         }
+
+        // Check the tokens' decimals.
         require(
-            underlyingTokenDecimals == originalUnderlyingTokenDecimals_,
-            NonMatchingUnderlyingTokenDecimals(underlyingTokenDecimals, originalUnderlyingTokenDecimals_)
+            customTokenDecimals == underlyingTokenDecimals,
+            NonMatchingTokenDecimals(customTokenDecimals, underlyingTokenDecimals)
         );
 
         // Initialize the inherited contracts.
@@ -152,6 +149,7 @@ abstract contract NativeConverter is
         // Initialize the storage.
         $.customToken = CustomToken(customToken_);
         $.underlyingToken = IERC20(underlyingToken_);
+        $._underlyingTokenIsNotMintable = ILxLyBridge(lxlyBridge_).wrappedAddressIsNotMintable(underlyingToken_);
         $.lxlyId = ILxLyBridge(lxlyBridge_).networkID();
         $.lxlyBridge = ILxLyBridge(lxlyBridge_);
         $.layerXLxlyId = layerXLxlyId_;
@@ -237,7 +235,6 @@ abstract contract NativeConverter is
         // Check the inputs.
         require(assets > 0, InvalidAssets());
         require(receiver != address(0), InvalidReceiver());
-        require(receiver != SPECIAL_INSTRUCTION_SKIP_MINTING, InvalidReceiver());
 
         // Transfer the underlying token from the sender to self.
         assets = _receiveUnderlyingToken(msg.sender, assets);
@@ -354,7 +351,6 @@ abstract contract NativeConverter is
         // Check the inputs.
         require(shares > 0, InvalidShares());
         require(receiver != address(0), InvalidReceiver());
-        require(receiver != SPECIAL_INSTRUCTION_SKIP_MINTING, InvalidReceiver());
 
         // Switch to the underlying token.
         // Set the return value.
@@ -439,7 +435,26 @@ abstract contract NativeConverter is
         uint256 shares = _convertToShares(assets);
 
         // Bridge the backing to Migration Manager on Layer X.
-        $.lxlyBridge.bridgeAsset($.layerXLxlyId, $.migrationManager, assets, address($.underlyingToken), true, "");
+        /* If the underlying token is not mintable by LxLy Bridge, we need to check for a transfer fee. */
+        if ($._underlyingTokenIsNotMintable) {
+            // Cache the balance.
+            uint256 balanceBefore = $.underlyingToken.balanceOf(address($.lxlyBridge));
+
+            // Bridge.
+            // @note IMPORTANT: Make sure the underlying token you are integrating does not enable reentrancy on `transferFrom`.
+            $.lxlyBridge.bridgeAsset($.layerXLxlyId, $.migrationManager, assets, address($.underlyingToken), true, "");
+
+            uint256 originalAssets = assets;
+
+            // Calculate the bridged amount.
+            assets = $.underlyingToken.balanceOf(address($.lxlyBridge)) - balanceBefore;
+
+            assert(assets > 0 && originalAssets >= assets);
+        }
+        /* If the underlying token is mintable by LxLy Bridge, it will be burned (not transferred). */
+        else {
+            $.lxlyBridge.bridgeAsset($.layerXLxlyId, $.migrationManager, assets, address($.underlyingToken), true, "");
+        }
 
         // Bridge a message to Migration Manager on Layer X to complete the migration.
         $.lxlyBridge.bridgeMessage(

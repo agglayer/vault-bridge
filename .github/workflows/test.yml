@@ -55,5 +55,5 @@ jobs:
           npm install
           forge test --no-match-contract "Generic" -vvv
         env:
-          TATARA_TOKEN: ${{ secrets.TATARA_TOKEN }}
+          BOKUTO_API_KEY: ${{ secrets.BOKUTO_API_KEY }}
         id: test
