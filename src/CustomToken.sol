@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: LicenseRef-PolygonLabs-Open-Attribution OR LicenseRef-PolygonLabs-Source-Available
-// Vault Bridge (last updated v0.6.0) (CustomToken.sol)
+// Vault Bridge (last updated v1.0.0) (CustomToken.sol)
 
 pragma solidity 0.8.29;
 
@@ -47,11 +47,12 @@ abstract contract CustomToken is
     // Errors.
     error Unauthorized();
     error InvalidOwner();
-    error InvalidName();
-    error InvalidSymbol();
     error InvalidOriginalUnderlyingTokenDecimals();
     error InvalidLxLyBridge();
     error InvalidNativeConverter();
+
+    // Events.
+    event NotMinted(uint256 indexed value);
 
     // -----================= ::: MODIFIERS ::: =================-----
 
@@ -72,8 +73,6 @@ abstract contract CustomToken is
     /// @param nativeConverter_ The address of Native Converter for this Custom Token.
     function __CustomToken_init(
         address owner_,
-        string calldata name_,
-        string calldata symbol_,
         uint8 originalUnderlyingTokenDecimals_,
         address lxlyBridge_,
         address nativeConverter_
@@ -82,11 +81,16 @@ abstract contract CustomToken is
 
         // Check the inputs.
         require(owner_ != address(0), InvalidOwner());
-        require(bytes(name_).length > 0, InvalidName());
-        require(bytes(symbol_).length > 0, InvalidSymbol());
         require(originalUnderlyingTokenDecimals_ > 0, InvalidOriginalUnderlyingTokenDecimals());
         require(lxlyBridge_ != address(0), InvalidLxLyBridge());
         require(nativeConverter_ != address(0), InvalidNativeConverter());
+
+        string memory name_ = name();
+        string memory symbol_ = symbol();
+
+        assert(bytes(name_).length > 0);
+        assert(bytes(symbol_).length > 0);
+        assert(decimals() == originalUnderlyingTokenDecimals_);
 
         // Initialize the inherited contracts.
         __ERC20_init(name_, symbol_);
@@ -139,30 +143,23 @@ abstract contract CustomToken is
     // -----================= ::: ERC-20 ::: =================-----
 
     /// @dev Pausable ERC-20 `transfer` function.
-    function transfer(address to, uint256 value) public virtual override whenNotPaused returns (bool) {
+    function transfer(address to, uint256 value) public override whenNotPaused returns (bool) {
         return super.transfer(to, value);
     }
 
     /// @dev Pausable ERC-20 `transferFrom` function.
-    function transferFrom(address from, address to, uint256 value)
-        public
-        virtual
-        override
-        whenNotPaused
-        returns (bool)
-    {
+    function transferFrom(address from, address to, uint256 value) public override whenNotPaused returns (bool) {
         return super.transferFrom(from, to, value);
     }
 
     /// @dev Pausable ERC-20 `approve` function.
-    function approve(address spender, uint256 value) public virtual override whenNotPaused returns (bool) {
+    function approve(address spender, uint256 value) public override whenNotPaused returns (bool) {
         return super.approve(spender, value);
     }
 
     /// @dev Pausable ERC-20 Permit `permit` function.
     function permit(address owner, address spender, uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s)
         public
-        virtual
         override
         whenNotPaused
     {
@@ -180,9 +177,12 @@ abstract contract CustomToken is
         nonReentrant
     {
         // @remind Redocument.
-        // When we migrate backing to Lx, we end up sending tokens to SPECIAL_INSTRUCTION_SKIP_MINTING here.
+        // When we migrate backing to Lx, we end up sending tokens to address(0) here.
         // These need to be claimable so the bridge accounting is correct and we allow it here by not reverting.
-        if (account == SPECIAL_INSTRUCTION_SKIP_MINTING) return;
+        if (account == address(0)) {
+            emit NotMinted(value);
+            return;
+        }
 
         _mint(account, value);
     }
@@ -212,7 +212,3 @@ abstract contract CustomToken is
         _unpause();
     }
 }
-
-// @remind Document.
-address constant SPECIAL_INSTRUCTION_SKIP_MINTING =
-    address(uint160(uint256(keccak256("SPECIAL_INSTRUCTION_SKIP_MINTING"))));

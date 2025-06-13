@@ -73,7 +73,7 @@ contract WETHTest is Test {
     }
 
     function test_wETH_version() public view {
-        assertEq(wETH.version(), "0.6.0");
+        assertEq(wETH.version(), "1.0.0");
     }
 
     function test_onlyIfGasTokenIsEth() public {

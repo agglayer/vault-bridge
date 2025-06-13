@@ -30,8 +30,8 @@ forge-std = { version = "1.9.4" }
 
 [rpc_endpoints]
 mainnet = "wss://mainnet.gateway.tenderly.co"
-katana = "https://rpc.katanarpc.com/${KATANA_TOKEN}"
+katana = "https://rpc.katanarpc.com/${KATANA_API_KEY}"
 sepolia = "https://sepolia.gateway.tenderly.co"
-tatara = "https://rpc.tatara.katanarpc.com/${TATARA_TOKEN}"
+bokuto = "https://rpc-bokuto.katanarpc.com/${BOKUTO_API_KEY}"
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
