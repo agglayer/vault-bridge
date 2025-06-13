@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: LicenseRef-PolygonLabs-Open-Attribution OR LicenseRef-PolygonLabs-Source-Available
-// Vault Bridge (last updated v0.6.0) (custom-tokens/WETH/WETHNativeConverter.sol)
+// Vault Bridge (last updated v1.0.0) (custom-tokens/WETH/WETHNativeConverter.sol)
 
 pragma solidity 0.8.29;
 
@@ -42,7 +42,6 @@ contract WETHNativeConverter is NativeConverter {
 
     function initialize(
         address owner_,
-        uint8 originalUnderlyingTokenDecimals_,
         address customToken_,
         address underlyingToken_,
         address lxlyBridge_,
@@ -56,7 +55,6 @@ contract WETHNativeConverter is NativeConverter {
         // Initialize the base implementation.
         __NativeConverter_init(
             owner_,
-            originalUnderlyingTokenDecimals_,
             customToken_,
             underlyingToken_,
             lxlyBridge_,
