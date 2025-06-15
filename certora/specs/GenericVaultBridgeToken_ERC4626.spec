@@ -363,6 +363,7 @@ filtered {
 }
 {
     uint256 assets; uint256 shares;
+    address receiver; address owner;
     
     require currentContract != e.msg.sender
          && currentContract != receiver
