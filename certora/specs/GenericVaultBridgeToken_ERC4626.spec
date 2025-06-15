@@ -102,7 +102,7 @@ rule depositMonotonicity() {
     address receiver;
     require currentContract != e.msg.sender && currentContract != receiver; 
 
-    safeAssumptions(e, e.msg.sender, receiver);
+    safeAssumptions(e);
 
     deposit(e, smallerAssets, receiver);
     uint256 smallerShares = balanceOf(receiver) ;
@@ -129,15 +129,14 @@ rule assetsMoreThanSupply_rule(method f, env e)
     filtered { f -> !excludedMethod(f) }
 {
     require e.msg.sender != currentContract;
-    address receiver;
-    address owner;
-    uint assets; uint shares;
-    safeAssumptions(e, receiver, owner);
+
+    safeAssumptions(e);
     
     uint256 assetsBefore = totalAssets();
     uint256 supplyBefore = totalSupply();
     
-    callFunctionsWithReceiverAndOwner(e, f, assets, shares, receiver, owner);
+    calldataarg args;
+    f(e, args);
 
     uint256 assetsAfter = totalAssets();
     uint256 supplyAfter = totalSupply();
@@ -151,15 +150,14 @@ rule assetsMoreThanSupply2_rule(method f, env e)
     filtered { f -> !excludedMethod(f) }
 {
     //require e.msg.sender != currentContract;
-    address receiver;
-    address owner;
-    uint assets; uint shares;
-    safeAssumptions(e, receiver, owner);
+
+    safeAssumptions(e);
     
     mathint assetsBefore = totalAssets();
     mathint supplyBefore = totalSupply() - getNetCollectedYield();
     
-    callFunctionsWithReceiverAndOwner(e, f, assets, shares, receiver, owner);
+    calldataarg args;
+    f(e, args);
 
     mathint assetsAfter = totalAssets();
     mathint supplyAfter = totalSupply() - getNetCollectedYield();
@@ -172,13 +170,14 @@ rule noBalanceIfNoSupply_rule(method f, env e)
     filtered { f -> !excludedMethod(f) }
 {
     require e.msg.sender != currentContract;
-    address receiver; address owner;
-    safeAssumptions(e, receiver, owner);
+    
+    safeAssumptions(e);
     
     uint256 balanceBefore = userAssets(currentContract);
     uint256 supplyBefore = totalSupply();
     
-    callFunctionsWithReceiverAndOwner2(e, f, receiver, owner);
+    calldataarg args;
+    f(e, args);
 
     uint256 balanceAfter = userAssets(currentContract);
     uint256 supplyAfter = totalSupply();
@@ -192,14 +191,15 @@ rule noAssetsIfNoSupply_rule(method f, env e)
     filtered { f -> !excludedMethod(f) }
 {
     require e.msg.sender != currentContract;
-    address receiver; address owner;
+    
     uint assets; uint shares;
-    safeAssumptions(e, receiver, owner);
+    safeAssumptions(e);
     
     uint256 assetsBefore = totalAssets();
     uint256 supplyBefore = totalSupply();
     
-    callFunctionsWithReceiverAndOwner(e, f, assets, shares, receiver, owner);
+    calldataarg args;
+    f(e, args);
 
     uint256 assetsAfter = totalAssets();
     uint256 supplyAfter = totalSupply();
@@ -213,7 +213,7 @@ invariant zeroAllowanceOnAssets(address user)
     filtered { f -> !excludedMethod(f) }
     {
         preserved with (env e) {
-        safeAssumptions(e, e.msg.sender, e.msg.sender);
+        safeAssumptions(e);
     }
 }
 
@@ -224,10 +224,11 @@ rule totalsMonotonicity(method f, env e)
     //require e.msg.sender != currentContract; 
     uint256 totalSupplyBefore = totalSupply();
     uint256 totalAssetsBefore = totalAssets();
-    address receiver; address owner;
-    safeAssumptions(e, receiver, owner);
+    
+    safeAssumptions(e);
     //snapshotStorage(0);
-    callFunctionsWithReceiverAndOwner2(e, f, receiver, owner);
+    calldataarg args;
+    f(e, args);
 
     uint256 totalSupplyAfter = totalSupply();
     uint256 totalAssetsAfter = totalAssets();
@@ -264,7 +265,7 @@ rule dustFavorsTheHouse(uint assetsIn )
     env e;
         
     require e.msg.sender != currentContract;
-    safeAssumptions(e, e.msg.sender, e.msg.sender);
+    safeAssumptions(e);
     uint256 totalSupplyBefore = totalSupply();
 
     uint balanceBefore = require_uint256(ERC20a.balanceOf(currentContract) + stakedAssets());
@@ -278,11 +279,11 @@ rule dustFavorsTheHouse(uint assetsIn )
 }
 
 //holds
-rule redeemingAllValidity() { 
+rule redeemingAllValidity(env e) { 
     address owner; 
     uint256 shares; require shares == balanceOf(owner);
     
-    env e; safeAssumptions(e, _, owner);
+    safeAssumptions(e);
     redeem(e, shares, _, owner);
     uint256 ownerBalanceAfter = balanceOf(owner);
     assert ownerBalanceAfter == 0;
@@ -306,7 +307,7 @@ filtered {
          && yieldVaultContract != contributor
          && yieldVaultContract != receiver;
 
-    safeAssumptions(e, contributor, receiver);
+    safeAssumptions(e);
 
     uint256 contributorAssetsBefore = userAssets(contributor);
     uint256 receiverSharesBefore = balanceOf(receiver);
@@ -327,13 +328,14 @@ rule onlyContributionMethodsReduceAssets(method f, env e)
     address user; 
     require user != currentContract;
     require user != yieldVaultContract;
-    address receiver; address owner;
+    
 
-    safeAssumptions(e, receiver, user);
+    safeAssumptions(e);
 
     uint256 userAssetsBefore = userAssets(user);
     
-    callFunctionsWithReceiverAndOwner2(e, f, receiver, owner);
+    calldataarg args;
+    f(e, args);
 
     uint256 userAssetsAfter = userAssets(user);
 
@@ -361,14 +363,14 @@ filtered {
 }
 {
     uint256 assets; uint256 shares;
-    address receiver; address owner;
+    
     require currentContract != e.msg.sender
          && currentContract != receiver
          && currentContract != owner
          && yieldVaultContract != receiver
          && yieldVaultContract != owner;
 
-    safeAssumptions(e, receiver, owner);
+    safeAssumptions(e);
 
     uint256 ownerSharesBefore = balanceOf(owner);
     uint256 receiverAssetsBefore = userAssets(receiver);
@@ -386,13 +388,14 @@ rule vaultSolvency_rule(method f, env e)
     filtered {f -> !excludedMethod(f) }
 {
     //require e.msg.sender != currentContract; 
-    address receiver; address owner;
-    safeAssumptions(e, receiver, owner);
+    
+    safeAssumptions(e);
 
     mathint assetsBefore = totalAssets();
     mathint sharesValueBefore = convertToAssets(totalSupply());
 
-    callFunctionsWithReceiverAndOwner2(e, f, receiver, owner);
+    calldataarg args;
+    f(e, args);
 
     mathint assetsAfter = totalAssets();
     mathint sharesValueAfter = convertToAssets(totalSupply());

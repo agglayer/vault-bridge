@@ -49,10 +49,12 @@ function requireNonSceneSender(env e)
     require e.msg.sender != yieldVaultContract;
 }
 
+// currently unused. The totals are guarded via hooks in GVBTBalances.spec and tokenMockBalances.spec
 function callFunctionsWithReceiverAndOwner2(env e, method f, address receiver, address owner) 
 {
     uint256 assets; uint256 shares;
-    callFunctionsWithReceiverAndOwner(e, f, assets, shares, receiver, owner);
+    calldataarg args;
+    f(e, args);
 }
 
 function callFunctionsWithReceiverAndOwner(env e, method f, uint256 assets, uint256 shares, address receiver, address owner) {

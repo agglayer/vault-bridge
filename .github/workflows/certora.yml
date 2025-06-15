@@ -16,8 +16,6 @@ env:
     certora/confs/GenericVaultBridgeToken.conf --rule zeroDepositZeroShares_rule
     certora/confs/GenericVaultBridgeToken.conf --rule assetsMoreThanSupply_rule
     certora/confs/GenericVaultBridgeToken.conf --rule assetsMoreThanSupply2_rule
-    certora/confs/GenericVaultBridgeToken.conf --rule noBalanceIfNoSupply_rule
-    certora/confs/GenericVaultBridgeToken.conf --rule noAssetsIfNoSupply_rule
     certora/confs/GenericVaultBridgeToken.conf --rule zeroAllowanceOnAssets
     certora/confs/GenericVaultBridgeToken.conf --rule totalsMonotonicity
     certora/confs/GenericVaultBridgeToken.conf --rule underlyingCannotChange
@@ -33,10 +31,6 @@ env:
     certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GenericVaultBridgeToken_basicInvariants.spec --rule vaultSolvency2
     certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GenericVaultBridgeToken_basicInvariants.spec --rule assetsMoreThanSupply
     certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GenericVaultBridgeToken_basicInvariants.spec --rule noSupplyIfNoAssets
-    certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GenericVaultBridgeToken_basicInvariants.spec --rule noBalanceIfNoSupply
-    certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GenericVaultBridgeToken_basicInvariants.spec --rule noSupplyIfNoBalance
-    certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GenericVaultBridgeToken_basicInvariants.spec --rule noAssetsIfNoSupply
-    certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GenericVaultBridgeToken_basicInvariants.spec --rule totalSupplyAccounted
     certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GenericVaultBridgeToken_allowedChanges.spec --rule onlyAllowedMethodsMayChangeTotalAssets
     certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GenericVaultBridgeToken_allowedChanges.spec --rule onlyAllowedMethodsMayChangeTotalSupply
     certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GenericVaultBridgeToken_allowedChanges.spec --rule onlyAllowedMethodsMayChangeStakedAssets

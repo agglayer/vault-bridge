@@ -6,11 +6,12 @@ rule onlyAllowedMethodsMayChangeTotalAssets(method f, env e)
     filtered {f -> !excludedMethod(f) }
 {
     //require e.msg.sender != currentContract; 
-    address receiver; address owner;
-    safeAssumptions(e, receiver, owner);
+    
+    safeAssumptions(e);
     uint256 totalAssetsBefore = totalAssets();
 
-    callFunctionsWithReceiverAndOwner2(e, f, receiver, owner);
+    calldataarg args;
+    f(e, args);
 
     uint256 totalAssetsAfter = totalAssets();
     satisfy totalAssetsAfter == totalAssetsBefore;
@@ -34,11 +35,12 @@ rule onlyAllowedMethodsMayChangeTotalSupply(method f, env e)
     filtered {f -> !excludedMethod(f) }
 {
     //require e.msg.sender != currentContract; 
-    address receiver; address owner;
-    safeAssumptions(e, receiver, owner);
+    
+    safeAssumptions(e);
 
     uint256 totalSupplyBefore = totalSupply();
-    callFunctionsWithReceiverAndOwner2(e, f, receiver, owner);
+    calldataarg args;
+    f(e, args);
 
     uint256 totalSupplyAfter = totalSupply();
     assert totalSupplyAfter > totalSupplyBefore => canIncreaseTotalSupply(f);
@@ -61,11 +63,12 @@ rule onlyAllowedMethodsMayChangeStakedAssets(method f, env e)
     filtered {f -> !excludedMethod(f) }
 {
     //require e.msg.sender != currentContract; 
-    address receiver; address owner;
-    safeAssumptions(e, receiver, owner);
+    
+    safeAssumptions(e);
 
     uint256 stakedAssetsBefore = stakedAssets();
-    callFunctionsWithReceiverAndOwner2(e, f, receiver, owner);
+    calldataarg args;
+    f(e, args);
 
     uint256 stakedAssetsAfter = stakedAssets();
     assert stakedAssetsAfter > stakedAssetsBefore => canIncreaseStakedAssets(f);
@@ -89,11 +92,12 @@ rule onlyAllowedMethodsMayChangeReservedAssets(method f, env e)
     filtered {f -> !excludedMethod(f) }
 {
     //require e.msg.sender != currentContract; 
-    address receiver; address owner;
-    safeAssumptions(e, receiver, owner);
+    
+    safeAssumptions(e);
 
     uint256 reservedAssetsBefore = reservedAssets();
-    callFunctionsWithReceiverAndOwner2(e, f, receiver, owner);
+    calldataarg args;
+    f(e, args);
 
     uint256 reservedAssetsAfter = reservedAssets();
     assert reservedAssetsAfter > reservedAssetsBefore => canIncreaseStakedAssets(f);

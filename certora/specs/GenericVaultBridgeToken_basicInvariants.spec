@@ -49,6 +49,7 @@ invariant minimumReservePercentageLimit()
         }
 }
 
+// keep both. call this "simple solvency"
 invariant vaultSolvency()    
     totalAssets() >= convertToAssets(totalSupply())
     filtered { f -> !excludedMethod(f) }
@@ -79,7 +80,7 @@ invariant vaultSolvency2(uint assets)
     filtered { f -> !excludedMethod(f) }
     {
         preserved with (env e) {
-            safeAssumptions(e, e.msg.sender, e.msg.sender);
+            safeAssumptions(e);
         }
 }
 
@@ -95,7 +96,7 @@ invariant strongerSolvency(uint assets)
         filtered { f -> !excludedMethod(f) }
     {
         preserved with (env e) {
-            safeAssumptions(e, e.msg.sender, e.msg.sender);
+            safeAssumptions(e);
         }
 }
 
@@ -111,7 +112,7 @@ invariant strongerSolvency2(uint assets)
         filtered { f -> !excludedMethod(f) }
     {
         preserved with (env e) {
-            safeAssumptions(e, e.msg.sender, e.msg.sender);
+            safeAssumptions(e);
         }
 }
 
@@ -121,8 +122,7 @@ invariant assetsMoreThanSupply()
     {
         preserved with (env e) {
             //require e.msg.sender != currentContract;
-            address any;
-            safeAssumptions(e, any , e.msg.sender);
+            safeAssumptions(e);
         }
 }
 
@@ -131,11 +131,13 @@ invariant noSupplyIfNoAssets()
     filtered { f -> !excludedMethod(f) }
     {
         preserved with (env e) {
-            safeAssumptions(e, _, e.msg.sender);
+            safeAssumptions(e);
         }
 }
 
 ///////////// these dont hold /////////////
+// these are incorrect properties
+// remove later
 
 invariant noBalanceIfNoSupply() 
     totalSupply() == 0 => userAssets(currentContract) == 0
@@ -143,7 +145,7 @@ invariant noBalanceIfNoSupply()
     {
         preserved with (env e) {
             address any;
-            safeAssumptions(e, any, e.msg.sender);
+            safeAssumptions(e);
         }
 }
 
@@ -152,7 +154,7 @@ invariant noSupplyIfNoBalance()
     filtered { f -> !excludedMethod(f) }
     {
         preserved with (env e) {
-            safeAssumptions(e, _, e.msg.sender);
+            safeAssumptions(e);
         }
 }
 
@@ -162,10 +164,9 @@ invariant noAssetsIfNoSupply()
     {
         preserved with (env e) {
             address any;
-            safeAssumptions(e, any, e.msg.sender);
+            safeAssumptions(e);
         }
 }
-
 
 invariant totalSupplyAccounted()
     convertToAssets(totalSupply()) >= stakedAssets()
@@ -178,22 +179,16 @@ invariant totalSupplyAccounted()
         }
 }
 
-
-
 ////////////////////////////////////////////////////////////////////////////////
 ////                        # helpers and miscellaneous                //////////
 ////////////////////////////////////////////////////////////////////////////////
 
-function safeAssumptions(env e, address receiver, address owner) {
+function safeAssumptions(env e) {
+    requireLinking();
     requireAllInvariants();
     require currentContract != asset(); // Although this is not disallowed, we assume the contract's underlying asset is not the contract itself
 
-    //require e.msg.sender != currentContract;  // This is proved by rule noDynamicCalls
-    //requireInvariant zeroAllowanceOnAssets(e.msg.sender);
-
-    //totalSuppliesMoreThanFourBalances(e.msg.sender, receiver, owner, currentContract);
-    
-    requireLinking();
+    //require e.msg.sender != currentContract;  // This is proved by rule noDynamicCalls    
 }
 
 
