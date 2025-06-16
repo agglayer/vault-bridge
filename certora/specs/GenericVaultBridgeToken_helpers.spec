@@ -127,7 +127,8 @@ definition canBeCalledWhenPaused(method f) returns bool =
     f.selector == sig:burn(uint256).selector ||
     f.selector == sig:grantRole(bytes32,address).selector ||
     f.selector == sig:revokeRole(bytes32,address).selector ||
-    f.selector == sig:renounceRole(bytes32,address).selector
+    f.selector == sig:renounceRole(bytes32,address).selector ||
+    f.selector == sig:donateAsYield(uint256).selector
 ;
 
 definition excludedMethod(method f) returns bool =

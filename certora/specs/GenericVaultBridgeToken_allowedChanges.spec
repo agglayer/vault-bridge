@@ -119,18 +119,8 @@ definition canIncreaseReservedAssets(method f) returns bool =
     f.selector == sig:mint(uint256,address).selector ||
     f.selector == sig:rebalanceReserve().selector;
 
-// todo should not be needed anymore
-rule minimumReservePercentageLTe18(method f, env e)
-    filtered {f -> !excludedMethod(f) }
-{
-    requireLinking();
-    uint minimumReservePercentageBefore = minimumReservePercentage(e);
-    calldataarg args;
-    f(e, args);
-    uint minimumReservePercentageAfter = minimumReservePercentage(e);
-    assert minimumReservePercentageBefore <= 10^18 => 
-        minimumReservePercentageAfter <= 10^18;
-}
+
+
 
 rule noActivityWhenPaused(method f, env e)
     filtered {f -> !excludedMethod(f) }

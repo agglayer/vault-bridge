@@ -128,7 +128,7 @@ rule zeroDepositZeroShares_rule(uint assets, address receiver)
 rule assetsMoreThanSupply_rule(method f, env e)
     filtered { f -> !excludedMethod(f) }
 {
-    require e.msg.sender != currentContract;
+    //require e.msg.sender != currentContract;
 
     safeAssumptions(e);
     
@@ -169,7 +169,7 @@ rule assetsMoreThanSupply2_rule(method f, env e)
 rule noBalanceIfNoSupply_rule(method f, env e)
     filtered { f -> !excludedMethod(f) }
 {
-    require e.msg.sender != currentContract;
+    //require e.msg.sender != currentContract;
     
     safeAssumptions(e);
     
@@ -190,7 +190,7 @@ rule noBalanceIfNoSupply_rule(method f, env e)
 rule noAssetsIfNoSupply_rule(method f, env e) 
     filtered { f -> !excludedMethod(f) }
 {
-    require e.msg.sender != currentContract;
+    //require e.msg.sender != currentContract;
     
     uint assets; uint shares;
     safeAssumptions(e);
@@ -264,7 +264,7 @@ rule dustFavorsTheHouse(uint assetsIn )
 {
     env e;
         
-    require e.msg.sender != currentContract;
+    //require e.msg.sender != currentContract;
     safeAssumptions(e);
     uint256 totalSupplyBefore = totalSupply();
 
