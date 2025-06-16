@@ -59,7 +59,7 @@ contract TestVault {
         {
             user;
         }
-        return _maxWithdraw;
+        return balanceOf[user];
     }
 
     function deposit(uint256 amount, address user) external payable returns (uint256) {
