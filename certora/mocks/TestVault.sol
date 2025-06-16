@@ -13,7 +13,7 @@ contract TestVault {
 
     IERC20 public asset;
     uint256 public slippageAmount;
-    bool public slippage;
+    bool public slippage = false;
 
     mapping(address => uint256) public balanceOf;
 
@@ -63,33 +63,33 @@ contract TestVault {
     }
 
     function deposit(uint256 amount, address user) external payable returns (uint256) {
-        if (slippage) {
-            require(amount > slippageAmount, "TestVault: Slippage amount is too high");
-            _receiveAssets(amount - slippageAmount, user);
-        } else {
+        //if (slippage) {
+        //    require(amount > slippageAmount, "TestVault: Slippage amount is too high");
+        //    _receiveAssets(amount - slippageAmount, user);
+        //} else {
             _receiveAssets(amount, user);
-        }
+        //}
         return amount;
     }
 
     function withdraw(uint256 amount, address receiver, address user) external returns (uint256) {
         require(balanceOf[user] >= amount, "TestVault: Insufficient balance");
         _sendAssets(amount, receiver, user);
-        if (slippage) {
-            require(amount > slippageAmount, "TestVault: Slippage amount is too high");
-            return amount + slippageAmount;
-        } else {
+        //if (slippage) {
+        //    require(amount > slippageAmount, "TestVault: Slippage amount is too high");
+        //    return amount + slippageAmount;
+        //} else {
             return amount;
-        }
+        //}
     }
 
     function previewWithdraw(uint256 amount) external view returns (uint256) {
-        if (slippage) {
-            require(amount > slippageAmount, "TestVault: Slippage amount is too high");
-            return amount + slippageAmount;
-        } else {
+        //if (slippage) {
+        //    require(amount > slippageAmount, "TestVault: Slippage amount is too high");
+        //    return amount + slippageAmount;
+        //} else {
             return amount;
-        }
+        //}
     }
 
     function _receiveAssets(uint256 amount, address user) internal {

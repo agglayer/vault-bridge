@@ -1,4 +1,4 @@
-import { TestVault } from "test/etc/TestVault.sol";
+import { TestVault } from "./TestVault.sol";
 
 // extend TestVault with some IERC4626 snippets
 contract VaultMock is TestVault {
