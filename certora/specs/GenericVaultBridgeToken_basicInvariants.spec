@@ -20,9 +20,9 @@ function requireAllInvariants()
     requireInvariant minimumReservePercentageLimit();
     requireInvariant assetsMoreThanSupply();
     requireInvariant noSupplyIfNoAssets();
-    requireInvariant vaultSolvency();
+    requireInvariant vaultSolvency_simple();
     uint256 assets;
-    requireInvariant vaultSolvency2(assets);
+    requireInvariant vaultSolvency(assets);
 }
 
 invariant reserveBacked()
@@ -49,8 +49,7 @@ invariant minimumReservePercentageLimit()
         }
 }
 
-// keep both. call this "simple solvency"
-invariant vaultSolvency()    
+invariant vaultSolvency_simple()    
     totalAssets() >= convertToAssets(totalSupply())
     filtered { f -> !excludedMethod(f) }
     {
@@ -69,7 +68,7 @@ invariant vaultSolvency()
 // afterwards, we cancel out the terms 
 // assets and yieldVaultContract.withdraw(assets, GenericVaultBridgeToken, GenericVaultBridgeToken)
 // we know that yieldVaultContract.withdraw(assets,..) <= assets so by canceling out we can only make the rule stronger
-invariant vaultSolvency2(uint assets)    
+invariant vaultSolvency(uint assets)    
     (convertToAssets(require_uint256(totalSupply() + yield())) - reservedAssets())
         //* yieldVaultContract.withdraw(assets, GenericVaultBridgeToken, GenericVaultBridgeToken)
         * 10^18
@@ -78,38 +77,6 @@ invariant vaultSolvency2(uint assets)
         * (10^18 + yieldVaultMaximumSlippagePercentage())
         //* assets
     filtered { f -> !excludedMethod(f) }
-    {
-        preserved with (env e) {
-            safeAssumptions(e);
-        }
-}
-
-invariant strongerSolvency(uint assets)
-    totalAssets() >= convertToAssets(totalSupply()) =>
-     (convertToAssets(require_uint256(totalSupply() + yield())) - reservedAssets())
-        //* yieldVaultContract.withdraw(assets, GenericVaultBridgeToken, GenericVaultBridgeToken)
-        * 10^18
-        <=
-        yieldVaultContract.balanceOf(GenericVaultBridgeToken)
-        * (10^18 + yieldVaultMaximumSlippagePercentage())
-        //* assets
-        filtered { f -> !excludedMethod(f) }
-    {
-        preserved with (env e) {
-            safeAssumptions(e);
-        }
-}
-
-invariant strongerSolvency2(uint assets)
-     (convertToAssets(require_uint256(totalSupply() + yield())) - reservedAssets())
-        //* yieldVaultContract.withdraw(assets, GenericVaultBridgeToken, GenericVaultBridgeToken)
-        * 10^18
-        <=
-        yieldVaultContract.balanceOf(GenericVaultBridgeToken)
-        * (10^18 + yieldVaultMaximumSlippagePercentage())
-        //* assets
-         => totalAssets() >= convertToAssets(totalSupply())
-        filtered { f -> !excludedMethod(f) }
     {
         preserved with (env e) {
             safeAssumptions(e);
@@ -132,50 +99,6 @@ invariant noSupplyIfNoAssets()
     {
         preserved with (env e) {
             safeAssumptions(e);
-        }
-}
-
-///////////// these dont hold /////////////
-// these are incorrect properties
-// remove later
-
-invariant noBalanceIfNoSupply() 
-    totalSupply() == 0 => userAssets(currentContract) == 0
-    filtered { f -> !excludedMethod(f) }
-    {
-        preserved with (env e) {
-            address any;
-            safeAssumptions(e);
-        }
-}
-
-invariant noSupplyIfNoBalance()
-    userAssets(currentContract) == 0 => totalSupply() == 0 
-    filtered { f -> !excludedMethod(f) }
-    {
-        preserved with (env e) {
-            safeAssumptions(e);
-        }
-}
-
-invariant noAssetsIfNoSupply() 
-    (totalSupply() == 0) => totalAssets() == 0
-    filtered { f -> !excludedMethod(f) }
-    {
-        preserved with (env e) {
-            address any;
-            safeAssumptions(e);
-        }
-}
-
-invariant totalSupplyAccounted()
-    convertToAssets(totalSupply()) >= stakedAssets()
-    filtered { f -> !excludedMethod(f) }
-    {
-        preserved with (env e) {
-            requireLinking();
-            requireNonSceneSender(e);
-            requireAllInvariants();
         }
 }
 

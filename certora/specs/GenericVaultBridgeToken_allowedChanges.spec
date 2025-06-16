@@ -120,35 +120,3 @@ definition canIncreaseReservedAssets(method f) returns bool =
     f.selector == sig:rebalanceReserve().selector;
 
 
-
-
-rule noActivityWhenPaused(method f, env e)
-    filtered {f -> !excludedMethod(f) }
-{
-    requireLinking();
-    bool paused = paused();
-    calldataarg args;
-    f@withrevert(e, args);
-    bool reverted = lastReverted;
-    assert paused => (reverted || isPrivilegedSender(e) || canBeCalledWhenPaused(f));
-}
-
-// //_simulateWithdraw(x, true) == x or revert 
-// rule integrityOf_simulateWithdraw_force(env e)
-// {   
-//     uint256 assets;
-//     uint256 res = _simulateWithdraw(e, assets, true);
-//     assert res == assets;
-// }
-
-// //_withdrawFromYieldVault(x, exact=true, ...) == (_, x)
-// rule integrityOf_withdrawFromYieldVault_exact(env e)
-// {
-//     uint256 assets; bool exact; address receiver;
-//     uint256 originalTotalSupply; uint256 originalUncollectedYield; uint256 originalReservedAssets;
-    
-//     uint256 receivedAssets;
-//     (_, receivedAssets) = _withdrawFromYieldVault(e, assets, exact, receiver, 
-//         originalTotalSupply, originalUncollectedYield, originalReservedAssets);
-//     assert exact == true => receivedAssets == assets;
-// }
