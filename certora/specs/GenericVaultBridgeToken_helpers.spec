@@ -97,7 +97,9 @@ definition excludedMethod(method f) returns bool =
     f.selector == sig:initialize(address, VaultBridgeToken.InitializationParameters).selector ||
     
     // harness methods
-    f.selector == sig:simulateWithdraw(uint256,bool).selector ||
-    f.selector == sig:rebalanceReserve(bool,bool).selector 
+    f.selector == sig:simulateWithdraw_harness(uint256,bool).selector ||
+    f.selector == sig:rebalanceReserve_harness(bool,bool).selector ||
+    f.selector == sig:depositIntoYieldVault_harness(uint256,bool).selector
+    
 ;
 

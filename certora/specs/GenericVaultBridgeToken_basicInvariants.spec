@@ -19,10 +19,22 @@ function requireAllInvariants()
     requireInvariant reserveBacked();
     requireInvariant minimumReservePercentageLimit();
     requireInvariant assetsMoreThanSupply();
+    requireInvariant assetsMoreThanSupply3();
     requireInvariant noSupplyIfNoAssets();
     requireInvariant vaultSolvency_simple();
     uint256 assets;
     requireInvariant vaultSolvency(assets);
+    requireInvariant netCollectedYieldAccounted();
+
+}
+
+invariant netCollectedYieldAccounted()
+    getNetCollectedYield() <= totalSupply()
+    filtered { f -> !excludedMethod(f) }
+    {
+        preserved with (env e) {
+            safeAssumptions(e);
+        }
 }
 
 invariant reserveBacked()
@@ -32,9 +44,7 @@ invariant reserveBacked()
     }
     {
         preserved with (env e) {
-            requireLinking();
-            //requireNonSceneSender(e);
-            requireAllInvariants();
+            safeAssumptions(e);
         }
 }
 
@@ -43,9 +53,7 @@ invariant minimumReservePercentageLimit()
     filtered { f -> !excludedMethod(f) }
     {
         preserved with (env e) {
-            //requireNonSceneSender(e);
-            requireLinking();
-            requireAllInvariants();
+            safeAssumptions(e);
         }
 }
 
@@ -54,8 +62,7 @@ invariant vaultSolvency_simple()
     filtered { f -> !excludedMethod(f) }
     {
         preserved with (env e) {
-            requireLinking();
-            requireAllInvariants();
+            safeAssumptions(e);
         }
 }
 
@@ -88,7 +95,24 @@ invariant assetsMoreThanSupply()
     filtered { f -> !excludedMethod(f) }
     {
         preserved with (env e) {
-            //require e.msg.sender != currentContract;
+            safeAssumptions(e);
+        }
+}
+
+invariant assetsMoreThanSupply2()
+    totalAssets() - getNetCollectedYield() >= totalSupply() 
+    filtered { f -> !excludedMethod(f) }
+    {
+        preserved with (env e) {
+            safeAssumptions(e);
+        }
+}
+
+invariant assetsMoreThanSupply3()
+    totalAssets() + getNetCollectedYield() >= totalSupply() 
+    filtered { f -> !excludedMethod(f) }
+    {
+        preserved with (env e) {
             safeAssumptions(e);
         }
 }
@@ -102,6 +126,15 @@ invariant noSupplyIfNoAssets()
         }
 }
 
+invariant zeroAllowanceOnAssets(address user)
+    ERC20a.allowance(currentContract, user) == 0 || user == yieldVault()
+    filtered { f -> !excludedMethod(f) }
+    {
+        preserved with (env e) {
+        safeAssumptions(e);
+    }
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 ////                        # helpers and miscellaneous                //////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -111,7 +144,7 @@ function safeAssumptions(env e) {
     requireAllInvariants();
     require currentContract != asset(); // Although this is not disallowed, we assume the contract's underlying asset is not the contract itself
 
-    //require e.msg.sender != currentContract;  // This is proved by rule noDynamicCalls    
+      // This is proved by rule noDynamicCalls    
 }
 
 

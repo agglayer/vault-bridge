@@ -79,6 +79,5 @@ function cvlForceApprove(address sender, address token, address spender, uint256
 {
     env e;
     require e.msg.sender == sender;
-    // TODO this doesn't work. it tells "direct call of an extension function" and reports violation
     token.approve(e, spender, value);
 }

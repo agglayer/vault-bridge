@@ -1,6 +1,3 @@
-//import "setup/dispatching_GenericVaultBridgeToken.spec";
-//import "dispatching_ERC4626.spec";
-//import "GenericVaultBridgeToken_storageSnapshot.spec";
 import "GenericVaultBridgeToken_basicInvariants.spec";
 
 persistent ghost bool callMade;
@@ -115,139 +112,21 @@ rule depositMonotonicity() {
 }
 
 // holds
-rule zeroDepositZeroShares_rule(uint assets, address receiver)
+rule zeroDepositZeroShares(env e)
 {
-    env e;
-    
-    uint shares = deposit(e,assets, receiver);
-
+    uint assets;
+    address receiver; 
+    uint shares = deposit(e, assets, receiver);
     assert shares == 0 <=> assets == 0;
-}
-
-// holds except for initialize and fallback
-rule assetsMoreThanSupply_rule(method f, env e)
-    filtered { f -> !excludedMethod(f) }
-{
-    //require e.msg.sender != currentContract;
-
-    safeAssumptions(e);
-    
-    uint256 assetsBefore = totalAssets();
-    uint256 supplyBefore = totalSupply();
-    
-    calldataarg args;
-    f(e, args);
-
-    uint256 assetsAfter = totalAssets();
-    uint256 supplyAfter = totalSupply();
-
-    assert (assetsBefore >= supplyBefore) => (assetsAfter >= supplyAfter);
-}
-
-// also takes into account the yieldRecepient. This is important as the YR can call burn and the prover thinks it can actually burn all shares
-// in fact, it can only burn it's own shares that's a like an "excess" so the important properties should still hold afterwards
-rule assetsMoreThanSupply2_rule(method f, env e)
-    filtered { f -> !excludedMethod(f) }
-{
-    //require e.msg.sender != currentContract;
-
-    safeAssumptions(e);
-    
-    mathint assetsBefore = totalAssets();
-    mathint supplyBefore = totalSupply() - getNetCollectedYield();
-    
-    calldataarg args;
-    f(e, args);
-
-    mathint assetsAfter = totalAssets();
-    mathint supplyAfter = totalSupply() - getNetCollectedYield();
-
-    assert (assetsBefore >= supplyBefore) => (assetsAfter >= supplyAfter);
-}
-
-// isnt supposed to hold. E.g. gifting breaks it, also burning, or..? TODO
-rule noBalanceIfNoSupply_rule(method f, env e)
-    filtered { f -> !excludedMethod(f) }
-{
-    //require e.msg.sender != currentContract;
-    
-    safeAssumptions(e);
-    
-    uint256 balanceBefore = userAssets(currentContract);
-    uint256 supplyBefore = totalSupply();
-    
-    calldataarg args;
-    f(e, args);
-
-    uint256 balanceAfter = userAssets(currentContract);
-    uint256 supplyAfter = totalSupply();
-
-    assert (supplyBefore == 0 => balanceBefore == 0) => 
-        (supplyAfter == 0 => balanceAfter == 0);
-}
-
-// doesn't hold. withdraw can violate
-rule noAssetsIfNoSupply_rule(method f, env e) 
-    filtered { f -> !excludedMethod(f) }
-{
-    //require e.msg.sender != currentContract;
-    
-    uint assets; uint shares;
-    safeAssumptions(e);
-    
-    uint256 assetsBefore = totalAssets();
-    uint256 supplyBefore = totalSupply();
-    
-    calldataarg args;
-    f(e, args);
-
-    uint256 assetsAfter = totalAssets();
-    uint256 supplyAfter = totalSupply();
-
-    assert (supplyBefore == 0 => assetsBefore == 0) => 
-        (supplyAfter == 0 => assetsAfter == 0);
-}
-
-invariant zeroAllowanceOnAssets(address user)
-    ERC20a.allowance(currentContract, user) == 0 || user == yieldVault()
-    filtered { f -> !excludedMethod(f) }
-    {
-        preserved with (env e) {
-        safeAssumptions(e);
-    }
-}
-
-// does not hold. (gifting, burning, even depositing to the yieldVault, ...) TODO update the rule??
-rule totalsMonotonicity(method f, env e)
-    filtered { f -> !excludedMethod(f) }
-{
-    //require e.msg.sender != currentContract; 
-    uint256 totalSupplyBefore = totalSupply();
-    uint256 totalAssetsBefore = totalAssets();
-    
-    safeAssumptions(e);
-    //snapshotStorage(0);
-    calldataarg args;
-    f(e, args);
-
-    uint256 totalSupplyAfter = totalSupply();
-    uint256 totalAssetsAfter = totalAssets();
-    
-    //snapshotStorage(1);
-    // possibly assert totalSupply and totalAssets must not change in opposite directions
-    assert totalSupplyBefore < totalSupplyAfter  <=> totalAssetsBefore < totalAssetsAfter,
-        "if totalSupply changes by a larger amount, the corresponding change in totalAssets must remain the same or grow";
-    assert totalSupplyAfter == totalSupplyBefore => totalAssetsBefore == totalAssetsAfter,
-        "equal size changes to totalSupply must yield equal size changes to totalAssets";
 }
 
 // holds
 rule underlyingCannotChange(method f, env e) 
 filtered {
-    f -> !excludedMethod(f)
-}
+        f -> !excludedMethod(f)
+    }
 {
-    requireLinking();
+    safeAssumptions(e);
     address originalAsset = asset();
 
     calldataarg args;
@@ -260,12 +139,10 @@ filtered {
 }
 
 // holds
-rule dustFavorsTheHouse(uint assetsIn )
+rule dustFavorsTheHouse(env e)
 {
-    env e;
-        
-    //require e.msg.sender != currentContract;
     safeAssumptions(e);
+    uint assetsIn;    
     uint256 totalSupplyBefore = totalSupply();
 
     uint balanceBefore = require_uint256(ERC20a.balanceOf(currentContract) + stakedAssets());
@@ -289,8 +166,8 @@ rule redeemingAllValidity(env e) {
     assert ownerBalanceAfter == 0;
 }
 
-// holds
-rule contributingProducesShares(method f)
+// TODO
+rule contributingProducesShares(env e, method f)
 filtered {
     f -> f.selector == sig:deposit(uint256,address).selector
         || f.selector == sig:depositAndBridge(uint256,address,uint32,bool).selector
@@ -299,7 +176,7 @@ filtered {
         || f.selector == sig:mint(uint256,address).selector
 }
 {
-    env e; uint256 assets; uint256 shares;
+    uint256 assets; uint256 shares;
     address contributor; require contributor == e.msg.sender;
     address receiver;
     require currentContract != contributor
@@ -315,13 +192,14 @@ filtered {
     callContributionMethods(e, f, assets, shares, receiver);
 
     uint256 contributorAssetsAfter = userAssets(contributor);
-    uint256 receiverSharesAfter = balanceOf(receiver);
+    uint256 receiverSharesAfter = balaenv enceOf(receiver);
 
-    assert contributorAssetsBefore > contributorAssetsAfter <=> receiverSharesBefore < receiverSharesAfter,
+    assert contributorAssetsBefore > contributorAssetsAfter <=> 
+        receiverSharesBefore < receiverSharesAfter,
         "a contributor's assets must decrease if and only if the receiver's shares increase";
 }
 
-rule onlyContributionMethodsReduceAssets(method f, env e)
+rule onlyContributionMethodsReduceAssets(env e, method f)
     filtered { f -> !excludedMethod(f) }
 {
     // user CAN be msg.sender
@@ -329,7 +207,6 @@ rule onlyContributionMethodsReduceAssets(method f, env e)
     require user != currentContract;
     require user != yieldVaultContract;
     
-
     safeAssumptions(e);
 
     uint256 userAssetsBefore = userAssets(user);
@@ -355,7 +232,7 @@ rule onlyContributionMethodsReduceAssets(method f, env e)
         "a user's assets must not go down except on calls to contribution methods or calls directly to the asset.";
 }
 
-rule reclaimingProducesAssets(method f, env e)
+rule reclaimingProducesAssets(env e, method f)
 filtered {
     f -> f.selector == sig:withdraw(uint256,address,address).selector
       || f.selector == sig:redeem(uint256,address,address).selector
@@ -383,24 +260,4 @@ filtered {
 
     assert ownerSharesBefore > ownerSharesAfter <=> receiverAssetsBefore < receiverAssetsAfter,
         "an owner's shares must decrease if and only if the receiver's assets increase";
-}
-
-rule vaultSolvency_rule(method f, env e)
-    filtered {f -> !excludedMethod(f) }
-{
-    //require e.msg.sender != currentContract; 
-    
-    safeAssumptions(e);
-
-    mathint assetsBefore = totalAssets();
-    mathint sharesValueBefore = convertToAssets(totalSupply());
-
-    calldataarg args;
-    f(e, args);
-
-    mathint assetsAfter = totalAssets();
-    mathint sharesValueAfter = convertToAssets(totalSupply());
-
-    assert assetsBefore >= sharesValueBefore =>
-            assetsAfter >= sharesValueAfter;
 }

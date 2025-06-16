@@ -1,5 +1,3 @@
-//import "setup/dispatching_GenericVaultBridgeToken.spec";
-//import "dispatching_ERC4626.spec";
 import "GenericVaultBridgeToken_ERC4626.spec";
 
 rule noActivityWhenPaused(method f, env e)
@@ -32,6 +30,17 @@ function isBalanced() returns bool
 rule integrityOfRebalance(env e)
 {
     safeAssumptions(e);
+    uint256 assetsBefore = totalAssets();
     rebalanceReserve(e, false, false);
+    uint256 assetsAfter = totalAssets();
     assert isBalanced();
+    assert assetsBefore == assetsAfter;
+}
+
+rule integrityOf_depositIntoYieldVault(env e)
+{
+    safeAssumptions(e);
+    uint assets; bool exact;
+    uint nonDeposited = _depositIntoYieldVault(assets, exact);
+    assert nonDeposited <= assets;
 }

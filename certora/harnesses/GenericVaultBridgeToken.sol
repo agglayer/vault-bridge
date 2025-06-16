@@ -31,13 +31,18 @@ contract GenericVaultBridgeToken is VaultBridgeToken {
 
 
     // Harness methods  
-    function rebalanceReserve(bool force, bool allowRebalanceDown) external 
+    function rebalanceReserve_harness(bool force, bool allowRebalanceDown) external 
     {
         _rebalanceReserve(force, allowRebalanceDown);
     }
 
-    function simulateWithdraw(uint256 assets, bool force) external returns (uint256)
+    function simulateWithdraw_harness(uint256 assets, bool force) external returns (uint256)
     {
         return _simulateWithdraw(assets, force);
+    }
+
+    function depositIntoYieldVault_harness(uint256 assets, bool exact) external returns (uint256)
+    {
+        return _depositIntoYieldVault(assets, exact);
     }
 }
