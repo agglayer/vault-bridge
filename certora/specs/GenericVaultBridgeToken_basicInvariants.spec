@@ -19,7 +19,6 @@ function requireAllInvariants()
     requireInvariant reserveBacked();
     requireInvariant minimumReservePercentageLimit();
     requireInvariant assetsMoreThanSupply();
-    requireInvariant assetsMoreThanSupply3();
     requireInvariant noSupplyIfNoAssets();
     requireInvariant vaultSolvency_simple();
     uint256 assets;
@@ -92,24 +91,6 @@ invariant vaultSolvency(uint assets)
 
 invariant assetsMoreThanSupply()
     totalAssets() >= totalSupply()
-    filtered { f -> !excludedMethod(f) }
-    {
-        preserved with (env e) {
-            safeAssumptions(e);
-        }
-}
-
-invariant assetsMoreThanSupply2()
-    totalAssets() - getNetCollectedYield() >= totalSupply() 
-    filtered { f -> !excludedMethod(f) }
-    {
-        preserved with (env e) {
-            safeAssumptions(e);
-        }
-}
-
-invariant assetsMoreThanSupply3()
-    totalAssets() + getNetCollectedYield() >= totalSupply() 
     filtered { f -> !excludedMethod(f) }
     {
         preserved with (env e) {

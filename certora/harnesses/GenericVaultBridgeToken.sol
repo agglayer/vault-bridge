@@ -29,7 +29,6 @@ contract GenericVaultBridgeToken is VaultBridgeToken {
         return "0.5.0";
     }
 
-
     // Harness methods  
     function rebalanceReserve_harness(bool force, bool allowRebalanceDown) external 
     {
