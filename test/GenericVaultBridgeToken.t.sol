@@ -16,6 +16,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import {TestVault} from "test/etc/TestVault.sol";
 import {ILxLyBridge as _ILxLyBridge} from "test/interfaces/ILxLyBridge.sol";
+import {SPECIAL_INSTRUCTION_SKIP_MINTING} from "src/CustomToken.sol";
 
 contract GenericVaultBridgeTokenTest is Test {
     using SafeERC20 for IERC20;
@@ -79,7 +80,7 @@ contract GenericVaultBridgeTokenTest is Test {
 
         asset = TEST_TOKEN;
         vbTokenVault = new TestVault(asset);
-        version = "0.5.0";
+        version = "1.0.0";
         name = "Vault Bridge USDC";
         symbol = "vbUSDC";
         decimals = 6;
@@ -906,7 +907,7 @@ contract GenericVaultBridgeTokenTest is Test {
             NETWORK_ID_L1,
             address(vbToken),
             NETWORK_ID_L2,
-            address(0),
+            SPECIAL_INSTRUCTION_SKIP_MINTING,
             shares,
             vbTokenMetaData,
             _ILxLyBridge(LXLY_BRIDGE).depositCount()
@@ -940,7 +941,7 @@ contract GenericVaultBridgeTokenTest is Test {
             NETWORK_ID_L1,
             address(vbToken),
             NETWORK_ID_L2,
-            address(0),
+            SPECIAL_INSTRUCTION_SKIP_MINTING,
             shares,
             vbTokenMetaData,
             _ILxLyBridge(LXLY_BRIDGE).depositCount()
@@ -984,7 +985,7 @@ contract GenericVaultBridgeTokenTest is Test {
             NETWORK_ID_L1,
             address(vbToken),
             NETWORK_ID_L2,
-            address(0),
+            SPECIAL_INSTRUCTION_SKIP_MINTING,
             shares,
             vbTokenMetaData,
             _ILxLyBridge(LXLY_BRIDGE).depositCount()

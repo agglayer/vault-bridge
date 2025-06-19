@@ -301,7 +301,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
         //////////////////////////////////////////////////////////////
         // Switch to Layer Y
         //////////////////////////////////////////////////////////////
-        forkIdLayerY = vm.createSelectFork("tatara");
+        forkIdLayerY = vm.createSelectFork("bokuto");
 
         // deploy custom token
         customToken = new GenericCustomToken();
@@ -601,7 +601,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
             destinationAddress: address(migrationManager),
             amount: 0,
             metadata: abi.encode(
-                MigrationManager.CrossNetworkInstruction.COMPLETE_MIGRATION, abi.encode(amountToMigrate, amountToMigrate)
+                MigrationManager.CrossNetworkInstruction._0_COMPLETE_MIGRATION, abi.encode(amountToMigrate, amountToMigrate)
             )
         });
 
@@ -648,6 +648,8 @@ contract IntegrationTest is Test, ZkEVMCommon {
         uint256 vbTokenTotalSupplyAfter = vbToken.totalSupply();
         assertGt(vbTokenTotalSupplyAfter, vbTokenTotalSupplyBefore);
     }
+
+    // @todo add test for SPECIAL_INSTRUCTION_SKIP_MINTING
 
     function _depositAndBridgeLayerX(address _sender, uint256 _amount, LeafPayload memory _leaf) internal {
         // make sure we are on Layer X
