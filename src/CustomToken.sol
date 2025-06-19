@@ -90,7 +90,7 @@ abstract contract CustomToken is
 
         assert(bytes(name_).length > 0);
         assert(bytes(symbol_).length > 0);
-        assert(decimals() == originalUnderlyingTokenDecimals_);
+        assert(super.decimals() == originalUnderlyingTokenDecimals_);
 
         // Initialize the inherited contracts.
         __ERC20_init(name_, symbol_);
