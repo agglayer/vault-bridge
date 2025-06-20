@@ -18,6 +18,8 @@ methods {
     function backingOnLayerY() external returns uint256 envfree;
     function nonMigratableBackingPercentage() external returns uint256 envfree;
     function customTokenContract.totalSupply() external returns uint256 envfree;
+    function customTokenContract.balanceOf(address account) external returns uint256 envfree;
+
 
     function _.eip712Domain() external => NONDET DELETE;
     //function GenericVaultBridgeToken.eip712Domain() external returns (bytes1, string, string, uint256, address, bytes32, uint256[]) => NONDET DELETE;

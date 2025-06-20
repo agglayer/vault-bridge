@@ -192,7 +192,7 @@ filtered {
     callContributionMethods(e, f, assets, shares, receiver);
 
     uint256 contributorAssetsAfter = userAssets(contributor);
-    uint256 receiverSharesAfter = balaenv enceOf(receiver);
+    uint256 receiverSharesAfter = balanceOf(receiver);
 
     assert contributorAssetsBefore > contributorAssetsAfter <=> 
         receiverSharesBefore < receiverSharesAfter,
