@@ -50,7 +50,7 @@ methods {
     function minimumYieldVaultDeposit() external returns (uint256) envfree;
     function yieldVaultMaximumSlippagePercentage() external returns (uint256) envfree;
     function migrationFeesFund() external returns (uint256) envfree;
-    
+    function GenericVaultBridgeToken.allowance(address, address) external returns uint256 envfree;
     
     //// #ERC20 methods
     function _.balanceOf(address) external  => DISPATCHER(true);

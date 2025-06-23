@@ -1,4 +1,3 @@
-//import "setup/dispatching_GenericVaultBridgeToken.spec";
 import "bridgeSummary.spec";
 import "GenericVaultBridgeToken_helpers.spec";
 import "./tokenMockBalances.spec";
@@ -16,30 +15,51 @@ function requireAllInvariants()
     requireInvariant sumOfBalancesMonotone();
     requireInvariant sumOfBalancesEqualsTotalSupply();
 
+    address user;
+    requireInvariant zeroAllowanceOnAssets(user);
+    requireInvariant zeroAllowanceOnShares(user);
     requireInvariant reserveBacked();
     requireInvariant minimumReservePercentageLimit();
     requireInvariant assetsMoreThanSupply();
     requireInvariant noSupplyIfNoAssets();
-    requireInvariant vaultSolvency_simple();
+    requireInvariant vaultBridgeTokenSolvency_simple();
     uint256 assets;
-    requireInvariant vaultSolvency(assets);
+    requireInvariant vaultBridgeTokenSolvency(assets);
     requireInvariant netCollectedYieldAccounted();
-
+    requireInvariant netCollectedYieldLimited();
 }
 
 invariant netCollectedYieldAccounted()
-    getNetCollectedYield() <= totalSupply()
-    filtered { f -> !excludedMethod(f) }
+    getNetCollectedYield() <= balanceOf(yieldRecipient())
+    filtered { f -> !excludedMethod(f) &&
+                    f.selector != sig:setYieldRecipient(address).selector &&  // the admin method that's allowed to break this
+                    f.selector != sig:burn(uint256).selector // this gives sanity issue because of the require e.msg.sender != yieldRecipient()
+        }
     {
         preserved with (env e) {
+            require e.msg.sender != yieldRecipient(), "yieldRecepient is allowed to break this";
+            require allowance(yieldRecipient(), e.msg.sender) == 0, "allowed user manipulating yieldRecepient's balance can also break this";
+            safeAssumptions(e);
+        }
+}
+
+invariant netCollectedYieldLimited()
+    getNetCollectedYield() <= totalSupply()
+    filtered { f -> !excludedMethod(f) &&
+                    f.selector != sig:burn(uint256).selector // this gives sanity issue because of the require e.msg.sender != yieldRecipient()
+    }
+    {
+        preserved with (env e) {
+            require e.msg.sender != yieldRecipient(), "yieldRecepient is allowed to break this";
+            require allowance(yieldRecipient(), e.msg.sender) == 0, "allowed user manipulating yieldRecepient's balance can also break this";
             safeAssumptions(e);
         }
 }
 
 invariant reserveBacked()
     ERC20a.balanceOf(GenericVaultBridgeToken) >= require_uint256(reservedAssets() + migrationFeesFund())
-    filtered { f -> !excludedMethod(f) 
-        && f.selector != sig:performReversibleYieldVaultDeposit(uint256).selector
+    filtered { f -> !excludedMethod(f) && 
+                    f.selector != sig:performReversibleYieldVaultDeposit(uint256).selector // not supposed to be called directly
     }
     {
         preserved with (env e) {
@@ -56,7 +76,7 @@ invariant minimumReservePercentageLimit()
         }
 }
 
-invariant vaultSolvency_simple()    
+invariant vaultBridgeTokenSolvency_simple()    
     totalAssets() >= convertToAssets(totalSupply())
     filtered { f -> !excludedMethod(f) }
     {
@@ -74,7 +94,7 @@ invariant vaultSolvency_simple()
 // afterwards, we cancel out the terms 
 // assets and yieldVaultContract.withdraw(assets, GenericVaultBridgeToken, GenericVaultBridgeToken)
 // we know that yieldVaultContract.withdraw(assets,..) <= assets so by canceling out we can only make the rule stronger
-invariant vaultSolvency(uint assets)    
+invariant vaultBridgeTokenSolvency(uint assets)    
     (convertToAssets(require_uint256(totalSupply() + yield())) - reservedAssets())
         //* yieldVaultContract.withdraw(assets, GenericVaultBridgeToken, GenericVaultBridgeToken)
         * 10^18
@@ -112,6 +132,19 @@ invariant zeroAllowanceOnAssets(address user)
     filtered { f -> !excludedMethod(f) }
     {
         preserved with (env e) {
+        safeAssumptions(e);
+    }
+}
+
+invariant zeroAllowanceOnShares(address user)
+    GenericVaultBridgeToken.allowance(currentContract, user) == 0
+    filtered { f -> !excludedMethod(f)  &&
+                    f.selector != sig:permit(address,address,uint256,uint256,uint8,bytes32,bytes32).selector &&
+                    f.selector != sig:performReversibleYieldVaultDeposit(uint256).selector  // this gives sanity issue because of the require e.msg.sender != GenericVaultBridgeToken;
+    }
+    {
+        preserved with (env e) {
+        require e.msg.sender != GenericVaultBridgeToken;    // the contract itself could provide allowance
         safeAssumptions(e);
     }
 }

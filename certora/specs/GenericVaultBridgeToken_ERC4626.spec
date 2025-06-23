@@ -1,4 +1,4 @@
-import "GenericVaultBridgeToken_basicInvariants.spec";
+import "GenericVaultBridgeToken_invariants.spec";
 
 persistent ghost bool callMade;
 persistent ghost bool delegatecallMade;
