@@ -30,8 +30,6 @@ hook Sstore (slot 0x52c63247e1f47db19d5ce0460030c497f067ca4cebf71ba98eeadabe20ba
     ghost_balancesGVBT[account] = _balance;
 }
 
-// rules and invariant all hold
-
 invariant sumOfBalancesGVBTStartsAtZero()
     sumOfBalancesGVBT[0] == 0
     filtered { f -> !excludedMethod(f) }
@@ -40,7 +38,6 @@ invariant sumOfBalancesGVBTStartsAtZero()
         requireLinking();
     }
 }
-
 
 invariant sumOfBalancesGVBTGrowsCorrectly()
     forall address addr. sumOfBalancesGVBT[to_mathint(addr) + 1] ==

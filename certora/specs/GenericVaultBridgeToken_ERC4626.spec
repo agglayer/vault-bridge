@@ -2,7 +2,6 @@ import "GenericVaultBridgeToken_basicInvariants.spec";
 
 persistent ghost bool callMade;
 persistent ghost bool delegatecallMade;
-persistent ghost address executingContract_ghost;
 
 hook CALL(uint g, address addr, uint value, uint argsOffset, uint argsLength, uint retOffset, uint retLength) uint rc {
     if (addr != currentContract.asset() &&          // these are trusted contracts
@@ -12,7 +11,6 @@ hook CALL(uint g, address addr, uint value, uint argsOffset, uint argsLength, ui
         ) 
     {
         callMade = true;
-        executingContract_ghost = executingContract;
     }
 }
 
@@ -20,7 +18,7 @@ hook DELEGATECALL(uint g, address addr, uint argsOffset, uint argsLength, uint r
     delegatecallMade = true;
 }
 
-// currently violated due to a bug. TODO
+// There are no dynamic calls to untrusted contracts.
 rule noDynamicCalls(method f, env e)
     filtered { f -> !excludedMethod(f) }
 {
@@ -33,7 +31,7 @@ rule noDynamicCalls(method f, env e)
     assert !callMade && !delegatecallMade;
 }
 
-// hold
+// convertTo{Aseets|Share}(0) == 0
 rule conversionOfZero {
     uint256 convertZeroShares = convertToAssets(0);
     uint256 convertZeroAssets = convertToShares(0);
@@ -44,7 +42,7 @@ rule conversionOfZero {
         "converting zero assets must return zero shares";
 }
 
-//holds
+// convertToAssets(A) + convertToAssets(B) <= convertToAssets(A+B)
 rule convertToAssetsWeakAdditivity() {
     uint256 sharesA; uint256 sharesB;
     require sharesA + sharesB < max_uint128
@@ -54,7 +52,7 @@ rule convertToAssetsWeakAdditivity() {
         "converting sharesA and sharesB to assets then summing them must yield a smaller or equal result to summing them then converting";
 }
 
-//holds
+// convertToShares(A) + convertToShares(B) <= convertToShares(A+B)
 rule convertToSharesWeakAdditivity() {
     uint256 assetsA; uint256 assetsB;
     require assetsA + assetsB < max_uint128
@@ -64,7 +62,7 @@ rule convertToSharesWeakAdditivity() {
         "converting assetsA and assetsB to shares then summing them must yield a smaller or equal result to summing them then converting";
 }
 
-//holds 
+// A < B => convertToAssets(A) <= convertToAssets(B) and the same for convertToShares 
 rule conversionWeakMonotonicity {
     uint256 smallerShares; uint256 largerShares;
     uint256 smallerAssets; uint256 largerAssets;
@@ -75,7 +73,7 @@ rule conversionWeakMonotonicity {
         "converting more assets must yield equal or greater shares";
 }
 
-// holds
+// convertToShares(convertToAssets(X)) <= X and also the other order
 rule conversionWeakIntegrity() {
     uint256 sharesOrAssets;
     assert convertToShares(convertToAssets(sharesOrAssets)) <= sharesOrAssets,
@@ -84,16 +82,10 @@ rule conversionWeakIntegrity() {
         "converting assets to shares then back to assets must return assets less than or equal to the original amount";
 }
 
-// holds
-rule convertToCorrectness(uint256 amount, uint256 shares)
+// A < B => deposit(A) gives less or equal shares than deposit(B)
+rule depositMonotonicity(env e) 
 {
-    assert amount >= convertToAssets(convertToShares(amount));
-    assert shares >= convertToShares(convertToAssets(shares));
-}
-
-// holds
-rule depositMonotonicity() {
-    env e; storage start = lastStorage;
+    storage start = lastStorage;
 
     uint256 smallerAssets; uint256 largerAssets;
     address receiver;
@@ -111,7 +103,7 @@ rule depositMonotonicity() {
             "when supply tokens outnumber asset tokens, a larger deposit of assets must produce an equal or greater number of shares";
 }
 
-// holds
+// deposit(x) == 0 <=> x == 0
 rule zeroDepositZeroShares(env e)
 {
     uint assets;
@@ -120,7 +112,7 @@ rule zeroDepositZeroShares(env e)
     assert shares == 0 <=> assets == 0;
 }
 
-// holds
+// address of asset() never changes
 rule underlyingCannotChange(method f, env e) 
 filtered {
         f -> !excludedMethod(f)
@@ -138,7 +130,7 @@ filtered {
         "the underlying asset of a contract must not change";
 }
 
-// holds
+// redeem(deposit(x)) doesn't decrease balance of the contract
 rule dustFavorsTheHouse(env e)
 {
     safeAssumptions(e);
@@ -155,7 +147,7 @@ rule dustFavorsTheHouse(env e)
     assert balanceAfter >= balanceBefore;
 }
 
-//holds
+// After redeeming the entire balance, the user's balance is zero
 rule redeemingAllValidity(env e) { 
     address owner; 
     uint256 shares; require shares == balanceOf(owner);
@@ -185,6 +177,7 @@ filtered {
          && yieldVaultContract != receiver;
 
     safeAssumptions(e);
+    mathint totalBridgedBefore = totalBridged;
 
     uint256 contributorAssetsBefore = userAssets(contributor);
     uint256 receiverSharesBefore = balanceOf(receiver);
@@ -193,10 +186,11 @@ filtered {
 
     uint256 contributorAssetsAfter = userAssets(contributor);
     uint256 receiverSharesAfter = balanceOf(receiver);
+    mathint totalBridgedAfter = totalBridged;
 
     assert contributorAssetsBefore > contributorAssetsAfter <=> 
-        receiverSharesBefore < receiverSharesAfter,
-        "a contributor's assets must decrease if and only if the receiver's shares increase";
+        (receiverSharesBefore < receiverSharesAfter ||
+        totalBridgedBefore < totalBridgedAfter);
 }
 
 rule onlyContributionMethodsReduceAssets(env e, method f)

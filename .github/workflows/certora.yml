@@ -5,36 +5,21 @@ on: pull_request
 env:
   FOUNDRY_PROFILE: ci
   CONFIGS: |
-    certora/confs/GenericVaultBridgeToken.conf --rule noDynamicCalls
-    certora/confs/GenericVaultBridgeToken.conf --rule conversionOfZero
-    certora/confs/GenericVaultBridgeToken.conf --rule convertToAssetsWeakAdditivity
-    certora/confs/GenericVaultBridgeToken.conf --rule convertToSharesWeakAdditivity
-    certora/confs/GenericVaultBridgeToken.conf --rule conversionWeakMonotonicity
-    certora/confs/GenericVaultBridgeToken.conf --rule conversionWeakIntegrity
-    certora/confs/GenericVaultBridgeToken.conf --rule convertToCorrectness
-    certora/confs/GenericVaultBridgeToken.conf --rule depositMonotonicity
-    certora/confs/GenericVaultBridgeToken.conf --rule zeroDepositZeroShares
-    certora/confs/GenericVaultBridgeToken.conf --rule zeroAllowanceOnAssets
-    certora/confs/GenericVaultBridgeToken.conf --rule underlyingCannotChange
-    certora/confs/GenericVaultBridgeToken.conf --rule dustFavorsTheHouse
-    certora/confs/GenericVaultBridgeToken.conf --rule redeemingAllValidity
-    certora/confs/GenericVaultBridgeToken.conf --rule contributingProducesShares
-    certora/confs/GenericVaultBridgeToken.conf --rule onlyContributionMethodsReduceAssets
-    certora/confs/GenericVaultBridgeToken.conf --rule reclaimingProducesAssets
-    certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GenericVaultBridgeToken_basicInvariants.spec --rule netCollectedYieldAccounted
-    certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GenericVaultBridgeToken_basicInvariants.spec --rule reserveBacked
-    certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GenericVaultBridgeToken_basicInvariants.spec --rule minimumReservePercentageLimit
-    certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GenericVaultBridgeToken_basicInvariants.spec --rule vaultSolvency_simple
-    certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GenericVaultBridgeToken_basicInvariants.spec --rule vaultSolvency
-    certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GenericVaultBridgeToken_basicInvariants.spec --rule assetsMoreThanSupply
-    certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GenericVaultBridgeToken_basicInvariants.spec --rule noSupplyIfNoAssets
+    certora/confs/GenericVaultBridgeToken.conf
+    certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GenericVaultBridgeToken_invariants.spec --rule netCollectedYieldAccounted
+    certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GenericVaultBridgeToken_invariants.spec --rule reserveBacked
+    certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GenericVaultBridgeToken_invariants.spec --rule minimumReservePercentageLimit
+    certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GenericVaultBridgeToken_invariants.spec --rule vaultSolvency_simple
+    certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GenericVaultBridgeToken_invariants.spec --rule vaultSolvency
+    certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GenericVaultBridgeToken_invariants.spec --rule assetsMoreThanSupply
+    certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GenericVaultBridgeToken_invariants.spec --rule noSupplyIfNoAssets
     certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GenericVaultBridgeToken_allowedChanges.spec --rule onlyAllowedMethodsMayChangeTotalAssets
     certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GenericVaultBridgeToken_allowedChanges.spec --rule onlyAllowedMethodsMayChangeTotalSupply
     certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GenericVaultBridgeToken_allowedChanges.spec --rule onlyAllowedMethodsMayChangeStakedAssets
     certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GenericVaultBridgeToken_allowedChanges.spec --rule onlyAllowedMethodsMayChangeReservedAssets
     certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GenericVaultBridgeToken_allowedChanges.spec --rule onlyAllowedMethodsMayChangeMigrationFeesFund
     certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GenericVaultBridgeToken_integrity.spec
-    certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GenericNativeConverter_invariants.spec
+    certora/confs/GenericNativeConverter.conf --verify GenericVaultBridgeToken:certora/specs/GenericNativeConverter_invariants.spec
 jobs:
   check:
     runs-on: ubuntu-latest

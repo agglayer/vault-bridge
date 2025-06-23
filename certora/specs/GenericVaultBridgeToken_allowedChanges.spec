@@ -1,12 +1,8 @@
-//import "setup/dispatching_GenericVaultBridgeToken.spec";
-//import "dispatching_ERC4626.spec";
 import "GenericVaultBridgeToken_ERC4626.spec";
 
 rule onlyAllowedMethodsMayChangeTotalAssets(method f, env e)
     filtered {f -> !excludedMethod(f) }
-{
-     
-    
+{    
     safeAssumptions(e);
     uint256 totalAssetsBefore = totalAssets();
 
@@ -34,8 +30,6 @@ definition canIncreaseTotalAssets(method f) returns bool =
 rule onlyAllowedMethodsMayChangeTotalSupply(method f, env e)
     filtered {f -> !excludedMethod(f) }
 {
-     
-    
     safeAssumptions(e);
 
     uint256 totalSupplyBefore = totalSupply();

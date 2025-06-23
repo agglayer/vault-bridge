@@ -1,4 +1,3 @@
-//import "setup/dispatching_GenericVaultBridgeToken.spec";
 import "bridgeSummary.spec";
 import "GenericNativeConverter_helpers.spec";
 import "./tokenMockBalances2.spec";
@@ -17,7 +16,7 @@ function requireAllInvariants()
     requireInvariant nonMigratableBackingAlwaysPresent();
 }
 
-// balance of underlying more than backingOnLayerY
+// balance of underlying is at least the backingOnLayerY
 invariant converterSolvency()    
     underlyingTokenContract.balanceOf(currentContract) >= backingOnLayerY()
     filtered { f -> !excludedMethod(f) }
@@ -27,7 +26,7 @@ invariant converterSolvency()
         }
 }
 
-// backing more than customToken.TotalSupply..??
+// backing is at least customToken.TotalSupply minus bridged assets
 invariant backingMoreThanSupply()
     backingOnLayerY() >= require_uint256(customTokenContract.totalSupply() - totalBridged)
     filtered { f -> !excludedMethod(f) }
@@ -37,6 +36,7 @@ invariant backingMoreThanSupply()
         }
 }
 
+// non-migratable percentage is at most 10^18 (== 100%)
 invariant nonMigratableBackingPercentageLT_E18()
     nonMigratableBackingPercentage() <= 10^18
     filtered { f -> !excludedMethod(f) }
@@ -48,7 +48,7 @@ invariant nonMigratableBackingPercentageLT_E18()
 
 // backingOnLayerY >= nonMigratableBacking, where
 // nonMigratableBacking = customToken().totalSupply() * nonMigratableBackingPercentage / 10^18
-// added +1 to cover rounding errors. (migratableBacking is rounding up for some reason)
+// added +1 to cover for rounding errors. (migratableBacking is rounding up for some reason)
 invariant nonMigratableBackingAlwaysPresent()
     (backingOnLayerY() + 1) * 10^18 >= customTokenContract.totalSupply() * nonMigratableBackingPercentage()
     filtered { f -> !excludedMethod(f) }
@@ -68,7 +68,7 @@ function safeAssumptions(env e)
     require e.msg.sender != currentContract => 
             require_uint256(customTokenContract.balanceOf(currentContract) + customTokenContract.balanceOf(e.msg.sender)) 
             <= customTokenContract.totalSupply();
-    require totalBridged == 0;
+    require totalBridged == 0, "initial state of the ghost variable";
 
     requireLinking();
     requireAllInvariants();
