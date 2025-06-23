@@ -19,7 +19,7 @@ env:
     certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GenericVaultBridgeToken_allowedChanges.spec --rule onlyAllowedMethodsMayChangeReservedAssets
     certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GenericVaultBridgeToken_allowedChanges.spec --rule onlyAllowedMethodsMayChangeMigrationFeesFund
     certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GenericVaultBridgeToken_integrity.spec
-    certora/confs/GenericNativeConverter.conf --verify GenericVaultBridgeToken:certora/specs/GenericNativeConverter_invariants.spec
+    certora/confs/GenericNativeConverter.conf
 jobs:
   check:
     runs-on: ubuntu-latest

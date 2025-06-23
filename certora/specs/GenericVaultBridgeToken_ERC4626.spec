@@ -158,7 +158,7 @@ rule redeemingAllValidity(env e) {
     assert ownerBalanceAfter == 0;
 }
 
-// TODO
+//
 rule contributingProducesShares(env e, method f)
 filtered {
     f -> f.selector == sig:deposit(uint256,address).selector
