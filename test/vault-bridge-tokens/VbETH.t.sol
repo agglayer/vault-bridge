@@ -11,7 +11,6 @@ import {
     GenericVaultBridgeTokenTest,
     IERC20,
     SafeERC20,
-    SPECIAL_INSTRUCTION_SKIP_MINTING,
     VaultBridgeTokenPart2
 } from "test/GenericVaultBridgeToken.t.sol";
 import {VaultBridgeTokenInitializer} from "src/VaultBridgeTokenInitializer.sol";
@@ -385,7 +384,7 @@ contract VbETHTest is GenericVaultBridgeTokenTest {
             NETWORK_ID_L1,
             address(vbToken),
             NETWORK_ID_L2,
-            SPECIAL_INSTRUCTION_SKIP_MINTING,
+            address(0),
             shares,
             vbTokenMetaData,
             _ILxLyBridge(LXLY_BRIDGE).depositCount()
@@ -437,7 +436,7 @@ contract VbETHTest is GenericVaultBridgeTokenTest {
             NETWORK_ID_L1,
             address(vbToken),
             NETWORK_ID_L2,
-            SPECIAL_INSTRUCTION_SKIP_MINTING,
+            address(0),
             shares,
             vbTokenMetaData,
             _ILxLyBridge(LXLY_BRIDGE).depositCount()
