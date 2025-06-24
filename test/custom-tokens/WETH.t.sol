@@ -5,6 +5,12 @@ import "forge-std/Test.sol";
 
 import {WETH} from "../../src/custom-tokens/WETH/WETH.sol";
 import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import {MockERC20MintableBurnable} from "../GenericNativeConverter.t.sol";
+
+import {
+    TransparentUpgradeableProxy,
+    ITransparentUpgradeableProxy
+} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
 contract LXLYBridgeMock {
     address public gasTokenAddress;
@@ -102,11 +108,36 @@ contract WETHTest is Test {
     }
 
     function _deployWETH(address _lxlyBridge) internal {
-        wETH = new WETH();
-        bytes memory initData = abi.encodeCall(
-            WETH.reinitialize, (address(this), "wETH", "wETH", 18, _lxlyBridge, calculatedNativeConverterAddr)
+        MockERC20MintableBurnable wETHBridgeImpl = new MockERC20MintableBurnable();
+        TransparentUpgradeableProxy wETHProxy = TransparentUpgradeableProxy(
+            payable(
+                _proxify(
+                    address(wETHBridgeImpl),
+                    address(this),
+                    abi.encodeCall(MockERC20MintableBurnable.initialize, ("WETH", "WETH"))
+                )
+            )
         );
-        wETH = WETH(payable(address(new TransparentUpgradeableProxy(address(wETH), address(this), initData))));
+
+        WETH wETHGenericImpl = new WETH();
+        bytes memory initData =
+            abi.encodeCall(WETH.reinitialize, (address(this), 18, _lxlyBridge, calculatedNativeConverterAddr));
+        bytes memory upgradeData = abi.encodeWithSelector(
+            ITransparentUpgradeableProxy.upgradeToAndCall.selector, address(wETHGenericImpl), initData
+        );
+        vm.prank(_getAdmin(address(wETHProxy)));
+        address(wETHProxy).call(upgradeData);
+        wETH = WETH(payable(address(wETHProxy)));
+    }
+
+    function _getAdmin(address target) internal view returns (address) {
+        bytes32 ADMIN_SLOT = 0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103;
+        bytes32 value = vm.load(target, ADMIN_SLOT);
+        return address(uint160(uint256(value)));
+    }
+
+    function _proxify(address logic, address admin, bytes memory initData) internal returns (address proxy) {
+        proxy = address(new TransparentUpgradeableProxy(logic, admin, initData));
     }
 
     receive() external payable {}
