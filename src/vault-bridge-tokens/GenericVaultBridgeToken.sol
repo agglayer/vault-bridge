@@ -10,6 +10,8 @@ import {VaultBridgeToken} from "../VaultBridgeToken.sol";
 /// @author See https://github.com/agglayer/vault-bridge
 /// @dev This contract can be used to deploy vbTokens that do not require any customization.
 contract GenericVaultBridgeToken is VaultBridgeToken {
+    // -----================= ::: SETUP ::: =================-----
+
     constructor() {
         _disableInitializers();
     }

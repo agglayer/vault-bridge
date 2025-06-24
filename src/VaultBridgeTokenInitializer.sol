@@ -16,9 +16,10 @@ import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {ILxLyBridge} from "./etc/ILxLyBridge.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-// @remind Document.
-// @title Vault Bridge Token: Initializer (singleton)
+/// @title Vault Bridge Token Initializer (singleton)
 /// @author See https://github.com/agglayer/vault-bridge
+/// @notice A singleton contract used by Vault Bridge Token for initialization.
+/// @dev This contract exists because of the contract size limit of the EVM.
 contract VaultBridgeTokenInitializer is IVaultBridgeTokenInitializer, VaultBridgeToken {
     // Libraries.
     using SafeERC20 for IERC20;
@@ -31,7 +32,7 @@ contract VaultBridgeTokenInitializer is IVaultBridgeTokenInitializer, VaultBridg
 
     // -----================= ::: VAULT BRIDGE TOKEN ::: =================-----
 
-    // @remind Document.
+    /// @inheritdoc IVaultBridgeTokenInitializer
     function initialize(VaultBridgeToken.InitializationParameters calldata initParams)
         external
         override
@@ -79,7 +80,7 @@ contract VaultBridgeTokenInitializer is IVaultBridgeTokenInitializer, VaultBridg
         try IERC20Metadata(initParams.underlyingToken).decimals() returns (uint8 decimals_) {
             $.decimals = decimals_;
         } catch {
-            // Default to 18 decimals.
+            // Default to 18 decimals if the underlying token reverted.
             $.decimals = 18;
         }
         $.minimumReservePercentage = initParams.minimumReservePercentage;
