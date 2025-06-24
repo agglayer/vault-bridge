@@ -8,13 +8,18 @@ import "src/MigrationManager.sol";
 import "src/custom-tokens/GenericCustomToken.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import {IERC20Errors} from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
+import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import {IBridgeL2SovereignChain} from "test/interfaces/IBridgeL2SovereignChain.sol";
 
 import {IAccessControl} from "@openzeppelin-contracts/access/IAccessControl.sol";
 import {MockERC20} from "forge-std/mocks/MockERC20.sol";
-import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import {
+    ITransparentUpgradeableProxy,
+    TransparentUpgradeableProxy
+} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import {ERC20PermitUpgradeable} from
+    "@openzeppelin-contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
 
 contract CustomGlobalExitRootManager {
     function updateExitRoot(bytes32 newRoot) public pure {
@@ -22,7 +27,12 @@ contract CustomGlobalExitRootManager {
     }
 }
 
-contract MockERC20MintableBurnable is MockERC20 {
+contract MockERC20MintableBurnable is ERC20PermitUpgradeable {
+    function initialize(string memory name_, string memory symbol_) external initializer {
+        __ERC20_init(name_, symbol_);
+        __ERC20Permit_init(name_);
+    }
+
     function mint(address account, uint256 amount) external {
         _mint(account, amount);
     }
@@ -41,7 +51,6 @@ contract GenericNativeConverterTest is Test {
     string internal constant NATIVE_CONVERTER_VERSION = "1.0.0";
     uint32 internal constant NETWORK_ID_L1 = 0;
     uint32 internal constant NETWORK_ID_L2 = 1;
-    uint8 internal constant ORIGINAL_UNDERLYING_TOKEN_DECIMALS = 18;
     bytes32 internal constant PERMIT_TYPEHASH =
         keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
     bytes4 internal constant PERMIT_SIGNATURE = 0xd505accf;
@@ -78,23 +87,38 @@ contract GenericNativeConverterTest is Test {
     function setUp() public virtual {
         // Setup tokens
         underlyingToken = new MockERC20MintableBurnable();
-        underlyingToken.initialize("Underlying Token", "uTKN", 18);
+        underlyingToken.initialize("Underlying Token", "uTKN");
 
-        GenericCustomToken _customToken = new GenericCustomToken();
+        // Predeploy the custom token to simulate the auto deployment via the lxly bridge
+        MockERC20MintableBurnable customTokenBridgeImpl = new MockERC20MintableBurnable();
+        TransparentUpgradeableProxy customTokenProxy = TransparentUpgradeableProxy(
+            payable(
+                _proxify(
+                    address(customTokenBridgeImpl),
+                    address(this),
+                    abi.encodeCall(MockERC20MintableBurnable.initialize, ("Custom Token", "cTKN"))
+                )
+            )
+        );
+
+        GenericCustomToken genericCustomTokenImpl = new GenericCustomToken();
+
         CustomGlobalExitRootManager _globalExitRootManager = new CustomGlobalExitRootManager();
-        address calculatedNativeConverterAddr = vm.computeCreateAddress(address(this), vm.getNonce(address(this)) + 2);
+        address calculatedNativeConverterAddr = vm.computeCreateAddress(address(this), vm.getNonce(address(this)) + 1);
+
         vm.etch(LXLY_BRIDGE, SOVEREIGN_BRIDGE_BYTECODE);
         _setLxlyBridgeAttributes(NETWORK_ID_L2, address(_globalExitRootManager), LXLY_BRIDGE);
+
         bytes memory initData = abi.encodeCall(
-            GenericCustomToken.reinitialize,
-            (address(this), "Custom Token", "cTKN", 18, LXLY_BRIDGE, calculatedNativeConverterAddr)
+            GenericCustomToken.reinitialize, (address(this), 18, LXLY_BRIDGE, calculatedNativeConverterAddr)
         );
-        _customToken = GenericCustomToken(
-            payable(address(new TransparentUpgradeableProxy(address(_customToken), address(this), initData)))
-        );
+        bytes memory upgradeData =
+            abi.encodeCall(ITransparentUpgradeableProxy.upgradeToAndCall, (address(genericCustomTokenImpl), initData));
+        vm.prank(_getAdmin(address(customTokenProxy)));
+        (address(customTokenProxy).call(upgradeData));
 
         // assign variables for generic testing
-        customToken = MockERC20MintableBurnable(address(_customToken));
+        customToken = MockERC20MintableBurnable(address(customTokenProxy));
         migrationManager = makeAddr("migrationManager");
         underlyingTokenMetadata = abi.encode("Underlying Token", "uTKN", 18);
 
@@ -109,7 +133,6 @@ contract GenericNativeConverterTest is Test {
             nativeConverter.initialize,
             (
                 owner,
-                18, // decimals
                 address(customToken), // custom token
                 address(underlyingToken), // wrapped underlying token
                 LXLY_BRIDGE,
@@ -122,7 +145,6 @@ contract GenericNativeConverterTest is Test {
         assertEq(address(nativeConverter), calculatedNativeConverterAddr);
 
         _mapCustomToken(originUnderlyingToken, address(underlyingToken), false);
-
         vm.label(address(customToken), "cTKN");
         vm.label(address(this), "testerAddress");
         vm.label(LXLY_BRIDGE, "lxlyBridge");
@@ -150,7 +172,6 @@ contract GenericNativeConverterTest is Test {
             nativeConverter.initialize,
             (
                 address(0),
-                ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
                 address(customToken),
                 address(underlyingToken),
                 LXLY_BRIDGE,
@@ -166,7 +187,6 @@ contract GenericNativeConverterTest is Test {
             nativeConverter.initialize,
             (
                 owner,
-                ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
                 address(0),
                 address(underlyingToken),
                 LXLY_BRIDGE,
@@ -182,7 +202,6 @@ contract GenericNativeConverterTest is Test {
             nativeConverter.initialize,
             (
                 owner,
-                ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
                 address(customToken),
                 address(0),
                 LXLY_BRIDGE,
@@ -198,7 +217,6 @@ contract GenericNativeConverterTest is Test {
             nativeConverter.initialize,
             (
                 owner,
-                ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
                 address(customToken),
                 address(underlyingToken),
                 address(0),
@@ -214,7 +232,6 @@ contract GenericNativeConverterTest is Test {
             nativeConverter.initialize,
             (
                 owner,
-                ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
                 address(customToken),
                 address(underlyingToken),
                 LXLY_BRIDGE,
@@ -226,57 +243,10 @@ contract GenericNativeConverterTest is Test {
         vm.expectRevert(NativeConverter.InvalidLxLyBridge.selector);
         GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
 
-        MockERC20 dummyToken = new MockERC20();
-        dummyToken.initialize("Dummy Token", "DT", 6);
-
-        initData = abi.encodeCall(
-            nativeConverter.initialize,
-            (
-                owner,
-                ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
-                address(dummyToken),
-                address(underlyingToken),
-                LXLY_BRIDGE,
-                NETWORK_ID_L1,
-                MAX_NON_MIGRATABLE_BACKING_PERCENTAGE,
-                migrationManager
-            )
-        );
-        vm.expectRevert(abi.encodeWithSelector(NativeConverter.NonMatchingCustomTokenDecimals.selector, 6, 18));
-        GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
-
-        dummyToken = new MockERC20();
-        dummyToken.initialize("Dummy Token", "DT", 6);
-
-        initData = abi.encodeCall(
-            nativeConverter.initialize,
-            (
-                owner,
-                ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
-                address(customToken),
-                address(dummyToken),
-                LXLY_BRIDGE,
-                NETWORK_ID_L1,
-                MAX_NON_MIGRATABLE_BACKING_PERCENTAGE,
-                migrationManager
-            )
-        );
-        vm.expectRevert(abi.encodeWithSelector(NativeConverter.NonMatchingUnderlyingTokenDecimals.selector, 6, 18));
-        GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
-
         vm.revertToState(beforeInit);
         initData = abi.encodeCall(
             nativeConverter.initialize,
-            (
-                owner,
-                ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
-                address(customToken),
-                address(underlyingToken),
-                LXLY_BRIDGE,
-                NETWORK_ID_L1,
-                1e19,
-                migrationManager
-            )
+            (owner, address(customToken), address(underlyingToken), LXLY_BRIDGE, NETWORK_ID_L1, 1e19, migrationManager)
         );
         vm.expectRevert(NativeConverter.InvalidNonMigratableBackingPercentage.selector);
         GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
@@ -285,7 +255,6 @@ contract GenericNativeConverterTest is Test {
             nativeConverter.initialize,
             (
                 owner,
-                ORIGINAL_UNDERLYING_TOKEN_DECIMALS,
                 address(customToken),
                 address(underlyingToken),
                 LXLY_BRIDGE,
@@ -315,10 +284,12 @@ contract GenericNativeConverterTest is Test {
         vm.expectRevert(NativeConverter.InvalidReceiver.selector);
         nativeConverter.convert(amount, address(0));
 
-        deal(address(underlyingToken), sender, amount);
+        underlyingToken.approve(address(nativeConverter), amount);
 
-        vm.expectRevert("ERC20: subtraction underflow");
+        vm.expectRevert(abi.encodeWithSelector(IERC20Errors.ERC20InsufficientBalance.selector, sender, 0, amount));
         nativeConverter.convert(amount, recipient);
+
+        deal(address(underlyingToken), sender, amount);
 
         underlyingToken.approve(address(nativeConverter), amount);
         nativeConverter.convert(amount, recipient);
@@ -373,7 +344,7 @@ contract GenericNativeConverterTest is Test {
         vm.expectRevert(NativeConverter.InvalidReceiver.selector);
         nativeConverter.convertWithPermit(amount, address(0), permitData);
 
-        vm.expectRevert("ERC20: subtraction underflow");
+        vm.expectRevert(abi.encodeWithSelector(IERC20Errors.ERC20InsufficientBalance.selector, sender, 0, amount));
         nativeConverter.convertWithPermit(amount, recipient, permitData);
 
         deal(address(underlyingToken), sender, amount);
@@ -609,5 +580,11 @@ contract GenericNativeConverterTest is Test {
 
     function _proxify(address logic, address admin, bytes memory initData) internal returns (address proxy) {
         proxy = address(new TransparentUpgradeableProxy(logic, admin, initData));
+    }
+
+    function _getAdmin(address target) internal view returns (address) {
+        bytes32 ADMIN_SLOT = 0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103;
+        bytes32 value = vm.load(target, ADMIN_SLOT);
+        return address(uint160(uint256(value)));
     }
 }
