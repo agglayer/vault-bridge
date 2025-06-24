@@ -14,11 +14,11 @@ import {PausableUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/Pau
 import {ReentrancyGuardUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import {Versioned} from "./etc/Versioned.sol";
 
-/// @title Custom Token
+/// @title Custom Token (optional)
 /// @author See https://github.com/agglayer/vault-bridge
-/// @notice A Custom Token is an ERC-20 token deployed on Layer Ys to represent the native version of the original underlying token from Layer X on Layer Y.
+/// @notice A Custom Token is an optional ERC-20 token on Layer Ys to represent the 'native' version of the original underlying token from Layer X on Layer Y, ideally (or, simply, the upgraded version of the bridged vbToken).
 /// @dev A base contract used to create Custom Tokens.
-/// @dev @note IMPORTANT: Custom Token MUST be custom mapped to the corresponding vbToken on LxLy Bridge on Layer Y and MUST give the minting and burning permission to LxLy Bridge and Native Converter. It MAY have a transfer fee.
+/// @dev @note IMPORTANT: Custom Token MUST be used as the new implementation for the bridged vbToken or be custom mapped to the corresponding vbToken on LxLy Bridge on Layer Y, and MUST give the minting and burning permission to LxLy Bridge and Native Converter. It MAY have a transfer fee.
 abstract contract CustomToken is
     Initializable,
     AccessControlUpgradeable,
@@ -69,6 +69,7 @@ abstract contract CustomToken is
 
     // -----================= ::: SETUP ::: =================-----
 
+    /// @dev Preserves the `name` and `symbol` of the bridged vbToken.
     /// @param originalUnderlyingTokenDecimals_ The number of decimals of the original underlying token on Layer X. Custom Token will have the same number of decimals as the original underlying token.
     /// @param nativeConverter_ The address of Native Converter for this Custom Token.
     function __CustomToken_init(
@@ -85,9 +86,11 @@ abstract contract CustomToken is
         require(lxlyBridge_ != address(0), InvalidLxLyBridge());
         require(nativeConverter_ != address(0), InvalidNativeConverter());
 
+        // Preserve the `name` and `symbol` of the bridged vbToken.
         string memory name_ = name();
         string memory symbol_ = symbol();
 
+        // Prevent mistakes while initializing.
         assert(bytes(name_).length > 0);
         assert(bytes(symbol_).length > 0);
         assert(super.decimals() == originalUnderlyingTokenDecimals_);
@@ -170,20 +173,20 @@ abstract contract CustomToken is
 
     /// @notice Mints Custom Tokens to the recipient.
     /// @notice This function can be called by LxLy Bridge and Native Converter only.
+    /// @param account @note CAUTION! Minting to `address(0)` will result in no tokens minted! This is to enable vbToken on Layer X to bridge tokens to address zero on Layer Y at the end of the process of migrating backing from Native Converter to Layer X. Please refer to `NativeConverter.sol` for more information.
     function mint(address account, uint256 value)
         external
         whenNotPaused
         onlyLxlyBridgeAndNativeConverter
         nonReentrant
     {
-        // @remind Redocument.
-        // When we migrate backing to Lx, we end up sending tokens to address(0) here.
-        // These need to be claimable so the bridge accounting is correct and we allow it here by not reverting.
+        // Do not mint if `account` is `address(0)`.
         if (account == address(0)) {
             emit NotMinted(value);
             return;
         }
 
+        // Mint.
         _mint(account, value);
     }
 
@@ -201,7 +204,7 @@ abstract contract CustomToken is
     // -----================= ::: ADMIN ::: =================-----
 
     /// @notice Prevents usage of functions with the `whenNotPaused` modifier.
-    /// @notice This function can be called by the pauser only.
+    /// @notice This function can be called by a pauser only.
     function pause() external onlyRole(PAUSER_ROLE) nonReentrant {
         _pause();
     }
