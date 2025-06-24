@@ -24,11 +24,11 @@ import {ILxLyBridge} from "./etc/ILxLyBridge.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IWETH9} from "./etc/IWETH9.sol";
 
-// @remind Redocument.
 /// @title Migration Manager (singleton)
 /// @author See https://github.com/agglayer/vault-bridge
-/// @notice Migration Manager is a singleton contract that lives on Layer X.
-/// @notice Backing for custom tokens minted by Native Converters on Layer Ys can be migrated to Layer X using Migration Manager. Migration Manager completes migrations by calling `completeMigration` on the corresponidng vbToken, which mints vbToken and bridge them to address zero on the Layer Ys, effectively locking the backing in LxLy Bridge. Please refer to `onMessageReceived` for more information.
+/// @notice Migration Manager is a singleton contract on Layer X.
+/// @notice Backing for Custom Tokens minted by Native Converters on Layer Ys can be migrated to Migration Manager on Layer X. Migration Manager completes migrations by calling `completeMigration` on the corresponidng vbToken, which mints vbToken and bridges it to address zero on the Layer Ys, effectively locking the backing in LxLy Bridge. Please refer to `onMessageReceived` for more information.
+/// @dev This contract exists to prevent manipulation of vbTokens' internal accounting through reentrancy (specifically, claiming assets on LxLy Bridge to vbToken mid-execution).
 contract MigrationManager is
     IBridgeMessageReceiver,
     Initializable,
@@ -97,12 +97,19 @@ contract MigrationManager is
         _;
     }
 
+    // -----================= ::: SOLIDITY ::: =================-----
+
+    receive() external payable {}
+
     // -----================= ::: SETUP ::: =================-----
 
     constructor() {
         _disableInitializers();
     }
 
+    /// @notice Initializes the Migration Manager contract.
+    /// @param owner_ (ATTENTION) This address will be granted the `DEFAULT_ADMIN_ROLE`, as well as all basic roles. Roles can be modified at any time.
+    /// @param wrappedGasToken_ The address of the wrapped gas token (e.g., WETH, if the gas token is ETH). Must be the same as the underlying token of the corresponding vbToken (e.g., vbETH, if the gas token is ETH).
     function initialize(address owner_, address lxlyBridge_, address wrappedGasToken_) external initializer {
         MigrationManagerStorage storage $ = _getMigrationManagerStorage();
 
@@ -128,10 +135,6 @@ contract MigrationManager is
         $._wrappedGasToken = IWETH9(wrappedGasToken_);
     }
 
-    // -----================= ::: SOLIDITY ::: =================-----
-
-    receive() external payable {}
-
     // -----================= ::: STORAGE ::: =================-----
 
     /// @notice LxLy Bridge, which connects AggLayer networks.
@@ -140,9 +143,9 @@ contract MigrationManager is
         return $.lxlyBridge;
     }
 
-    // @remind Redocument.
-    /// @notice Tells which vbToken and the underlying token Native Converter on Layer Ys belongs to.
-    /// @param nativeConverter The address of Native Converter on Layer Ys.
+    /// @notice Tells which vbToken Native Converter on Layer a Y belongs to.
+    /// @param layerYLxlyId Layer Y's LxLy ID.
+    /// @param nativeConverter The address of Native Converter on Layer Y.
     function nativeConvertersConfiguration(uint32 layerYLxlyId, address nativeConverter)
         public
         view
@@ -161,12 +164,12 @@ contract MigrationManager is
 
     // -----================= ::: MIGRATION MANAGER ::: =================-----
 
-    // @remind Redocument (the entire function).
-    /// @notice Maps Native Converter on Layer Ys to vbToken and underlying token on Layer X.
+    /// @notice Maps Native Converters on Layer Ys to vbToken and underlying token on Layer X.
     /// @dev CAUTION! Misconfiguration could allow an attacker to gain unauthorized access to vbToken and other contracts.
     /// @notice This function can be called by the owner only.
-    /// @param nativeConverters The address of Native Converter on Layer Ys.
-    /// @param vbToken The address of vbToken on Layer X Native Converter belongs to. To unmap the tokens, set to address zero. You can override tokens without unmapping them first.
+    /// @param layerYLxlyIds The Layer Ys' LxLy IDs.
+    /// @param nativeConverters The addresses of Native Converters on Layer Ys.
+    /// @param vbToken The address of vbToken on Layer X Native Converter belongs to. Set to address zero to unset the tokens. You can override tokens without unsetting them first.
     function configureNativeConverters(
         uint32[] calldata layerYLxlyIds,
         address[] calldata nativeConverters,
@@ -177,7 +180,7 @@ contract MigrationManager is
         // Check the inputs.
         require(layerYLxlyIds.length == nativeConverters.length, NonMatchingInputLengths());
 
-        // @remind Document.
+        // Cache Layer X LxLy ID.
         uint32 lxlyId = $._lxlyId;
 
         for (uint256 i; i < layerYLxlyIds.length; ++i) {
@@ -189,9 +192,10 @@ contract MigrationManager is
             require(layerYLxlyId != lxlyId, InvalidLayerYLxLyId());
             require(nativeConverter != address(0), InvalidNativeConverter());
 
+            // Cache the current tokens.
             TokenPair memory oldTokens = $.nativeConvertersConfiguration[layerYLxlyId][nativeConverter];
 
-            // Map or override tokens.
+            // Set or override tokens.
             /* Set tokens. */
             if (vbToken != address(0)) {
                 // Cache the tokens.
@@ -226,10 +230,10 @@ contract MigrationManager is
         }
     }
 
-    // @remind Redocument (the entire function).
-    /// @dev Native Converters on a Layer Ys call both `bridgeAsset` and `bridgeMessage` on LxLy Bridge to `migrateBackingToLayerX`.
+    /// @dev When Native Converter migrates backing, it calls both `bridgeAsset` and `bridgeMessage` on LxLy Bridge to `migrateBackingToLayerX`.
     /// @dev The asset must be claimed before the message on LxLy Bridge.
-    /// @dev The message tells Migration Manager on Layer X how much custom token must be backed by vbToken, which is minted and bridged to address zero on the respective Layer Y. This action provides liquidity when bridging the custom token to from Layer Ys to Layer X and increments the pessimistic proof.
+    /// @dev The message tells vbToken how much Custom Token must be backed by vbToken, which is minted and bridged to address zero on the respective Layer Y. This action provides liquidity when bridging Custom Token to from Layer Ys to Layer X and increments the pessimistic proof.
+    /// @dev This function can be called by LxLy Bridge only.
     function onMessageReceived(address originAddress, uint32 originNetwork, bytes memory data)
         external
         payable
@@ -263,6 +267,7 @@ contract MigrationManager is
                 // Cache the underlying token.
                 IERC20 underlyingToken = $.nativeConvertersConfiguration[originNetwork][originAddress].underlyingToken;
 
+                // Check the input.
                 require(address(underlyingToken) == address($._wrappedGasToken), Unauthorized());
 
                 // Cache the previous balance.

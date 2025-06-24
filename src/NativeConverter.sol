@@ -22,11 +22,12 @@ import {MigrationManager} from "./MigrationManager.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-/// @title Native Converter
+/// @title Native Converter (optional)
 /// @author See https://github.com/agglayer/vault-bridge
-/// @notice Native Converter lives on Layer Ys and converts the underlying token (usually the bridge-wrapped version of the original underlying token from Layer X) to Custom Token, and vice versa, on demand. It can also migrate backing for Custom Token it has minted to Layer X, where vbToken will be minted and locked in LxLy Bridge. Please refer to `migrateBackingToLayerX` for more information.
+/// @notice Native Converter is an optional contract on Layer Ys that converts the underlying token (usually the bridge-wrapped version of the original underlying token from Layer X) to Custom Token, and vice versa, on demand. It can also migrate backing for Custom Token it has minted to Layer X, where vbToken will be minted and locked in LxLy Bridge. Please refer to `migrateBackingToLayerX` for more information.
+/// @dev A base contract used to create Native Converters.
 /// @dev @note (ATTENTION) This contract MUST have mint and burn permission on Custom Token. Please refer to `CustomToken.sol` for more information.
-/// @dev @note IMPORTANT: The underlying token MUST NOT be a rebasing token, and MUST NOT have transfer hooks (i.e., enable reentrancy).
+/// @dev @note IMPORTANT: The underlying token MUST NOT be a rebasing token, and MUST NOT have transfer hooks (i.e., enable reentrancy); it MAY have a transfer fee.
 abstract contract NativeConverter is
     Initializable,
     AccessControlUpgradeable,
@@ -86,10 +87,12 @@ abstract contract NativeConverter is
 
     // -----================= ::: SETUP ::: =================-----
 
-    /// @dev The `customToken` and `underlyingToken` MUST have the same number of decimals. @note (ATTENTION) The decimals of the `customToken` and `underlyingToken` will default to `18` if the calls revert.
-    /// @param customToken_ The token custom mapped to vbToken on LxLy Bridge on Layer Y. Native Converter must be able to mint and burn this token. Please refer to `CustomToken.sol` for more information.
+    /// @dev The `customToken` and `underlyingToken` MUST have the same number of decimals. @note (ATTENTION) The decimals of the `customToken` and `underlyingToken` will default to `18` if they revert on `decimals`.
+    /// @param owner_ (ATTENTION) This address will be granted the `DEFAULT_ADMIN_ROLE`, as well as all basic roles. Roles can be modified at any time.
+    /// @param customToken_ The upgraded version of the bridged vbToken. Native Converter must be able to mint and burn this token. Please refer to `CustomToken.sol` for more information.
     /// @param underlyingToken_ The token that represents the original underlying token on Layer Y. @note IMPORTANT: This token MUST be either the bridge-wrapped version of the original underlying token, or the original underlying token must be custom mapped to this token on LxLy Bridge on Layer Y.
-    /// @param nonMigratableBackingPercentage_ The percentage of backing that should remain in Native Converter after a migration, based on the total supply of Custom Token. 1e18 is 100%. It is possible to game the system by manipulating the total supply of Custom Token, so this is a soft limit.
+    /// @param nonMigratableBackingPercentage_ The percentage of backing that should remain in Native Converter when migrating backing to Layer X, based on the total supply of Custom Token. `1e18` is 100%. It is possible to game the system by manipulating the total supply of Custom Token, so this is more of a soft limit.
+    /// @param migrationManager_ The address of the Migration Manager on Layer X.
     function __NativeConverter_init(
         address owner_,
         address customToken_,
@@ -159,7 +162,7 @@ abstract contract NativeConverter is
 
     // -----================= ::: STORAGE ::: =================-----
 
-    /// @notice The token custom mapped to vbToken on LxLy Bridge on Layer Y.
+    /// @notice The upgraded version of the bridged vbToken.
     function customToken() public view returns (IERC20) {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
         return $.customToken;
@@ -196,15 +199,15 @@ abstract contract NativeConverter is
         return $.layerXLxlyId;
     }
 
-    /// @notice The percentage of backing that should remain in Native Converter after a migration, based on the total supply of Custom Token.
-    /// @dev It is possible to game the system by manipulating the total supply of Custom Token, so this is a soft limit.
+    /// @notice The percentage of backing that should remain in Native Converter when migrating backing to Layer X, based on the total supply of Custom Token.
+    /// @dev It is possible to game the system by manipulating the total supply of Custom Token, so this is more of a soft limit.
     /// @return 1e18 is 100%.
     function nonMigratableBackingPercentage() public view returns (uint256) {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
         return $.nonMigratableBackingPercentage;
     }
 
-    // @remind Document.
+    /// @notice The address of the Migration Manager on Layer X.
     function migrationManager() public view returns (MigrationManager) {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
         return MigrationManager(payable($.migrationManager));
@@ -415,7 +418,7 @@ abstract contract NativeConverter is
     /// @notice Migrates a specific amount of backing to Layer X.
     /// @notice This action provides vbToken liquidity on LxLy Bridge on Layer X.
     /// @notice The bridged asset and message must be claimed manually on LxLy Bridge on Layer X to complete the migration.
-    /// @notice This function can be called by the migrator only.
+    /// @notice This function can be called by a migrator only.
     /// @notice The migration can be completed by anyone on Layer X.
     /// @dev Consider calling this function periodically; anyone can complete a migration on Layer X.
     function migrateBackingToLayerX(uint256 assets) external whenNotPaused onlyRole(MIGRATOR_ROLE) nonReentrant {
@@ -449,6 +452,7 @@ abstract contract NativeConverter is
             // Calculate the bridged amount.
             assets = $.underlyingToken.balanceOf(address($.lxlyBridge)) - balanceBefore;
 
+            // Try to prevent a mistake in case LxLy Bridge code changes.
             assert(assets > 0 && originalAssets >= assets);
         }
         /* If the underlying token is mintable by LxLy Bridge, it will be burned (not transferred). */
@@ -521,7 +525,7 @@ abstract contract NativeConverter is
     // -----================= ::: ADMIN ::: =================-----
 
     /// @notice Prevents usage of functions with the `whenNotPaused` modifier.
-    /// @notice This function can be called by the pauser only.
+    /// @notice This function can be called by a pauser only.
     function pause() external onlyRole(PAUSER_ROLE) nonReentrant {
         _pause();
     }
