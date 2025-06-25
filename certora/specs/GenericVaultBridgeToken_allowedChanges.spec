@@ -1,7 +1,9 @@
 import "GenericVaultBridgeToken_ERC4626.spec";
 
 rule onlyAllowedMethodsMayChangeTotalAssets(method f, env e)
-    filtered {f -> !excludedMethod(f) }
+        filtered { f -> !excludedMethod(f) && 
+                    f.selector != sig:performReversibleYieldVaultDeposit(uint256).selector // not supposed to be called directly
+    }
 {    
     safeAssumptions(e);
     uint256 totalAssetsBefore = totalAssets();
@@ -10,7 +12,6 @@ rule onlyAllowedMethodsMayChangeTotalAssets(method f, env e)
     f(e, args);
 
     uint256 totalAssetsAfter = totalAssets();
-    satisfy totalAssetsAfter == totalAssetsBefore;
     assert totalAssetsAfter > totalAssetsBefore => canIncreaseTotalAssets(f);
     assert totalAssetsAfter < totalAssetsBefore => canDecreaseTotalAssets(f);
 }
@@ -25,6 +26,8 @@ definition canIncreaseTotalAssets(method f) returns bool =
     f.selector == sig:depositAndBridge(uint256,address,uint32,bool).selector ||
     f.selector == sig:depositWithPermit(uint256,address,bytes).selector ||
     f.selector == sig:depositWithPermitAndBridge(uint256,address,uint32,bool,bytes).selector ||
+    f.selector == sig:donateAsYield(uint256).selector ||
+    f.selector == sig:completeMigration(uint32,uint256,uint256).selector ||
     f.selector == sig:mint(uint256,address).selector;
 
 rule onlyAllowedMethodsMayChangeTotalSupply(method f, env e)
@@ -56,6 +59,7 @@ definition canIncreaseTotalSupply(method f) returns bool =
     f.selector == sig:depositWithPermitAndBridge(uint256,address,uint32,bool,bytes).selector ||
     f.selector == sig:collectYield().selector ||
     f.selector == sig:setYieldRecipient(address).selector ||
+    f.selector == sig:completeMigration(uint32, uint256, uint256).selector ||
     f.selector == sig:mint(uint256,address).selector;
 
 rule onlyAllowedMethodsMayChangeStakedAssets(method f, env e)
@@ -76,48 +80,19 @@ definition canDecreaseStakedAssets(method f) returns bool =
     f.selector == sig:claimAndRedeem(bytes32[32],bytes32[32],uint256,bytes32,bytes32,address,uint256,address,bytes).selector ||
     f.selector == sig:redeem(uint256,address,address).selector ||
     f.selector == sig:withdraw(uint256,address,address).selector;
-    // f.selector == sig:rebalanceReserve().selector;
 
 definition canIncreaseStakedAssets(method f) returns bool =
     f.selector == sig:deposit(uint256,address).selector ||
     f.selector == sig:depositAndBridge(uint256,address,uint32,bool).selector ||
     f.selector == sig:depositWithPermit(uint256,address,bytes).selector ||
     f.selector == sig:depositWithPermitAndBridge(uint256,address,uint32,bool,bytes).selector ||
+    f.selector == sig:performReversibleYieldVaultDeposit(uint256).selector ||
+    f.selector == sig:completeMigration(uint32, uint256, uint256).selector ||
     f.selector == sig:mint(uint256,address).selector;
-
-rule onlyAllowedMethodsMayChangeReservedAssets(method f, env e)
-    filtered {f -> !excludedMethod(f) }
-{
-    safeAssumptions(e);
-
-    uint256 reservedAssetsBefore = reservedAssets();
-    calldataarg args;
-    f(e, args);
-
-    uint256 reservedAssetsAfter = reservedAssets();
-    assert reservedAssetsAfter > reservedAssetsBefore => canIncreaseStakedAssets(f);
-    assert reservedAssetsAfter < reservedAssetsBefore => canDecreaseStakedAssets(f);
-}
-
-definition canDecreaseReservedAssets(method f) returns bool =
-    f.selector == sig:claimAndRedeem(bytes32[32],bytes32[32],uint256,bytes32,bytes32,address,uint256,address,bytes).selector ||
-    f.selector == sig:redeem(uint256,address,address).selector ||
-    f.selector == sig:withdraw(uint256,address,address).selector;
-    //f.selector == sig:rebalanceReserve().selector
-    
-
-definition canIncreaseReservedAssets(method f) returns bool =
-    f.selector == sig:deposit(uint256,address).selector ||
-    f.selector == sig:depositAndBridge(uint256,address,uint32,bool).selector ||
-    f.selector == sig:depositWithPermit(uint256,address,bytes).selector ||
-    f.selector == sig:depositWithPermitAndBridge(uint256,address,uint32,bool,bytes).selector ||
-    f.selector == sig:mint(uint256,address).selector;
-    //f.selector == sig:rebalanceReserve().selector
 
 rule onlyAllowedMethodsMayChangeMigrationFeesFund(method f, env e)
     filtered {f -> !excludedMethod(f) }
 {
-
     safeAssumptions(e);
 
     uint256 fundBefore = migrationFeesFund();

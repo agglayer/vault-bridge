@@ -157,8 +157,6 @@ function safeAssumptions(env e) {
     requireLinking();
     requireAllInvariants();
     require currentContract != asset(); // Although this is not disallowed, we assume the contract's underlying asset is not the contract itself
-
-      // This is proved by rule noDynamicCalls    
 }
 
 

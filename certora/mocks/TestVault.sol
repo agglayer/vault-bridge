@@ -1,4 +1,3 @@
-//
 pragma solidity 0.8.29;
 
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -63,33 +62,19 @@ contract TestVault {
     }
 
     function deposit(uint256 amount, address user) external payable returns (uint256) {
-        //if (slippage) {
-        //    require(amount > slippageAmount, "TestVault: Slippage amount is too high");
-        //    _receiveAssets(amount - slippageAmount, user);
-        //} else {
             _receiveAssets(amount, user);
-        //}
+        
         return amount;
     }
 
     function withdraw(uint256 amount, address receiver, address user) external returns (uint256) {
         require(balanceOf[user] >= amount, "TestVault: Insufficient balance");
         _sendAssets(amount, receiver, user);
-        //if (slippage) {
-        //    require(amount > slippageAmount, "TestVault: Slippage amount is too high");
-        //    return amount + slippageAmount;
-        //} else {
             return amount;
-        //}
     }
 
     function previewWithdraw(uint256 amount) external view returns (uint256) {
-        //if (slippage) {
-        //    require(amount > slippageAmount, "TestVault: Slippage amount is too high");
-        //    return amount + slippageAmount;
-        //} else {
             return amount;
-        //}
     }
 
     function _receiveAssets(uint256 amount, address user) internal {

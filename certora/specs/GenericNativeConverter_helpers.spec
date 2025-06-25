@@ -10,8 +10,6 @@ function requireLinking()
 }
 
 definition excludedMethod(method f) returns bool =
-    f.isView || f.isFallback
-    //f.selector == sig:initialize(address, VaultBridgeToken.InitializationParameters).selector ||
-    
+    f.isView || f.isFallback    
 ;
 

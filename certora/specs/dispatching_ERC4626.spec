@@ -5,10 +5,9 @@ methods {
     function _.asset() external => DISPATCHER(true);
 
     function _.totalSupply() external => DISPATCHER(true);
-    // function _.balanceOf(address) external => DISPATCHER(true);
+    
     function _.nonces(address) external => DISPATCHER(true);
     function _.totalAssets() external => DISPATCHER(true);
-    // function _.userAssets(address) external => DISPATCHER(true);
     function _.convertToShares(uint256) external => DISPATCHER(true);
     function _.convertToAssets(uint256) external => DISPATCHER(true);
     function _.previewDeposit(uint256) external => DISPATCHER(true);

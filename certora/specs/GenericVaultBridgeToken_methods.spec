@@ -18,7 +18,6 @@ methods {
     function balanceOf(address) external returns uint256 envfree;
     function nonces(address) external returns uint256 envfree;
     function totalAssets() external returns uint256 envfree;
-    //function userAssets(address) external returns uint256 envfree;
     function convertToShares(uint256) external returns uint256 envfree;
     function convertToAssets(uint256) external returns uint256 envfree;
     function previewDeposit(uint256) external returns uint256 envfree;
@@ -29,16 +28,10 @@ methods {
     function maxMint(address) external returns uint256 envfree;
     function maxWithdraw(address) external returns uint256 envfree;
     function maxRedeem(address) external returns uint256 envfree;
-
-    //function permit(address,address,uint256,uint256,uint8,bytes32,bytes32) external;
-    //function DOMAIN_SEPARATOR() external returns bytes32;
-
     function yieldVault() external returns (address) envfree;
     function yieldRecipient() external returns (address) envfree;
     function lxlyBridge() external returns (address) envfree;
     
-    
-    //function VaultBridgeTokenPart2.yieldVault() external returns (address) envfree;
     function stakedAssets() external returns (uint256) envfree;
     function yield() external returns (uint256) envfree;
     function getNetCollectedYield() external returns (uint256) envfree;
@@ -59,15 +52,9 @@ methods {
 
     function ERC20a.balanceOf(address) external returns uint256 envfree;
     function ERC20a.allowance(address, address) external returns uint256 envfree;
-    //function ERC20a.transferFrom(address,address,uint256) external returns bool;
     function ERC20a.totalSupply() external returns uint256 envfree;
 
     function yieldVaultContract.balanceOf(address) external returns uint256 envfree;
-    //function yieldVaultContract.totalSupply() external returns uint256 envfree;
-
-    // function ERC20b.allowance(address, address) external returns uint256 envfree;
-
-    // function _.eip712Domain() => NONDET DELETE;
     function GenericVaultBridgeToken.eip712Domain() external returns (bytes1, string, string, uint256, address, bytes32, uint256[]) => NONDET DELETE;
 
     // summarising to avoid the "call" in SafeERC20._callOptionalReturnBool

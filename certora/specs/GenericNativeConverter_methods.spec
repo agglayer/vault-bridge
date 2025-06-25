@@ -22,7 +22,7 @@ methods {
 
 
     function _.eip712Domain() external => NONDET DELETE;
-    //function GenericVaultBridgeToken.eip712Domain() external returns (bytes1, string, string, uint256, address, bytes32, uint256[]) => NONDET DELETE;
+    
 
     // summarising to avoid the "call" in SafeERC20._callOptionalReturnBool
     function _.forceApprove(address token, address spender, uint256 value) internal

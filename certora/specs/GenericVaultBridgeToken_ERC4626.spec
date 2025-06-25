@@ -169,7 +169,7 @@ filtered {
 }
 {
     uint256 assets; uint256 shares;
-    address contributor; require contributor == e.msg.sender;
+    address contributor = e.msg.sender;
     address receiver;
     require currentContract != contributor
          && currentContract != receiver
