@@ -1,4 +1,4 @@
-//
+// SPDX-License-Identifier: LicenseRef-PolygonLabs-Open-Attribution OR LicenseRef-PolygonLabs-Source-Available
 pragma solidity 0.8.29;
 
 /// @dev Main functionality.
@@ -23,6 +23,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 // @remind Redocument.
 /// @title Migration Manager (singleton)
+/// @author See https://github.com/agglayer/vault-bridge
 /// @notice Migration Manager is a singleton contract that lives on Layer X.
 /// @notice Backing for custom tokens minted by Native Converters on Layer Ys can be migrated to Layer X using Migration Manager. Migration Manager completes migrations by calling `completeMigration` on the corresponidng vbToken, which mints vbToken and bridge them to address zero on the Layer Ys, effectively locking the backing in LxLy Bridge. Please refer to `onMessageReceived` for more information.
 contract MigrationManager is
@@ -89,7 +90,7 @@ contract MigrationManager is
         uint32 indexed layerYLxlyId, address indexed nativeConverter, address indexed vbToken
     );
 
-    // -----================= ::: COMMON ::: =================-----
+    // -----================= ::: MODIFIERS ::: =================-----
 
     /// @dev Checks if the sender is LxLy Bridge.
     modifier onlyLxLyBridge() {
@@ -97,8 +98,6 @@ contract MigrationManager is
         require(msg.sender == address($.lxlyBridge), Unauthorized());
         _;
     }
-
-    receive() external payable {}
 
     // -----================= ::: SETUP ::: =================-----
 
@@ -128,6 +127,10 @@ contract MigrationManager is
         $.lxlyBridge = ILxLyBridge(lxlyBridge_);
         $._lxlyId = $.lxlyBridge.networkID();
     }
+
+    // -----================= ::: SOLIDITY ::: =================-----
+
+    receive() external payable {}
 
     // -----================= ::: STORAGE ::: =================-----
 

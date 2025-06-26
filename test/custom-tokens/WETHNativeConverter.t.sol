@@ -1,4 +1,4 @@
-//
+// SPDX-License-Identifier: LicenseRef-PolygonLabs-Open-Attribution OR LicenseRef-PolygonLabs-Source-Available
 pragma solidity ^0.8.29;
 
 import "forge-std/Test.sol";
@@ -44,7 +44,7 @@ contract LXLYBridgeMock {
 contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
     uint256 constant MAX_NON_MIGRATABLE_GAS_BACKING_PERCENTAGE = 1e17;
 
-    MockERC20 internal wWETH;
+    MockERC20MintableBurnable internal wWETH;
     WETH internal wETH;
     LXLYBridgeMock internal lxlyBridgeMock;
     address internal migrationManager_ = makeAddr("migrationManager");
@@ -55,7 +55,7 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
         zkevmFork = vm.createSelectFork("polygon_zkevm", 19164969);
 
         // Setup tokens
-        wWETH = new MockERC20();
+        wWETH = new MockERC20MintableBurnable();
         wWETH.initialize("Wrapped WETH", "wWETH", 18);
         wETH = new WETH();
         address calculatedNativeConverterAddr = vm.computeCreateAddress(address(this), vm.getNonce(address(this)) + 2);
@@ -65,11 +65,10 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
         );
         wETH = WETH(payable(address(new TransparentUpgradeableProxy(address(wETH), address(this), initData))));
 
-        // assign addresses for generic testing
+        // assign variables for generic testing
         customToken = MockERC20MintableBurnable(address(wETH));
-        underlyingToken = MockERC20(address(wWETH));
+        underlyingToken = MockERC20MintableBurnable(address(wWETH));
         migrationManager = migrationManager_;
-
         underlyingTokenMetadata = abi.encode("Wrapped WETH", "wWETH", 18);
 
         // Deploy and initialize converter
@@ -95,6 +94,8 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
         );
         nativeConverter = GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
         assertEq(address(nativeConverter), calculatedNativeConverterAddr);
+
+        _mapCustomToken(originUnderlyingToken, address(wWETH), false);
 
         wETHConverter = WETHNativeConverter(payable(address(nativeConverter)));
 

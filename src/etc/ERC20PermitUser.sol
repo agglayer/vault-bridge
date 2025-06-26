@@ -1,7 +1,8 @@
-//
+// SPDX-License-Identifier: LicenseRef-PolygonLabs-Open-Attribution OR LicenseRef-PolygonLabs-Source-Available
 pragma solidity 0.8.29;
 
 /// @title ERC-20 Permit User
+/// @author See https://github.com/agglayer/vault-bridge
 /// @dev Mimics the behavior of LxLy Bridge for validating and using ERC-20 permits.
 abstract contract ERC20PermitUser {
     /// @dev Calculated as `bytes4(keccak256(bytes("permit(address,address,uint256,uint256,uint8,bytes32,bytes32)")))`.

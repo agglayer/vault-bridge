@@ -1,4 +1,4 @@
-//
+// SPDX-License-Identifier: LicenseRef-PolygonLabs-Open-Attribution OR LicenseRef-PolygonLabs-Source-Available
 pragma solidity 0.8.29;
 
 // Main functionality.
@@ -17,20 +17,21 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 // @remind Document.
 /// @title Vault Bridge Token: Part 2 (singleton)
+/// @author See https://github.com/agglayer/vault-bridge
 contract VaultBridgeTokenPart2 is VaultBridgeToken {
     // Libraries.
     using SafeERC20 for IERC20;
-
-    // -----================= ::: COMMON ::: =================-----
-
-    fallback() external payable override {
-        revert UnknownFunction(bytes4(msg.data));
-    }
 
     // -----================= ::: SETUP ::: =================-----
 
     constructor() {
         _disableInitializers();
+    }
+
+    // -----================= ::: SOLIDITY ::: =================-----
+
+    fallback() external payable override {
+        revert UnknownFunction(bytes4(msg.data));
     }
 
     // -----================= ::: VAULT BRIDGE TOKEN ::: =================-----

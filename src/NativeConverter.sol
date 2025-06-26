@@ -1,4 +1,4 @@
-//
+// SPDX-License-Identifier: LicenseRef-PolygonLabs-Open-Attribution OR LicenseRef-PolygonLabs-Source-Available
 pragma solidity 0.8.29;
 
 // Other functionality.
@@ -21,6 +21,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 /// @title Native Converter
+/// @author See https://github.com/agglayer/vault-bridge
 /// @notice Native Converter lives on Layer Ys and converts the underlying token (usually the bridge-wrapped version of the original underlying token from Layer X) to Custom Token, and vice versa, on demand. It can also migrate backing for Custom Token it has minted to Layer X, where vbToken will be minted and locked in LxLy Bridge. Please refer to `migrateBackingToLayerX` for more information.
 /// @dev @note (ATTENTION) This contract MUST have mint and burn permission on Custom Token. Please refer to `CustomToken.sol` for more information.
 /// @dev @note IMPORTANT: The underlying token MUST NOT be a rebasing token, and MUST NOT have transfer hooks (i.e., enable reentrancy).

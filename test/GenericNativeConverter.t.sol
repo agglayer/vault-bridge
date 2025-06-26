@@ -1,4 +1,4 @@
-//
+// SPDX-License-Identifier: LicenseRef-PolygonLabs-Open-Attribution OR LicenseRef-PolygonLabs-Source-Available
 pragma solidity ^0.8.29;
 
 import "forge-std/Test.sol";
@@ -10,6 +10,7 @@ import "src/custom-tokens/GenericCustomToken.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import {IERC20Errors} from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
+import {IBridgeL2SovereignChain} from "test/interfaces/IBridgeL2SovereignChain.sol";
 
 import {IAccessControl} from "@openzeppelin-contracts/access/IAccessControl.sol";
 import {MockERC20} from "forge-std/mocks/MockERC20.sol";
@@ -42,7 +43,7 @@ contract GenericNativeConverterTest is Test {
     uint256 constant MAX_NON_MIGRATABLE_BACKING_PERCENTAGE = 1e17;
 
     MockERC20MintableBurnable internal customToken;
-    MockERC20 internal underlyingToken;
+    MockERC20MintableBurnable internal underlyingToken;
     uint256 internal zkevmFork;
     uint256 internal beforeInit;
     bytes internal underlyingTokenMetadata;
@@ -53,6 +54,7 @@ contract GenericNativeConverterTest is Test {
     // initialization arguments
     address internal owner = makeAddr("owner");
     address internal recipient = makeAddr("recipient");
+    address internal originUnderlyingToken = makeAddr("originUnderlyingToken");
 
     uint256 internal senderPrivateKey = 0xBEEF;
     address internal sender = vm.addr(senderPrivateKey);
@@ -72,13 +74,12 @@ contract GenericNativeConverterTest is Test {
         zkevmFork = vm.createSelectFork("polygon_zkevm", 19164969);
 
         // Setup tokens
-        MockERC20 _underlyingToken = new MockERC20();
-        _underlyingToken.initialize("Underlying Token", "uTKN", 18);
-        GenericCustomToken _customToken = new GenericCustomToken();
+        underlyingToken = new MockERC20MintableBurnable();
+        underlyingToken.initialize("Underlying Token", "uTKN", 18);
 
+        GenericCustomToken _customToken = new GenericCustomToken();
         address calculatedNativeConverterAddr = vm.computeCreateAddress(address(this), vm.getNonce(address(this)) + 2);
         vm.etch(LXLY_BRIDGE, SOVEREIGN_BRIDGE_BYTECODE);
-
         bytes memory initData = abi.encodeCall(
             GenericCustomToken.reinitialize,
             (address(this), "Custom Token", "cTKN", 18, LXLY_BRIDGE, calculatedNativeConverterAddr)
@@ -87,11 +88,9 @@ contract GenericNativeConverterTest is Test {
             payable(address(new TransparentUpgradeableProxy(address(_customToken), address(this), initData)))
         );
 
-        // assign addresses for generic testing
+        // assign variables for generic testing
         customToken = MockERC20MintableBurnable(address(_customToken));
-        underlyingToken = _underlyingToken;
         migrationManager = makeAddr("migrationManager");
-
         underlyingTokenMetadata = abi.encode("Underlying Token", "uTKN", 18);
 
         // Deploy and initialize converter
@@ -106,8 +105,8 @@ contract GenericNativeConverterTest is Test {
             (
                 owner,
                 18, // decimals
-                address(_customToken), // custom token
-                address(_underlyingToken), // wrapped underlying token
+                address(customToken), // custom token
+                address(underlyingToken), // wrapped underlying token
                 LXLY_BRIDGE,
                 NETWORK_ID_L1,
                 MAX_NON_MIGRATABLE_BACKING_PERCENTAGE,
@@ -117,15 +116,17 @@ contract GenericNativeConverterTest is Test {
         nativeConverter = GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
         assertEq(address(nativeConverter), calculatedNativeConverterAddr);
 
-        vm.label(address(_customToken), "WETH");
+        _mapCustomToken(originUnderlyingToken, address(underlyingToken), false);
+
+        vm.label(address(customToken), "cTKN");
         vm.label(address(this), "testerAddress");
         vm.label(LXLY_BRIDGE, "lxlyBridge");
         vm.label(migrationManager, "migrationManager");
         vm.label(owner, "owner");
         vm.label(recipient, "recipient");
         vm.label(sender, "sender");
-        vm.label(address(nativeConverter), "WETHNativeConverter");
-        vm.label(address(_underlyingToken), "wWETH");
+        vm.label(address(nativeConverter), "NativeConverter");
+        vm.label(address(underlyingToken), "uTKN");
     }
 
     function test_setup() public view {
@@ -447,13 +448,13 @@ contract GenericNativeConverterTest is Test {
         nativeConverter.unpause();
         vm.stopPrank();
 
-        vm.startPrank(sender);
+        vm.prank(sender);
         vm.expectRevert(NativeConverter.InvalidDestinationNetworkId.selector);
         nativeConverter.deconvertAndBridge(amount, recipient, NETWORK_ID_L2, true);
 
         // create backing on layer Y
         uint256 backingOnLayerY = 0;
-        deal(address(underlyingToken), owner, amount);
+        underlyingToken.mint(owner, amount);
         vm.startPrank(owner);
         underlyingToken.approve(address(nativeConverter), amount);
         backingOnLayerY = nativeConverter.convert(amount, recipient);
@@ -461,16 +462,12 @@ contract GenericNativeConverterTest is Test {
 
         deal(address(customToken), sender, amount); // mint shares
 
-        // In the real world we don't have to approve the underlying token as the bridge will burn the wrapped tokens
-        vm.prank(address(nativeConverter));
-        underlyingToken.approve(LXLY_BRIDGE, amount);
-
-        vm.startPrank(sender);
+        vm.prank(sender);
         vm.expectEmit();
         emit BridgeEvent(
             LEAF_TYPE_ASSET,
-            NETWORK_ID_L2,
-            address(underlyingToken),
+            NETWORK_ID_L1,
+            originUnderlyingToken,
             NETWORK_ID_L1,
             recipient,
             amount,
@@ -497,9 +494,7 @@ contract GenericNativeConverterTest is Test {
         ); // only owner can call this function
         nativeConverter.migrateBackingToLayerX(amount);
 
-        // In the real world we don't have to approve the underlying token as the bridge will burn the wrapped tokens
-        vm.prank(address(nativeConverter));
-        underlyingToken.approve(LXLY_BRIDGE, amountToMigrate);
+        underlyingToken.mint(owner, amount);
 
         vm.startPrank(owner);
 
@@ -520,15 +515,14 @@ contract GenericNativeConverterTest is Test {
 
         // create backing on layer Y
         uint256 backingOnLayerY = 0;
-        deal(address(underlyingToken), owner, amount);
         underlyingToken.approve(address(nativeConverter), amount);
         backingOnLayerY = nativeConverter.convert(amount, recipient);
 
         vm.expectEmit();
         emit BridgeEvent(
             LEAF_TYPE_ASSET,
-            NETWORK_ID_L2,
-            address(underlyingToken),
+            NETWORK_ID_L1,
+            originUnderlyingToken,
             NETWORK_ID_L1,
             migrationManager,
             amountToMigrate,
@@ -559,6 +553,27 @@ contract GenericNativeConverterTest is Test {
 
     function test_version() public view {
         assertEq(nativeConverter.version(), NATIVE_CONVERTER_VERSION);
+    }
+
+    function _mapCustomToken(address _originTokenAddress, address _sovereignTokenAddress, bool _isNotMintable)
+        internal
+    {
+        uint32[] memory originNetworks = new uint32[](1);
+        originNetworks[0] = NETWORK_ID_L1;
+        address[] memory originTokenAddresses = new address[](1);
+        originTokenAddresses[0] = _originTokenAddress;
+        address[] memory sovereignTokenAddresses = new address[](1);
+        sovereignTokenAddresses[0] = _sovereignTokenAddress;
+        bool[] memory isNotMintable = new bool[](1);
+        isNotMintable[0] = _isNotMintable;
+
+        (, bytes memory data) = address(LXLY_BRIDGE).staticcall(abi.encodeWithSignature("bridgeManager()"));
+        address bridgeManager = abi.decode(data, (address));
+
+        vm.prank(bridgeManager);
+        IBridgeL2SovereignChain(LXLY_BRIDGE).setMultipleSovereignTokenAddress(
+            originNetworks, originTokenAddresses, sovereignTokenAddresses, isNotMintable
+        );
     }
 
     function _proxify(address logic, address admin, bytes memory initData) internal returns (address proxy) {

@@ -1,4 +1,4 @@
-//
+// SPDX-License-Identifier: LicenseRef-PolygonLabs-Open-Attribution OR LicenseRef-PolygonLabs-Source-Available
 pragma solidity 0.8.29;
 
 // Main functionality.
@@ -8,6 +8,7 @@ import {CustomToken} from "../CustomToken.sol";
 import {IVersioned} from "../etc/IVersioned.sol";
 
 /// @title Generic Custom Token
+/// @author See https://github.com/agglayer/vault-bridge
 /// @dev This contract can be used to deploy Custom Tokens that do not require any customization.
 contract GenericCustomToken is CustomToken {
     // -----================= ::: SETUP ::: =================-----

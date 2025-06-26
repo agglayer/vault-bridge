@@ -3,7 +3,7 @@
 
 # Vault Bridge
 
-Vault Bridge Token is the core of the Vault Bridge protocol. Built from the ground up to be reusable, it offers complete functionality out of the box, allowing you to create vbTokens in just a few lines of code.
+Vault Bridge Token is the core of the Vault Bridge protocol. Built from the ground up to be reusable, it offers full Vault Bridge functionality out of the box, allowing you to create vbTokens in just a few lines of code.
 
 ## Overview
 
@@ -95,10 +95,10 @@ This codebase is licensed under a dual license model:
 
 1. Open Attribution License – this license is similar to the MIT License and permits broad 
 use (including for commercial purposes), but is only available when the codebase is used in 
-connection with cryptoasset deposits into the Agglayer’s unified LxLy bridge. See: [LICENSE-OPEN LICENSE](<LICENSE-OPEN LICENSE>)
+connection with cryptoasset deposits into the Agglayer’s unified LxLy bridge. See: [LICENSE-OPEN-LICENSE](<LICENSE-OPEN-LICENSE>)
 2. Source Available License – for all other use cases, including cryptoasset deposits into 
 elsewhere than the Agglayer’s unified LxLy bridge, you may use the codebase under the Source 
-Available License. See: [LICENSE-SOURCE AVAILABLE LICENSE](<LICENSE-SOURCE AVAILABLE LICENSE>)
+Available License. See: [LICENSE-SOURCE-AVAILABLE-LICENSE](<LICENSE-SOURCE-AVAILABLE-LICENSE>)
 
 Your use of this software constitutes acceptance of these license terms. If you are unsure whether
 your use qualifies under the Open Attribution license, please contact: legal@polygon.technology

@@ -1,4 +1,4 @@
-//
+// SPDX-License-Identifier: LicenseRef-PolygonLabs-Open-Attribution OR LicenseRef-PolygonLabs-Source-Available
 pragma solidity 0.8.29;
 
 // @remind UPDATE DOCUMENTATION.
@@ -31,6 +31,7 @@ import {ERC20Upgradeable} from "@openzeppelin-contracts-upgradeable/token/ERC20/
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 /// @title Vault Bridge Token
+/// @author See https://github.com/agglayer/vault-bridge
 /// @notice A vbToken is an ERC-20 token, ERC-4626 vault, and LxLy Bridge extension, enabling deposits and bridging of select assets, such as WBTC, WETH, USDT, USDC, and USDS, while producing yield.
 /// @dev A base contract used to create vault bridge tokens.
 /// @dev @note IMPORTANT: In order to not drive the complexity of the Vault Bridge protocol up, vbToken MUST NOT have transfer, deposit, or withdrawal fees. The underlying token on Layer X MUST NOT have a transfer fee; the contract will revert if a transfer fee is detected. The underlying token and Custom Token on Layer Ys MAY have transfer fees. The yield vault SHOULD NOT have deposit and/or withdrawal fees, and the price of its shares MUST NOT decrease (e.g., the vault does not realize bad debt); still, this contract implements solvency checks for protection. Additionally, the underlying token MUST NOT be a rebasing token, and MUST NOT have transfer hooks (i.e., the token does not enable reentrancy/cross-entrancy).
@@ -157,7 +158,7 @@ abstract contract VaultBridgeToken is
     event YieldVaultSet(address yieldVault);
     event YieldVaultMaximumSlippagePercentageSet(uint256 slippagePercentage);
 
-    // -----================= ::: COMMON ::: =================-----
+    // -----================= ::: MODIFIERS ::: =================-----
 
     /// @dev Checks if the sender is the yield recipient.
     modifier onlyYieldRecipient() {
@@ -186,25 +187,6 @@ abstract contract VaultBridgeToken is
         _;
     }
 
-    // @remind Document.
-    receive() external payable {}
-
-    // @remind Document (the entire function).
-    fallback() external payable virtual {
-        VaultBridgeTokenStorage storage $ = _getVaultBridgeTokenStorage();
-
-        address vaultBridgeTokenPart2 = $._vaultBridgeTokenPart2;
-
-        assembly {
-            calldatacopy(0, 0, calldatasize())
-            let success := delegatecall(gas(), vaultBridgeTokenPart2, 0, calldatasize(), 0, 0)
-            returndatacopy(0, 0, returndatasize())
-            switch success
-            case 0 { revert(0, returndatasize()) }
-            default { return(0, returndatasize()) }
-        }
-    }
-
     // -----================= ::: SETUP ::: =================-----
 
     // @remind Document.
@@ -224,6 +206,27 @@ abstract contract VaultBridgeToken is
             assembly ("memory-safe") {
                 revert(add(32, data), mload(data))
             }
+        }
+    }
+
+    // -----================= ::: SOLIDITY ::: =================-----
+
+    // @remind Document.
+    receive() external payable {}
+
+    // @remind Document (the entire function).
+    fallback() external payable virtual {
+        VaultBridgeTokenStorage storage $ = _getVaultBridgeTokenStorage();
+
+        address vaultBridgeTokenPart2 = $._vaultBridgeTokenPart2;
+
+        assembly {
+            calldatacopy(0, 0, calldatasize())
+            let success := delegatecall(gas(), vaultBridgeTokenPart2, 0, calldatasize(), 0, 0)
+            returndatacopy(0, 0, returndatasize())
+            switch success
+            case 0 { revert(0, returndatasize()) }
+            default { return(0, returndatasize()) }
         }
     }
 
@@ -605,7 +608,6 @@ abstract contract VaultBridgeToken is
         remainingAssets -= $.reservedAssets;
 
         // Simulate withdrawal from the yield vault.
-        // @note Yield vault usage.
         uint256 maxWithdraw_ = $.yieldVault.maxWithdraw(address(this));
         maxWithdraw_ = remainingAssets > maxWithdraw_ ? maxWithdraw_ : remainingAssets;
         uint256 burnedYieldVaultShares;
@@ -692,7 +694,6 @@ abstract contract VaultBridgeToken is
 
         if (remainingAssets != 0) {
             // Calculate the amount to withdraw from the yield vault.
-            // @note Yield vault usage.
             uint256 maxWithdraw_ = $.yieldVault.maxWithdraw(address(this));
 
             // Withdraw the underlying token from the yield vault.
@@ -992,7 +993,6 @@ abstract contract VaultBridgeToken is
         uint256 originalAssets = assets;
 
         // Get the yield vault's deposit limit.
-        // @note Yield vault usage.
         uint256 maxDeposit_ = $.yieldVault.maxDeposit(address(this));
 
         // @remind Document.
@@ -1084,7 +1084,6 @@ abstract contract VaultBridgeToken is
         VaultBridgeTokenStorage storage $ = _getVaultBridgeTokenStorage();
 
         // Get the yield vault's withdraw limit.
-        // @note Yield vault usage.
         uint256 maxWithdraw_ = $.yieldVault.maxWithdraw(address(this));
 
         // @remind Document.

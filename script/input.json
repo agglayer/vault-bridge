@@ -1,78 +1,142 @@
 {
     "1": {
-        "proxyAdmin": "0x0000c6A4e8C654dF65503CBb0eDc82B4Ce9158e6",
         "migrationManager": {
-            "ownerMigrationManager": "0x0000c6A4e8C654dF65503CBb0eDc82B4Ce9158e6",
-            "lxlyBridge": "0x2a3DD3EB832aF982ec71669E178424b10Dca2EDe"
-        },
-        "vbETH": {
-            "owner": "0x0000c6A4e8C654dF65503CBb0eDc82B4Ce9158e6",
-            "name": "VaultBridge ETH",
-            "symbol": "vbETH",
-            "underlyingToken": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
-            "minimumReservePercentage": 0,
-            "yieldVault": "0x0000c6A4e8C654dF65503CBb0eDc82B4Ce9158e6",
-            "yieldRecipient": "0x0000c6A4e8C654dF65503CBb0eDc82B4Ce9158e6",
-            "lxlyBridge": "using above",
-            "minimumYieldVaultDeposit": 0,
-            "migrationManager": "0x0000c6A4e8C654dF65503CBb0eDc82B4Ce9158e6",
-            "yieldVaultMaximumSlippagePercentage": 0
-        },
-        "vbUSDC": {
-            "owner": "0x0000c6A4e8C654dF65503CBb0eDc82B4Ce9158e6",
-            "name": "VaultBridge USDC",
-            "symbol": "vbUSDC",
-            "underlyingToken": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
-            "minimumReservePercentage": 0,
-            "yieldVault": "0x0000c6A4e8C654dF65503CBb0eDc82B4Ce9158e6",
-            "yieldRecipient": "0x0000c6A4e8C654dF65503CBb0eDc82B4Ce9158e6",
-            "lxlyBridge": "using above",
-            "minimumYieldVaultDeposit": 0,
-            "migrationManager": "0x0000c6A4e8C654dF65503CBb0eDc82B4Ce9158e6",
-            "yieldVaultMaximumSlippagePercentage": 0
+            "proxyAdmin": "0x9d851f8b8751c5FbC09b9E74E6e68E9950949052",
+            "ownerMigrationManager": "0x9d851f8b8751c5FbC09b9E74E6e68E9950949052",
+            "lxlyBridge": "0x2a3DD3EB832aF982ec71669E178424b10Dca2EDe",
+            "address": "0x417d01B64Ea30C4E163873f3a1f77b727c689e02",
+            "layerYNetworkId": 20,
+            "vbUSDSNativeConverter": "0x639f13D5f30B47c792b6851238c05D0b623C77DE",
+            "vbUSDTNativeConverter": "0x053FA9b934b83E1E0ffc7e98a41aAdc3640bB462",
+            "vbUSDCNativeConverter": "0x97a3500083348A147F419b8a65717909762c389f",
+            "vbWBTCNativeConverter": "0xb00aa68b87256E2F22058fB2Ba3246EEc54A44fc",
+            "vbETHNativeConverter": "0xa6b0db1293144ebe9478b6a84f75dd651e45914a",
+            "vbUSDS": "0x3DD459dE96F9C28e3a343b831cbDC2B93c8C4855",
+            "vbUSDT": "0x6d4f9f9f8f0155509ecd6Ac6c544fF27999845CC",
+            "vbUSDC": "0x53E82ABbb12638F09d9e624578ccB666217a765e",
+            "vbWBTC": "0x2C24B57e2CCd1f273045Af6A5f632504C432374F",
+            "vbETH": "0x2DC70fb75b88d2eB4715bc06E1595E6D97c34DFF"
         },
         "vbUSDS": {
-            "owner": "0x0000c6A4e8C654dF65503CBb0eDc82B4Ce9158e6",
-            "name": "VaultBridge USDS",
+            "proxyAdmin": "0xA8C31B2edd84c654d06d626383f4154D1E40C5Ff",
+            "owner": "0xA8C31B2edd84c654d06d626383f4154D1E40C5Ff",
+            "name": "Vault Bridge USDS",
             "symbol": "vbUSDS",
             "underlyingToken": "0xdc035d45d973e3ec169d2276ddab16f1e407384f",
             "minimumReservePercentage": 0,
-            "yieldVault": "0x0000c6A4e8C654dF65503CBb0eDc82B4Ce9158e6",
-            "yieldRecipient": "0x0000c6A4e8C654dF65503CBb0eDc82B4Ce9158e6",
+            "yieldVault": "0x4cE9c93513DfF543Bc392870d57dF8C04e89Ba0a",
+            "yieldRecipient": "0xA8C31B2edd84c654d06d626383f4154D1E40C5Ff",
             "lxlyBridge": "using above",
             "minimumYieldVaultDeposit": 0,
-            "migrationManager": "0x0000c6A4e8C654dF65503CBb0eDc82B4Ce9158e6",
-            "yieldVaultMaximumSlippagePercentage": 0
+            "migrationManager": "using from deployment",
+            "yieldVaultMaximumSlippagePercentage": 0.01e18
         },
         "vbUSDT": {
-            "owner": "0x0000c6A4e8C654dF65503CBb0eDc82B4Ce9158e6",
-            "name": "VaultBridge USDT",
+            "proxyAdmin": "0x2De242e27386e224E5fbF110EA8406d5B70740ec",
+            "owner": "0x2De242e27386e224E5fbF110EA8406d5B70740ec",
+            "name": "Vault Bridge USDT",
             "symbol": "vbUSDT",
             "underlyingToken": "0xdac17f958d2ee523a2206206994597c13d831ec7",
             "minimumReservePercentage": 0,
-            "yieldVault": "0x0000c6A4e8C654dF65503CBb0eDc82B4Ce9158e6",
-            "yieldRecipient": "0x0000c6A4e8C654dF65503CBb0eDc82B4Ce9158e6",
+            "yieldVault": "0xc54b4E08C1Dcc199fdd35c6b5Ab589ffD3428a8d",
+            "yieldRecipient": "0x2De242e27386e224E5fbF110EA8406d5B70740ec",
             "lxlyBridge": "using above",
             "minimumYieldVaultDeposit": 0,
-            "migrationManager": "0x0000c6A4e8C654dF65503CBb0eDc82B4Ce9158e6",
-            "yieldVaultMaximumSlippagePercentage": 0
+            "migrationManager": "using from deployment",
+            "yieldVaultMaximumSlippagePercentage": 0.01e18
+        },
+        "vbUSDC": {
+            "proxyAdmin": "0xf4F2f5F6bAdBE05433C4604320ecC56BbECBC04E",
+            "owner": "0xf4F2f5F6bAdBE05433C4604320ecC56BbECBC04E",
+            "name": "Vault Bridge USDC",
+            "symbol": "vbUSDC",
+            "underlyingToken": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+            "minimumReservePercentage": 0,
+            "yieldVault": "0xBEefb9f61CC44895d8AEc381373555a64191A9c4",
+            "yieldRecipient": "0xf4F2f5F6bAdBE05433C4604320ecC56BbECBC04E",
+            "lxlyBridge": "using above",
+            "minimumYieldVaultDeposit": 0,
+            "migrationManager": "using from deployment",
+            "yieldVaultMaximumSlippagePercentage": 0.01e18
         },
         "vbWBTC": {
-            "owner": "0x0000c6A4e8C654dF65503CBb0eDc82B4Ce9158e6",
-            "name": "VaultBridge WBTC",
+            "proxyAdmin": "0x2De242e27386e224E5fbF110EA8406d5B70740ec",
+            "owner": "0x2De242e27386e224E5fbF110EA8406d5B70740ec",
+            "name": "Vault Bridge WBTC",
             "symbol": "vbWBTC",
             "underlyingToken": "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599",
             "minimumReservePercentage": 0,
-            "yieldVault": "0x0000c6A4e8C654dF65503CBb0eDc82B4Ce9158e6",
-            "yieldRecipient": "0x0000c6A4e8C654dF65503CBb0eDc82B4Ce9158e6",
+            "yieldVault": "0x812B2C6Ab3f4471c0E43D4BB61098a9211017427",
+            "yieldRecipient": "0x2De242e27386e224E5fbF110EA8406d5B70740ec",
             "lxlyBridge": "using above",
             "minimumYieldVaultDeposit": 0,
-            "migrationManager": "0x0000c6A4e8C654dF65503CBb0eDc82B4Ce9158e6",
-            "yieldVaultMaximumSlippagePercentage": 0
+            "migrationManager": "using from deployment",
+            "yieldVaultMaximumSlippagePercentage": 0.01e18
+        },
+        "vbETH": {
+            "proxyAdmin": "0x2De242e27386e224E5fbF110EA8406d5B70740ec",
+            "owner": "0x2De242e27386e224E5fbF110EA8406d5B70740ec",
+            "name": "Vault Bridge ETH",
+            "symbol": "vbETH",
+            "underlyingToken": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+            "minimumReservePercentage": 0,
+            "yieldVault": "0x31A5684983EeE865d943A696AAC155363bA024f9",
+            "yieldRecipient": "0x2De242e27386e224E5fbF110EA8406d5B70740ec",
+            "lxlyBridge": "using above",
+            "minimumYieldVaultDeposit": 0,
+            "migrationManager": "using from deployment",
+            "yieldVaultMaximumSlippagePercentage": 0.01e18
         }
     },
     "747474": {
-        
+        "vbUSDS": {
+            "customToken": "0x62D6A123E8D19d06d68cf0d2294F9A3A0362c6b3",
+            "underlyingToken": "0x2134866886ce784fE2E0DE819118E4D32b4Be32C",
+            "owner": "0xA8C31B2edd84c654d06d626383f4154D1E40C5Ff",
+            "name": "Vault Bridge USDS",
+            "symbol": "vbUSDS",
+            "decimals": 18,
+            "nonMigratableBackingPercentage": 0.01e18
+        },
+        "vbUSDT": {
+            "customToken": "0x2DCa96907fde857dd3D816880A0df407eeB2D2F2",
+            "underlyingToken": "0xf44e3BCB7A2461CC08185E127B324f2486a74E20",
+            "owner": "0x2De242e27386e224E5fbF110EA8406d5B70740ec",
+            "name": "Vault Bridge USDT",
+            "symbol": "vbUSDT",
+            "decimals": 6,
+            "nonMigratableBackingPercentage": 0.02e18
+        },
+        "vbUSDC": {
+            "customToken": "0x203A662b0BD271A6ed5a60EdFbd04bFce608FD36",
+            "underlyingToken": "0xfd415D011FfaA8e6f17fa753CdB080d1dE266784",
+            "owner": "0xf4F2f5F6bAdBE05433C4604320ecC56BbECBC04E",
+            "name": "Vault Bridge USDC",
+            "symbol": "vbUSDC",
+            "decimals": 6,
+            "nonMigratableBackingPercentage": 0.02e18
+        },
+        "vbWBTC": {
+            "customToken": "0x0913DA6Da4b42f538B445599b46Bb4622342Cf52",
+            "underlyingToken": "0xB33e43A3F276e8e75792b941bccC996EcB2c0bBD",
+            "owner": "0x2De242e27386e224E5fbF110EA8406d5B70740ec",
+            "name": "Vault Bridge WBTC",
+            "symbol": "vbWBTC",
+            "decimals": 8,
+            "nonMigratableBackingPercentage": 0.01e18
+        },
+        "vbETH": {
+            "customToken": "0xEE7D8BCFb72bC1880D0Cf19822eB0A2e6577aB62",
+            "underlyingToken": "0x815955d051C6262C16c720b19D735426254Bec5B",
+            "owner": "0x2De242e27386e224E5fbF110EA8406d5B70740ec",
+            "name": "Vault Bridge ETH",
+            "symbol": "vbETH",
+            "decimals": 18,
+            "nonMigratableGasBackingPercentage": 0.1e18
+        },
+        "migrationManager": "0x417d01B64Ea30C4E163873f3a1f77b727c689e02",
+        "polygonEngineeringMultisig": "0x4e981bAe8E3cd06Ca911ffFE5504B2653ac1C38a",
+        "lxlyBridge": "0x2a3DD3EB832aF982ec71669E178424b10Dca2EDe"
     },
     "31337": {
         "proxyAdmin": "0x0000c6A4e8C654dF65503CBb0eDc82B4Ce9158e6",
@@ -82,7 +146,7 @@
         },
         "vbETH": {
             "owner": "0x0000c6A4e8C654dF65503CBb0eDc82B4Ce9158e6",
-            "name": "VaultBridge ETH",
+            "name": "Vault Bridge ETH",
             "symbol": "vbETH",
             "underlyingToken": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
             "minimumReservePercentage": 0,
@@ -95,7 +159,7 @@
         },
         "vbUSDC": {
             "owner": "0x0000c6A4e8C654dF65503CBb0eDc82B4Ce9158e6",
-            "name": "VaultBridge USDC",
+            "name": "Vault Bridge USDC",
             "symbol": "vbUSDC",
             "underlyingToken": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
             "minimumReservePercentage": 0,
@@ -108,7 +172,7 @@
         },
         "vbUSDS": {
             "owner": "0x0000c6A4e8C654dF65503CBb0eDc82B4Ce9158e6",
-            "name": "VaultBridge USDS",
+            "name": "Vault Bridge USDS",
             "symbol": "vbUSDS",
             "underlyingToken": "0xdc035d45d973e3ec169d2276ddab16f1e407384f",
             "minimumReservePercentage": 0,
@@ -121,7 +185,7 @@
         },
         "vbUSDT": {
             "owner": "0x0000c6A4e8C654dF65503CBb0eDc82B4Ce9158e6",
-            "name": "VaultBridge USDT",
+            "name": "Vault Bridge USDT",
             "symbol": "vbUSDT",
             "underlyingToken": "0xdac17f958d2ee523a2206206994597c13d831ec7",
             "minimumReservePercentage": 0,
@@ -134,7 +198,7 @@
         },
         "vbWBTC": {
             "owner": "0x0000c6A4e8C654dF65503CBb0eDc82B4Ce9158e6",
-            "name": "VaultBridge WBTC",
+            "name": "Vault Bridge WBTC",
             "symbol": "vbWBTC",
             "underlyingToken": "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599",
             "minimumReservePercentage": 0,

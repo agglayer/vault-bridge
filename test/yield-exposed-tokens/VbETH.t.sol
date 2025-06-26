@@ -1,4 +1,4 @@
-//
+// SPDX-License-Identifier: LicenseRef-PolygonLabs-Open-Attribution OR LicenseRef-PolygonLabs-Source-Available
 pragma solidity 0.8.29;
 
 import {VbETH} from "src/vault-bridge-tokens/vbETH/VbETH.sol";
@@ -28,6 +28,15 @@ contract LXLYBridgeMock {
 
     function setGasTokenNetwork(uint32 _gasTokenNetwork) external {
         gasTokenNetwork = _gasTokenNetwork;
+    }
+
+    function networkID() external pure returns (uint32) {
+        return 1;
+    }
+
+    function wrappedAddressIsNotMintable(address wrappedAddress) external pure returns (bool isNotMintable) {
+        (wrappedAddress);
+        return true;
     }
 }
 
@@ -64,9 +73,10 @@ contract VbETHTest is GenericVaultBridgeTokenTest {
         // Deploy implementation
         vbToken = GenericVaultBridgeToken(payable(address(new VbETH())));
         vbTokenImplementation = address(vbToken);
-        stateBeforeInitialize = vm.snapshotState();
 
         vbTokenPart2 = new VaultBridgeTokenPart2();
+
+        stateBeforeInitialize = vm.snapshotState();
 
         // prepare calldata
         VaultBridgeToken.InitializationParameters memory initParams = VaultBridgeToken.InitializationParameters({
@@ -173,25 +183,11 @@ contract VbETHTest is GenericVaultBridgeTokenTest {
         vm.expectRevert(VaultBridgeToken.InvalidYieldRecipient.selector);
         vbToken = GenericVaultBridgeToken(payable(_proxify(vbTokenImplementation, address(this), initData)));
 
-        lxlyBridgeMock.setGasTokenAddress(address(0));
-        lxlyBridgeMock.setGasTokenNetwork(DUMMY_NETWORK_ID);
-
         initParams.yieldRecipient = yieldRecipient;
-        initParams.lxlyBridge = address(lxlyBridgeMock);
+        initParams.lxlyBridge = address(0);
         initData = abi.encodeCall(vbToken.initialize, (initializer, initParams));
-        vm.expectRevert(VbETH.ContractNotSupportedOnThisNetwork.selector);
+        vm.expectRevert(VaultBridgeToken.InvalidLxLyBridge.selector);
         vbToken = GenericVaultBridgeToken(payable(_proxify(vbTokenImplementation, address(this), initData)));
-
-        lxlyBridgeMock.setGasTokenAddress(DUMMY_ADDRESS);
-        lxlyBridgeMock.setGasTokenNetwork(0);
-
-        initParams.lxlyBridge = address(lxlyBridgeMock);
-        initData = abi.encodeCall(vbToken.initialize, (initializer, initParams));
-        vm.expectRevert(VbETH.ContractNotSupportedOnThisNetwork.selector);
-        vbToken = GenericVaultBridgeToken(payable(_proxify(vbTokenImplementation, address(this), initData)));
-
-        lxlyBridgeMock.setGasTokenAddress(address(0));
-        lxlyBridgeMock.setGasTokenNetwork(0);
 
         initParams.lxlyBridge = address(lxlyBridgeMock);
         initParams.migrationManager = address(0);
@@ -209,6 +205,23 @@ contract VbETHTest is GenericVaultBridgeTokenTest {
         initParams.vaultBridgeTokenPart2 = address(0);
         initData = abi.encodeCall(vbToken.initialize, (initializer, initParams));
         vm.expectRevert(VaultBridgeToken.InvalidVaultBridgeTokenPart2.selector);
+        vbToken = GenericVaultBridgeToken(payable(_proxify(vbTokenImplementation, address(this), initData)));
+
+        lxlyBridgeMock.setGasTokenAddress(address(0));
+        lxlyBridgeMock.setGasTokenNetwork(DUMMY_NETWORK_ID);
+
+        initParams.vaultBridgeTokenPart2 = address(vbTokenPart2);
+        initParams.lxlyBridge = address(lxlyBridgeMock);
+        initData = abi.encodeCall(vbToken.initialize, (initializer, initParams));
+        vm.expectRevert(VbETH.ContractNotSupportedOnThisNetwork.selector);
+        vbToken = GenericVaultBridgeToken(payable(_proxify(vbTokenImplementation, address(this), initData)));
+
+        lxlyBridgeMock.setGasTokenAddress(DUMMY_ADDRESS);
+        lxlyBridgeMock.setGasTokenNetwork(0);
+
+        initParams.lxlyBridge = address(lxlyBridgeMock);
+        initData = abi.encodeCall(vbToken.initialize, (initializer, initParams));
+        vm.expectRevert(VbETH.ContractNotSupportedOnThisNetwork.selector);
         vbToken = GenericVaultBridgeToken(payable(_proxify(vbTokenImplementation, address(this), initData)));
     }
 

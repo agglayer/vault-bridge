@@ -1,10 +1,11 @@
-//
+// SPDX-License-Identifier: LicenseRef-PolygonLabs-Open-Attribution OR LicenseRef-PolygonLabs-Source-Available
 pragma solidity 0.8.29;
 
 // Main functionality.
 import {GenericNativeConverter} from "../GenericNativeConverter.sol";
 
 /// @title VbUSDT Native Converter
+/// @author See https://github.com/agglayer/vault-bridge
 /// @dev No customization is required.
 /// @dev This contract does not need to be deployed. You can point `VbUSDTNativeConverter` proxy to `GenericNativeConverter` instead.
 contract VbUSDTNativeConverter is GenericNativeConverter {}

@@ -1,4 +1,4 @@
-//
+// SPDX-License-Identifier: LicenseRef-PolygonLabs-Open-Attribution OR LicenseRef-PolygonLabs-Source-Available
 pragma solidity 0.8.29;
 
 import {CustomToken} from "../../CustomToken.sol";
@@ -7,6 +7,7 @@ import {IVersioned} from "../../etc/IVersioned.sol";
 import {ILxLyBridge} from "../../etc/ILxLyBridge.sol";
 
 /// @title WETH
+/// @author See https://github.com/agglayer/vault-bridge
 /// @dev based on https://github.com/gnosis/canonical-weth/blob/master/contracts/WETH9.sol
 contract WETH is CustomToken {
     /// @dev Storage of WETH contract.

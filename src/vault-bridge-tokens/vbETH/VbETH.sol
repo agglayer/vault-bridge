@@ -1,4 +1,4 @@
-//
+// SPDX-License-Identifier: LicenseRef-PolygonLabs-Open-Attribution OR LicenseRef-PolygonLabs-Source-Available
 pragma solidity 0.8.29;
 
 import {VaultBridgeToken, ILxLyBridge} from "../../VaultBridgeToken.sol";
@@ -8,6 +8,7 @@ import {IVersioned} from "../../etc/IVersioned.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /// @title Vault Bridge gas token
+/// @author See https://github.com/agglayer/vault-bridge
 /// @dev CAUTION! As-is, this contract MUST NOT be used on a network if the gas token is not ETH.
 contract VbETH is VaultBridgeToken {
     using SafeERC20 for IWETH9;
@@ -23,14 +24,14 @@ contract VbETH is VaultBridgeToken {
         external
         initializer
     {
+        // Initialize the base implementation.
+        __VaultBridgeToken_init(initializer_, initParams);
+
         require(
             ILxLyBridge(initParams.lxlyBridge).gasTokenAddress() == address(0)
                 && ILxLyBridge(initParams.lxlyBridge).gasTokenNetwork() == 0,
             ContractNotSupportedOnThisNetwork()
         );
-
-        // Initialize the base implementation.
-        __VaultBridgeToken_init(initializer_, initParams);
     }
 
     /// @dev deposit ETH to get vbETH

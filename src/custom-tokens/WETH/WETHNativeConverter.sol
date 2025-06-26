@@ -1,4 +1,4 @@
-//
+// SPDX-License-Identifier: LicenseRef-PolygonLabs-Open-Attribution OR LicenseRef-PolygonLabs-Source-Available
 pragma solidity 0.8.29;
 
 import {NativeConverter, Math} from "../../NativeConverter.sol";
@@ -8,6 +8,7 @@ import {MigrationManager} from "../../MigrationManager.sol";
 import {ILxLyBridge} from "../../etc/ILxLyBridge.sol";
 
 /// @title WETH Native Converter
+/// @author See https://github.com/agglayer/vault-bridge
 contract WETHNativeConverter is NativeConverter {
     /// @dev Storage of WETHNativeConverter contract.
     /// @dev It's implemented on a custom ERC-7201 namespace to reduce the risk of storage collisions when using with upgradeable contracts.

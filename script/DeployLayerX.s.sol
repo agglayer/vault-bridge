@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: LicenseRef-PolygonLabs-Open-Attribution OR LicenseRef-PolygonLabs-Source-Available
 pragma solidity ^0.8.29;
 
 import "forge-std/Script.sol";
@@ -27,8 +27,6 @@ contract DeployLayerX is Script {
         returns (MigrationManager migrationManager, GenericVaultBridgeToken[] memory vbTokenContracts)
     {
         string memory input = vm.readFile("script/input.json");
-        string memory chainIdSlug = string(abi.encodePacked('["', vm.toString(block.chainid), '"]'));
-        address proxyAdmin = input.readAddress(string.concat(chainIdSlug, ".proxyAdmin"));
 
         string memory migrationManagerSlug =
             string(abi.encodePacked('["', vm.toString(block.chainid), '"]', '.["migrationManager"]'));
@@ -36,6 +34,7 @@ contract DeployLayerX is Script {
         // Read from input.json based on current chain ID
         address ownerMigrationManager = input.readAddress(string.concat(migrationManagerSlug, ".ownerMigrationManager"));
         address lxlyBridge = input.readAddress(string.concat(migrationManagerSlug, ".lxlyBridge"));
+        address proxyAdmin = input.readAddress(string.concat(migrationManagerSlug, ".proxyAdmin"));
 
         vm.startBroadcast(deployerPrivateKey);
 
@@ -60,9 +59,9 @@ contract DeployLayerX is Script {
         string[] memory vbTokens = new string[](5);
         vbTokens[0] = "vbETH";
         vbTokens[1] = "vbUSDC";
-        vbTokens[2] = "vbUSDS";
-        vbTokens[3] = "vbUSDT";
-        vbTokens[4] = "vbWBTC";
+        vbTokens[2] = "vbUSDT";
+        vbTokens[3] = "vbWBTC";
+        vbTokens[4] = "vbUSDS";
 
         GenericVaultBridgeToken vbTokenImpl = new GenericVaultBridgeToken();
         address initializer = address(new VaultBridgeTokenInitializer());
@@ -89,6 +88,8 @@ contract DeployLayerX is Script {
                 ),
                 vaultBridgeTokenPart2: vb2
             });
+
+            proxyAdmin = input.readAddress(string.concat(vbTokenSlug, ".proxyAdmin"));
 
             bytes memory initData = abi.encodeCall(vbTokenImpl.initialize, (initializer, initParams));
 
