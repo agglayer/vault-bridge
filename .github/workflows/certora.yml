@@ -16,7 +16,7 @@ env:
     certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GVBTBalances.spec
     certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/tokenMockBalances.spec
     certora/confs/GenericNativeConverter.conf
-    certora/confs/MigrationManager-generic.conf --rule onMsgReceived_doesntAlwaysRever
+    certora/confs/MigrationManager-generic.conf --rule onMsgReceived_doesntAlwaysRevert
 jobs:
   check:
     runs-on: ubuntu-latest
