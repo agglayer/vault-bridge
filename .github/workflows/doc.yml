@@ -40,7 +40,7 @@ jobs:
 
       - name: Build docs with Forge
         run: |
-          forge doc --build --out ./docs
+          forge doc --build --out docs
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
