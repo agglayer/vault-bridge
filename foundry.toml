@@ -34,4 +34,7 @@ katana = "https://rpc.katanarpc.com/${KATANA_API_KEY}"
 sepolia = "https://sepolia.gateway.tenderly.co"
 bokuto = "https://rpc-bokuto.katanarpc.com/${BOKUTO_API_KEY}"
 
+[doc]
+title = "Vault Bridge Technical Reference"
+
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
