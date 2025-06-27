@@ -2,7 +2,7 @@
 
 <img src=".github/assets/banner.png" alt="Vault Bridge Banner" style="border-radius: 25px;"/>
 
-<br>
+&nbsp;<br>
 
 **[⛓️ Deployments](#deployments)**
 **&nbsp;&nbsp; [📙 Documentation](#documentation)**
@@ -26,11 +26,11 @@ Vault Bridge enables chains and apps to generate native yield on TVL by putting 
 The protocol is comprised of:
 
 - One primary chain ("Layer X")
-  - [Vault Bridge Token](#vault-bridge-token-)
-  - [Migration Manager](#migration-manager-singleton-)
+  - [Vault Bridge Token](#vault-bridge-token)
+  - [Migration Manager](#migration-manager)
 - Many secondary chains ("Layer Y")
-  - [Custom Token](#custom-token-)
-  - [Native Converter](#native-converter-)
+  - [Custom Token](#custom-token)
+  - [Native Converter](#native-converter)
 
 ## *Overview*
 
@@ -52,7 +52,7 @@ Assets in high demand with available yield strategies, such as WETH and USDC, ca
 
 The Migration Manager is:
 
-- [Vault Bridge Token](#vault-bridge-token-) dependency
+- [Vault Bridge Token](#vault-bridge-token) dependency
 
 vbTokens can be minted directly on Layer Y. In order for an underlying asset that backs vbToken minted on Layer Y to be deposited in Vault Bridge Token contract on Layer X, backing is migrated to Layer X via Native Converter and Migration Manager. Migration Manager completes migrations by interacting with Vault Bridge Token contract. All vbTokens share the same Migration Manager contract.
 
