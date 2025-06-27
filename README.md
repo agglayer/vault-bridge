@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src=".github/assets/banner.png" alt="Vault Bridge Banner" style="border-radius: 25px;"/>
+<img src="https://github.com/agglayer/vault-bridge/blob/feat/v1/.github/assets/banner.png?raw=true" alt="Vault Bridge Banner" style="border-radius: 25px;"/>
 
-&nbsp;<br>
+&nbsp;
 
 **[⛓️ Deployments](#deployments)**
 **&nbsp;&nbsp; [📙 Documentation](#documentation)**
@@ -10,10 +10,12 @@
 
 </div>
 
+<br>
+
 # *Content*
 
 - [Overview](#overview)
-- [Get Started](#integration)
+- [Get Started](#get-started)
 - [Documentation](#documentation)
 - [Deployments](#deployments)
 - [Usage](#usage)
@@ -141,6 +143,11 @@ forge coverage --ir-minimum --report lcov && genhtml -o coverage lcov.info
 
 This codebase is licensed under Source Available License.
 
-See [`LICENSE-SOURCE-AVAILABLE`](https://github.com/agglayer/vault-bridge/blob/main/LICENSE-SOURCE-AVAILABLE).
+1. Open Attribution License – this license is similar to the MIT License and permits broad 
+use (including for commercial purposes), but is only available when the codebase is used in 
+connection with cryptoasset deposits into the Agglayer’s unified LxLy bridge. See: [LICENSE-OPEN-LICENSE](https://github.com/agglayer/vault-bridge/blob/main/LICENSE-OPEN-LICENSE)
+1. Source Available License – for all other use cases, including cryptoasset deposits into 
+elsewhere than the Agglayer’s unified LxLy bridge, you may use the codebase under the Source 
+Available License. See: [LICENSE-SOURCE-AVAILABLE-LICENSE](https://github.com/agglayer/vault-bridge/blob/main/LICENSE-SOURCE-AVAILABLE-LICENSE)
 
 Your use of this software constitutes acceptance of these license terms.
