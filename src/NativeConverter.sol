@@ -220,7 +220,7 @@ abstract contract NativeConverter is
         }
     }
 
-    // -----================= ::: PSEUDO-ERC-4626 ::: =================-----
+    // -----================= ::: PSEUDO-VAULT ::: =================-----
 
     /// @notice Deposit a specific amount of the underlying token and get Custom Token.
     /// @param assets The amount of the underlying token to convert to Custom Token.

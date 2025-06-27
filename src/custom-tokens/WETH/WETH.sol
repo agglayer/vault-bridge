@@ -78,6 +78,7 @@ contract WETH is CustomToken {
         _deposit();
     }
 
+    /// @notice Same as WETH9 deposit function.
     function deposit() external payable whenNotPaused onlyIfGasTokenIsEth nonReentrant {
         _deposit();
     }
@@ -87,6 +88,7 @@ contract WETH is CustomToken {
         emit Deposit(msg.sender, msg.value);
     }
 
+    /// @notice Same as WETH9 withdraw function, but liqudity is guaranteed only up to a certain percentage.
     function withdraw(uint256 value) external whenNotPaused onlyIfGasTokenIsEth nonReentrant {
         _burn(msg.sender, value);
         uint256 availableAssets = address(this).balance;
