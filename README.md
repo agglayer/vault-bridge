@@ -15,7 +15,7 @@
 # *Content*
 
 - [Overview](#overview)
-- [Get Started](#get-started)
+- [Getting Started](#getting-started)
 - [Documentation](#documentation)
 - [Deployments](#deployments)
 - [Usage](#usage)
@@ -76,15 +76,15 @@ A Native Converter is:
 
 Native Converter can be deployed on Layer Y to enable minting of vbToken directly on Layer Y by converting the bridged underlying asset, in a 1:1 ratio. The same can be deconverted to by burning bridged vbToken. Accumulated backing in Native Converter on Layer Y can be migrated to Layer X to be deposited into Vault Bridge Token contract via Migration Manger. For this reason, liqudity for deconverting to the bridged underlying token on Layer Y is guaranteed only up to a certain percentage. Native Converter doubles a bridge extension, so vbToken can be deconverted and bridged in a single call.
 
-# *Get Started*
+# *Getting Started*
 
 Getting started should be easy as Vault Bridge Token contracts follow the ERC-4626 interface. Variants of the standard ERC-4626 functions include `depositAndBridge` and `claimAndRedeem`. Please see the [documentation](#documentation) for more information.
 
-If your chain is part of Agglayer, you can start using the official vbTokens immediately. Please note that you will get vbToken when bridging, not the underlying token, therefore activity should be incentivized in vbToken. You must participate in the revenue sharing program in order to receive yield. Please reach out if interested in revenue sharing.
+If your chain is part of Agglayer, you can start using the official vbTokens immediately. Please note that you will get vbToken when bridging, not the underlying token, therefore activity should be incentivized in vbToken. You must participate in the revenue sharing program in order to receive yield. Please [contact our team](https://info.polygon.technology/vaultbridge-intake-form) if interested in revenue sharing.
 
-If your chain is not part of Agglayer, you can start using the official vbTokens immediately. Please note that you will need to use a third party bridge to bridge vbTokens to your chain, and Native Converter functionality will not be supported. You must participate in the revenue sharing program in order to receive yield. Please reach out if interested in revenue sharing.
+If your chain is not part of Agglayer, you can start using the official vbTokens immediately. Please note that you will need to use a third party bridge to bridge vbTokens to your chain, and Native Converter functionality will not be supported. You must participate in the revenue sharing program in order to receive yield. Please [contact our team](https://info.polygon.technology/vaultbridge-intake-form) if interested in revenue sharing.
 
-Full support for non-Agglayer chains, third-party bridges, as well as non-EVM chains is coming soon. Please reach out to register interest.
+Full support for non-Agglayer chains, third-party bridges, as well as non-EVM chains is coming soon. Please [contact our team](https://info.polygon.technology/vaultbridge-intake-form) to register interest.
 
 # *Documentation*
 
