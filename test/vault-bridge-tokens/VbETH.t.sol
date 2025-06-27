@@ -7,11 +7,11 @@ import {ILxLyBridge} from "src/etc/ILxLyBridge.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {IWETH9} from "src/etc/IWETH9.sol";
 import {
-    GenericVaultBridgeTokenTest,
     GenericVaultBridgeToken,
-    VaultBridgeTokenPart2,
+    GenericVaultBridgeTokenTest,
     IERC20,
-    SafeERC20
+    SafeERC20,
+    VaultBridgeTokenPart2
 } from "test/GenericVaultBridgeToken.t.sol";
 import {VaultBridgeTokenInitializer} from "src/VaultBridgeTokenInitializer.sol";
 import {TestVault} from "test/etc/TestVault.sol";
@@ -59,7 +59,7 @@ contract VbETHTest is GenericVaultBridgeTokenTest {
         lxlyBridgeMock = new LXLYBridgeMock();
         asset = WETH;
         vbTokenVault = new TestVault(asset);
-        version = "0.5.0";
+        version = "1.0.0";
         name = "Vault Bridge ETH";
         symbol = "vbETH";
         decimals = 18;
