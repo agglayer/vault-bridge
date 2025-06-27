@@ -20,12 +20,11 @@ rule integrityOf_simulateWithdraw_force(env e)
     assert res == assets;
 }
 
-// meaning: reservedAssets + 1 >= minimumReservedAssets
+// reservedAssets >= minimumReservedAssets
 // where minimumReservedAssets = minimumReservePercentage * totalSupply / 10^18
-// we add "+ 1" as a margin for rounding errors
 function isBalanced() returns bool
 {
-    return (reservedAssets() + 1) * 10^18 >= minimumReservePercentage() * totalSupply();
+    return reservedAssets() * 10^18 >= minimumReservePercentage() * totalSupply();
 }
 
 // After calling rebalanceReserve, the reservedAssets >= minimumReservedAssets  
@@ -36,6 +35,23 @@ rule integrityOfRebalance(env e)
     rebalanceReserve_harness(e, false, false);
     uint256 assetsAfter = totalAssets();
     assert isBalanced();
+    assert assetsBefore == assetsAfter;
+}
+
+// same as isBalanced but we add "+ 1" as a margin for rounding errors
+function isBalanced_margin1() returns bool
+{
+    return (reservedAssets() + 1) * 10^18 >= minimumReservePercentage() * totalSupply();
+}
+
+// After calling rebalanceReserve, the reservedAssets + 1 >= minimumReservedAssets  
+rule integrityOfRebalance_margin1(env e)
+{
+    safeAssumptions(e);
+    uint256 assetsBefore = totalAssets();
+    rebalanceReserve_harness(e, false, false);
+    uint256 assetsAfter = totalAssets();
+    assert isBalanced_margin1();
     assert assetsBefore == assetsAfter;
 }
 

@@ -48,8 +48,19 @@ invariant nonMigratableBackingPercentageLT_E18()
 
 // backingOnLayerY >= nonMigratableBacking, where
 // nonMigratableBacking = customToken().totalSupply() * nonMigratableBackingPercentage / 10^18
-// added +1 to cover for rounding errors. (migratableBacking is rounding up for some reason)
 invariant nonMigratableBackingAlwaysPresent()
+    backingOnLayerY() * 10^18 >= customTokenContract.totalSupply() * nonMigratableBackingPercentage()
+    filtered { f -> !excludedMethod(f) }
+    {
+        preserved with (env e) {
+            safeAssumptions(e);
+        }
+}
+
+// backingOnLayerY >= nonMigratableBacking, where
+// nonMigratableBacking = customToken().totalSupply() * nonMigratableBackingPercentage / 10^18
+// added +1 to cover for rounding errors.
+invariant nonMigratableBackingAlwaysPresent_margin1()
     (backingOnLayerY() + 1) * 10^18 >= customTokenContract.totalSupply() * nonMigratableBackingPercentage()
     filtered { f -> !excludedMethod(f) }
     {
