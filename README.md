@@ -12,15 +12,17 @@
 
 # *Content*
 
-- [About](#about)
-- [Integration](#integration)
+- [Overview](#overview)
+- [Get Started](#integration)
 - [Documentation](#documentation)
 - [Deployments](#deployments)
 - [Usage](#usage)
 - [License](#license)
 
-# *About*
-2
+<br>
+
+# *Overview*
+
 Vault Bridge enables chains and apps to generate native yield on TVL by putting bridged assets to work.
 
 The protocol is comprised of:
@@ -32,7 +34,7 @@ The protocol is comprised of:
   - [Custom Token](#custom-token)
   - [Native Converter](#native-converter)
 
-## *Overview*
+## *TL;DR*
 
 Select assets are bridged from Layer X to Layer Y. These assets are deposited into Vault Bridge Token contract on Layer X, which mints and bridges vbToken to Layer Y. Deposited assets are used to generate yield on Layer X, while bridged vbTokens are used in DeFi on Layer Y. Generated yield gets distributed to chains and apps participating in the revenue sharing program.
 
@@ -72,7 +74,7 @@ A Native Converter is:
 
 Native Converter can be deployed on Layer Y to enable minting of vbToken directly on Layer Y by converting the bridged underlying asset, in a 1:1 ratio. The same can be deconverted to by burning bridged vbToken. Accumulated backing in Native Converter on Layer Y can be migrated to Layer X to be deposited into Vault Bridge Token contract via Migration Manger. For this reason, liqudity for deconverting to the bridged underlying token on Layer Y is guaranteed only up to a certain percentage. Native Converter doubles a bridge extension, so vbToken can be deconverted and bridged in a single call.
 
-# *Integration*
+# *Get Started*
 
 Getting started should be easy as Vault Bridge Token contracts follow the ERC-4626 interface. Variants of the standard ERC-4626 functions include `depositAndBridge` and `claimAndRedeem`. Please see the [documentation](#documentation) for more information.
 
