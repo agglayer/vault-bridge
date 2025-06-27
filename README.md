@@ -90,7 +90,7 @@ Full support for non-Agglayer chains, third-party bridges, as well as non-EVM ch
 
 - [General documentation](https://docs.agglayer.dev/)
 - [Technical reference](https://agglayer.github.io/vault-bridge/)
-- In addition to the general documentation and technical reference, source code is 100% documented and you are encouraged to check it out.
+- In addition to the general documentation and technical reference, the [source code](https://github.com/agglayer/vault-bridge/tree/main/src) is 100% documented and you are encouraged to check it out.
 
 # *Deployments*
 
