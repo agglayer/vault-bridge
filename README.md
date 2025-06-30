@@ -1,8 +1,6 @@
 <div align="center">
 
-<img src="https://github.com/agglayer/vault-bridge/blob/feat/v1/.github/assets/banner.png?raw=true" alt="Vault Bridge Banner" style="border-radius: 25px;"/>
-
-&nbsp;
+<img src="https://github.com/agglayer/vault-bridge/blob/feat/v1/.github/assets/banner.png?raw=true" alt="Vault Bridge Banner" style="border-radius: 12px;"/>
 
 **[⛓️ Deployments](#deployments)**
 **&nbsp;&nbsp; [📙 Documentation](#documentation)**
@@ -10,9 +8,7 @@
 
 </div>
 
-<br>
-
-# *Content*
+# *Contents*
 
 - [Overview](#overview)
 - [Getting Started](#getting-started)
@@ -20,8 +16,6 @@
 - [Deployments](#deployments)
 - [Usage](#usage)
 - [License](#license)
-
-<br>
 
 # *Overview*
 
@@ -78,19 +72,19 @@ Native Converter can be deployed on Layer Y to enable minting of vbToken directl
 
 # *Getting Started*
 
-Getting started should be easy as Vault Bridge Token contracts follow the ERC-4626 interface. Variants of the standard ERC-4626 functions include `depositAndBridge` and `claimAndRedeem`. Please see the [documentation](#documentation) for more information.
+Getting started should be easy as Vault Bridge Token contracts follow the ERC-4626 interface. Variants of the standard ERC-4626 functions include `depositAndBridge` and `claimAndRedeem`. Please see [Documentation](#documentation) for more information.
 
-If your chain is part of Agglayer, you can start using the official vbTokens immediately. Please note that you will get vbToken when bridging, not the underlying token, therefore activity should be incentivized in vbToken. You must participate in the revenue sharing program in order to receive yield. Please [contact our team](https://info.polygon.technology/vaultbridge-intake-form) if interested in revenue sharing.
+If your chain is part of Agglayer, you can start using the official vbTokens immediately. Please note that you will get vbToken when bridging, not the underlying token, therefore activity should be incentivized in vbToken. You must participate in the revenue sharing program in order to receive yield. [Contact our team](https://info.polygon.technology/vaultbridge-intake-form) if interested in revenue sharing.
 
-If your chain is not part of Agglayer, you can start using the official vbTokens immediately. Please note that you will need to use a third party bridge to bridge vbTokens to your chain, and Native Converter functionality will not be supported. You must participate in the revenue sharing program in order to receive yield. Please [contact our team](https://info.polygon.technology/vaultbridge-intake-form) if interested in revenue sharing.
+If your chain is not part of Agglayer, you can start using the official vbTokens immediately. Please note that you will need to use a third party bridge to bridge vbTokens to your chain, and Native Converter functionality will not be supported. You must participate in the revenue sharing program in order to receive yield. [Contact our team](https://info.polygon.technology/vaultbridge-intake-form) if interested in revenue sharing.
 
-Full support for non-Agglayer chains, third-party bridges, as well as non-EVM chains is coming soon. Please [contact our team](https://info.polygon.technology/vaultbridge-intake-form) to register interest.
+Full support for non-Agglayer chains, third-party bridges, as well as non-EVM chains is coming soon. [Contact our team](https://info.polygon.technology/vaultbridge-intake-form) to register interest.
 
 # *Documentation*
 
-- [General documentation](https://docs.agglayer.dev/)
-- [Technical reference](https://agglayer.github.io/vault-bridge/)
-- In addition to the general documentation and technical reference, the [source code](https://github.com/agglayer/vault-bridge/tree/main/src) is 100% documented and you are encouraged to check it out.
+- [General Documentation](https://docs.agglayer.dev/)
+- [Technical Reference](https://agglayer.github.io/vault-bridge/)
+- In addition to General Documentation and Technical Reference, the [source code](https://github.com/agglayer/vault-bridge/tree/main/src) is 100% documented and you are encouraged to check it out.
 
 # *Deployments*
 
