@@ -3,8 +3,9 @@
 <img src="https://github.com/agglayer/vault-bridge/blob/feat/v1/.github/assets/banner.png?raw=true" alt="Vault Bridge Banner"/>
 
 **[⛓️ Deployments](#deployments)**
-**&nbsp;&nbsp; [📖 Documentation](#documentation)**
+**&nbsp;&nbsp; [📗 Documentation](#documentation)**
 **&nbsp;&nbsp; [🧭 Website](https://www.agglayer.dev/agglayer-vaultbridge)**
+**&nbsp;&nbsp; [🐈‍⬛ GitHub](https://github.com/agglayer/vault-bridge/)**
 
 </div>
 
