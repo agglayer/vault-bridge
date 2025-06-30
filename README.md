@@ -1,9 +1,9 @@
 <div align="center">
 
-<img src="https://github.com/agglayer/vault-bridge/blob/feat/v1/.github/assets/banner.png?raw=true" alt="Vault Bridge Banner" style="border-radius: 12px;"/>
+<img src="https://github.com/agglayer/vault-bridge/blob/feat/v1/.github/assets/banner.png?raw=true" alt="Vault Bridge Banner"/>
 
 **[⛓️ Deployments](#deployments)**
-**&nbsp;&nbsp; [📙 Documentation](#documentation)**
+**&nbsp;&nbsp; [📖 Documentation](#documentation)**
 **&nbsp;&nbsp; [🧭 Website](https://www.agglayer.dev/agglayer-vaultbridge)**
 
 </div>
@@ -66,6 +66,7 @@ Bridged vbToken can be upgraded to Custom Token on Layer Y. This enables custom 
 
 A Native Converter is:
 
+- [Vault Bridge Token](#vault-bridge-token) extension
 - [Unified Bridge](https://github.com/agglayer/agglayer-contracts) extension
 
 Native Converter can be deployed on Layer Y to enable minting of vbToken directly on Layer Y by converting the bridged underlying asset, in a 1:1 ratio. The same can be deconverted to by burning bridged vbToken. Accumulated backing in Native Converter on Layer Y can be migrated to Layer X to be deposited into Vault Bridge Token contract via Migration Manger. For this reason, liqudity for deconverting to the bridged underlying token on Layer Y is guaranteed only up to a certain percentage. Native Converter doubles a bridge extension, so vbToken can be deconverted and bridged in a single call.
