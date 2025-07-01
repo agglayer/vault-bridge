@@ -1,7 +1,6 @@
 import "bridgeSummary.spec";
 import "GenericNativeConverter_helpers.spec";
 import "./tokenMockBalances2.spec";
-//import "./CustomTokenBalances.spec";
 
 function requireAllInvariants()
 {

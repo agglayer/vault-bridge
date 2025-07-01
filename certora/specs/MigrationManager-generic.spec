@@ -1,4 +1,4 @@
-import "setup/dispatching_MigrationManager.spec";
+import "dispatchingMigrationManager.spec";
 
 using GenericVaultBridgeToken as GenericVaultBridgeToken;
 using VaultBridgeTokenPart2 as VaultBridgeTokenPart2;

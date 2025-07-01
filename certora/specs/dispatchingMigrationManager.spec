@@ -1,4 +1,4 @@
-import "../snippets/dispatching_Bridge.spec";
+import "dispatchingBridge.spec";
 
 using TokenMock as Underlying;
 
