@@ -78,7 +78,7 @@ Getting started should be easy as Vault Bridge Token contracts follow the ERC-46
 
 If your chain is part of Agglayer, you can start using the official vbTokens immediately. Please note that you will get vbToken when bridging, not the underlying token, therefore activity should be incentivized in vbToken. You must participate in the revenue sharing program in order to receive yield. [Contact our team](https://info.polygon.technology/vaultbridge-intake-form) if interested in revenue sharing.
 
-If your chain is not part of Agglayer, you can start using the official vbTokens immediately. Please note that you will need to use a third party bridge to bridge vbTokens to your chain, and Native Converter functionality will not be supported. You must participate in the revenue sharing program in order to receive yield. [Contact our team](https://info.polygon.technology/vaultbridge-intake-form) if interested in revenue sharing.
+If your chain is not part of Agglayer, you can start using the official vbTokens immediately. Please note that you will need to use a third-party bridge to bridge vbTokens to your chain, and Native Converter functionality will not be supported. You must participate in the revenue sharing program in order to receive yield. [Contact our team](https://info.polygon.technology/vaultbridge-intake-form) if interested in revenue sharing.
 
 Full support for non-Agglayer chains, third-party bridges, as well as non-EVM chains is coming soon. [Contact our team](https://info.polygon.technology/vaultbridge-intake-form) to register interest.
 
