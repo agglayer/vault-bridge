@@ -617,7 +617,7 @@ abstract contract VaultBridgeToken is
             }
         }
 
-        // Perform the same solvency check as `_withdrawFromYieldVault` would do.
+        // Perform the same solvency check as `_withdrawFromYieldVault` would.
         bool solvencyCheckPassed = Math.mulDiv(
             convertToAssets(totalSupply() + yield()) - reservedAssets(), burnedYieldVaultShares, maxWithdraw_
         ) <= Math.mulDiv($.yieldVault.balanceOf(address(this)), 1e18 + $.yieldVaultMaximumSlippagePercentage, 1e18);
@@ -906,7 +906,8 @@ abstract contract VaultBridgeToken is
         uint256 originalUncollectedYield = yield();
 
         // Calculate the minimum reserve amount.
-        uint256 minimumReserve = convertToAssets(Math.mulDiv(originalTotalSupply, $.minimumReservePercentage, 1e18));
+        uint256 minimumReserve =
+            convertToAssets(Math.mulDiv(originalTotalSupply, $.minimumReservePercentage, 1e18, Math.Rounding.Ceil));
 
         // Check if the reserve is below, above, or at the minimum threshold.
         /* Below. */
@@ -1082,8 +1083,9 @@ abstract contract VaultBridgeToken is
         VaultBridgeTokenStorage storage $ = _getVaultBridgeTokenStorage();
 
         // Calculate the minimum reserve.
-        uint256 minimumReserve =
-            convertToAssets(Math.mulDiv(totalSupply() + nonMintedShares, $.minimumReservePercentage, 1e18));
+        uint256 minimumReserve = convertToAssets(
+            Math.mulDiv(totalSupply() + nonMintedShares, $.minimumReservePercentage, 1e18, Math.Rounding.Ceil)
+        );
 
         // Calculate the amount to reserve.
         assetsToReserve = $.reservedAssets < minimumReserve ? minimumReserve - $.reservedAssets : 0;
