@@ -232,12 +232,6 @@ abstract contract VaultBridgeToken is
 
     // -----================= ::: STORAGE ::: =================-----
 
-    /// @notice Yield collected getter
-    function getNetCollectedYield() public view returns (uint256) {
-        VaultBridgeTokenStorage storage $ = _getVaultBridgeTokenStorage();
-        return $._netCollectedYield;
-    }
-
     /// @notice The underlying token that backs vbToken.
     function underlyingToken() public view returns (IERC20) {
         VaultBridgeTokenStorage storage $ = _getVaultBridgeTokenStorage();

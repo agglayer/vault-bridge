@@ -44,4 +44,10 @@ contract GenericVaultBridgeToken is VaultBridgeToken {
     {
         return _depositIntoYieldVault(assets, exact);
     }
+
+    /// @notice Yield collected getter
+     function getNetCollectedYield() public view returns (uint256) {
+         VaultBridgeTokenStorage storage $ = _getVaultBridgeTokenStorage();
+         return $._netCollectedYield;
+     }
 }
