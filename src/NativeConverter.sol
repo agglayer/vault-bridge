@@ -409,7 +409,7 @@ abstract contract NativeConverter is
 
         // Calculate the non-migratable backing.
         uint256 nonMigratableBacking = _convertToAssets(
-            Math.mulDiv(customToken().totalSupply(), $.nonMigratableBackingPercentage, 1e18, Math.Rounding.Floor)
+            Math.mulDiv(customToken().totalSupply(), $.nonMigratableBackingPercentage, 1e18, Math.Rounding.Ceil)
         );
 
         // Return the amount of backing that can be migrated.
