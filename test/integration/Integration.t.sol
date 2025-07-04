@@ -8,7 +8,10 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {CustomToken} from "src/CustomToken.sol";
 import {MigrationManager} from "src/MigrationManager.sol";
 import {NativeConverter} from "src/NativeConverter.sol";
-import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import {
+    TransparentUpgradeableProxy,
+    ITransparentUpgradeableProxy
+} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import {TestVault} from "test/etc/TestVault.sol";
 import {ZkEVMCommon} from "test/etc/ZkEVMCommon.sol";
 import {VaultBridgeTokenInitializer} from "src/VaultBridgeTokenInitializer.sol";
@@ -20,6 +23,37 @@ import {GenericCustomToken} from "src/custom-tokens/GenericCustomToken.sol";
 import {IBridgeL2SovereignChain} from "test/interfaces/IBridgeL2SovereignChain.sol";
 import {ILxLyBridge as _ILxLyBridge} from "test/interfaces/ILxLyBridge.sol";
 import {IPolygonZkEVMGlobalExitRoot} from "test/interfaces/IPolygonZkEVMGlobalExitRoot.sol";
+
+contract MockERC20WithDeposit is ERC20 {
+    bool public canDeposit;
+
+    constructor(string memory name, string memory symbol) ERC20(name, symbol) {}
+
+    function setCanDeposit(bool _canDeposit) external {
+        canDeposit = _canDeposit;
+    }
+
+    function deposit() external payable {
+        if (canDeposit) {
+            _mint(msg.sender, msg.value);
+        }
+    }
+}
+
+contract MockERC20MintableBurnable is ERC20PermitUpgradeable {
+    function initialize(string memory name_, string memory symbol_) external initializer {
+        __ERC20_init(name_, symbol_);
+        __ERC20Permit_init(name_);
+    }
+
+    function mint(address account, uint256 amount) external {
+        _mint(account, amount);
+    }
+
+    function burn(address account, uint256 amount) external {
+        _burn(account, amount);
+    }
+}
 
 contract UnderlyingAsset is ERC20 {
     constructor(string memory name, string memory symbol) ERC20(name, symbol) {}
@@ -134,17 +168,17 @@ contract IntegrationTest is Test, ZkEVMCommon {
         bytes metadata;
     }
 
-    address internal constant BRIDGE_MANAGER = 0x165BD6204Df6A4C47875D62582dc7C1Ed6477c17;
+    address internal constant BRIDGE_MANAGER = 0xAb3506507449bF1880f3337825efd19ac89E235E;
     address constant LXLY_BRIDGE_X = 0x528e26b25a34a4A5d0dbDa1d57D318153d2ED582;
     address constant LXLY_BRIDGE_Y = 0x528e26b25a34a4A5d0dbDa1d57D318153d2ED582;
     address constant GER_X = 0xAd1490c248c5d3CbAE399Fd529b79B42984277DF;
     address constant GER_Y = 0xa40D5f56745a118D0906a34E69aeC8C0Db1cB8fA;
-    address constant GER_Y_UPDATER = 0x7d8EB43E982b1aAb2b0cd1084EeF80345D3f92d8;
+    address constant GER_Y_UPDATER = 0x2caeD842621FF58AaaeC1A06e487d9975F9bFe8A;
     address constant ROLLUP_MANAGER = 0x32d33D5137a7cFFb54c5Bf8371172bcEc5f310ff;
     uint8 constant LEAF_TYPE_ASSET = 0;
     uint8 constant LEAF_TYPE_MESSAGE = 1;
     uint32 constant NETWORK_ID_X = 0; // mainnet/sepolia
-    uint32 constant NETWORK_ID_Y = 29; // katana-apex
+    uint32 constant NETWORK_ID_Y = 37; // katana-apex
     bytes32 constant PERMIT_TYPEHASH =
         keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
     bytes4 constant PERMIT_SIGNATURE = 0xd505accf;
@@ -157,6 +191,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
     TestVault vbTokenVault;
     GenericNativeConverter nativeConverter;
     MigrationManager migrationManager;
+    MockERC20WithDeposit wrappedGasToken;
 
     // dummy addresses
     address recipient = makeAddr("recipient");
@@ -252,13 +287,13 @@ contract IntegrationTest is Test, ZkEVMCommon {
         vbTokenVault.setMaxWithdraw(MAX_WITHDRAW);
 
         // calculate native converter address
-        uint256 nativeConverterNonce = vm.getNonce(address(this)) + 9;
+        uint256 nativeConverterNonce = vm.getNonce(address(this)) + 11;
         address nativeConverterAddr = vm.computeCreateAddress(address(this), nativeConverterNonce);
 
         address initializer = address(new VaultBridgeTokenInitializer());
 
         // calculate migration manager address
-        uint256 migrationManagerNonce = vm.getNonce(address(this)) + 4;
+        uint256 migrationManagerNonce = vm.getNonce(address(this)) + 5;
         address migrationManagerAddr = vm.computeCreateAddress(address(this), migrationManagerNonce);
 
         // deploy vbToken part 2
@@ -290,8 +325,11 @@ contract IntegrationTest is Test, ZkEVMCommon {
         nativeConverters[0] = nativeConverterAddr;
 
         // deploy migration manager
+        wrappedGasToken = new MockERC20WithDeposit("Wrapped Gas Token", "WGT");
+
         MigrationManager migrationManagerImpl = new MigrationManager();
-        bytes memory migrationManagerInitData = abi.encodeCall(MigrationManager.initialize, (owner, LXLY_BRIDGE_X));
+        bytes memory migrationManagerInitData =
+            abi.encodeCall(MigrationManager.initialize, (owner, LXLY_BRIDGE_X, address(wrappedGasToken)));
         migrationManager =
             MigrationManager(payable(_proxify(address(migrationManagerImpl), address(this), migrationManagerInitData)));
         vm.prank(owner);
@@ -301,22 +339,32 @@ contract IntegrationTest is Test, ZkEVMCommon {
         //////////////////////////////////////////////////////////////
         // Switch to Layer Y
         //////////////////////////////////////////////////////////////
-        forkIdLayerY = vm.createSelectFork("tatara");
+        forkIdLayerY = vm.createSelectFork("bokuto");
 
         // deploy custom token
-        customToken = new GenericCustomToken();
-        bytes memory customTokenInitData = abi.encodeCall(
-            GenericCustomToken.reinitialize,
-            (owner, CUSTOM_TOKEN_NAME, CUSTOM_TOKEN_SYMBOL, CUSTOM_TOKEN_DECIMALS, LXLY_BRIDGE_Y, nativeConverterAddr)
-        );
-        customToken = GenericCustomToken(_proxify(address(customToken), address(this), customTokenInitData));
-
-        // calculate bridge wrapped vbToken address
-        bwVbToken = TokenWrapped(
-            _ILxLyBridge(LXLY_BRIDGE_Y).precalculatedWrapperAddress(
-                NETWORK_ID_X, address(vbToken), VBTOKEN_NAME, VBTOKEN_SYMBOL, VBTOKEN_DECIMALS
+        MockERC20MintableBurnable customTokenBridgeImpl = new MockERC20MintableBurnable();
+        TransparentUpgradeableProxy customTokenProxy = TransparentUpgradeableProxy(
+            payable(
+                _proxify(
+                    address(customTokenBridgeImpl),
+                    address(this),
+                    abi.encodeCall(MockERC20MintableBurnable.initialize, (CUSTOM_TOKEN_NAME, CUSTOM_TOKEN_SYMBOL))
+                )
             )
         );
+
+        GenericCustomToken genericCustomTokenImpl = new GenericCustomToken();
+        bytes memory initData = abi.encodeCall(
+            GenericCustomToken.reinitialize, (owner, CUSTOM_TOKEN_DECIMALS, LXLY_BRIDGE_Y, nativeConverterAddr)
+        );
+        bytes memory upgradeData =
+            abi.encodeCall(ITransparentUpgradeableProxy.upgradeToAndCall, (address(genericCustomTokenImpl), initData));
+        vm.prank(_getAdmin(address(customTokenProxy)));
+        (address(customTokenProxy).call(upgradeData));
+        customToken = GenericCustomToken(address(customTokenProxy));
+
+        // calculate bridge wrapped vbToken address
+        bwVbToken = TokenWrapped(_ILxLyBridge(LXLY_BRIDGE_Y).computeTokenProxyAddress(NETWORK_ID_X, address(vbToken)));
 
         // deploy underlying token (note: normally we don't have to do this manually and this should be done automatically by bridging vbToken on Layer X)
         vm.prank(LXLY_BRIDGE_Y);
@@ -325,13 +373,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
 
         // calculate bridge wrapped underlying asset address
         bwUnderlyingAsset = UnderlyingAsset(
-            _ILxLyBridge(LXLY_BRIDGE_Y).precalculatedWrapperAddress(
-                NETWORK_ID_X,
-                address(underlyingAsset),
-                UNDERLYING_ASSET_NAME,
-                UNDERLYING_ASSET_SYMBOL,
-                UNDERLYING_ASSET_DECIMALS
-            )
+            _ILxLyBridge(LXLY_BRIDGE_Y).computeTokenProxyAddress(NETWORK_ID_X, address(underlyingAsset))
         );
 
         // deploy the bridge wrapped underlying asset (note: normally we don't have to do this manually and this should be done automatically by bridging underlying asset on Layer X)
@@ -346,7 +388,6 @@ contract IntegrationTest is Test, ZkEVMCommon {
             GenericNativeConverter(nativeConverter).initialize,
             (
                 owner,
-                VBTOKEN_DECIMALS,
                 address(customToken),
                 address(bwUnderlyingAsset),
                 LXLY_BRIDGE_Y,
@@ -496,7 +537,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
         );
         ILxLyBridge(LXLY_BRIDGE_Y).bridgeAsset(
             NETWORK_ID_X, address(vbToken), withdrawAmount, address(customToken), true, ""
-        );
+        ); // @todo fix -> error: LocalBalanceTreeUnderflow(uint32,address,uint256,uint256)
         assertEq(customToken.balanceOf(LXLY_BRIDGE_Y), 0); // custom token is burned as it is custom mapped to vbToken
         vm.stopPrank();
 
@@ -601,7 +642,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
             destinationAddress: address(migrationManager),
             amount: 0,
             metadata: abi.encode(
-                MigrationManager.CrossNetworkInstruction.COMPLETE_MIGRATION, abi.encode(amountToMigrate, amountToMigrate)
+                MigrationManager.CrossNetworkInstruction._0_COMPLETE_MIGRATION, abi.encode(amountToMigrate, amountToMigrate)
             )
         });
 
@@ -631,7 +672,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
         vm.expectEmit();
         emit NativeConverter.MigrationStarted(amountToMigrate, amountToMigrate);
         vm.prank(owner);
-        nativeConverter.migrateBackingToLayerX(amountToMigrate);
+        nativeConverter.migrateBackingToLayerX(amountToMigrate); // @todo fix -> error: LocalBalanceTreeUnderflow(uint32,address,uint256,uint256)
 
         LeafPayload[] memory leafPayloads = new LeafPayload[](2);
         leafPayloads[0] = assetLeaf;
@@ -952,8 +993,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
             _claimPayload.exitRootLayerY,
             _claimPayload.destinationAddress,
             _claimPayload.amount,
-            recipient,
-            _claimPayload.metadata
+            recipient
         );
 
         assertEq(vbToken.underlyingToken().balanceOf(recipient), _claimPayload.amount);
@@ -981,7 +1021,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
             _ILxLyBridge(LXLY_BRIDGE_Y).depositCount()
         );
 
-        nativeConverter.deconvertAndBridge(_amount, _leaf.destinationAddress, _leaf.destinationNetwork, true);
+        nativeConverter.deconvertAndBridge(_amount, _leaf.destinationAddress, _leaf.destinationNetwork, true); // @todo fix -> error: LocalBalanceTreeUnderflow(uint32,address,uint256,uint256)
 
         vm.stopPrank();
 
@@ -1008,5 +1048,11 @@ contract IntegrationTest is Test, ZkEVMCommon {
 
     function _calculateGlobalExitRoot(bytes32 exitRootLayerX, bytes32 exitRootLayerY) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked(exitRootLayerX, exitRootLayerY));
+    }
+
+    function _getAdmin(address target) internal view returns (address) {
+        bytes32 ADMIN_SLOT = 0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103;
+        bytes32 value = vm.load(target, ADMIN_SLOT);
+        return address(uint160(uint256(value)));
     }
 }

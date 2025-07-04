@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: LicenseRef-PolygonLabs-Open-Attribution OR LicenseRef-PolygonLabs-Source-Available
+// Vault Bridge (last updated v1.0.0) (VaultBridgeTokenInitializer.sol)
+
 pragma solidity 0.8.29;
 
 // Main functionality.
 import {IVaultBridgeTokenInitializer} from "./etc/IVaultBridgeTokenInitializer.sol";
 import {VaultBridgeToken} from "./VaultBridgeToken.sol";
-
-// Other functionality.
-import {IVersioned} from "./etc/IVersioned.sol";
 
 // Libraries.
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -17,9 +16,10 @@ import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {ILxLyBridge} from "./etc/ILxLyBridge.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-// @remind Document.
-// @title Vault Bridge Token: Initializer (singleton)
+/// @title Vault Bridge Token Initializer (singleton)
 /// @author See https://github.com/agglayer/vault-bridge
+/// @notice A singleton contract used by Vault Bridge Token for initialization.
+/// @dev This contract exists because of the contract size limit of the EVM.
 contract VaultBridgeTokenInitializer is IVaultBridgeTokenInitializer, VaultBridgeToken {
     // Libraries.
     using SafeERC20 for IERC20;
@@ -32,7 +32,7 @@ contract VaultBridgeTokenInitializer is IVaultBridgeTokenInitializer, VaultBridg
 
     // -----================= ::: VAULT BRIDGE TOKEN ::: =================-----
 
-    // @remind Document.
+    /// @inheritdoc IVaultBridgeTokenInitializer
     function initialize(VaultBridgeToken.InitializationParameters calldata initParams)
         external
         override
@@ -53,6 +53,11 @@ contract VaultBridgeTokenInitializer is IVaultBridgeTokenInitializer, VaultBridg
         require(initParams.migrationManager != address(0), InvalidMigrationManager());
         require(initParams.yieldVaultMaximumSlippagePercentage <= 1e18, InvalidYieldVaultMaximumSlippagePercentage());
         require(initParams.vaultBridgeTokenPart2 != address(0), InvalidVaultBridgeTokenPart2());
+        require(
+            keccak256(bytes(VaultBridgeToken(initParams.vaultBridgeTokenPart2).version()))
+                == keccak256(bytes(version())),
+            InvalidVaultBridgeTokenPart2()
+        );
 
         // Initialize the inherited contracts.
         __ERC20_init(initParams.name, initParams.symbol);
@@ -75,7 +80,7 @@ contract VaultBridgeTokenInitializer is IVaultBridgeTokenInitializer, VaultBridg
         try IERC20Metadata(initParams.underlyingToken).decimals() returns (uint8 decimals_) {
             $.decimals = decimals_;
         } catch {
-            // Default to 18 decimals.
+            // Default to 18 decimals if the underlying token reverted.
             $.decimals = 18;
         }
         $.minimumReservePercentage = initParams.minimumReservePercentage;
@@ -91,12 +96,5 @@ contract VaultBridgeTokenInitializer is IVaultBridgeTokenInitializer, VaultBridg
         // Approve the yield vault and LxLy Bridge.
         IERC20(initParams.underlyingToken).forceApprove(initParams.yieldVault, type(uint256).max);
         _approve(address(this), address(initParams.lxlyBridge), type(uint256).max);
-    }
-
-    // -----================= ::: INFO ::: =================-----
-
-    /// @inheritdoc IVersioned
-    function version() external pure returns (string memory) {
-        return "0.5.0";
     }
 }

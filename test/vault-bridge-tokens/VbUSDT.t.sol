@@ -27,7 +27,7 @@ contract VbUSDTTest is GenericVaultBridgeTokenTest {
 
         asset = USDT;
         vbTokenVault = new TestVault(asset);
-        version = "0.5.0";
+        version = "1.0.0";
         name = "Vault USDT";
         symbol = "vbUSDT";
         decimals = 6;

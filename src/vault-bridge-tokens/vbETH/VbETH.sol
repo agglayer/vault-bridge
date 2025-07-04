@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: LicenseRef-PolygonLabs-Open-Attribution OR LicenseRef-PolygonLabs-Source-Available
+// Vault Bridge (last updated v1.0.0) (vault-bridge-tokens/vbETH/VbETH.sol)
+
 pragma solidity 0.8.29;
 
 import {VaultBridgeToken, ILxLyBridge} from "../../VaultBridgeToken.sol";
 import {IWETH9} from "../../etc/IWETH9.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
-import {IVersioned} from "../../etc/IVersioned.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /// @title Vault Bridge gas token
@@ -96,10 +97,5 @@ contract VbETH is VaultBridgeToken {
         uint256 receivedAssets = balanceAfter - balanceBefore;
 
         require(receivedAssets == assets, InsufficientUnderlyingTokenReceived(receivedAssets, assets));
-    }
-
-    /// @inheritdoc IVersioned
-    function version() external pure override returns (string memory) {
-        return "0.5.0";
     }
 }

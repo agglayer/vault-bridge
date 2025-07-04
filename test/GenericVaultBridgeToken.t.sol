@@ -79,7 +79,7 @@ contract GenericVaultBridgeTokenTest is Test {
 
         asset = TEST_TOKEN;
         vbTokenVault = new TestVault(asset);
-        version = "0.5.0";
+        version = "1.0.0";
         name = "Vault Bridge USDC";
         symbol = "vbUSDC";
         decimals = 6;
