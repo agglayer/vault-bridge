@@ -344,7 +344,7 @@ contract VbETHTest is GenericVaultBridgeTokenTest {
         vm.expectEmit();
         emit IERC4626.Withdraw(address(this), address(this), address(this), amountToWithdraw, amountToWithdraw);
         vbToken.withdraw(amountToWithdraw, address(this), address(this));
-        assertEq(IWETH9(WETH).balanceOf(address(vbETH)), 0); // reserve assets reduced
+        assertEq(IWETH9(WETH).balanceOf(address(vbETH)), 1); // reserve assets reduced (minimum reserve is 1 due to rounding)
         assertEq(IWETH9(WETH).balanceOf(address(this)), initialBalance + amountToWithdraw); // assets returned to sender
         assertEq(vbETH.balanceOf(address(this)), amount - amountToWithdraw); // shares reduced
     }
