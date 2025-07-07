@@ -53,6 +53,4 @@ jobs:
         run: |
           npm install
           forge test --no-match-contract "Generic" -vvv
-        env:
-          BOKUTO_API_KEY: ${{ secrets.BOKUTO_API_KEY }}
         id: test
