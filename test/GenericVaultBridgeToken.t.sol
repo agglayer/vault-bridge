@@ -698,7 +698,8 @@ contract GenericVaultBridgeTokenTest is Test {
 
         vm.stopPrank();
 
-        uint256 finalReserveAmount = totalSupply * minimumReservePercentage / MAX_RESERVE_PERCENTAGE;
+        uint256 finalReserveAmount =
+            Math.mulDiv(totalSupply, minimumReservePercentage, MAX_RESERVE_PERCENTAGE, Math.Rounding.Ceil);
         uint256 finalPercentage = finalReserveAmount * 1e18 / totalSupply;
         vm.expectEmit();
         emit VaultBridgeToken.ReserveRebalanced(reserveAmount - 100, finalReserveAmount, finalPercentage);
@@ -996,8 +997,9 @@ contract GenericVaultBridgeTokenTest is Test {
         vm.prank(migrationManager);
         vbTokenPart2.completeMigration(NETWORK_ID_L2, shares, amount);
 
-        uint256 reserveAssetsAfterDeposit =
-            vbToken.convertToAssets(shares) * minimumReservePercentage / MAX_RESERVE_PERCENTAGE;
+        uint256 reserveAssetsAfterDeposit = Math.mulDiv(
+            vbToken.convertToAssets(shares), minimumReservePercentage, MAX_RESERVE_PERCENTAGE, Math.Rounding.Ceil
+        );
 
         assertEq(vbToken.reservedAssets(), reserveAssetsAfterDeposit);
         assertGt(vbToken.stakedAssets(), stakedAssetsBefore);
