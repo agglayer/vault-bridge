@@ -17,6 +17,7 @@ import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC2
 import {TestVault} from "test/etc/TestVault.sol";
 import {ILxLyBridge as _ILxLyBridge} from "test/interfaces/ILxLyBridge.sol";
 
+/// @dev Tests for VaultBridgeToken and VaultBridgeTokenPart2
 contract GenericVaultBridgeTokenTest is Test {
     using SafeERC20 for IERC20;
     using SafeERC20 for GenericVaultBridgeToken;
@@ -1156,6 +1157,241 @@ contract GenericVaultBridgeTokenTest is Test {
         uint256 expectedPercentage = (reserveAssetsAfterDeposit * MAX_RESERVE_PERCENTAGE) / vbToken.totalSupply();
 
         assertEq(vbToken.reservePercentage(), expectedPercentage);
+    }
+
+    function test_burn_revert() public virtual {
+        uint256 amount = 1 ether;
+
+        // Only yield recipient can burn
+        vm.expectRevert(VaultBridgeToken.Unauthorized.selector);
+        vbTokenPart2.burn(amount);
+
+        // Cannot burn 0 shares
+        vm.expectRevert(VaultBridgeToken.InvalidShares.selector);
+        vm.prank(yieldRecipient);
+        vbTokenPart2.burn(0);
+    }
+
+    function test_burn() public virtual {
+        uint256 amount = 1 ether;
+
+        // First, set up yield to burn - need to deposit, collect yield, then burn
+        deal(asset, sender, amount);
+        vm.startPrank(sender);
+        IERC20(asset).forceApprove(address(vbToken), amount);
+        vbToken.deposit(amount, sender);
+        vm.stopPrank();
+
+        // Generate some yield by adding shares to the vault
+        uint256 yieldShares = 0.1 ether;
+        uint256 sharesBalanceBefore = vbTokenVault.balanceOf(address(vbToken));
+        deal(address(vbTokenVault), address(vbToken), sharesBalanceBefore + yieldShares);
+
+        // Collect yield to mint vbTokens to yield recipient
+        vm.prank(owner);
+        vbTokenPart2.collectYield();
+
+        uint256 yieldRecipientBalance = vbToken.balanceOf(yieldRecipient);
+        assertGt(yieldRecipientBalance, 0);
+
+        // Burn half of the yield recipient's balance
+        uint256 burnAmount = yieldRecipientBalance / 2;
+
+        vm.expectEmit();
+        emit VaultBridgeToken.Burned(burnAmount);
+        vm.prank(yieldRecipient);
+        vbTokenPart2.burn(burnAmount);
+
+        assertEq(vbToken.balanceOf(yieldRecipient), yieldRecipientBalance - burnAmount);
+    }
+
+    function test_donateAsYield_revert() public {
+        // Cannot donate 0 assets
+        vm.expectRevert(VaultBridgeToken.InvalidAssets.selector);
+        vbTokenPart2.donateAsYield(0);
+    }
+
+    function test_donateAsYield() public {
+        uint256 amount = 1 ether;
+
+        // Get initial reserved assets
+        uint256 initialReservedAssets = vbToken.reservedAssets();
+
+        deal(asset, address(this), amount);
+        IERC20(asset).forceApprove(address(vbToken), amount);
+
+        vm.expectEmit();
+        emit VaultBridgeToken.DonatedAsYield(address(this), amount);
+        vbTokenPart2.donateAsYield(amount);
+
+        assertEq(vbToken.reservedAssets(), initialReservedAssets + amount);
+        assertEq(IERC20(asset).balanceOf(address(this)), 0);
+    }
+
+    function test_drainYieldVault_revert() public {
+        uint256 shares = 1 ether;
+
+        // Only admin can drain yield vault
+        vm.expectRevert();
+        vbTokenPart2.drainYieldVault(shares, false);
+
+        vm.startPrank(owner);
+
+        // Cannot drain 0 shares
+        vm.expectRevert(VaultBridgeToken.InvalidShares.selector);
+        vbTokenPart2.drainYieldVault(0, false);
+
+        vm.stopPrank();
+    }
+
+    function test_drainYieldVault() public {
+        uint256 depositAmount = 10 ether;
+
+        // First, deposit some assets to generate yield vault shares
+        deal(asset, sender, depositAmount);
+        vm.startPrank(sender);
+        IERC20(asset).forceApprove(address(vbToken), depositAmount);
+        vbToken.deposit(depositAmount, sender);
+        vm.stopPrank();
+
+        uint256 initialReservedAssets = vbToken.reservedAssets();
+        uint256 vaultSharesBalance = vbTokenVault.balanceOf(address(vbToken));
+
+        // Only proceed if there are vault shares to drain
+        vm.assume(vaultSharesBalance > 0);
+
+        // Calculate shares to drain (half of the balance)
+        uint256 sharesToDrain = vaultSharesBalance / 2;
+
+        // Preview how many assets we expect to receive
+        uint256 expectedAssets = vbTokenVault.previewRedeem(sharesToDrain);
+
+        vm.expectEmit();
+        emit VaultBridgeToken.YieldVaultDrained(sharesToDrain, expectedAssets);
+        vm.prank(owner);
+        vbTokenPart2.drainYieldVault(sharesToDrain, false);
+
+        // Verify that reserved assets increased by the drained amount
+        assertEq(vbToken.reservedAssets(), initialReservedAssets + expectedAssets);
+        // Verify that yield vault shares decreased
+        assertEq(vbTokenVault.balanceOf(address(vbToken)), vaultSharesBalance - sharesToDrain);
+    }
+
+    function test_setYieldVault_revert() public {
+        address newVault = makeAddr("newVault");
+
+        // Only admin can set yield vault
+        vm.expectRevert();
+        vbTokenPart2.setYieldVault(newVault);
+
+        vm.startPrank(owner);
+
+        // Cannot set yield vault to zero address
+        vm.expectRevert(VaultBridgeToken.InvalidYieldVault.selector);
+        vbTokenPart2.setYieldVault(address(0));
+
+        vm.stopPrank();
+    }
+
+    function test_setYieldVault() public {
+        // Create a new test vault
+        TestVault newVault = new TestVault(asset);
+        newVault.setMaxDeposit(MAX_DEPOSIT);
+        newVault.setMaxWithdraw(MAX_WITHDRAW);
+
+        // Get the current yield vault for comparison
+        address oldVault = address(vbToken.yieldVault());
+        assertEq(oldVault, address(vbTokenVault));
+
+        // Expect the event to be emitted
+        vm.expectEmit();
+        emit VaultBridgeToken.YieldVaultSet(address(newVault));
+
+        // Set the new yield vault as owner
+        vm.prank(owner);
+        vbTokenPart2.setYieldVault(address(newVault));
+
+        assertEq(address(vbToken.yieldVault()), address(newVault));
+        assertNotEq(address(vbToken.yieldVault()), oldVault);
+        assertEq(IERC20(asset).allowance(address(vbToken), address(newVault)), type(uint256).max);
+        assertEq(IERC20(asset).allowance(address(vbToken), oldVault), 0);
+    }
+
+    function test_setMinimumYieldVaultDeposit_revert() public {
+        uint256 newDeposit = 5e12;
+
+        // Only admin can set minimum yield vault deposit
+        vm.expectRevert();
+        vbTokenPart2.setMinimumYieldVaultDeposit(newDeposit);
+    }
+
+    function test_setMinimumYieldVaultDeposit() public {
+        uint256 newDeposit = 5e12;
+
+        // Get the current minimum yield vault deposit for comparison
+        uint256 oldDeposit = vbToken.minimumYieldVaultDeposit();
+        assertEq(oldDeposit, MINIMUM_YIELD_VAULT_DEPOSIT);
+
+        vm.prank(owner);
+        vbTokenPart2.setMinimumYieldVaultDeposit(newDeposit);
+
+        assertEq(vbToken.minimumYieldVaultDeposit(), newDeposit);
+        assertNotEq(vbToken.minimumYieldVaultDeposit(), oldDeposit);
+
+        // Test setting to 0 (disabled)
+        vm.prank(owner);
+        vbTokenPart2.setMinimumYieldVaultDeposit(0);
+        assertEq(vbToken.minimumYieldVaultDeposit(), 0);
+    }
+
+    function test_setYieldVaultMaximumSlippagePercentage_revert() public {
+        // Test non-admin caller reverts
+        vm.expectRevert();
+        vbTokenPart2.setYieldVaultMaximumSlippagePercentage(5e17);
+
+        // Test invalid percentage (> 1e18) reverts
+        vm.startPrank(owner);
+        vm.expectRevert(VaultBridgeToken.InvalidYieldVaultMaximumSlippagePercentage.selector);
+        vbTokenPart2.setYieldVaultMaximumSlippagePercentage(1e18 + 1);
+        vm.stopPrank();
+    }
+
+    function test_setYieldVaultMaximumSlippagePercentage() public {
+        vm.startPrank(owner);
+
+        // Test setting a valid percentage
+        uint256 newSlippagePercentage = 5e17;
+
+        vm.expectEmit();
+        emit VaultBridgeToken.YieldVaultMaximumSlippagePercentageSet(newSlippagePercentage);
+        vbTokenPart2.setYieldVaultMaximumSlippagePercentage(newSlippagePercentage);
+
+        assertEq(vbToken.yieldVaultMaximumSlippagePercentage(), newSlippagePercentage);
+
+        // Test setting to zero (disable slippage protection)
+        vm.expectEmit();
+        emit VaultBridgeToken.YieldVaultMaximumSlippagePercentageSet(0);
+        vbTokenPart2.setYieldVaultMaximumSlippagePercentage(0);
+
+        assertEq(vbToken.yieldVaultMaximumSlippagePercentage(), 0);
+
+        // Test setting to maximum allowed (100%)
+        vm.expectEmit();
+        emit VaultBridgeToken.YieldVaultMaximumSlippagePercentageSet(1e18);
+        vbTokenPart2.setYieldVaultMaximumSlippagePercentage(1e18);
+
+        assertEq(vbToken.yieldVaultMaximumSlippagePercentage(), 1e18);
+
+        vm.stopPrank();
+    }
+
+    function test_fallback_revert() public {
+        // Test that fallback function reverts with UnknownFunction error
+        bytes4 invalidSelector = bytes4(keccak256("nonExistentFunction()"));
+
+        vm.expectRevert(abi.encodeWithSelector(VaultBridgeToken.UnknownFunction.selector, invalidSelector));
+        (bool success,) = address(vbTokenPart2).call(abi.encodePacked(invalidSelector));
+        require(!success, "Call should have failed");
     }
 
     function test_pause_unpause() public {
