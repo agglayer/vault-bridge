@@ -89,10 +89,11 @@ contract TestVault {
         if (slippage) {
             require(amount > slippageAmount, "TestVault: Slippage amount is too high");
             _receiveAssets(amount - slippageAmount, user);
+            return amount - slippageAmount;
         } else {
             _receiveAssets(amount, user);
+            return amount;
         }
-        return amount;
     }
 
     function withdraw(uint256 amount, address receiver, address user) external returns (uint256) {
