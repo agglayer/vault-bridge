@@ -30,7 +30,7 @@ contract GenericVaultBridgeTokenHarness is GenericVaultBridgeToken {
         );
     }
 
-    function internal_depositIntoYieldVault(uint256 assets, bool exact) internal returns (uint256 nonDepositedAssets) {
+    function internal_depositIntoYieldVault(uint256 assets, bool exact) public returns (uint256 nonDepositedAssets) {
         nonDepositedAssets = _depositIntoYieldVault(assets, exact);
     }
 }
@@ -108,8 +108,123 @@ contract GenericVaultBridgeTokenFuzzTest is Test {
         vm.label(address(vbTokenPart2), "vbToken Part 2");
     }
 
-    // @todo add fuzz tests for the following functions:
-    // - _depositIntoYieldVault
+    function testFuzz_depositIntoYieldVault_minimumDepositNotMet_revert(uint256 assets) public {
+        assets = bound(assets, 1, MINIMUM_YIELD_VAULT_DEPOSIT - 1);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                VaultBridgeToken.MinimumYieldVaultDepositNotMet.selector, assets, MINIMUM_YIELD_VAULT_DEPOSIT
+            )
+        );
+        vbToken.internal_depositIntoYieldVault(assets, true);
+    }
+
+    function testFuzz_depositIntoYieldVault_minimumDepositNotMet_nonExact(uint256 assets) public {
+        assets = bound(assets, 1, MINIMUM_YIELD_VAULT_DEPOSIT - 1);
+
+        uint256 nonDepositedAssets = vbToken.internal_depositIntoYieldVault(assets, false);
+        assertEq(nonDepositedAssets, assets);
+    }
+
+    function testFuzz_depositIntoYieldVault_exceedsMaxDeposit_revert(uint256 assets) public {
+        assets = bound(assets, MAX_DEPOSIT + 1, type(uint128).max);
+
+        vm.expectRevert(abi.encodeWithSelector(VaultBridgeToken.YieldVaultDepositFailed.selector, assets, MAX_DEPOSIT));
+        vbToken.internal_depositIntoYieldVault(assets, true);
+    }
+
+    function testFuzz_depositIntoYieldVault_exceedsMaxDeposit_nonExact(uint256 assets) public {
+        assets = bound(assets, MAX_DEPOSIT + 1, type(uint128).max);
+
+        // Provide the contract with enough tokens to handle the deposit
+        deal(TEST_TOKEN, address(vbToken), MAX_DEPOSIT);
+
+        uint256 nonDepositedAssets = vbToken.internal_depositIntoYieldVault(assets, false);
+        assertEq(nonDepositedAssets, assets - MAX_DEPOSIT);
+    }
+
+    function testFuzz_depositIntoYieldVault_slippageFailure_revert(uint256 assets, uint256 slippageAmount) public {
+        assets = bound(assets, MINIMUM_YIELD_VAULT_DEPOSIT, MAX_DEPOSIT);
+
+        // Calculate minimum expected shares for 1% slippage tolerance
+        uint256 minimumExpectedShares = Math.mulDiv(assets, 1e18 - YIELD_VAULT_ALLOWED_SLIPPAGE, 1e18);
+
+        // Bound slippage to be large enough to cause solvency failure
+        // The actual shares after slippage will be (assets - slippageAmount)
+        // We need this to be less than minimumExpectedShares
+        uint256 maxAllowedSlippage = assets - minimumExpectedShares;
+        slippageAmount = bound(slippageAmount, maxAllowedSlippage + 1, assets - 1);
+
+        // Setup vault to have slippage that exceeds the allowed threshold
+        deal(TEST_TOKEN, address(vbToken), assets);
+        vbTokenVault.setSlippage(true, slippageAmount);
+
+        // Calculate the actual shares minted after slippage
+        uint256 actualMintedShares = assets - slippageAmount;
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                VaultBridgeToken.InsufficientYieldVaultSharesMinted.selector, assets, actualMintedShares
+            )
+        );
+        vbToken.internal_depositIntoYieldVault(assets, true);
+    }
+
+    function testFuzz_depositIntoYieldVault_slippageFailure_nonExact(uint256 assets, uint256 slippageAmount) public {
+        assets = bound(assets, MINIMUM_YIELD_VAULT_DEPOSIT, MAX_DEPOSIT);
+
+        // Calculate minimum expected shares for 1% slippage tolerance
+        uint256 minimumExpectedShares = Math.mulDiv(assets, 1e18 - YIELD_VAULT_ALLOWED_SLIPPAGE, 1e18);
+
+        // Bound slippage to be large enough to cause solvency failure
+        // The actual shares after slippage will be (assets - slippageAmount)
+        // We need this to be less than minimumExpectedShares
+        uint256 maxAllowedSlippage = assets - minimumExpectedShares;
+        slippageAmount = bound(slippageAmount, maxAllowedSlippage + 1, assets - 1);
+
+        // Setup vault to have slippage that exceeds the allowed threshold
+        deal(TEST_TOKEN, address(vbToken), assets);
+        vbTokenVault.setSlippage(true, slippageAmount);
+
+        uint256 nonDepositedAssets = vbToken.internal_depositIntoYieldVault(assets, false);
+        assertEq(nonDepositedAssets, assets);
+    }
+
+    function testFuzz_depositIntoYieldVault_success(uint256 assets, uint256 slippageAmount) public {
+        assets = bound(assets, MINIMUM_YIELD_VAULT_DEPOSIT, MAX_DEPOSIT);
+
+        // Calculate minimum expected shares for 1% slippage tolerance
+        uint256 minimumExpectedShares = Math.mulDiv(assets, 1e18 - YIELD_VAULT_ALLOWED_SLIPPAGE, 1e18);
+
+        // Bound slippage to be within allowed threshold
+        // The actual shares after slippage will be (assets - slippageAmount)
+        // We need this to be >= minimumExpectedShares
+        uint256 maxAllowedSlippage = assets - minimumExpectedShares;
+        slippageAmount = bound(slippageAmount, 0, maxAllowedSlippage);
+
+        // Calculate expected minted shares after slippage
+        uint256 expectedMintedShares = assets - slippageAmount;
+
+        // Setup vault with acceptable slippage
+        deal(TEST_TOKEN, address(vbToken), assets);
+        vbTokenVault.setSlippage(true, slippageAmount);
+
+        uint256 nonDepositedAssets = vbToken.internal_depositIntoYieldVault(assets, false);
+        assertEq(nonDepositedAssets, 0);
+        assertEq(vbTokenVault.balanceOf(address(vbToken)), expectedMintedShares);
+    }
+
+    function testFuzz_depositIntoYieldVault_successNoSlippage(uint256 assets) public {
+        assets = bound(assets, MINIMUM_YIELD_VAULT_DEPOSIT, MAX_DEPOSIT);
+
+        // Setup vault without slippage
+        deal(TEST_TOKEN, address(vbToken), assets);
+        vbTokenVault.setSlippage(false, 0);
+
+        uint256 nonDepositedAssets = vbToken.internal_depositIntoYieldVault(assets, true);
+        assertEq(nonDepositedAssets, 0);
+        assertEq(vbTokenVault.balanceOf(address(vbToken)), assets);
+    }
 
     function testFuzz_withdrawFromYieldVault_revert(uint256 assets, uint256 originalTotalSupply, uint256 slippageAmount)
         public
