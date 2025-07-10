@@ -85,7 +85,7 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
         );
 
         vm.prank(_getAdmin(address(wETHProxy)));
-        address(wETHProxy).call(upgradeData);
+        (address(wETHProxy).call(upgradeData));
         wETH = WETH(payable(address(wETHProxy)));
 
         // assign variables for generic testing

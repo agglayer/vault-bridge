@@ -126,7 +126,7 @@ contract WETHTest is Test {
             ITransparentUpgradeableProxy.upgradeToAndCall.selector, address(wETHGenericImpl), initData
         );
         vm.prank(_getAdmin(address(wETHProxy)));
-        address(wETHProxy).call(upgradeData);
+        (address(wETHProxy).call(upgradeData));
         wETH = WETH(payable(address(wETHProxy)));
     }
 
