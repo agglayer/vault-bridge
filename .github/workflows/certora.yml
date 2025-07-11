@@ -48,6 +48,14 @@ jobs:
           git checkout v10.1.0-rc.1
           npm install
 
+      - name: Check secret availability
+        run: |
+          if [ -z "${{ secrets.CERTORAKEY }}" ]; then
+            echo "CERTORAKEY is missing"
+          else
+            echo "CERTORAKEY is set"
+          fi
+
       - name: run configs
         uses: Certora/certora-run-action@v1
         with:
