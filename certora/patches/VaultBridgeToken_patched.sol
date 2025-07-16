@@ -91,6 +91,9 @@ abstract contract VaultBridgeToken is
         address vaultBridgeTokenPart2;
     }
 
+    // Certora: munge to simplify delegation to Part2
+    address PART2;
+
     // Basic roles.
     bytes32 public constant REBALANCER_ROLE = keccak256("REBALANCER_ROLE");
     bytes32 public constant YIELD_COLLECTOR_ROLE = keccak256("YIELD_COLLECTOR_ROLE");
@@ -892,7 +895,9 @@ abstract contract VaultBridgeToken is
     /// @notice Rebalances the internal reserve by withdrawing the underlying token from, or depositing the underlying token into, the yield vault.
     /// @notice This function can be called by a rebalancer only.
     /// @dev Delegates the call to `VaultBridgeTokenPart2`.
-    function rebalanceReserve() external virtual delegatedToPart2 {}
+    function rebalanceReserve() external virtual {
+        PART2.delegatecall(abi.encodeWithSignature("rebalanceReserve()"));
+    }
 
     /// @notice Rebalances the internal reserve by withdrawing the underlying token from, or depositing the underlying token into, the yield vault.
     /// @param force Whether to revert if the reserve cannot be rebalanced.
@@ -957,7 +962,9 @@ abstract contract VaultBridgeToken is
     /// @notice This function can be called by a yield collector only.
     /// @dev Increases the net collected yield.
     /// @dev Delegates the call to `VaultBridgeTokenPart2`.
-    function collectYield() external virtual delegatedToPart2 {}
+    function collectYield() external virtual {
+        PART2.delegatecall(abi.encodeWithSignature("collectYield()"));
+    }
 
     /// @notice Burns a specific amount of vbToken.
     /// @notice This function can be used if the yield recipient has collected an unrealistic amount of yield over time.
@@ -965,25 +972,22 @@ abstract contract VaultBridgeToken is
     /// @dev Decreases the net collected yield.
     /// @dev Does not rebalance the reserve after burning to allow usage while the contract is paused.
     /// @dev Delegates the call to `VaultBridgeTokenPart2`.
-    function burn(uint256 shares) external virtual delegatedToPart2 {
-        // Silence the Solidity compiler.
-        shares;
+    function burn(uint256 shares) external virtual {
+        PART2.delegatecall(abi.encodeWithSignature("burn(uint256)", shares));
     }
 
     /// @notice Adds a specific amount of the underlying token to the reserve by transferring it from the sender.
     /// @notice This function can be used to restore backing difference by donating the underlying token.
     /// @notice This function can be called by anyone.
     /// @dev Delegates the call to `VaultBridgeTokenPart2`.
-    function donateAsYield(uint256 assets) external virtual delegatedToPart2 {
-        // Silence the Solidity compiler.
-        assets;
+    function donateAsYield(uint256 assets) external virtual {
+        PART2.delegatecall(abi.encodeWithSignature("donateAsYield(uint256)", assets));
     }
 
     /// @notice Adds a specific amount of the underlying token to a dedicated fund for covering any fees on Layer Y during a migration of backing to Layer X by transferring it from the sender. Please refer to `completeMigration` for more information.
     /// @dev Delegates the call to `VaultBridgeTokenPart2`.
-    function donateForCompletingMigration(uint256 assets) external virtual delegatedToPart2 {
-        // Silence the Solidity compiler.
-        assets;
+    function donateForCompletingMigration(uint256 assets) external virtual {
+        PART2.delegatecall(abi.encodeWithSignature("donateForCompletingMigration(uint256)", assets));
     }
 
     /// @notice Completes a migration of backing from a Layer Y to Layer X by minting and locking the required amount of vbToken in LxLy Bridge.
@@ -1000,12 +1004,8 @@ abstract contract VaultBridgeToken is
     function completeMigration(uint32 originNetwork, uint256 shares, uint256 assets)
         external
         virtual
-        delegatedToPart2
     {
-        // Silence the Solidity compiler.
-        originNetwork;
-        shares;
-        assets;
+        PART2.delegatecall(abi.encodeWithSignature("completeMigration(uint32,uint256,uint256)", originNetwork, shares, assets));
     }
 
     /// @notice Drains the yield vault by redeeming yield vault shares. Assets will be put into the internal reserve.
@@ -1014,10 +1014,8 @@ abstract contract VaultBridgeToken is
     /// @dev Delegates the call to `VaultBridgeTokenPart2`.
     /// @param shares The amount of the yield vault shares to redeem.
     /// @param exact Whether to revert if the exact amount of shares could not be redeemed.
-    function drainYieldVault(uint256 shares, bool exact) external virtual delegatedToPart2 {
-        // Silence the Solidity compiler.
-        shares;
-        exact;
+    function drainYieldVault(uint256 shares, bool exact) external virtual {
+        PART2.delegatecall(abi.encodeWithSignature("drainYieldVault(uint256,bool)", shares, exact));
     }
 
     /// @notice Sets the minimum reserve percentage.
@@ -1025,27 +1023,24 @@ abstract contract VaultBridgeToken is
     /// @notice This function can be called by the owner only.
     /// @dev Delegates the call to `VaultBridgeTokenPart2`.
     /// @param minimumReservePercentage_ `1e18` is 100%.
-    function setMinimumReservePercentage(uint256 minimumReservePercentage_) external virtual delegatedToPart2 {
-        // Silence the Solidity compiler.
-        minimumReservePercentage_;
+    function setMinimumReservePercentage(uint256 minimumReservePercentage_) external virtual {
+        PART2.delegatecall(abi.encodeWithSignature("setMinimumReservePercentage(uint256)", minimumReservePercentage_));
     }
 
     /// @notice Sets the yield vault.
     /// @notice @note CAUTION! Use `drainYieldVault` to drain the current yield vault completely before changing it. Any yield vault shares that are not redeemed will not count toward the underlying token backing after changing the yield vault.
     /// @notice This function can be called by the owner only.
     /// @dev Delegates the call to `VaultBridgeTokenPart2`.
-    function setYieldVault(address yieldVault_) external virtual delegatedToPart2 {
-        // Silence the Solidity compiler.
-        yieldVault_;
+    function setYieldVault(address yieldVault_) external virtual {
+        PART2.delegatecall(abi.encodeWithSignature("setYieldVault(address)", yieldVault_));
     }
 
     /// @notice Sets the yield recipient.
     /// @notice Yield will be collected before changing the recipient.
     /// @notice This function can be called by the owner only.
     /// @dev Delegates the call to `VaultBridgeTokenPart2`.
-    function setYieldRecipient(address yieldRecipient_) external virtual delegatedToPart2 {
-        // Silence the Solidity compiler.
-        yieldRecipient_;
+    function setYieldRecipient(address yieldRecipient_) external virtual {
+        PART2.delegatecall(abi.encodeWithSignature("setYieldRecipient(address)", yieldRecipient_));
     }
 
     /// @notice The minimum amount of the underlying token that triggers a yield vault deposit.
@@ -1054,9 +1049,8 @@ abstract contract VaultBridgeToken is
     /// @notice This function can be called by the owner only.
     /// @dev Delegates the call to `VaultBridgeTokenPart2`.
     /// @param minimumYieldVaultDeposit_ Set to `0` to disable.
-    function setMinimumYieldVaultDeposit(uint256 minimumYieldVaultDeposit_) external virtual delegatedToPart2 {
-        // Silence the Solidity compiler.
-        minimumYieldVaultDeposit_;
+    function setMinimumYieldVaultDeposit(uint256 minimumYieldVaultDeposit_) external virtual {
+        PART2.delegatecall(abi.encodeWithSignature("setMinimumYieldVaultDeposit(uint256)", minimumYieldVaultDeposit_));
     }
 
     /// @notice The maximum slippage percentage when depositing into or withdrawing from the yield vault.
@@ -1065,10 +1059,8 @@ abstract contract VaultBridgeToken is
     function setYieldVaultMaximumSlippagePercentage(uint256 maximumSlippagePercentage)
         external
         virtual
-        delegatedToPart2
     {
-        // Silence the Solidity compiler.
-        maximumSlippagePercentage;
+        PART2.delegatecall(abi.encodeWithSignature("setYieldVaultMaximumSlippagePercentage(uint256)", maximumSlippagePercentage));
     }
 
     /// @notice Calculates the amount of assets to reserve (as opposed to depositing into the yield vault) based on the current and minimum reserve percentages.
@@ -1294,12 +1286,16 @@ abstract contract VaultBridgeToken is
     /// @notice Prevents usage of functions with the `whenNotPaused` modifier.
     /// @notice This function can be called by a pauser only.
     /// @dev Delegates the call to `VaultBridgeTokenPart2`.
-    function pause() external virtual delegatedToPart2 {}
+    function pause() external virtual {
+        PART2.delegatecall(abi.encodeWithSignature("pause()"));
+    }
 
     /// @notice Allows usage of functions with the `whenNotPaused` modifier.
     /// @notice This function can be called by the owner only.
     /// @dev Delegates the call to `VaultBridgeTokenPart2`.
-    function unpause() external virtual delegatedToPart2 {}
+    function unpause() external virtual {
+        PART2.delegatecall(abi.encodeWithSignature("unpause()"));
+    }
 
     // -----================= ::: PART 2 ::: =================-----
 

@@ -48,6 +48,9 @@ jobs:
           git checkout v10.1.0-rc.1
           npm install
 
+      - name: Certora munge
+        run: ./certora/scripts/munge.sh
+
       - name: run configs
         uses: Certora/certora-run-action@v1
         with:
