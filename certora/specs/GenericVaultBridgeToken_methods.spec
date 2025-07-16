@@ -1,6 +1,7 @@
 using TokenMock as ERC20a; 
 using GenericVaultBridgeToken as GenericVaultBridgeToken;
 using ILxLyBridgeMock as ILxLyBridgeMock;
+using VaultBridgeTokenPart2 as VBTpart2;
 
 /*
     Declaration of methods that are used in the rules. envfree indicate that

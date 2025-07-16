@@ -16,8 +16,8 @@ hook CALL(uint g, address addr, uint value, uint argsOffset, uint argsLength, ui
 
 hook DELEGATECALL(uint g, address addr, uint argsOffset, uint argsLength, uint retOffset, uint retLength) uint rc {
     if (
-        addr != currentContract
-        ) 
+        addr != currentContract &&
+        addr != VBTpart2) 
     {
         delegatecallMade = true;
     }

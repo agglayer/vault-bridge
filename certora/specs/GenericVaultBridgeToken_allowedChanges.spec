@@ -79,7 +79,8 @@ rule onlyAllowedMethodsMayChangeStakedAssets(method f, env e)
 definition canDecreaseStakedAssets(method f) returns bool =
     f.selector == sig:claimAndRedeem(bytes32[32],bytes32[32],uint256,bytes32,bytes32,address,uint256,address,bytes).selector ||
     f.selector == sig:redeem(uint256,address,address).selector ||
-    f.selector == sig:withdraw(uint256,address,address).selector;
+    f.selector == sig:withdraw(uint256,address,address).selector ||
+    f.selector == sig:rebalanceReserve().selector;
 
 definition canIncreaseStakedAssets(method f) returns bool =
     f.selector == sig:deposit(uint256,address).selector ||
@@ -88,7 +89,8 @@ definition canIncreaseStakedAssets(method f) returns bool =
     f.selector == sig:depositWithPermitAndBridge(uint256,address,uint32,bool,bytes).selector ||
     f.selector == sig:performReversibleYieldVaultDeposit(uint256).selector ||
     f.selector == sig:completeMigration(uint32, uint256, uint256).selector ||
-    f.selector == sig:mint(uint256,address).selector;
+    f.selector == sig:mint(uint256,address).selector||
+    f.selector == sig:rebalanceReserve().selector;
 
 rule onlyAllowedMethodsMayChangeMigrationFeesFund(method f, env e)
     filtered {f -> !excludedMethod(f) }
