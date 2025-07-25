@@ -49,7 +49,7 @@ jobs:
           npm install
 
       - name: run configs
-        uses: Certora/certora-run-action@v1
+        uses: Certora/certora-run-action@v2
         with:
 #          use-alpha: true
           configurations: ${{ env.CONFIGS }}
