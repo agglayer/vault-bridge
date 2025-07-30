@@ -20,7 +20,7 @@
   - [Migration Manager](#migration-manager)
   - [Custom Token](#custom-token)
   - [Native Converter](#native-converter)
-- [Getting Started](#getting-started)
+- [Get Started](#get-started)
 - [Documentation](#documentation)
 - [Deployments](#deployments)
 - [Usage](#usage)
@@ -82,7 +82,7 @@ A Native Converter is:
 
 Native Converter can be deployed on Layer Y to enable minting of vbToken directly on Layer Y by converting the bridged underlying asset, in a 1:1 ratio. The same can be deconverted to by burning bridged vbToken. Accumulated backing in Native Converter on Layer Y can be migrated to Layer X to be deposited into Vault Bridge Token contract via Migration Manger. For this reason, liqudity for deconverting to the bridged underlying token on Layer Y is guaranteed only up to a certain percentage. Native Converter doubles a bridge extension, so vbToken can be deconverted and bridged in a single call.
 
-## Getting Started
+## Get Started
 
 Getting started should be easy as Vault Bridge Token contracts follow the ERC-4626 interface. Variants of the standard ERC-4626 functions include `depositAndBridge` and `claimAndRedeem`. Please see [Documentation](#documentation) for more information.
 
@@ -121,25 +121,31 @@ Full support for non-Agglayer chains, third-party bridges, as well as non-EVM ch
 
 ## Usage
 
-**Install**
+Clone:
+
+```
+git clone git@github.com:agglayer/vault-bridge.git
+```
+
+Install:
 
 ```
 forge soldeer install & npm install
 ```
 
-**Build**
+Build:
 
 ```
 forge build
 ```
 
-**Test**
+Test:
 
 ```
 forge test
 ```
 
-**Coverage**
+Coverage:
 
 ```
 forge coverage --ir-minimum --report lcov && genhtml -o coverage lcov.info
