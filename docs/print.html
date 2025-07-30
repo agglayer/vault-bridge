@@ -1,0 +1,2422 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Technical Reference</title>
+        <meta name="robots" content="noindex">
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="book.css">
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Technical Reference</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/agglayer/vault-bridge" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <div align="center">
+<h1 id="vault-bridge"><a class="header" href="#vault-bridge">Vault Bridge</a></h1>
+<p><strong><a href="index.html#deployments">⛓️ Deployments</a></strong>
+<strong>   <a href="index.html#documentation">📗 Documentation</a></strong>
+<strong>   <a href="https://www.agglayer.dev/agglayer-vaultbridge">🧭 Website</a></strong>
+<strong>   <a href="https://github.com/agglayer/vault-bridge/">🐈‍⬛ GitHub</a></strong></p>
+</div>
+<br>
+<h2 id="contents"><a class="header" href="#contents">Contents</a></h2>
+<ul>
+<li><a href="index.html#contents">Contents</a></li>
+<li><a href="index.html#overview">Overview</a>
+<ul>
+<li><a href="index.html#tldr">TL;DR</a></li>
+<li><a href="index.html#vault-bridge-token">Vault Bridge Token</a></li>
+<li><a href="index.html#migration-manager">Migration Manager</a></li>
+<li><a href="index.html#custom-token">Custom Token</a></li>
+<li><a href="index.html#native-converter">Native Converter</a></li>
+</ul>
+</li>
+<li><a href="index.html#get-started">Get Started</a></li>
+<li><a href="index.html#documentation">Documentation</a></li>
+<li><a href="index.html#deployments">Deployments</a></li>
+<li><a href="index.html#usage">Usage</a></li>
+<li><a href="index.html#license">License</a></li>
+</ul>
+<br>
+<h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
+<p>Vault Bridge enables chains and apps to generate native yield on TVL by putting bridged assets to work.</p>
+<p>The protocol is comprised of:</p>
+<ul>
+<li>One primary chain ("Layer X")
+<ul>
+<li><a href="index.html#vault-bridge-token">Vault Bridge Token</a></li>
+<li><a href="index.html#migration-manager">Migration Manager</a></li>
+</ul>
+</li>
+<li>Many secondary chains ("Layer Y")
+<ul>
+<li><a href="index.html#custom-token">Custom Token</a></li>
+<li><a href="index.html#native-converter">Native Converter</a></li>
+</ul>
+</li>
+</ul>
+<h3 id="tldr"><a class="header" href="#tldr">TL;DR</a></h3>
+<p>Select assets are bridged from Layer X to Layer Y. These assets are deposited into Vault Bridge Token contract on Layer X, which mints and bridges vbToken to Layer Y. Deposited assets are used to generate yield on Layer X, while bridged vbTokens are used in DeFi on Layer Y. Generated yield gets distributed to chains and apps participating in the revenue sharing program.</p>
+<p>Native Converter contract can be deployed on Layer Y to enable acquisition of vbToken on Layer Y without having to bridge from Layer X. Accumulated backing in Native Converter on Layer Y gets migrated to Layer X and deposited into Vault Bridge Token contract.</p>
+<h3 id="vault-bridge-token"><a class="header" href="#vault-bridge-token">Vault Bridge Token</a></h3>
+<p>A Vault Bridge Token is:</p>
+<ul>
+<li><a href="https://eips.ethereum.org/EIPS/eip-20">ERC-20</a> token</li>
+<li><a href="https://eips.ethereum.org/EIPS/eip-4626">ERC-4626</a> vault</li>
+<li><a href="https://github.com/agglayer/agglayer-contracts">Unified Bridge</a> extension</li>
+</ul>
+<p>Assets in high demand with available yield strategies, such as WETH and USDC, can get their versions of vbTokens. The underlying asset is deposited into Vault Bridge Token contract, and vbToken is minted in a 1:1 ratio. The same can be withdrawn by burning vbToken. Vault Bridge Token contract doubles a pseudo bridge, so vbToken can be minted and bridged, or claimed and redeemed, in a single call. Deposited underlying assets are put into an external, ERC-4626 compatible vault ("yield vault") where they generate yield. Yield is distributed to chains and apps that participate in the revenue sharing program. Vault Bridge Token contracts also includes functionality that enables minting of vbToken directly on Layer Y via Native Converter, with backing migration to Layer X via Migration Manager.</p>
+<h3 id="migration-manager"><a class="header" href="#migration-manager">Migration Manager</a></h3>
+<p>The Migration Manager is:</p>
+<ul>
+<li><a href="index.html#vault-bridge-token">Vault Bridge Token</a> dependency</li>
+</ul>
+<p>vbTokens can be minted directly on Layer Y. In order for an underlying asset that backs vbToken minted on Layer Y to be deposited in Vault Bridge Token contract on Layer X, backing is migrated to Layer X via Native Converter and Migration Manager. Migration Manager completes migrations by interacting with Vault Bridge Token contract. All vbTokens share the same Migration Manager contract.</p>
+<h3 id="custom-token"><a class="header" href="#custom-token">Custom Token</a></h3>
+<p>A Custom Token is:</p>
+<ul>
+<li><a href="https://eips.ethereum.org/EIPS/eip-20">ERC-20</a> token</li>
+</ul>
+<p>Bridged vbToken can be upgraded to Custom Token on Layer Y. This enables custom behavior, such as bridged vbETH to integrate WETH9 interface, replacing WETH on Layer Y.</p>
+<h3 id="native-converter"><a class="header" href="#native-converter">Native Converter</a></h3>
+<p>A Native Converter is:</p>
+<ul>
+<li><a href="index.html#vault-bridge-token">Vault Bridge Token</a> extension</li>
+<li><a href="https://github.com/agglayer/agglayer-contracts">Unified Bridge</a> extension</li>
+</ul>
+<p>Native Converter can be deployed on Layer Y to enable minting of vbToken directly on Layer Y by converting the bridged underlying asset, in a 1:1 ratio. The same can be deconverted to by burning bridged vbToken. Accumulated backing in Native Converter on Layer Y can be migrated to Layer X to be deposited into Vault Bridge Token contract via Migration Manger. For this reason, liqudity for deconverting to the bridged underlying token on Layer Y is guaranteed only up to a certain percentage. Native Converter doubles a bridge extension, so vbToken can be deconverted and bridged in a single call.</p>
+<h2 id="get-started"><a class="header" href="#get-started">Get Started</a></h2>
+<p>Getting started should be easy as Vault Bridge Token contracts follow the ERC-4626 interface. Variants of the standard ERC-4626 functions include <code>depositAndBridge</code> and <code>claimAndRedeem</code>. Please see <a href="index.html#documentation">Documentation</a> for more information.</p>
+<p>If your chain is part of Agglayer, you can start using the official vbTokens immediately. Please note that you will get vbToken when bridging, not the underlying token, therefore activity should be incentivized in vbToken. You must participate in the revenue sharing program in order to receive yield. <a href="https://info.polygon.technology/vaultbridge-intake-form">Contact our team</a> if interested in revenue sharing.</p>
+<p>If your chain is not part of Agglayer, you can start using the official vbTokens immediately. Please note that you will need to use a third-party bridge to bridge vbTokens to your chain, and Native Converter functionality will not be supported. You must participate in the revenue sharing program in order to receive yield. <a href="https://info.polygon.technology/vaultbridge-intake-form">Contact our team</a> if interested in revenue sharing.</p>
+<p>Full support for non-Agglayer chains, third-party bridges, as well as non-EVM chains is coming soon. <a href="https://info.polygon.technology/vaultbridge-intake-form">Contact our team</a> to register interest.</p>
+<h2 id="documentation"><a class="header" href="#documentation">Documentation</a></h2>
+<ul>
+<li><a href="https://docs.agglayer.dev/">General Documentation</a></li>
+<li><a href="https://agglayer.github.io/vault-bridge/">Technical Reference</a></li>
+<li>In addition to General Documentation and Technical Reference, the <a href="https://github.com/agglayer/vault-bridge/tree/main/src">source code</a> is 100% documented and you are encouraged to check it out.</li>
+</ul>
+<h2 id="deployments"><a class="header" href="#deployments">Deployments</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Chain</th><th>Contract</th><th>Address</th></tr></thead><tbody>
+<tr><td>1</td><td>Vault Bridge ETH</td><td><a href="http://etherscan.io/address/0x2DC70fb75b88d2eB4715bc06E1595E6D97c34DFF"><code>0x2DC70fb75b88d2eB4715bc06E1595E6D97c34DFF</code></a></td></tr>
+<tr><td>1</td><td>Vault Bridge USDC</td><td><a href="http://etherscan.io/address/0x53E82ABbb12638F09d9e624578ccB666217a765e"><code>0x53E82ABbb12638F09d9e624578ccB666217a765e</code></a></td></tr>
+<tr><td>1</td><td>Vault Bridge USDT</td><td><a href="http://etherscan.io/address/0x6d4f9f9f8f0155509ecd6Ac6c544fF27999845CC"><code>0x6d4f9f9f8f0155509ecd6Ac6c544fF27999845CC</code></a></td></tr>
+<tr><td>1</td><td>Vault Bridge WBTC</td><td><a href="http://etherscan.io/address/0x2C24B57e2CCd1f273045Af6A5f632504C432374F"><code>0x2C24B57e2CCd1f273045Af6A5f632504C432374F</code></a></td></tr>
+<tr><td>1</td><td>Vault Bridge USDS</td><td><a href="http://etherscan.io/address/0x3DD459dE96F9C28e3a343b831cbDC2B93c8C4855"><code>0x3DD459dE96F9C28e3a343b831cbDC2B93c8C4855</code></a></td></tr>
+<tr><td>1</td><td>Migration Manager</td><td><a href="http://etherscan.io/address/0x417d01B64Ea30C4E163873f3a1f77b727c689e02"><code>0x417d01B64Ea30C4E163873f3a1f77b727c689e02</code></a></td></tr>
+<tr><td>747474</td><td>Bridged Vault Bridge ETH</td><td><a href="https://katanascan.com/address/0xEE7D8BCFb72bC1880D0Cf19822eB0A2e6577aB62"><code>0xEE7D8BCFb72bC1880D0Cf19822eB0A2e6577aB62</code></a></td></tr>
+<tr><td>747474</td><td>Bridged Vault Bridge USDC</td><td><a href="https://katanascan.com/address/0x203A662b0BD271A6ed5a60EdFbd04bFce608FD36"><code>0x203A662b0BD271A6ed5a60EdFbd04bFce608FD36</code></a></td></tr>
+<tr><td>747474</td><td>Bridged Vault Bridge USDT</td><td><a href="https://katanascan.com/address/0x2DCa96907fde857dd3D816880A0df407eeB2D2F2"><code>0x2DCa96907fde857dd3D816880A0df407eeB2D2F2</code></a></td></tr>
+<tr><td>747474</td><td>Bridged Vault Bridge WBTC</td><td><a href="https://katanascan.com/address/0x0913DA6Da4b42f538B445599b46Bb4622342Cf52"><code>0x0913DA6Da4b42f538B445599b46Bb4622342Cf52</code></a></td></tr>
+<tr><td>747474</td><td>Bridged Vault Bridge USDS</td><td><a href="https://katanascan.com/address/0x62D6A123E8D19d06d68cf0d2294F9A3A0362c6b3"><code>0x62D6A123E8D19d06d68cf0d2294F9A3A0362c6b3</code></a></td></tr>
+<tr><td>747474</td><td>Vault Bridge ETH Native Converter</td><td><a href="https://katanascan.com/address/0xa6b0db1293144ebe9478b6a84f75dd651e45914a"><code>0xa6b0db1293144ebe9478b6a84f75dd651e45914a</code></a></td></tr>
+<tr><td>747474</td><td>Vault Bridge USDC Native Converter</td><td><a href="https://katanascan.com/address/0x97a3500083348A147F419b8a65717909762c389f"><code>0x97a3500083348A147F419b8a65717909762c389f</code></a></td></tr>
+<tr><td>747474</td><td>Vault Bridge USDT Native Converter</td><td><a href="https://katanascan.com/address/0x053FA9b934b83E1E0ffc7e98a41aAdc3640bB462"><code>0x053FA9b934b83E1E0ffc7e98a41aAdc3640bB462</code></a></td></tr>
+<tr><td>747474</td><td>Vault Bridge WBTC Native Converter</td><td><a href="https://katanascan.com/address/0xb00aa68b87256E2F22058fB2Ba3246EEc54A44fc"><code>0xb00aa68b87256E2F22058fB2Ba3246EEc54A44fc</code></a></td></tr>
+<tr><td>747474</td><td>Vault Bridge USDS Native Converter</td><td><a href="https://katanascan.com/address/0x639f13D5f30B47c792b6851238c05D0b623C77DE"><code>0x639f13D5f30B47c792b6851238c05D0b623C77DE</code></a></td></tr>
+</tbody></table>
+</div>
+<h2 id="usage"><a class="header" href="#usage">Usage</a></h2>
+<p>Clone:</p>
+<pre><code>git clone git@github.com:agglayer/vault-bridge.git
+</code></pre>
+<p>Install:</p>
+<pre><code>forge soldeer install &amp; npm install
+</code></pre>
+<p>Build:</p>
+<pre><code>forge build
+</code></pre>
+<p>Test:</p>
+<pre><code>forge test
+</code></pre>
+<p>Coverage:</p>
+<pre><code>forge coverage --ir-minimum --report lcov &amp;&amp; genhtml -o coverage lcov.info
+</code></pre>
+<h2 id="license"><a class="header" href="#license">License</a></h2>
+<p>This codebase is licensed under Source Available License.</p>
+<p>See <a href="https://github.com/agglayer/vault-bridge/blob/main/LICENSE-SOURCE-AVAILABLE"><code>LICENSE-SOURCE-AVAILABLE</code></a>.</p>
+<p>Your use of this software constitutes acceptance of these license terms.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="contents-1"><a class="header" href="#contents-1">Contents</a></h1>
+<ul>
+<li><a href="src/custom-tokens//src/custom-tokens/WETH">WETH</a></li>
+<li><a href="src/custom-tokens/GenericCustomToken.sol/contract.GenericCustomToken.html">GenericCustomToken</a></li>
+<li><a href="src/custom-tokens/GenericNativeConverter.sol/contract.GenericNativeConverter.html">GenericNativeConverter</a></li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="contents-2"><a class="header" href="#contents-2">Contents</a></h1>
+<ul>
+<li><a href="src/custom-tokens/WETH/WETH.sol/contract.WETH.html">WETH</a></li>
+<li><a href="src/custom-tokens/WETH/WETHNativeConverter.sol/contract.WETHNativeConverter.html">WETHNativeConverter</a></li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="weth"><a class="header" href="#weth">WETH</a></h1>
+<p><a href="https://github.com/agglayer/vault-bridge/blob/2c76a3249f25aa635aad39bd435c00f1c4cfe601/src/custom-tokens/WETH/WETH.sol">Git Source</a></p>
+<p><strong>Inherits:</strong>
+<a href="src/custom-tokens/WETH/WETH.sol//src/CustomToken.sol/abstract.CustomToken.html">CustomToken</a></p>
+<p><strong>Author:</strong>
+See https://github.com/agglayer/vault-bridge</p>
+<p><em>based on https://github.com/gnosis/canonical-weth/blob/master/contracts/WETH9.sol</em></p>
+<h2 id="state-variables"><a class="header" href="#state-variables">State Variables</a></h2>
+<h3 id="_weth_storage"><a class="header" href="#_weth_storage">_WETH_STORAGE</a></h3>
+<p><em>The storage slot at which WETH storage starts, following the EIP-7201 standard.</em></p>
+<p><em>Calculated as <code>keccak256(abi.encode(uint256(keccak256("agglayer.vault-bridge.WETH.storage")) - 1)) &amp; ~bytes32(uint256(0xff))</code>.</em></p>
+<pre><code class="language-solidity">bytes32 private constant _WETH_STORAGE = hex"df8caff5d0161908572492829df972cd19b1aabe3c3078d95299408cd561dc00";
+</code></pre>
+<h2 id="functions"><a class="header" href="#functions">Functions</a></h2>
+<h3 id="constructor"><a class="header" href="#constructor">constructor</a></h3>
+<pre><code class="language-solidity">constructor();
+</code></pre>
+<h3 id="onlynativeconverter"><a class="header" href="#onlynativeconverter">onlyNativeConverter</a></h3>
+<pre><code class="language-solidity">modifier onlyNativeConverter();
+</code></pre>
+<h3 id="onlyifgastokeniseth"><a class="header" href="#onlyifgastokeniseth">onlyIfGasTokenIsEth</a></h3>
+<pre><code class="language-solidity">modifier onlyIfGasTokenIsEth();
+</code></pre>
+<h3 id="reinitialize"><a class="header" href="#reinitialize">reinitialize</a></h3>
+<pre><code class="language-solidity">function reinitialize(
+    address owner_,
+    uint8 originalUnderlyingTokenDecimals_,
+    address lxlyBridge_,
+    address nativeConverter_
+) external reinitializer(2);
+</code></pre>
+<h3 id="_getwethstorage"><a class="header" href="#_getwethstorage">_getWETHStorage</a></h3>
+<pre><code class="language-solidity">function _getWETHStorage() private pure returns (WETHStorage storage $);
+</code></pre>
+<h3 id="bridgebackingtolayerx"><a class="header" href="#bridgebackingtolayerx">bridgeBackingToLayerX</a></h3>
+<pre><code class="language-solidity">function bridgeBackingToLayerX(uint256 amount)
+    external
+    whenNotPaused
+    onlyIfGasTokenIsEth
+    onlyNativeConverter
+    nonReentrant;
+</code></pre>
+<h3 id="receive"><a class="header" href="#receive">receive</a></h3>
+<pre><code class="language-solidity">receive() external payable whenNotPaused onlyIfGasTokenIsEth nonReentrant;
+</code></pre>
+<h3 id="deposit"><a class="header" href="#deposit">deposit</a></h3>
+<p>Same as WETH9 deposit function.</p>
+<pre><code class="language-solidity">function deposit() external payable whenNotPaused onlyIfGasTokenIsEth nonReentrant;
+</code></pre>
+<h3 id="_deposit"><a class="header" href="#_deposit">_deposit</a></h3>
+<pre><code class="language-solidity">function _deposit() internal;
+</code></pre>
+<h3 id="withdraw"><a class="header" href="#withdraw">withdraw</a></h3>
+<p>Same as WETH9 withdraw function, but liqudity is guaranteed only up to a certain percentage.</p>
+<pre><code class="language-solidity">function withdraw(uint256 value) external whenNotPaused onlyIfGasTokenIsEth nonReentrant;
+</code></pre>
+<h2 id="events"><a class="header" href="#events">Events</a></h2>
+<h3 id="deposit-1"><a class="header" href="#deposit-1">Deposit</a></h3>
+<pre><code class="language-solidity">event Deposit(address indexed from, uint256 value);
+</code></pre>
+<h3 id="withdrawal"><a class="header" href="#withdrawal">Withdrawal</a></h3>
+<pre><code class="language-solidity">event Withdrawal(address indexed to, uint256 value);
+</code></pre>
+<h2 id="errors"><a class="header" href="#errors">Errors</a></h2>
+<h3 id="assetstoolarge"><a class="header" href="#assetstoolarge">AssetsTooLarge</a></h3>
+<pre><code class="language-solidity">error AssetsTooLarge(uint256 availableAssets, uint256 requestedAssets);
+</code></pre>
+<h3 id="functionnotsupportedonthisnetwork"><a class="header" href="#functionnotsupportedonthisnetwork">FunctionNotSupportedOnThisNetwork</a></h3>
+<pre><code class="language-solidity">error FunctionNotSupportedOnThisNetwork();
+</code></pre>
+<h2 id="structs"><a class="header" href="#structs">Structs</a></h2>
+<h3 id="wethstorage"><a class="header" href="#wethstorage">WETHStorage</a></h3>
+<p><em>Storage of WETH contract.</em></p>
+<p><em>It's implemented on a custom ERC-7201 namespace to reduce the risk of storage collisions when using with upgradeable contracts.</em></p>
+<p><strong>Note:</strong>
+storage-location: erc7201:agglayer.vault-bridge.WETH.storage</p>
+<pre><code class="language-solidity">struct WETHStorage {
+    bool _gasTokenIsEth;
+}
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="wethnativeconverter"><a class="header" href="#wethnativeconverter">WETHNativeConverter</a></h1>
+<p><a href="https://github.com/agglayer/vault-bridge/blob/2c76a3249f25aa635aad39bd435c00f1c4cfe601/src/custom-tokens/WETH/WETHNativeConverter.sol">Git Source</a></p>
+<p><strong>Inherits:</strong>
+<a href="src/custom-tokens/WETH/WETHNativeConverter.sol//src/NativeConverter.sol/abstract.NativeConverter.html">NativeConverter</a></p>
+<p><strong>Author:</strong>
+See https://github.com/agglayer/vault-bridge</p>
+<h2 id="state-variables-1"><a class="header" href="#state-variables-1">State Variables</a></h2>
+<h3 id="_weth_native_converter_storage"><a class="header" href="#_weth_native_converter_storage">_WETH_NATIVE_CONVERTER_STORAGE</a></h3>
+<p><em>The storage slot at which WETHNativeConverter storage starts, following the EIP-7201 standard.</em></p>
+<p><em>Calculated as <code>keccak256(abi.encode(uint256(keccak256("agglayer.vault-bridge.WETHNativeConverter.storage")) - 1)) &amp; ~bytes32(uint256(0xff))</code>.</em></p>
+<pre><code class="language-solidity">bytes32 private constant _WETH_NATIVE_CONVERTER_STORAGE =
+    hex"f9565ea242552c2a1a216404344b0c8f6a3093382a21dd5bd6f5dc2ff1934d00";
+</code></pre>
+<h2 id="functions-1"><a class="header" href="#functions-1">Functions</a></h2>
+<h3 id="onlyifgastokeniseth-1"><a class="header" href="#onlyifgastokeniseth-1">onlyIfGasTokenIsEth</a></h3>
+<pre><code class="language-solidity">modifier onlyIfGasTokenIsEth();
+</code></pre>
+<h3 id="constructor-1"><a class="header" href="#constructor-1">constructor</a></h3>
+<pre><code class="language-solidity">constructor();
+</code></pre>
+<h3 id="initialize"><a class="header" href="#initialize">initialize</a></h3>
+<pre><code class="language-solidity">function initialize(
+    address owner_,
+    address customToken_,
+    address underlyingToken_,
+    address lxlyBridge_,
+    uint32 layerXNetworkId_,
+    uint256 nonMigratableBackingPercentage_,
+    address migrationManager_,
+    uint256 nonMigratableGasBackingPercentage_
+) external initializer;
+</code></pre>
+<h3 id="nonmigratablegasbackingpercentage"><a class="header" href="#nonmigratablegasbackingpercentage">nonMigratableGasBackingPercentage</a></h3>
+<pre><code class="language-solidity">function nonMigratableGasBackingPercentage() public view returns (uint256);
+</code></pre>
+<h3 id="_getwethnativeconverterstorage"><a class="header" href="#_getwethnativeconverterstorage">_getWETHNativeConverterStorage</a></h3>
+<pre><code class="language-solidity">function _getWETHNativeConverterStorage() private pure returns (WETHNativeConverterStorage storage $);
+</code></pre>
+<h3 id="migratablegasbacking"><a class="header" href="#migratablegasbacking">migratableGasBacking</a></h3>
+<pre><code class="language-solidity">function migratableGasBacking() public view returns (uint256);
+</code></pre>
+<h3 id="migrategasbackingtolayerx"><a class="header" href="#migrategasbackingtolayerx">migrateGasBackingToLayerX</a></h3>
+<p>It is known that this can lead to WETH not being able to perform withdrawals, because of a lack of gas backing.</p>
+<p>However, this is acceptable, because WETH is a vault backed token so its backing should actually be staked.</p>
+<p>Users can still bridge WETH back to Layer X to receive wETH or ETH.</p>
+<p><em>This special function allows the NativeConverter owner to migrate the gas backing of the WETH Custom Token</em></p>
+<p><em>It simply takes the amount of gas token from the WETH contract</em></p>
+<p><em>and performs the migration using a special CrossNetworkInstruction called _1_WRAP_GAS_TOKEN_AND_COMPLETE_MIGRATION</em></p>
+<p><em>It instructs vbETH on Layer X to first wrap the gas token and then deposit it to complete the migration.</em></p>
+<pre><code class="language-solidity">function migrateGasBackingToLayerX(uint256 amount)
+    external
+    whenNotPaused
+    onlyIfGasTokenIsEth
+    onlyRole(MIGRATOR_ROLE)
+    nonReentrant;
+</code></pre>
+<h3 id="receive-1"><a class="header" href="#receive-1">receive</a></h3>
+<pre><code class="language-solidity">receive() external payable whenNotPaused onlyIfGasTokenIsEth;
+</code></pre>
+<h3 id="setnonmigratablegasbackingpercentage"><a class="header" href="#setnonmigratablegasbackingpercentage">setNonMigratableGasBackingPercentage</a></h3>
+<pre><code class="language-solidity">function setNonMigratableGasBackingPercentage(uint256 nonMigratableGasBackingPercentage_)
+    external
+    onlyRole(DEFAULT_ADMIN_ROLE)
+    nonReentrant;
+</code></pre>
+<h2 id="events-1"><a class="header" href="#events-1">Events</a></h2>
+<h3 id="nonmigratablegasbackingpercentageset"><a class="header" href="#nonmigratablegasbackingpercentageset">NonMigratableGasBackingPercentageSet</a></h3>
+<pre><code class="language-solidity">event NonMigratableGasBackingPercentageSet(uint256 nonMigratableGasBackingPercentage_);
+</code></pre>
+<h2 id="errors-1"><a class="header" href="#errors-1">Errors</a></h2>
+<h3 id="functionnotsupportedonthisnetwork-1"><a class="header" href="#functionnotsupportedonthisnetwork-1">FunctionNotSupportedOnThisNetwork</a></h3>
+<pre><code class="language-solidity">error FunctionNotSupportedOnThisNetwork();
+</code></pre>
+<h3 id="invalidnonmigratablegasbackingpercentage"><a class="header" href="#invalidnonmigratablegasbackingpercentage">InvalidNonMigratableGasBackingPercentage</a></h3>
+<pre><code class="language-solidity">error InvalidNonMigratableGasBackingPercentage();
+</code></pre>
+<h2 id="structs-1"><a class="header" href="#structs-1">Structs</a></h2>
+<h3 id="wethnativeconverterstorage"><a class="header" href="#wethnativeconverterstorage">WETHNativeConverterStorage</a></h3>
+<p><em>Storage of WETHNativeConverter contract.</em></p>
+<p><em>It's implemented on a custom ERC-7201 namespace to reduce the risk of storage collisions when using with upgradeable contracts.</em></p>
+<p><strong>Note:</strong>
+storage-location: erc7201:agglayer.vault-bridge.WETHNativeConverter.storage</p>
+<pre><code class="language-solidity">struct WETHNativeConverterStorage {
+    WETH _weth;
+    bool _gasTokenIsEth;
+    uint256 nonMigratableGasBackingPercentage;
+}
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="genericcustomtoken"><a class="header" href="#genericcustomtoken">GenericCustomToken</a></h1>
+<p><a href="https://github.com/agglayer/vault-bridge/blob/2c76a3249f25aa635aad39bd435c00f1c4cfe601/src/custom-tokens/GenericCustomToken.sol">Git Source</a></p>
+<p><strong>Inherits:</strong>
+<a href="src/custom-tokens/GenericCustomToken.sol//src/CustomToken.sol/abstract.CustomToken.html">CustomToken</a></p>
+<p><strong>Author:</strong>
+See https://github.com/agglayer/vault-bridge</p>
+<p><em>This contract can be used to deploy Custom Tokens that do not require any customization.</em></p>
+<h2 id="functions-2"><a class="header" href="#functions-2">Functions</a></h2>
+<h3 id="constructor-2"><a class="header" href="#constructor-2">constructor</a></h3>
+<pre><code class="language-solidity">constructor();
+</code></pre>
+<h3 id="reinitialize-1"><a class="header" href="#reinitialize-1">reinitialize</a></h3>
+<pre><code class="language-solidity">function reinitialize(
+    address owner_,
+    uint8 originalUnderlyingTokenDecimals_,
+    address lxlyBridge_,
+    address nativeConverter_
+) external reinitializer(2);
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="genericnativeconverter"><a class="header" href="#genericnativeconverter">GenericNativeConverter</a></h1>
+<p><a href="https://github.com/agglayer/vault-bridge/blob/2c76a3249f25aa635aad39bd435c00f1c4cfe601/src/custom-tokens/GenericNativeConverter.sol">Git Source</a></p>
+<p><strong>Inherits:</strong>
+<a href="src/custom-tokens/GenericNativeConverter.sol//src/NativeConverter.sol/abstract.NativeConverter.html">NativeConverter</a></p>
+<p><strong>Author:</strong>
+See https://github.com/agglayer/vault-bridge</p>
+<p><em>This contract can be used to deploy Native Converters that do not require any customization.</em></p>
+<h2 id="functions-3"><a class="header" href="#functions-3">Functions</a></h2>
+<h3 id="constructor-3"><a class="header" href="#constructor-3">constructor</a></h3>
+<pre><code class="language-solidity">constructor();
+</code></pre>
+<h3 id="initialize-1"><a class="header" href="#initialize-1">initialize</a></h3>
+<pre><code class="language-solidity">function initialize(
+    address owner_,
+    address customToken_,
+    address underlyingToken_,
+    address lxlyBridge_,
+    uint32 layerXLxlyId_,
+    uint256 nonMigratableBackingPercentage_,
+    address migrationManager_
+) external initializer;
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="contents-3"><a class="header" href="#contents-3">Contents</a></h1>
+<ul>
+<li><a href="src/etc/ERC20PermitUser.sol/abstract.ERC20PermitUser.html">ERC20PermitUser</a></li>
+<li><a href="src/etc/IBridgeMessageReceiver.sol/interface.IBridgeMessageReceiver.html">IBridgeMessageReceiver</a></li>
+<li><a href="src/etc/ILxLyBridge.sol/interface.ILxLyBridge.html">ILxLyBridge</a></li>
+<li><a href="src/etc/IVaultBridgeTokenInitializer.sol/interface.IVaultBridgeTokenInitializer.html">IVaultBridgeTokenInitializer</a></li>
+<li><a href="src/etc/IWETH9.sol/interface.IWETH9.html">IWETH9</a></li>
+<li><a href="src/etc/Versioned.sol/abstract.Versioned.html">Versioned</a></li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="erc20permituser"><a class="header" href="#erc20permituser">ERC20PermitUser</a></h1>
+<p><a href="https://github.com/agglayer/vault-bridge/blob/2c76a3249f25aa635aad39bd435c00f1c4cfe601/src/etc/ERC20PermitUser.sol">Git Source</a></p>
+<p><strong>Author:</strong>
+See https://github.com/agglayer/vault-bridge</p>
+<p><em>Mimics the behavior of LxLy Bridge for validating and using ERC-20 permits.</em></p>
+<h2 id="state-variables-2"><a class="header" href="#state-variables-2">State Variables</a></h2>
+<h3 id="_permit_selector_erc_2612"><a class="header" href="#_permit_selector_erc_2612">_PERMIT_SELECTOR_ERC_2612</a></h3>
+<p><em>Calculated as <code>bytes4(keccak256(bytes("permit(address,address,uint256,uint256,uint8,bytes32,bytes32)")))</code>.</em></p>
+<pre><code class="language-solidity">bytes4 private constant _PERMIT_SELECTOR_ERC_2612 = hex"d505accf";
+</code></pre>
+<h3 id="_permit_selector_dai"><a class="header" href="#_permit_selector_dai">_PERMIT_SELECTOR_DAI</a></h3>
+<pre><code class="language-solidity">bytes4 private constant _PERMIT_SELECTOR_DAI = hex"8fcbaf0c";
+</code></pre>
+<h2 id="functions-4"><a class="header" href="#functions-4">Functions</a></h2>
+<h3 id="_permit"><a class="header" href="#_permit">_permit</a></h3>
+<pre><code class="language-solidity">function _permit(address token, uint256 minimumAmount, bytes calldata permitData) internal;
+</code></pre>
+<h2 id="errors-2"><a class="header" href="#errors-2">Errors</a></h2>
+<h3 id="invalidownerinerc20permit"><a class="header" href="#invalidownerinerc20permit">InvalidOwnerInERC20Permit</a></h3>
+<pre><code class="language-solidity">error InvalidOwnerInERC20Permit(address owner, address expectedOwner);
+</code></pre>
+<h3 id="invalidspenderinerc20permit"><a class="header" href="#invalidspenderinerc20permit">InvalidSpenderInERC20Permit</a></h3>
+<pre><code class="language-solidity">error InvalidSpenderInERC20Permit(address spender, address expectedSpender);
+</code></pre>
+<h3 id="invalidamountinerc20permit"><a class="header" href="#invalidamountinerc20permit">InvalidAmountInERC20Permit</a></h3>
+<pre><code class="language-solidity">error InvalidAmountInERC20Permit(uint256 amount, uint256 minimumAmount);
+</code></pre>
+<h3 id="invalidselectorinerc20permit"><a class="header" href="#invalidselectorinerc20permit">InvalidSelectorInERC20Permit</a></h3>
+<pre><code class="language-solidity">error InvalidSelectorInERC20Permit(bytes4 selector);
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="ibridgemessagereceiver"><a class="header" href="#ibridgemessagereceiver">IBridgeMessageReceiver</a></h1>
+<p><a href="https://github.com/agglayer/vault-bridge/blob/2c76a3249f25aa635aad39bd435c00f1c4cfe601/src/etc/IBridgeMessageReceiver.sol">Git Source</a></p>
+<p><strong>Author:</strong>
+See https://github.com/agglayer/vault-bridge</p>
+<h2 id="functions-5"><a class="header" href="#functions-5">Functions</a></h2>
+<h3 id="onmessagereceived"><a class="header" href="#onmessagereceived">onMessageReceived</a></h3>
+<pre><code class="language-solidity">function onMessageReceived(address originAddress, uint32 originNetwork, bytes memory data) external payable;
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="ilxlybridge"><a class="header" href="#ilxlybridge">ILxLyBridge</a></h1>
+<p><a href="https://github.com/agglayer/vault-bridge/blob/2c76a3249f25aa635aad39bd435c00f1c4cfe601/src/etc/ILxLyBridge.sol">Git Source</a></p>
+<p><strong>Author:</strong>
+See https://github.com/agglayer/vault-bridge</p>
+<h2 id="functions-6"><a class="header" href="#functions-6">Functions</a></h2>
+<h3 id="networkid"><a class="header" href="#networkid">networkID</a></h3>
+<pre><code class="language-solidity">function networkID() external view returns (uint32);
+</code></pre>
+<h3 id="gastokenaddress"><a class="header" href="#gastokenaddress">gasTokenAddress</a></h3>
+<pre><code class="language-solidity">function gasTokenAddress() external view returns (address);
+</code></pre>
+<h3 id="gastokennetwork"><a class="header" href="#gastokennetwork">gasTokenNetwork</a></h3>
+<pre><code class="language-solidity">function gasTokenNetwork() external view returns (uint32);
+</code></pre>
+<h3 id="bridgeasset"><a class="header" href="#bridgeasset">bridgeAsset</a></h3>
+<pre><code class="language-solidity">function bridgeAsset(
+    uint32 destinationNetwork,
+    address destinationAddress,
+    uint256 amount,
+    address token,
+    bool forceUpdateGlobalExitRoot,
+    bytes calldata permitData
+) external payable;
+</code></pre>
+<h3 id="claimasset"><a class="header" href="#claimasset">claimAsset</a></h3>
+<pre><code class="language-solidity">function claimAsset(
+    bytes32[32] calldata smtProofLocalExitRoot,
+    bytes32[32] calldata smtProofRollupExitRoot,
+    uint256 globalIndex,
+    bytes32 mainnetExitRoot,
+    bytes32 rollupExitRoot,
+    uint32 originNetwork,
+    address originTokenAddress,
+    uint32 destinationNetwork,
+    address destinationAddress,
+    uint256 amount,
+    bytes calldata metadata
+) external;
+</code></pre>
+<h3 id="claimmessage"><a class="header" href="#claimmessage">claimMessage</a></h3>
+<pre><code class="language-solidity">function claimMessage(
+    bytes32[32] calldata smtProofLocalExitRoot,
+    bytes32[32] calldata smtProofRollupExitRoot,
+    uint256 globalIndex,
+    bytes32 mainnetExitRoot,
+    bytes32 rollupExitRoot,
+    uint32 originNetwork,
+    address originAddress,
+    uint32 destinationNetwork,
+    address destinationAddress,
+    uint256 amount,
+    bytes calldata metadata
+) external;
+</code></pre>
+<h3 id="bridgemessage"><a class="header" href="#bridgemessage">bridgeMessage</a></h3>
+<pre><code class="language-solidity">function bridgeMessage(
+    uint32 destinationNetwork,
+    address destinationAddress,
+    bool forceUpdateGlobalExitRoot,
+    bytes calldata metadata
+) external payable;
+</code></pre>
+<h3 id="wrappedaddressisnotmintable"><a class="header" href="#wrappedaddressisnotmintable">wrappedAddressIsNotMintable</a></h3>
+<pre><code class="language-solidity">function wrappedAddressIsNotMintable(address wrappedAddress) external view returns (bool isNotMintable);
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="ivaultbridgetokeninitializer"><a class="header" href="#ivaultbridgetokeninitializer">IVaultBridgeTokenInitializer</a></h1>
+<p><a href="https://github.com/agglayer/vault-bridge/blob/2c76a3249f25aa635aad39bd435c00f1c4cfe601/src/etc/IVaultBridgeTokenInitializer.sol">Git Source</a></p>
+<p><strong>Author:</strong>
+See https://github.com/agglayer/vault-bridge</p>
+<p><em>This interface exists because of a limitiation in the Solidity compiler.</em></p>
+<h2 id="functions-7"><a class="header" href="#functions-7">Functions</a></h2>
+<h3 id="initialize-2"><a class="header" href="#initialize-2">initialize</a></h3>
+<p><em>Vault Bridge Token delegates the initialization to this contract.</em></p>
+<p><em>Please refer to <code>__VaultBridgeToken_init</code> in <code>VaultBridgeToken.sol</code> for more information.</em></p>
+<pre><code class="language-solidity">function initialize(VaultBridgeToken.InitializationParameters calldata initParams) external;
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="iweth9"><a class="header" href="#iweth9">IWETH9</a></h1>
+<p><a href="https://github.com/agglayer/vault-bridge/blob/2c76a3249f25aa635aad39bd435c00f1c4cfe601/src/etc/IWETH9.sol">Git Source</a></p>
+<p><strong>Inherits:</strong>
+IERC20</p>
+<p><strong>Author:</strong>
+See https://github.com/agglayer/vault-bridge</p>
+<h2 id="functions-8"><a class="header" href="#functions-8">Functions</a></h2>
+<h3 id="deposit-2"><a class="header" href="#deposit-2">deposit</a></h3>
+<p>Deposit ether to get wrapped ether</p>
+<pre><code class="language-solidity">function deposit() external payable;
+</code></pre>
+<h3 id="withdraw-1"><a class="header" href="#withdraw-1">withdraw</a></h3>
+<p>Withdraw wrapped ether to get ether</p>
+<pre><code class="language-solidity">function withdraw(uint256) external;
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="versioned"><a class="header" href="#versioned">Versioned</a></h1>
+<p><a href="https://github.com/agglayer/vault-bridge/blob/2c76a3249f25aa635aad39bd435c00f1c4cfe601/src/etc/Versioned.sol">Git Source</a></p>
+<p><strong>Author:</strong>
+See https://github.com/agglayer/vault-bridge</p>
+<h2 id="functions-9"><a class="header" href="#functions-9">Functions</a></h2>
+<h3 id="version"><a class="header" href="#version">version</a></h3>
+<p>The version of the contract.</p>
+<pre><code class="language-solidity">function version() public pure returns (string memory);
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="contents-4"><a class="header" href="#contents-4">Contents</a></h1>
+<ul>
+<li><a href="src/vault-bridge-tokens//src/vault-bridge-tokens/vbETH">vbETH</a></li>
+<li><a href="src/vault-bridge-tokens/GenericVaultBridgeToken.sol/contract.GenericVaultBridgeToken.html">GenericVaultBridgeToken</a></li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="contents-5"><a class="header" href="#contents-5">Contents</a></h1>
+<ul>
+<li><a href="src/vault-bridge-tokens/vbETH/VbETH.sol/contract.VbETH.html">VbETH</a></li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="vbeth"><a class="header" href="#vbeth">VbETH</a></h1>
+<p><a href="https://github.com/agglayer/vault-bridge/blob/2c76a3249f25aa635aad39bd435c00f1c4cfe601/src/vault-bridge-tokens/vbETH/VbETH.sol">Git Source</a></p>
+<p><strong>Inherits:</strong>
+<a href="src/vault-bridge-tokens/vbETH/VbETH.sol//src/VaultBridgeToken.sol/abstract.VaultBridgeToken.html">VaultBridgeToken</a></p>
+<p><strong>Author:</strong>
+See https://github.com/agglayer/vault-bridge</p>
+<p><em>CAUTION! As-is, this contract MUST NOT be used on a network if the gas token is not ETH.</em></p>
+<h2 id="functions-10"><a class="header" href="#functions-10">Functions</a></h2>
+<h3 id="constructor-4"><a class="header" href="#constructor-4">constructor</a></h3>
+<pre><code class="language-solidity">constructor();
+</code></pre>
+<h3 id="initialize-3"><a class="header" href="#initialize-3">initialize</a></h3>
+<pre><code class="language-solidity">function initialize(address initializer_, VaultBridgeToken.InitializationParameters calldata initParams)
+    external
+    initializer;
+</code></pre>
+<h3 id="depositgastoken"><a class="header" href="#depositgastoken">depositGasToken</a></h3>
+<p><em>deposit ETH to get vbETH</em></p>
+<pre><code class="language-solidity">function depositGasToken(address receiver) external payable whenNotPaused nonReentrant returns (uint256 shares);
+</code></pre>
+<h3 id="depositgastokenandbridge"><a class="header" href="#depositgastokenandbridge">depositGasTokenAndBridge</a></h3>
+<p><em>deposit ETH to get vbETH and bridge to an L2</em></p>
+<pre><code class="language-solidity">function depositGasTokenAndBridge(
+    address destinationAddress,
+    uint32 destinationNetworkId,
+    bool forceUpdateGlobalExitRoot
+) external payable whenNotPaused nonReentrant returns (uint256 shares);
+</code></pre>
+<h3 id="mintwithgastoken"><a class="header" href="#mintwithgastoken">mintWithGasToken</a></h3>
+<pre><code class="language-solidity">function mintWithGasToken(uint256 shares, address receiver)
+    external
+    payable
+    whenNotPaused
+    nonReentrant
+    returns (uint256 assets);
+</code></pre>
+<h3 id="_receiveunderlyingtokenviamsgvalue"><a class="header" href="#_receiveunderlyingtokenviamsgvalue">_receiveUnderlyingTokenViaMsgValue</a></h3>
+<pre><code class="language-solidity">function _receiveUnderlyingTokenViaMsgValue(address from, uint256 assets) internal;
+</code></pre>
+<h2 id="errors-3"><a class="header" href="#errors-3">Errors</a></h2>
+<h3 id="contractnotsupportedonthisnetwork"><a class="header" href="#contractnotsupportedonthisnetwork">ContractNotSupportedOnThisNetwork</a></h3>
+<pre><code class="language-solidity">error ContractNotSupportedOnThisNetwork();
+</code></pre>
+<h3 id="incorrectmsgvalue"><a class="header" href="#incorrectmsgvalue">IncorrectMsgValue</a></h3>
+<pre><code class="language-solidity">error IncorrectMsgValue(uint256 msgValue, uint256 requestedAssets);
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="genericvaultbridgetoken"><a class="header" href="#genericvaultbridgetoken">GenericVaultBridgeToken</a></h1>
+<p><a href="https://github.com/agglayer/vault-bridge/blob/2c76a3249f25aa635aad39bd435c00f1c4cfe601/src/vault-bridge-tokens/GenericVaultBridgeToken.sol">Git Source</a></p>
+<p><strong>Inherits:</strong>
+<a href="src/vault-bridge-tokens/GenericVaultBridgeToken.sol//src/VaultBridgeToken.sol/abstract.VaultBridgeToken.html">VaultBridgeToken</a></p>
+<p><strong>Author:</strong>
+See https://github.com/agglayer/vault-bridge</p>
+<p><em>This contract can be used to deploy vbTokens that do not require any customization.</em></p>
+<h2 id="functions-11"><a class="header" href="#functions-11">Functions</a></h2>
+<h3 id="constructor-5"><a class="header" href="#constructor-5">constructor</a></h3>
+<pre><code class="language-solidity">constructor();
+</code></pre>
+<h3 id="initialize-4"><a class="header" href="#initialize-4">initialize</a></h3>
+<pre><code class="language-solidity">function initialize(address initializer_, VaultBridgeToken.InitializationParameters calldata initParams)
+    external
+    initializer;
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="customtoken"><a class="header" href="#customtoken">CustomToken</a></h1>
+<p><a href="https://github.com/agglayer/vault-bridge/blob/2c76a3249f25aa635aad39bd435c00f1c4cfe601/src/CustomToken.sol">Git Source</a></p>
+<p><strong>Inherits:</strong>
+Initializable, AccessControlUpgradeable, PausableUpgradeable, ReentrancyGuardUpgradeable, ERC20PermitUpgradeable, <a href="src/CustomToken.sol//src/etc/Versioned.sol/abstract.Versioned.html">Versioned</a></p>
+<p><strong>Author:</strong>
+See https://github.com/agglayer/vault-bridge</p>
+<p>A Custom Token is an optional ERC-20 token on Layer Ys to represent the 'native' version of the original underlying token from Layer X on Layer Y, ideally (or, simply, the upgraded version of the bridged vbToken).</p>
+<p><em>A base contract used to create Custom Tokens.</em></p>
+<p><em>@note IMPORTANT: Custom Token MUST be used as the new implementation for the bridged vbToken or be custom mapped to the corresponding vbToken on LxLy Bridge on Layer Y, and MUST give the minting and burning permission to LxLy Bridge and Native Converter. It MAY have a transfer fee.</em></p>
+<h2 id="state-variables-3"><a class="header" href="#state-variables-3">State Variables</a></h2>
+<h3 id="_custom_token_storage"><a class="header" href="#_custom_token_storage">_CUSTOM_TOKEN_STORAGE</a></h3>
+<p><em>The storage slot at which Custom Token storage starts, following the EIP-7201 standard.</em></p>
+<p><em>Calculated as <code>keccak256(abi.encode(uint256(keccak256("agglayer.vault-bridge.CustomToken.storage")) - 1)) &amp; ~bytes32(uint256(0xff))</code>.</em></p>
+<pre><code class="language-solidity">bytes32 private constant _CUSTOM_TOKEN_STORAGE = hex"0300d81ec8b5c42d6bd2cedd81ce26f1003c52753656b7512a8eef168b702500";
+</code></pre>
+<h3 id="pauser_role"><a class="header" href="#pauser_role">PAUSER_ROLE</a></h3>
+<pre><code class="language-solidity">bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
+</code></pre>
+<h2 id="functions-12"><a class="header" href="#functions-12">Functions</a></h2>
+<h3 id="onlylxlybridgeandnativeconverter"><a class="header" href="#onlylxlybridgeandnativeconverter">onlyLxlyBridgeAndNativeConverter</a></h3>
+<p><em>Checks if the sender is LxLy Bridge or Native Converter.</em></p>
+<p><em>This modifier is used to restrict the minting and burning of Custom Token.</em></p>
+<pre><code class="language-solidity">modifier onlyLxlyBridgeAndNativeConverter();
+</code></pre>
+<h3 id="__customtoken_init"><a class="header" href="#__customtoken_init">__CustomToken_init</a></h3>
+<p><em>Preserves the <code>name</code> and <code>symbol</code> of the bridged vbToken.</em></p>
+<pre><code class="language-solidity">function __CustomToken_init(
+    address owner_,
+    uint8 originalUnderlyingTokenDecimals_,
+    address lxlyBridge_,
+    address nativeConverter_
+) internal onlyInitializing;
+</code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>owner_</code></td><td><code>address</code></td><td></td></tr>
+<tr><td><code>originalUnderlyingTokenDecimals_</code></td><td><code>uint8</code></td><td>The number of decimals of the original underlying token on Layer X. Custom Token will have the same number of decimals as the original underlying token.</td></tr>
+<tr><td><code>lxlyBridge_</code></td><td><code>address</code></td><td></td></tr>
+<tr><td><code>nativeConverter_</code></td><td><code>address</code></td><td>The address of Native Converter for this Custom Token.</td></tr>
+</tbody></table>
+</div>
+<h3 id="decimals"><a class="header" href="#decimals">decimals</a></h3>
+<p>The number of decimals of Custom Token.</p>
+<p>The number of decimals is the same as that of the original underlying token on Layer X.</p>
+<pre><code class="language-solidity">function decimals() public view override returns (uint8);
+</code></pre>
+<h3 id="lxlybridge"><a class="header" href="#lxlybridge">lxlyBridge</a></h3>
+<p>LxLy Bridge, which connects AggLayer networks.</p>
+<pre><code class="language-solidity">function lxlyBridge() public view returns (address);
+</code></pre>
+<h3 id="nativeconverter"><a class="header" href="#nativeconverter">nativeConverter</a></h3>
+<p>The address of Native Converter for this Custom Token.</p>
+<pre><code class="language-solidity">function nativeConverter() public view returns (address);
+</code></pre>
+<h3 id="_getcustomtokenstorage"><a class="header" href="#_getcustomtokenstorage">_getCustomTokenStorage</a></h3>
+<p><em>Returns a pointer to the ERC-7201 storage namespace.</em></p>
+<pre><code class="language-solidity">function _getCustomTokenStorage() private pure returns (CustomTokenStorage storage $);
+</code></pre>
+<h3 id="transfer"><a class="header" href="#transfer">transfer</a></h3>
+<p><em>Pausable ERC-20 <code>transfer</code> function.</em></p>
+<pre><code class="language-solidity">function transfer(address to, uint256 value) public override whenNotPaused returns (bool);
+</code></pre>
+<h3 id="transferfrom"><a class="header" href="#transferfrom">transferFrom</a></h3>
+<p><em>Pausable ERC-20 <code>transferFrom</code> function.</em></p>
+<pre><code class="language-solidity">function transferFrom(address from, address to, uint256 value) public override whenNotPaused returns (bool);
+</code></pre>
+<h3 id="approve"><a class="header" href="#approve">approve</a></h3>
+<p><em>Pausable ERC-20 <code>approve</code> function.</em></p>
+<pre><code class="language-solidity">function approve(address spender, uint256 value) public override whenNotPaused returns (bool);
+</code></pre>
+<h3 id="permit"><a class="header" href="#permit">permit</a></h3>
+<p><em>Pausable ERC-20 Permit <code>permit</code> function.</em></p>
+<pre><code class="language-solidity">function permit(address owner, address spender, uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s)
+    public
+    override
+    whenNotPaused;
+</code></pre>
+<h3 id="mint"><a class="header" href="#mint">mint</a></h3>
+<p>Mints Custom Tokens to the recipient.</p>
+<p>This function can be called by LxLy Bridge and Native Converter only.</p>
+<pre><code class="language-solidity">function mint(address account, uint256 value) external whenNotPaused onlyLxlyBridgeAndNativeConverter nonReentrant;
+</code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>account</code></td><td><code>address</code></td><td>@note CAUTION! Minting to <code>address(0)</code> will result in no tokens minted! This is to enable vbToken on Layer X to bridge tokens to address zero on Layer Y at the end of the process of migrating backing from Native Converter to Layer X. Please refer to <code>NativeConverter.sol</code> for more information.</td></tr>
+<tr><td><code>value</code></td><td><code>uint256</code></td><td></td></tr>
+</tbody></table>
+</div>
+<h3 id="burn"><a class="header" href="#burn">burn</a></h3>
+<p>Burns Custom Tokens from a holder.</p>
+<p>This function can be called by LxLy Bridge and Native Converter only.</p>
+<pre><code class="language-solidity">function burn(address account, uint256 value) external whenNotPaused onlyLxlyBridgeAndNativeConverter nonReentrant;
+</code></pre>
+<h3 id="pause"><a class="header" href="#pause">pause</a></h3>
+<p>Prevents usage of functions with the <code>whenNotPaused</code> modifier.</p>
+<p>This function can be called by a pauser only.</p>
+<pre><code class="language-solidity">function pause() external onlyRole(PAUSER_ROLE) nonReentrant;
+</code></pre>
+<h3 id="unpause"><a class="header" href="#unpause">unpause</a></h3>
+<p>Allows usage of functions with the <code>whenNotPaused</code> modifier.</p>
+<p>This function can be called by the owner only.</p>
+<pre><code class="language-solidity">function unpause() external onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant;
+</code></pre>
+<h2 id="events-2"><a class="header" href="#events-2">Events</a></h2>
+<h3 id="notminted"><a class="header" href="#notminted">NotMinted</a></h3>
+<pre><code class="language-solidity">event NotMinted(uint256 indexed value);
+</code></pre>
+<h2 id="errors-4"><a class="header" href="#errors-4">Errors</a></h2>
+<h3 id="unauthorized"><a class="header" href="#unauthorized">Unauthorized</a></h3>
+<pre><code class="language-solidity">error Unauthorized();
+</code></pre>
+<h3 id="invalidowner"><a class="header" href="#invalidowner">InvalidOwner</a></h3>
+<pre><code class="language-solidity">error InvalidOwner();
+</code></pre>
+<h3 id="invalidoriginalunderlyingtokendecimals"><a class="header" href="#invalidoriginalunderlyingtokendecimals">InvalidOriginalUnderlyingTokenDecimals</a></h3>
+<pre><code class="language-solidity">error InvalidOriginalUnderlyingTokenDecimals();
+</code></pre>
+<h3 id="invalidlxlybridge"><a class="header" href="#invalidlxlybridge">InvalidLxLyBridge</a></h3>
+<pre><code class="language-solidity">error InvalidLxLyBridge();
+</code></pre>
+<h3 id="invalidnativeconverter"><a class="header" href="#invalidnativeconverter">InvalidNativeConverter</a></h3>
+<pre><code class="language-solidity">error InvalidNativeConverter();
+</code></pre>
+<h2 id="structs-2"><a class="header" href="#structs-2">Structs</a></h2>
+<h3 id="customtokenstorage"><a class="header" href="#customtokenstorage">CustomTokenStorage</a></h3>
+<p><em>Storage of Custom Token contract.</em></p>
+<p><em>It's implemented on a custom ERC-7201 namespace to reduce the risk of storage collisions when using with upgradeable contracts.</em></p>
+<p><strong>Note:</strong>
+storage-location: erc7201:agglayer.vault-bridge.CustomToken.storage</p>
+<pre><code class="language-solidity">struct CustomTokenStorage {
+    uint8 decimals;
+    address lxlyBridge;
+    address nativeConverter;
+}
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="migrationmanager"><a class="header" href="#migrationmanager">MigrationManager</a></h1>
+<p><a href="https://github.com/agglayer/vault-bridge/blob/2c76a3249f25aa635aad39bd435c00f1c4cfe601/src/MigrationManager.sol">Git Source</a></p>
+<p><strong>Inherits:</strong>
+<a href="src/MigrationManager.sol//src/etc/IBridgeMessageReceiver.sol/interface.IBridgeMessageReceiver.html">IBridgeMessageReceiver</a>, Initializable, AccessControlUpgradeable, PausableUpgradeable, ReentrancyGuardTransientUpgradeable, <a href="src/MigrationManager.sol//src/etc/Versioned.sol/abstract.Versioned.html">Versioned</a></p>
+<p><strong>Author:</strong>
+See https://github.com/agglayer/vault-bridge</p>
+<p>Migration Manager is a singleton contract on Layer X.</p>
+<p>Backing for Custom Tokens minted by Native Converters on Layer Ys can be migrated to Migration Manager on Layer X. Migration Manager completes migrations by calling <code>completeMigration</code> on the corresponidng vbToken, which mints vbToken and bridges it to address zero on the Layer Ys, effectively locking the backing in LxLy Bridge. Please refer to <code>onMessageReceived</code> for more information.</p>
+<p><em>Main functionality.</em></p>
+<p><em>Other functionality.</em></p>
+<p><em>Libraries.</em></p>
+<p><em>External contracts.</em></p>
+<p><em>This contract exists to prevent manipulation of vbTokens' internal accounting through reentrancy (specifically, claiming assets on LxLy Bridge to vbToken mid-execution).</em></p>
+<h2 id="state-variables-4"><a class="header" href="#state-variables-4">State Variables</a></h2>
+<h3 id="_migration_manager_storage"><a class="header" href="#_migration_manager_storage">_MIGRATION_MANAGER_STORAGE</a></h3>
+<p><em>The storage slot at which Migration Manager storage starts, following the EIP-7201 standard.</em></p>
+<p><em>Calculated as <code>keccak256(abi.encode(uint256(keccak256("agglayer.vault-bridge.MigrationManager.storage")) - 1)) &amp; ~bytes32(uint256(0xff))</code>.</em></p>
+<pre><code class="language-solidity">bytes32 private constant _MIGRATION_MANAGER_STORAGE =
+    hex"30cf29e424d82bdf294fbec113ef39ac73137edfdb802b37ef3fc9ad433c5000";
+</code></pre>
+<h3 id="pauser_role-1"><a class="header" href="#pauser_role-1">PAUSER_ROLE</a></h3>
+<pre><code class="language-solidity">bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
+</code></pre>
+<h2 id="functions-13"><a class="header" href="#functions-13">Functions</a></h2>
+<h3 id="onlylxlybridge"><a class="header" href="#onlylxlybridge">onlyLxLyBridge</a></h3>
+<p><em>Checks if the sender is LxLy Bridge.</em></p>
+<pre><code class="language-solidity">modifier onlyLxLyBridge();
+</code></pre>
+<h3 id="receive-2"><a class="header" href="#receive-2">receive</a></h3>
+<pre><code class="language-solidity">receive() external payable;
+</code></pre>
+<h3 id="constructor-6"><a class="header" href="#constructor-6">constructor</a></h3>
+<pre><code class="language-solidity">constructor();
+</code></pre>
+<h3 id="initialize-5"><a class="header" href="#initialize-5">initialize</a></h3>
+<p>Initializes the Migration Manager contract.</p>
+<pre><code class="language-solidity">function initialize(address owner_, address lxlyBridge_, address wrappedGasToken_) external initializer;
+</code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>owner_</code></td><td><code>address</code></td><td>(ATTENTION) This address will be granted the <code>DEFAULT_ADMIN_ROLE</code>, as well as all basic roles. Roles can be modified at any time.</td></tr>
+<tr><td><code>lxlyBridge_</code></td><td><code>address</code></td><td></td></tr>
+<tr><td><code>wrappedGasToken_</code></td><td><code>address</code></td><td>The address of the wrapped gas token (e.g., WETH, if the gas token is ETH). Must be the same as the underlying token of the corresponding vbToken (e.g., vbETH, if the gas token is ETH).</td></tr>
+</tbody></table>
+</div>
+<h3 id="lxlybridge-1"><a class="header" href="#lxlybridge-1">lxlyBridge</a></h3>
+<p>LxLy Bridge, which connects AggLayer networks.</p>
+<pre><code class="language-solidity">function lxlyBridge() public view returns (ILxLyBridge);
+</code></pre>
+<h3 id="nativeconvertersconfiguration"><a class="header" href="#nativeconvertersconfiguration">nativeConvertersConfiguration</a></h3>
+<p>Tells which vbToken Native Converter on Layer a Y belongs to.</p>
+<pre><code class="language-solidity">function nativeConvertersConfiguration(uint32 layerYLxlyId, address nativeConverter)
+    public
+    view
+    returns (TokenPair memory tokenPair);
+</code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>layerYLxlyId</code></td><td><code>uint32</code></td><td>Layer Y's LxLy ID.</td></tr>
+<tr><td><code>nativeConverter</code></td><td><code>address</code></td><td>The address of Native Converter on Layer Y.</td></tr>
+</tbody></table>
+</div>
+<h3 id="_getmigrationmanagerstorage"><a class="header" href="#_getmigrationmanagerstorage">_getMigrationManagerStorage</a></h3>
+<p><em>Returns a pointer to the ERC-7201 storage namespace.</em></p>
+<pre><code class="language-solidity">function _getMigrationManagerStorage() private pure returns (MigrationManagerStorage storage $);
+</code></pre>
+<h3 id="configurenativeconverters"><a class="header" href="#configurenativeconverters">configureNativeConverters</a></h3>
+<p>Maps Native Converters on Layer Ys to vbToken and underlying token on Layer X.</p>
+<p>This function can be called by the owner only.</p>
+<p><em>CAUTION! Misconfiguration could allow an attacker to gain unauthorized access to vbToken and other contracts.</em></p>
+<pre><code class="language-solidity">function configureNativeConverters(
+    uint32[] calldata layerYLxlyIds,
+    address[] calldata nativeConverters,
+    address payable vbToken
+) external onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant;
+</code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>layerYLxlyIds</code></td><td><code>uint32[]</code></td><td>The Layer Ys' LxLy IDs.</td></tr>
+<tr><td><code>nativeConverters</code></td><td><code>address[]</code></td><td>The addresses of Native Converters on Layer Ys.</td></tr>
+<tr><td><code>vbToken</code></td><td><code>address payable</code></td><td>The address of vbToken on Layer X Native Converter belongs to. Set to address zero to unset the tokens. You can override tokens without unsetting them first.</td></tr>
+</tbody></table>
+</div>
+<h3 id="onmessagereceived-1"><a class="header" href="#onmessagereceived-1">onMessageReceived</a></h3>
+<p><em>When Native Converter migrates backing, it calls both <code>bridgeAsset</code> and <code>bridgeMessage</code> on LxLy Bridge to <code>migrateBackingToLayerX</code>.</em></p>
+<p><em>The asset must be claimed before the message on LxLy Bridge.</em></p>
+<p><em>The message tells vbToken how much Custom Token must be backed by vbToken, which is minted and bridged to address zero on the respective Layer Y. This action provides liquidity when bridging Custom Token to from Layer Ys to Layer X and increments the pessimistic proof.</em></p>
+<p><em>This function can be called by LxLy Bridge only.</em></p>
+<pre><code class="language-solidity">function onMessageReceived(address originAddress, uint32 originNetwork, bytes memory data)
+    external
+    payable
+    whenNotPaused
+    onlyLxLyBridge
+    nonReentrant;
+</code></pre>
+<h3 id="pause-1"><a class="header" href="#pause-1">pause</a></h3>
+<p>Prevents usage of functions with the <code>whenNotPaused</code> modifier.</p>
+<p>This function can be called by the owner only.</p>
+<pre><code class="language-solidity">function pause() external onlyRole(PAUSER_ROLE) nonReentrant;
+</code></pre>
+<h3 id="unpause-1"><a class="header" href="#unpause-1">unpause</a></h3>
+<p>Allows usage of functions with the <code>whenNotPaused</code> modifier.</p>
+<p>This function can be called by the owner only.</p>
+<pre><code class="language-solidity">function unpause() external onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant;
+</code></pre>
+<h2 id="events-3"><a class="header" href="#events-3">Events</a></h2>
+<h3 id="nativeconverterconfigured"><a class="header" href="#nativeconverterconfigured">NativeConverterConfigured</a></h3>
+<pre><code class="language-solidity">event NativeConverterConfigured(uint32 indexed layerYLxlyId, address indexed nativeConverter, address indexed vbToken);
+</code></pre>
+<h2 id="errors-5"><a class="header" href="#errors-5">Errors</a></h2>
+<h3 id="invalidowner-1"><a class="header" href="#invalidowner-1">InvalidOwner</a></h3>
+<pre><code class="language-solidity">error InvalidOwner();
+</code></pre>
+<h3 id="invalidlxlybridge-1"><a class="header" href="#invalidlxlybridge-1">InvalidLxLyBridge</a></h3>
+<pre><code class="language-solidity">error InvalidLxLyBridge();
+</code></pre>
+<h3 id="invalidwrappedgastoken"><a class="header" href="#invalidwrappedgastoken">InvalidWrappedGasToken</a></h3>
+<pre><code class="language-solidity">error InvalidWrappedGasToken();
+</code></pre>
+<h3 id="nonmatchinginputlengths"><a class="header" href="#nonmatchinginputlengths">NonMatchingInputLengths</a></h3>
+<pre><code class="language-solidity">error NonMatchingInputLengths();
+</code></pre>
+<h3 id="invalidlayerylxlyid"><a class="header" href="#invalidlayerylxlyid">InvalidLayerYLxLyId</a></h3>
+<pre><code class="language-solidity">error InvalidLayerYLxLyId();
+</code></pre>
+<h3 id="invalidnativeconverter-1"><a class="header" href="#invalidnativeconverter-1">InvalidNativeConverter</a></h3>
+<pre><code class="language-solidity">error InvalidNativeConverter();
+</code></pre>
+<h3 id="invalidunderlyingtoken"><a class="header" href="#invalidunderlyingtoken">InvalidUnderlyingToken</a></h3>
+<pre><code class="language-solidity">error InvalidUnderlyingToken();
+</code></pre>
+<h3 id="unauthorized-1"><a class="header" href="#unauthorized-1">Unauthorized</a></h3>
+<pre><code class="language-solidity">error Unauthorized();
+</code></pre>
+<h3 id="cannotwrapgastoken"><a class="header" href="#cannotwrapgastoken">CannotWrapGasToken</a></h3>
+<pre><code class="language-solidity">error CannotWrapGasToken();
+</code></pre>
+<h3 id="insufficientunderlyingtokenbalanceafterwrapping"><a class="header" href="#insufficientunderlyingtokenbalanceafterwrapping">InsufficientUnderlyingTokenBalanceAfterWrapping</a></h3>
+<pre><code class="language-solidity">error InsufficientUnderlyingTokenBalanceAfterWrapping(uint256 newBalance, uint256 expectedBalance);
+</code></pre>
+<h2 id="structs-3"><a class="header" href="#structs-3">Structs</a></h2>
+<h3 id="tokenpair"><a class="header" href="#tokenpair">TokenPair</a></h3>
+<p><em>Used for mapping Native Converters to vbTokens.</em></p>
+<pre><code class="language-solidity">struct TokenPair {
+    VaultBridgeToken vbToken;
+    IERC20 underlyingToken;
+}
+</code></pre>
+<h3 id="migrationmanagerstorage"><a class="header" href="#migrationmanagerstorage">MigrationManagerStorage</a></h3>
+<p><em>Storage of the Migration Manager contract.</em></p>
+<p><em>It's implemented on a custom ERC-7201 namespace to reduce the risk of storage collisions when using with upgradeable contracts.</em></p>
+<p><strong>Note:</strong>
+storage-location: erc7201:agglayer.vault-bridge.MigrationManager.storage</p>
+<pre><code class="language-solidity">struct MigrationManagerStorage {
+    ILxLyBridge lxlyBridge;
+    uint32 _lxlyId;
+    mapping(uint32 layerYLxLyId =&gt; mapping(address nativeConverter =&gt; TokenPair tokenPair))
+        nativeConvertersConfiguration;
+    IWETH9 _wrappedGasToken;
+}
+</code></pre>
+<h2 id="enums"><a class="header" href="#enums">Enums</a></h2>
+<h3 id="crossnetworkinstruction"><a class="header" href="#crossnetworkinstruction">CrossNetworkInstruction</a></h3>
+<p><em>Used in cross-network communication.</em></p>
+<pre><code class="language-solidity">enum CrossNetworkInstruction {
+    _0_COMPLETE_MIGRATION,
+    _1_WRAP_GAS_TOKEN_AND_COMPLETE_MIGRATION
+}
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="nativeconverter-1"><a class="header" href="#nativeconverter-1">NativeConverter</a></h1>
+<p><a href="https://github.com/agglayer/vault-bridge/blob/2c76a3249f25aa635aad39bd435c00f1c4cfe601/src/NativeConverter.sol">Git Source</a></p>
+<p><strong>Inherits:</strong>
+Initializable, AccessControlUpgradeable, PausableUpgradeable, ReentrancyGuardUpgradeable, <a href="src/NativeConverter.sol//src/etc/ERC20PermitUser.sol/abstract.ERC20PermitUser.html">ERC20PermitUser</a>, <a href="src/NativeConverter.sol//src/etc/Versioned.sol/abstract.Versioned.html">Versioned</a></p>
+<p><strong>Author:</strong>
+See https://github.com/agglayer/vault-bridge</p>
+<p>Native Converter is an optional contract on Layer Ys that converts the underlying token (usually the bridge-wrapped version of the original underlying token from Layer X) to Custom Token, and vice versa, on demand. It can also migrate backing for Custom Token it has minted to Layer X, where vbToken will be minted and locked in LxLy Bridge. Please refer to <code>migrateBackingToLayerX</code> for more information.</p>
+<p><em>A base contract used to create Native Converters.</em></p>
+<p><em>@note (ATTENTION) This contract MUST have mint and burn permission on Custom Token. Please refer to <code>CustomToken.sol</code> for more information.</em></p>
+<p><em>@note IMPORTANT: The underlying token MUST NOT be a rebasing token, and MUST NOT have transfer hooks (i.e., enable reentrancy); it MAY have a transfer fee.</em></p>
+<h2 id="state-variables-5"><a class="header" href="#state-variables-5">State Variables</a></h2>
+<h3 id="_native_converter_storage"><a class="header" href="#_native_converter_storage">_NATIVE_CONVERTER_STORAGE</a></h3>
+<p><em>The storage slot at which Native Converter storage starts, following the EIP-7201 standard.</em></p>
+<p><em>Calculated as <code>keccak256(abi.encode(uint256(keccak256("agglayer.vault-bridge.NativeConverter.storage")) - 1)) &amp; ~bytes32(uint256(0xff))</code>.</em></p>
+<pre><code class="language-solidity">bytes32 private constant _NATIVE_CONVERTER_STORAGE =
+    hex"a14770e0debfe4b8406a01c33ee3a7bbe0acc66b3bde7c71854bf7d080a9c600";
+</code></pre>
+<h3 id="migrator_role"><a class="header" href="#migrator_role">MIGRATOR_ROLE</a></h3>
+<pre><code class="language-solidity">bytes32 public constant MIGRATOR_ROLE = keccak256("MIGRATOR_ROLE");
+</code></pre>
+<h3 id="pauser_role-2"><a class="header" href="#pauser_role-2">PAUSER_ROLE</a></h3>
+<pre><code class="language-solidity">bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
+</code></pre>
+<h2 id="functions-14"><a class="header" href="#functions-14">Functions</a></h2>
+<h3 id="__nativeconverter_init"><a class="header" href="#__nativeconverter_init">__NativeConverter_init</a></h3>
+<p><em>The <code>customToken</code> and <code>underlyingToken</code> MUST have the same number of decimals. @note (ATTENTION) The decimals of the <code>customToken</code> and <code>underlyingToken</code> will default to <code>18</code> if they revert on <code>decimals</code>.</em></p>
+<pre><code class="language-solidity">function __NativeConverter_init(
+    address owner_,
+    address customToken_,
+    address underlyingToken_,
+    address lxlyBridge_,
+    uint32 layerXLxlyId_,
+    uint256 nonMigratableBackingPercentage_,
+    address migrationManager_
+) internal onlyInitializing;
+</code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>owner_</code></td><td><code>address</code></td><td>(ATTENTION) This address will be granted the <code>DEFAULT_ADMIN_ROLE</code>, as well as all basic roles. Roles can be modified at any time.</td></tr>
+<tr><td><code>customToken_</code></td><td><code>address</code></td><td>The upgraded version of the bridged vbToken. Native Converter must be able to mint and burn this token. Please refer to <code>CustomToken.sol</code> for more information.</td></tr>
+<tr><td><code>underlyingToken_</code></td><td><code>address</code></td><td>The token that represents the original underlying token on Layer Y. @note IMPORTANT: This token MUST be either the bridge-wrapped version of the original underlying token, or the original underlying token must be custom mapped to this token on LxLy Bridge on Layer Y.</td></tr>
+<tr><td><code>lxlyBridge_</code></td><td><code>address</code></td><td></td></tr>
+<tr><td><code>layerXLxlyId_</code></td><td><code>uint32</code></td><td></td></tr>
+<tr><td><code>nonMigratableBackingPercentage_</code></td><td><code>uint256</code></td><td>The percentage of backing that should remain in Native Converter when migrating backing to Layer X, based on the total supply of Custom Token. <code>1e18</code> is 100%. It is possible to game the system by manipulating the total supply of Custom Token, so this is more of a soft limit.</td></tr>
+<tr><td><code>migrationManager_</code></td><td><code>address</code></td><td>The address of the Migration Manager on Layer X.</td></tr>
+</tbody></table>
+</div>
+<h3 id="customtoken-1"><a class="header" href="#customtoken-1">customToken</a></h3>
+<p>The upgraded version of the bridged vbToken.</p>
+<pre><code class="language-solidity">function customToken() public view returns (IERC20);
+</code></pre>
+<h3 id="underlyingtoken"><a class="header" href="#underlyingtoken">underlyingToken</a></h3>
+<p>The token that represent the original underlying token on Layer Y.</p>
+<pre><code class="language-solidity">function underlyingToken() public view returns (IERC20);
+</code></pre>
+<h3 id="backingonlayery"><a class="header" href="#backingonlayery">backingOnLayerY</a></h3>
+<p>The amount of the underlying token that backs Custom Token minted by Native Converter on Layer Y that has not been migrated to Layer X.</p>
+<p><em>The amount is used in accounting and may be different from Native Converter's underlying token balance. @note IMPORTANT: You may do as you wish with surplus underlying token balance, but you MUST NOT designate it as backing.</em></p>
+<pre><code class="language-solidity">function backingOnLayerY() public view returns (uint256);
+</code></pre>
+<h3 id="lxlyid"><a class="header" href="#lxlyid">lxlyId</a></h3>
+<p>The LxLy ID of this network.</p>
+<pre><code class="language-solidity">function lxlyId() public view returns (uint32);
+</code></pre>
+<h3 id="lxlybridge-2"><a class="header" href="#lxlybridge-2">lxlyBridge</a></h3>
+<p>LxLy Bridge, which connects AggLayer networks.</p>
+<pre><code class="language-solidity">function lxlyBridge() public view returns (ILxLyBridge);
+</code></pre>
+<h3 id="layerxlxlyid"><a class="header" href="#layerxlxlyid">layerXLxlyId</a></h3>
+<p>The LxLy ID of Layer X.</p>
+<pre><code class="language-solidity">function layerXLxlyId() public view returns (uint32);
+</code></pre>
+<h3 id="nonmigratablebackingpercentage"><a class="header" href="#nonmigratablebackingpercentage">nonMigratableBackingPercentage</a></h3>
+<p>The percentage of backing that should remain in Native Converter when migrating backing to Layer X, based on the total supply of Custom Token.</p>
+<p><em>It is possible to game the system by manipulating the total supply of Custom Token, so this is more of a soft limit.</em></p>
+<pre><code class="language-solidity">function nonMigratableBackingPercentage() public view returns (uint256);
+</code></pre>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>&lt;none&gt;</code></td><td><code>uint256</code></td><td>1e18 is 100%.</td></tr>
+</tbody></table>
+</div>
+<h3 id="migrationmanager-1"><a class="header" href="#migrationmanager-1">migrationManager</a></h3>
+<p>The address of the Migration Manager on Layer X.</p>
+<pre><code class="language-solidity">function migrationManager() public view returns (MigrationManager);
+</code></pre>
+<h3 id="_getnativeconverterstorage"><a class="header" href="#_getnativeconverterstorage">_getNativeConverterStorage</a></h3>
+<p><em>Returns a pointer to the ERC-7201 storage namespace.</em></p>
+<pre><code class="language-solidity">function _getNativeConverterStorage() private pure returns (NativeConverterStorage storage $);
+</code></pre>
+<h3 id="convert"><a class="header" href="#convert">convert</a></h3>
+<p>Deposit a specific amount of the underlying token and get Custom Token.</p>
+<pre><code class="language-solidity">function convert(uint256 assets, address receiver) external whenNotPaused nonReentrant returns (uint256 shares);
+</code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>assets</code></td><td><code>uint256</code></td><td>The amount of the underlying token to convert to Custom Token.</td></tr>
+<tr><td><code>receiver</code></td><td><code>address</code></td><td></td></tr>
+</tbody></table>
+</div>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>shares</code></td><td><code>uint256</code></td><td>The amount of Custom Token minted to the receiver.</td></tr>
+</tbody></table>
+</div>
+<h3 id="_convert"><a class="header" href="#_convert">_convert</a></h3>
+<p>Deposit a specific amount of the underlying token and get Custom Token.</p>
+<pre><code class="language-solidity">function _convert(uint256 assets, address receiver) internal returns (uint256 shares);
+</code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>assets</code></td><td><code>uint256</code></td><td>The amount of the underlying token to convert to Custom Token.</td></tr>
+<tr><td><code>receiver</code></td><td><code>address</code></td><td></td></tr>
+</tbody></table>
+</div>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>shares</code></td><td><code>uint256</code></td><td>The amount of Custom Token minted to the receiver.</td></tr>
+</tbody></table>
+</div>
+<h3 id="convertwithpermit"><a class="header" href="#convertwithpermit">convertWithPermit</a></h3>
+<p>Deposit a specific amount of the underlying token and get Custom Token.</p>
+<p><em>Uses EIP-2612 permit to transfer the underlying token from the sender to self.</em></p>
+<pre><code class="language-solidity">function convertWithPermit(uint256 assets, address receiver, bytes calldata permitData)
+    external
+    whenNotPaused
+    nonReentrant
+    returns (uint256 shares);
+</code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>assets</code></td><td><code>uint256</code></td><td>The amount of the underlying token to convert to Custom Token.</td></tr>
+<tr><td><code>receiver</code></td><td><code>address</code></td><td></td></tr>
+<tr><td><code>permitData</code></td><td><code>bytes</code></td><td></td></tr>
+</tbody></table>
+</div>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>shares</code></td><td><code>uint256</code></td><td>The amount of Custom Token minted to the receiver.</td></tr>
+</tbody></table>
+</div>
+<h3 id="maxdeconvert"><a class="header" href="#maxdeconvert">maxDeconvert</a></h3>
+<p>How much Custom Token a specific user can burn. (Deconverting Custom Token burns it and unlocks the underlying token).</p>
+<pre><code class="language-solidity">function maxDeconvert(address owner) external view returns (uint256 maxShares);
+</code></pre>
+<h3 id="_simulatedeconvert"><a class="header" href="#_simulatedeconvert">_simulateDeconvert</a></h3>
+<p><em>Calculates the amount of Custom Token that can be deconverted right now.</em></p>
+<pre><code class="language-solidity">function _simulateDeconvert(uint256 shares, bool force) internal view returns (uint256 deconvertedShares);
+</code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>shares</code></td><td><code>uint256</code></td><td>The maximum amount of Custom Token to simulate deconversion for.</td></tr>
+<tr><td><code>force</code></td><td><code>bool</code></td><td>Whether to revert if the all of the <code>shares</code> would not be deconverted.</td></tr>
+</tbody></table>
+</div>
+<h3 id="deconvert"><a class="header" href="#deconvert">deconvert</a></h3>
+<p>Burn a specific amount of Custom Token to unlock a respective amount of the underlying token.</p>
+<pre><code class="language-solidity">function deconvert(uint256 shares, address receiver) external whenNotPaused nonReentrant returns (uint256 assets);
+</code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>shares</code></td><td><code>uint256</code></td><td>The amount of Custom Token to deconvert to the underlying token.</td></tr>
+<tr><td><code>receiver</code></td><td><code>address</code></td><td></td></tr>
+</tbody></table>
+</div>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>assets</code></td><td><code>uint256</code></td><td>The amount of the underlying token unlocked to the receiver.</td></tr>
+</tbody></table>
+</div>
+<h3 id="deconvertandbridge"><a class="header" href="#deconvertandbridge">deconvertAndBridge</a></h3>
+<p>Burn a specific amount of Custom Token to unlock a respective amount of the underlying token, and bridge it to another network.</p>
+<pre><code class="language-solidity">function deconvertAndBridge(
+    uint256 shares,
+    address receiver,
+    uint32 destinationNetworkId,
+    bool forceUpdateGlobalExitRoot
+) external whenNotPaused nonReentrant returns (uint256 assets);
+</code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>shares</code></td><td><code>uint256</code></td><td>The amount of Custom Token to deconvert to the underlying token.</td></tr>
+<tr><td><code>receiver</code></td><td><code>address</code></td><td></td></tr>
+<tr><td><code>destinationNetworkId</code></td><td><code>uint32</code></td><td></td></tr>
+<tr><td><code>forceUpdateGlobalExitRoot</code></td><td><code>bool</code></td><td></td></tr>
+</tbody></table>
+</div>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>assets</code></td><td><code>uint256</code></td><td>The amount of the underlying token unlocked to the receiver.</td></tr>
+</tbody></table>
+</div>
+<h3 id="_deconvert"><a class="header" href="#_deconvert">_deconvert</a></h3>
+<p>Burn a specific amount of Custom Token to unlock a respective amount of the underlying token, and optionally bridge it to another network.</p>
+<pre><code class="language-solidity">function _deconvert(uint256 shares, uint32 destinationNetworkId, address receiver, bool forceUpdateGlobalExitRoot)
+    internal
+    returns (uint256 assets);
+</code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>shares</code></td><td><code>uint256</code></td><td>The amount of Custom Token to deconvert to the underlying token.</td></tr>
+<tr><td><code>destinationNetworkId</code></td><td><code>uint32</code></td><td></td></tr>
+<tr><td><code>receiver</code></td><td><code>address</code></td><td></td></tr>
+<tr><td><code>forceUpdateGlobalExitRoot</code></td><td><code>bool</code></td><td></td></tr>
+</tbody></table>
+</div>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>assets</code></td><td><code>uint256</code></td><td>The amount of the underlying token unlocked to the receiver.</td></tr>
+</tbody></table>
+</div>
+<h3 id="_converttoshares"><a class="header" href="#_converttoshares">_convertToShares</a></h3>
+<p><em>Tells how much a specific amount of underlying token is worth in Custom Token.</em></p>
+<p><em>The underlying token backs vbToken 1:1.</em></p>
+<pre><code class="language-solidity">function _convertToShares(uint256 assets) internal pure returns (uint256 shares);
+</code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>assets</code></td><td><code>uint256</code></td><td>The amount of the underlying token.</td></tr>
+</tbody></table>
+</div>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>shares</code></td><td><code>uint256</code></td><td>The amount of Custom Token.</td></tr>
+</tbody></table>
+</div>
+<h3 id="_converttoassets"><a class="header" href="#_converttoassets">_convertToAssets</a></h3>
+<p><em>Tells how much a specific amount of Custom Token is worth in the underlying token.</em></p>
+<p><em>vbToken is backed by the underlying token 1:1.</em></p>
+<pre><code class="language-solidity">function _convertToAssets(uint256 shares) internal pure returns (uint256 assets);
+</code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>shares</code></td><td><code>uint256</code></td><td>The amount of Custom Token.</td></tr>
+</tbody></table>
+</div>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>assets</code></td><td><code>uint256</code></td><td>The amount of the underlying token.</td></tr>
+</tbody></table>
+</div>
+<h3 id="migratablebacking"><a class="header" href="#migratablebacking">migratableBacking</a></h3>
+<p>The maximum amount of backing that can be migrated to Layer X.</p>
+<pre><code class="language-solidity">function migratableBacking() public view returns (uint256);
+</code></pre>
+<h3 id="migratebackingtolayerx"><a class="header" href="#migratebackingtolayerx">migrateBackingToLayerX</a></h3>
+<p>Migrates a specific amount of backing to Layer X.</p>
+<p>This action provides vbToken liquidity on LxLy Bridge on Layer X.</p>
+<p>The bridged asset and message must be claimed manually on LxLy Bridge on Layer X to complete the migration.</p>
+<p>This function can be called by a migrator only.</p>
+<p>The migration can be completed by anyone on Layer X.</p>
+<p><em>Consider calling this function periodically; anyone can complete a migration on Layer X.</em></p>
+<pre><code class="language-solidity">function migrateBackingToLayerX(uint256 assets) external whenNotPaused onlyRole(MIGRATOR_ROLE) nonReentrant;
+</code></pre>
+<h3 id="setnonmigratablebackingpercentage"><a class="header" href="#setnonmigratablebackingpercentage">setNonMigratableBackingPercentage</a></h3>
+<p>Sets the percentage of backing that should remain in Native Converter after a migration, based on the total supply of Custom Token.</p>
+<p>It is possible to game the system by manipulating the total supply of Custom Token, so this is a soft limit.</p>
+<p>This function can be called by the owner only.</p>
+<pre><code class="language-solidity">function setNonMigratableBackingPercentage(uint256 nonMigratableBackingPercentage_)
+    external
+    onlyRole(DEFAULT_ADMIN_ROLE)
+    nonReentrant;
+</code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>nonMigratableBackingPercentage_</code></td><td><code>uint256</code></td><td>1e18 is 100%.</td></tr>
+</tbody></table>
+</div>
+<h3 id="_receiveunderlyingtoken"><a class="header" href="#_receiveunderlyingtoken">_receiveUnderlyingToken</a></h3>
+<p>Transfers the underlying token from an external account to itself.</p>
+<p><em>@note CAUTION! This function MUST NOT introduce reentrancy/cross-entrancy vulnerabilities.</em></p>
+<pre><code class="language-solidity">function _receiveUnderlyingToken(address from, uint256 value) internal returns (uint256 receivedValue);
+</code></pre>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>receivedValue</code></td><td><code>uint256</code></td><td>The amount of the underlying actually received (e.g., after transfer fees).</td></tr>
+</tbody></table>
+</div>
+<h3 id="_sendunderlyingtoken"><a class="header" href="#_sendunderlyingtoken">_sendUnderlyingToken</a></h3>
+<p>Transfers the underlying token to an external account.</p>
+<p><em>@note CAUTION! This function MUST NOT introduce reentrancy/cross-entrancy vulnerabilities.</em></p>
+<pre><code class="language-solidity">function _sendUnderlyingToken(address to, uint256 value) internal;
+</code></pre>
+<h3 id="pause-2"><a class="header" href="#pause-2">pause</a></h3>
+<p>Prevents usage of functions with the <code>whenNotPaused</code> modifier.</p>
+<p>This function can be called by a pauser only.</p>
+<pre><code class="language-solidity">function pause() external onlyRole(PAUSER_ROLE) nonReentrant;
+</code></pre>
+<h3 id="unpause-2"><a class="header" href="#unpause-2">unpause</a></h3>
+<p>Allows usage of functions with the <code>whenNotPaused</code> modifier.</p>
+<p>This function can be called by the owner only.</p>
+<pre><code class="language-solidity">function unpause() external onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant;
+</code></pre>
+<h2 id="events-4"><a class="header" href="#events-4">Events</a></h2>
+<h3 id="migrationstarted"><a class="header" href="#migrationstarted">MigrationStarted</a></h3>
+<pre><code class="language-solidity">event MigrationStarted(uint256 indexed mintedCustomToken, uint256 indexed migratedBacking);
+</code></pre>
+<h3 id="nonmigratablebackingpercentageset"><a class="header" href="#nonmigratablebackingpercentageset">NonMigratableBackingPercentageSet</a></h3>
+<pre><code class="language-solidity">event NonMigratableBackingPercentageSet(uint256 nonMigratableBackingPercentage);
+</code></pre>
+<h2 id="errors-6"><a class="header" href="#errors-6">Errors</a></h2>
+<h3 id="invalidowner-2"><a class="header" href="#invalidowner-2">InvalidOwner</a></h3>
+<pre><code class="language-solidity">error InvalidOwner();
+</code></pre>
+<h3 id="invalidcustomtoken"><a class="header" href="#invalidcustomtoken">InvalidCustomToken</a></h3>
+<pre><code class="language-solidity">error InvalidCustomToken();
+</code></pre>
+<h3 id="invalidunderlyingtoken-1"><a class="header" href="#invalidunderlyingtoken-1">InvalidUnderlyingToken</a></h3>
+<pre><code class="language-solidity">error InvalidUnderlyingToken();
+</code></pre>
+<h3 id="invalidlxlybridge-2"><a class="header" href="#invalidlxlybridge-2">InvalidLxLyBridge</a></h3>
+<pre><code class="language-solidity">error InvalidLxLyBridge();
+</code></pre>
+<h3 id="invalidlayerxlxlyid"><a class="header" href="#invalidlayerxlxlyid">InvalidLayerXLxlyId</a></h3>
+<pre><code class="language-solidity">error InvalidLayerXLxlyId();
+</code></pre>
+<h3 id="invalidmigrationmanager"><a class="header" href="#invalidmigrationmanager">InvalidMigrationManager</a></h3>
+<pre><code class="language-solidity">error InvalidMigrationManager();
+</code></pre>
+<h3 id="nonmatchingtokendecimals"><a class="header" href="#nonmatchingtokendecimals">NonMatchingTokenDecimals</a></h3>
+<pre><code class="language-solidity">error NonMatchingTokenDecimals(uint8 customTokenDecimals, uint8 underlyingTokenDecimals);
+</code></pre>
+<h3 id="invalidassets"><a class="header" href="#invalidassets">InvalidAssets</a></h3>
+<pre><code class="language-solidity">error InvalidAssets();
+</code></pre>
+<h3 id="invalidreceiver"><a class="header" href="#invalidreceiver">InvalidReceiver</a></h3>
+<pre><code class="language-solidity">error InvalidReceiver();
+</code></pre>
+<h3 id="invalidpermitdata"><a class="header" href="#invalidpermitdata">InvalidPermitData</a></h3>
+<pre><code class="language-solidity">error InvalidPermitData();
+</code></pre>
+<h3 id="invalidshares"><a class="header" href="#invalidshares">InvalidShares</a></h3>
+<pre><code class="language-solidity">error InvalidShares();
+</code></pre>
+<h3 id="invalidnonmigratablebackingpercentage"><a class="header" href="#invalidnonmigratablebackingpercentage">InvalidNonMigratableBackingPercentage</a></h3>
+<pre><code class="language-solidity">error InvalidNonMigratableBackingPercentage();
+</code></pre>
+<h3 id="assetstoolarge-1"><a class="header" href="#assetstoolarge-1">AssetsTooLarge</a></h3>
+<pre><code class="language-solidity">error AssetsTooLarge(uint256 availableAssets, uint256 requestedAssets);
+</code></pre>
+<h3 id="invaliddestinationnetworkid"><a class="header" href="#invaliddestinationnetworkid">InvalidDestinationNetworkId</a></h3>
+<pre><code class="language-solidity">error InvalidDestinationNetworkId();
+</code></pre>
+<h3 id="onlymigrator"><a class="header" href="#onlymigrator">OnlyMigrator</a></h3>
+<pre><code class="language-solidity">error OnlyMigrator();
+</code></pre>
+<h2 id="structs-4"><a class="header" href="#structs-4">Structs</a></h2>
+<h3 id="nativeconverterstorage"><a class="header" href="#nativeconverterstorage">NativeConverterStorage</a></h3>
+<p><em>Storage of Native Converter contract.</em></p>
+<p><em>It's implemented on a custom ERC-7201 namespace to reduce the risk of storage collisions when using with upgradeable contracts.</em></p>
+<p><strong>Note:</strong>
+storage-location: erc7201:agglayer.vault-bridge.NativeConverter.storage</p>
+<pre><code class="language-solidity">struct NativeConverterStorage {
+    CustomToken customToken;
+    IERC20 underlyingToken;
+    uint256 backingOnLayerY;
+    uint32 lxlyId;
+    ILxLyBridge lxlyBridge;
+    uint32 layerXLxlyId;
+    uint256 nonMigratableBackingPercentage;
+    address migrationManager;
+    bool _underlyingTokenIsNotMintable;
+}
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="vaultbridgetoken"><a class="header" href="#vaultbridgetoken">VaultBridgeToken</a></h1>
+<p><a href="https://github.com/agglayer/vault-bridge/blob/2c76a3249f25aa635aad39bd435c00f1c4cfe601/src/VaultBridgeToken.sol">Git Source</a></p>
+<p><strong>Inherits:</strong>
+Initializable, AccessControlUpgradeable, PausableUpgradeable, ReentrancyGuardTransientUpgradeable, IERC4626, ERC20PermitUpgradeable, <a href="src/VaultBridgeToken.sol//src/etc/ERC20PermitUser.sol/abstract.ERC20PermitUser.html">ERC20PermitUser</a>, <a href="src/VaultBridgeToken.sol//src/etc/Versioned.sol/abstract.Versioned.html">Versioned</a></p>
+<p><strong>Author:</strong>
+See https://github.com/agglayer/vault-bridge</p>
+<p>A vbToken is an ERC-20 token, ERC-4626 vault, and LxLy Bridge extension, enabling deposits and bridging of select assets, such as WBTC, WETH, USDT, USDC, and USDS, while putting the assets to work to produce yield.</p>
+<p><em>A base contract used to create vbTokens.</em></p>
+<p><em>@note IMPORTANT: In order to not drive the complexity of the Vault Bridge protocol up, vbToken MUST NOT have transfer, deposit, or withdrawal fees. The underlying token on Layer X MUST NOT have a transfer fee; this contract will revert if it detects a transfer fee. The underlying token and Custom Token on Layer Ys MAY have transfer fees. The yield vault SHOULD NOT have deposit and/or withdrawal fees; however, it is expected that produced yield will offset any costs incurred when depositing to and withdrawing from the yield vault for the purpose of producing yield or rebalancing the internal reserve. The price of the yield vault's shares MUST NOT decrease (e.g., no bad debt realization); still, this contract implements solvency checks for protection with a configurable slippage parameter. Additionally, the underlying token MUST NOT be a rebasing token, and MUST NOT have transfer hooks (i.e., does not enable reentrancy/crossentrancy).</em></p>
+<h2 id="state-variables-6"><a class="header" href="#state-variables-6">State Variables</a></h2>
+<h3 id="rebalancer_role"><a class="header" href="#rebalancer_role">REBALANCER_ROLE</a></h3>
+<pre><code class="language-solidity">bytes32 public constant REBALANCER_ROLE = keccak256("REBALANCER_ROLE");
+</code></pre>
+<h3 id="yield_collector_role"><a class="header" href="#yield_collector_role">YIELD_COLLECTOR_ROLE</a></h3>
+<pre><code class="language-solidity">bytes32 public constant YIELD_COLLECTOR_ROLE = keccak256("YIELD_COLLECTOR_ROLE");
+</code></pre>
+<h3 id="pauser_role-3"><a class="header" href="#pauser_role-3">PAUSER_ROLE</a></h3>
+<pre><code class="language-solidity">bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
+</code></pre>
+<h3 id="_vault_bridge_token_storage"><a class="header" href="#_vault_bridge_token_storage">_VAULT_BRIDGE_TOKEN_STORAGE</a></h3>
+<p><em>The storage slot at which Vault Bridge Token storage starts, following the EIP-7201 standard.</em></p>
+<p><em>Calculated as <code>keccak256(abi.encode(uint256(keccak256("agglayer.vault-bridge.VaultBridgeToken.storage")) - 1)) &amp; ~bytes32(uint256(0xff))</code>.</em></p>
+<pre><code class="language-solidity">bytes32 private constant _VAULT_BRIDGE_TOKEN_STORAGE =
+    hex"f082fbc4cfb4d172ba00d34227e208a31ceb0982bc189440d519185302e44700";
+</code></pre>
+<h2 id="functions-15"><a class="header" href="#functions-15">Functions</a></h2>
+<h3 id="onlyyieldrecipient"><a class="header" href="#onlyyieldrecipient">onlyYieldRecipient</a></h3>
+<p><em>Checks if the sender is the yield recipient.</em></p>
+<pre><code class="language-solidity">modifier onlyYieldRecipient();
+</code></pre>
+<h3 id="onlylxlybridge-1"><a class="header" href="#onlylxlybridge-1">onlyLxLyBridge</a></h3>
+<p><em>Checks if the sender is LxLy Bridge.</em></p>
+<pre><code class="language-solidity">modifier onlyLxLyBridge();
+</code></pre>
+<h3 id="onlymigrationmanager"><a class="header" href="#onlymigrationmanager">onlyMigrationManager</a></h3>
+<p><em>Checks if the sender is Migration Manager.</em></p>
+<pre><code class="language-solidity">modifier onlyMigrationManager();
+</code></pre>
+<h3 id="onlyself"><a class="header" href="#onlyself">onlySelf</a></h3>
+<p><em>Checks if the sender is the vbToken itself.</em></p>
+<pre><code class="language-solidity">modifier onlySelf();
+</code></pre>
+<h3 id="delegatedtopart2"><a class="header" href="#delegatedtopart2">delegatedToPart2</a></h3>
+<p><em>Delegates the call to <code>VaultBridgeTokenPart2</code>.</em></p>
+<pre><code class="language-solidity">modifier delegatedToPart2();
+</code></pre>
+<h3 id="__vaultbridgetoken_init"><a class="header" href="#__vaultbridgetoken_init">__VaultBridgeToken_init</a></h3>
+<pre><code class="language-solidity">function __VaultBridgeToken_init(address initializer_, InitializationParameters calldata initParams)
+    internal
+    onlyInitializing;
+</code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>initializer_</code></td><td><code>address</code></td><td>The address of <code>VaultBridgeTokenInitializer</code>.</td></tr>
+<tr><td><code>initParams</code></td><td><code>InitializationParameters</code></td><td>Please refer to <code>InitializationParameters</code> for more information.</td></tr>
+</tbody></table>
+</div>
+<h3 id="underlyingtoken-1"><a class="header" href="#underlyingtoken-1">underlyingToken</a></h3>
+<p>The underlying token that backs vbToken.</p>
+<pre><code class="language-solidity">function underlyingToken() public view returns (IERC20);
+</code></pre>
+<h3 id="decimals-1"><a class="header" href="#decimals-1">decimals</a></h3>
+<p>The number of decimals of vbToken.</p>
+<p>The number of decimals is the same as that of the underlying token, or <code>18</code> if the underlying token reverted on <code>decimals</code>.</p>
+<pre><code class="language-solidity">function decimals() public view override(ERC20Upgradeable, IERC20Metadata) returns (uint8);
+</code></pre>
+<h3 id="minimumreservepercentage"><a class="header" href="#minimumreservepercentage">minimumReservePercentage</a></h3>
+<p>vbTokens can maintain an internal reserve of the underlying token for serving withdrawals from first (as opposed to staking all assets).</p>
+<p>The owner can rebalance the reserve by calling <code>rebalanceReserve</code> when it is below or above the <code>minimumReservePercentage</code>. The reserve may also be rebalanced automatically on deposits and withdrawals.</p>
+<pre><code class="language-solidity">function minimumReservePercentage() public view returns (uint256);
+</code></pre>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>&lt;none&gt;</code></td><td><code>uint256</code></td><td>1e18 is 100%.</td></tr>
+</tbody></table>
+</div>
+<h3 id="reservedassets"><a class="header" href="#reservedassets">reservedAssets</a></h3>
+<p>vbTokens can maintain an internal reserve of the underlying token for serving withdrawals from first (as opposed to staking all assets).</p>
+<p>How much of the underlying token is in the internal reserve.</p>
+<pre><code class="language-solidity">function reservedAssets() public view returns (uint256);
+</code></pre>
+<h3 id="yieldvault"><a class="header" href="#yieldvault">yieldVault</a></h3>
+<p>An external, ERC-4246 compliant vault into which the underlying token is deposited to produce yield.</p>
+<pre><code class="language-solidity">function yieldVault() public view returns (IERC4626);
+</code></pre>
+<h3 id="yieldrecipient"><a class="header" href="#yieldrecipient">yieldRecipient</a></h3>
+<p>The address that receives yield produced by the yield vault.</p>
+<p>The yield collector collects yield, while the yield recipient receives it.</p>
+<pre><code class="language-solidity">function yieldRecipient() public view returns (address);
+</code></pre>
+<h3 id="lxlyid-1"><a class="header" href="#lxlyid-1">lxlyId</a></h3>
+<p>The LxLy ID of this network.</p>
+<pre><code class="language-solidity">function lxlyId() public view returns (uint32);
+</code></pre>
+<h3 id="lxlybridge-3"><a class="header" href="#lxlybridge-3">lxlyBridge</a></h3>
+<p>LxLy Bridge, which connects AggLayer networks.</p>
+<pre><code class="language-solidity">function lxlyBridge() public view returns (ILxLyBridge);
+</code></pre>
+<h3 id="migrationfeesfund"><a class="header" href="#migrationfeesfund">migrationFeesFund</a></h3>
+<p>A dedicated fund for covering any fees on Layer Y during a migration of backing to Layer X. Please refer to <code>completeMigration</code> for more information.</p>
+<pre><code class="language-solidity">function migrationFeesFund() public view returns (uint256);
+</code></pre>
+<h3 id="minimumyieldvaultdeposit"><a class="header" href="#minimumyieldvaultdeposit">minimumYieldVaultDeposit</a></h3>
+<p>The minimum amount of the underlying token that triggers a yield vault deposit.</p>
+<p><em>Amounts below this value will be reserved regardless of the reserve percentage, in order to save gas for users.</em></p>
+<p><em>The limit does not apply when rebalancing the reserve.</em></p>
+<pre><code class="language-solidity">function minimumYieldVaultDeposit() public view returns (uint256);
+</code></pre>
+<h3 id="migrationmanager-2"><a class="header" href="#migrationmanager-2">migrationManager</a></h3>
+<p>The address of Migration Manager. Please refer to <code>MigrationManager.sol</code> for more information.</p>
+<pre><code class="language-solidity">function migrationManager() public view returns (address);
+</code></pre>
+<h3 id="yieldvaultmaximumslippagepercentage"><a class="header" href="#yieldvaultmaximumslippagepercentage">yieldVaultMaximumSlippagePercentage</a></h3>
+<p>The maximum slippage percentage when depositing into or withdrawing from the yield vault.</p>
+<pre><code class="language-solidity">function yieldVaultMaximumSlippagePercentage() public view returns (uint256);
+</code></pre>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>&lt;none&gt;</code></td><td><code>uint256</code></td><td>1e18 is 100%.</td></tr>
+</tbody></table>
+</div>
+<h3 id="_getvaultbridgetokenstorage"><a class="header" href="#_getvaultbridgetokenstorage">_getVaultBridgeTokenStorage</a></h3>
+<p><em>Returns a pointer to the ERC-7201 storage namespace.</em></p>
+<pre><code class="language-solidity">function _getVaultBridgeTokenStorage() private pure returns (VaultBridgeTokenStorage storage $);
+</code></pre>
+<h3 id="asset"><a class="header" href="#asset">asset</a></h3>
+<p>The underlying token that backs vbToken.</p>
+<pre><code class="language-solidity">function asset() public view returns (address assetTokenAddress);
+</code></pre>
+<h3 id="totalassets"><a class="header" href="#totalassets">totalAssets</a></h3>
+<p>The total backing of vbToken in the underlying token in real-time.</p>
+<pre><code class="language-solidity">function totalAssets() public view returns (uint256 totalManagedAssets);
+</code></pre>
+<h3 id="converttoshares"><a class="header" href="#converttoshares">convertToShares</a></h3>
+<p>Tells how much a specific amount of underlying token is worth in vbToken.</p>
+<p><em>The underlying token backs vbToken 1:1.</em></p>
+<pre><code class="language-solidity">function convertToShares(uint256 assets) public pure returns (uint256 shares);
+</code></pre>
+<h3 id="converttoassets"><a class="header" href="#converttoassets">convertToAssets</a></h3>
+<p>Tells how much a specific amount of vbToken is worth in the underlying token.</p>
+<p><em>vbToken is backed by the underlying token 1:1.</em></p>
+<pre><code class="language-solidity">function convertToAssets(uint256 shares) public pure returns (uint256 assets);
+</code></pre>
+<h3 id="maxdeposit"><a class="header" href="#maxdeposit">maxDeposit</a></h3>
+<p>How much underlying token can deposited for a specific user right now. (Depositing the underlying token mints vbToken).</p>
+<pre><code class="language-solidity">function maxDeposit(address) external view returns (uint256 maxAssets);
+</code></pre>
+<h3 id="previewdeposit"><a class="header" href="#previewdeposit">previewDeposit</a></h3>
+<p>How much vbToken would be minted if a specific amount of the underlying token were deposited right now.</p>
+<pre><code class="language-solidity">function previewDeposit(uint256 assets) external view whenNotPaused returns (uint256 shares);
+</code></pre>
+<h3 id="deposit-3"><a class="header" href="#deposit-3">deposit</a></h3>
+<p>Deposit a specific amount of the underlying token and mint vbToken.</p>
+<pre><code class="language-solidity">function deposit(uint256 assets, address receiver) external whenNotPaused nonReentrant returns (uint256 shares);
+</code></pre>
+<h3 id="depositandbridge"><a class="header" href="#depositandbridge">depositAndBridge</a></h3>
+<p>Deposit a specific amount of the underlying token, and bridge minted vbToken to another network.</p>
+<p><em>The <code>receiver</code> in the ERC-4626 <code>Deposit</code> event will be this contract.</em></p>
+<pre><code class="language-solidity">function depositAndBridge(uint256 assets, address receiver, uint32 destinationNetworkId, bool forceUpdateGlobalExitRoot)
+    external
+    whenNotPaused
+    nonReentrant
+    returns (uint256 shares);
+</code></pre>
+<h3 id="_deposit-1"><a class="header" href="#_deposit-1">_deposit</a></h3>
+<p>Locks the underlying token, mints vbToken, and optionally bridges it to another network.</p>
+<p><em>If bridging to another network, the <code>receiver</code> in the ERC-4626 <code>Deposit</code> event will be this contract.</em></p>
+<pre><code class="language-solidity">function _deposit(
+    uint256 assets,
+    uint32 destinationNetworkId,
+    address receiver,
+    bool forceUpdateGlobalExitRoot,
+    uint256 maxShares
+) internal returns (uint256 shares, uint256 spentAssets);
+</code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>assets</code></td><td><code>uint256</code></td><td></td></tr>
+<tr><td><code>destinationNetworkId</code></td><td><code>uint32</code></td><td></td></tr>
+<tr><td><code>receiver</code></td><td><code>address</code></td><td></td></tr>
+<tr><td><code>forceUpdateGlobalExitRoot</code></td><td><code>bool</code></td><td></td></tr>
+<tr><td><code>maxShares</code></td><td><code>uint256</code></td><td>Caps the amount of vbToken that is minted. Unused underlying token will be refunded to the sender. Set to <code>0</code> to disable.</td></tr>
+</tbody></table>
+</div>
+<h3 id="_depositusingcustomreceivingfunction"><a class="header" href="#_depositusingcustomreceivingfunction">_depositUsingCustomReceivingFunction</a></h3>
+<p>Locks the underlying token, mints vbToken, and optionally bridges it to another network.</p>
+<p><em>If bridging to another network, the <code>receiver</code> in the ERC-4626 <code>Deposit</code> event will be this contract.</em></p>
+<pre><code class="language-solidity">function _depositUsingCustomReceivingFunction(
+    function(address, uint256) internal receiveUnderlyingToken,
+    uint256 assets,
+    uint32 destinationNetworkId,
+    address receiver,
+    bool forceUpdateGlobalExitRoot,
+    uint256 maxShares
+) internal returns (uint256 shares, uint256 spentAssets);
+</code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>receiveUnderlyingToken</code></td><td><code>function (address, uint256) internal</code></td><td>A custom function to use for receiving the underlying token from the sender. @note CAUTION! This function MUST NOT introduce reentrancy/crossentrancy vulnerabilities. @note IMPORTANT: The function MUST detect and revert if there was a transfer fee.</td></tr>
+<tr><td><code>assets</code></td><td><code>uint256</code></td><td></td></tr>
+<tr><td><code>destinationNetworkId</code></td><td><code>uint32</code></td><td></td></tr>
+<tr><td><code>receiver</code></td><td><code>address</code></td><td></td></tr>
+<tr><td><code>forceUpdateGlobalExitRoot</code></td><td><code>bool</code></td><td></td></tr>
+<tr><td><code>maxShares</code></td><td><code>uint256</code></td><td>Caps the amount of vbToken that is minted. Unused underlying token will be refunded to the sender. Set to <code>0</code> to disable.</td></tr>
+</tbody></table>
+</div>
+<h3 id="depositwithpermit"><a class="header" href="#depositwithpermit">depositWithPermit</a></h3>
+<p>Deposit a specific amount of the underlying token and mint vbToken.</p>
+<p><em>Uses EIP-2612 permit to transfer the underlying token from the sender to self.</em></p>
+<pre><code class="language-solidity">function depositWithPermit(uint256 assets, address receiver, bytes calldata permitData)
+    external
+    whenNotPaused
+    nonReentrant
+    returns (uint256 shares);
+</code></pre>
+<h3 id="depositwithpermitandbridge"><a class="header" href="#depositwithpermitandbridge">depositWithPermitAndBridge</a></h3>
+<p>Deposit a specific amount of the underlying token, and bridge minted vbToken to another network.</p>
+<p><em>Uses EIP-2612 permit to transfer the underlying token from the sender to self.</em></p>
+<p><em>The <code>receiver</code> in the ERC-4626 <code>Deposit</code> event will be this contract.</em></p>
+<pre><code class="language-solidity">function depositWithPermitAndBridge(
+    uint256 assets,
+    address receiver,
+    uint32 destinationNetworkId,
+    bool forceUpdateGlobalExitRoot,
+    bytes calldata permitData
+) external whenNotPaused nonReentrant returns (uint256 shares);
+</code></pre>
+<h3 id="_depositwithpermit"><a class="header" href="#_depositwithpermit">_depositWithPermit</a></h3>
+<p>Locks the underlying token, mints vbToken, and optionally bridges it to another network.</p>
+<p><em>Uses EIP-2612 permit to transfer the underlying token from the sender to self.</em></p>
+<pre><code class="language-solidity">function _depositWithPermit(
+    uint256 assets,
+    bytes calldata permitData,
+    uint32 destinationNetworkId,
+    address receiver,
+    bool forceUpdateGlobalExitRoot,
+    uint256 maxShares
+) internal returns (uint256 shares, uint256 spentAssets);
+</code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>assets</code></td><td><code>uint256</code></td><td></td></tr>
+<tr><td><code>permitData</code></td><td><code>bytes</code></td><td></td></tr>
+<tr><td><code>destinationNetworkId</code></td><td><code>uint32</code></td><td></td></tr>
+<tr><td><code>receiver</code></td><td><code>address</code></td><td></td></tr>
+<tr><td><code>forceUpdateGlobalExitRoot</code></td><td><code>bool</code></td><td></td></tr>
+<tr><td><code>maxShares</code></td><td><code>uint256</code></td><td>Caps the amount of vbToken that is minted. Unused underlying token will be refunded to the sender. Set to <code>0</code> to disable.</td></tr>
+</tbody></table>
+</div>
+<h3 id="maxmint"><a class="header" href="#maxmint">maxMint</a></h3>
+<p>How much vbToken can be minted to a specific user right now. (Minting vbToken locks the underlying token).</p>
+<pre><code class="language-solidity">function maxMint(address) external view returns (uint256 maxShares);
+</code></pre>
+<h3 id="previewmint"><a class="header" href="#previewmint">previewMint</a></h3>
+<p>How much underlying token would be required to mint a specific amount of vbToken right now.</p>
+<pre><code class="language-solidity">function previewMint(uint256 shares) external view whenNotPaused returns (uint256 assets);
+</code></pre>
+<h3 id="mint-1"><a class="header" href="#mint-1">mint</a></h3>
+<p>Mint a specific amount of vbToken by locking the required amount of the underlying token.</p>
+<pre><code class="language-solidity">function mint(uint256 shares, address receiver) external whenNotPaused nonReentrant returns (uint256 assets);
+</code></pre>
+<h3 id="maxwithdraw"><a class="header" href="#maxwithdraw">maxWithdraw</a></h3>
+<p>How much underlying token can be withdrawn from a specific user right now. (Withdrawing the underlying token burns vbToken).</p>
+<pre><code class="language-solidity">function maxWithdraw(address owner) external view returns (uint256 maxAssets);
+</code></pre>
+<h3 id="previewwithdraw"><a class="header" href="#previewwithdraw">previewWithdraw</a></h3>
+<p>How much vbToken would be burned if a specific amount of the underlying token were withdrawn right now.</p>
+<pre><code class="language-solidity">function previewWithdraw(uint256 assets) external view whenNotPaused returns (uint256 shares);
+</code></pre>
+<h3 id="_simulatewithdraw"><a class="header" href="#_simulatewithdraw">_simulateWithdraw</a></h3>
+<p><em>Calculates the amount of the underlying token that could be withdrawn right now.</em></p>
+<p><em>This function is used for estimation purposes only.</em></p>
+<p><em>@note IMPORTANT: <code>reservedAssets</code> must be up-to-date before using this function!</em></p>
+<pre><code class="language-solidity">function _simulateWithdraw(uint256 assets, bool force) internal view returns (uint256 withdrawnAssets);
+</code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>assets</code></td><td><code>uint256</code></td><td>The maximum amount of the underlying token to simulate a withdrawal for.</td></tr>
+<tr><td><code>force</code></td><td><code>bool</code></td><td>Whether to revert if the all of the <code>assets</code> would not be withdrawn.</td></tr>
+</tbody></table>
+</div>
+<h3 id="withdraw-2"><a class="header" href="#withdraw-2">withdraw</a></h3>
+<p>Withdraw a specific amount of the underlying token by burning the required amount of vbToken.</p>
+<pre><code class="language-solidity">function withdraw(uint256 assets, address receiver, address owner)
+    external
+    whenNotPaused
+    nonReentrant
+    returns (uint256 shares);
+</code></pre>
+<h3 id="_withdraw"><a class="header" href="#_withdraw">_withdraw</a></h3>
+<p>Withdraw a specific amount of the underlying token by burning the required amount of vbToken.</p>
+<pre><code class="language-solidity">function _withdraw(uint256 assets, address receiver, address owner) internal returns (uint256 shares);
+</code></pre>
+<h3 id="maxredeem"><a class="header" href="#maxredeem">maxRedeem</a></h3>
+<p>How much vbToken can be redeemed for a specific user. (Redeeming vbToken burns it and unlocks the underlying token).</p>
+<pre><code class="language-solidity">function maxRedeem(address owner) external view returns (uint256 maxShares);
+</code></pre>
+<h3 id="previewredeem"><a class="header" href="#previewredeem">previewRedeem</a></h3>
+<p>How much underlying token would be unlocked if a specific amount of vbToken were redeemed and burned right now.</p>
+<pre><code class="language-solidity">function previewRedeem(uint256 shares) external view whenNotPaused returns (uint256 assets);
+</code></pre>
+<h3 id="redeem"><a class="header" href="#redeem">redeem</a></h3>
+<p>Burn a specific amount of vbToken and unlock the respective amount of the underlying token.</p>
+<pre><code class="language-solidity">function redeem(uint256 shares, address receiver, address owner)
+    external
+    whenNotPaused
+    nonReentrant
+    returns (uint256 assets);
+</code></pre>
+<h3 id="claimandredeem"><a class="header" href="#claimandredeem">claimAndRedeem</a></h3>
+<p>Claim vbToken from LxLy Bridge and redeem it.</p>
+<pre><code class="language-solidity">function claimAndRedeem(
+    bytes32[32] calldata smtProofLocalExitRoot,
+    bytes32[32] calldata smtProofRollupExitRoot,
+    uint256 globalIndex,
+    bytes32 mainnetExitRoot,
+    bytes32 rollupExitRoot,
+    address destinationAddress,
+    uint256 amount,
+    address receiver,
+    bytes calldata metadata
+) external whenNotPaused nonReentrant returns (uint256 assets);
+</code></pre>
+<h3 id="transfer-1"><a class="header" href="#transfer-1">transfer</a></h3>
+<p><em>Pausable ERC-20 <code>transfer</code> function.</em></p>
+<pre><code class="language-solidity">function transfer(address to, uint256 value) public override(ERC20Upgradeable, IERC20) whenNotPaused returns (bool);
+</code></pre>
+<h3 id="transferfrom-1"><a class="header" href="#transferfrom-1">transferFrom</a></h3>
+<p><em>Pausable ERC-20 <code>transferFrom</code> function.</em></p>
+<pre><code class="language-solidity">function transferFrom(address from, address to, uint256 value)
+    public
+    override(ERC20Upgradeable, IERC20)
+    whenNotPaused
+    returns (bool);
+</code></pre>
+<h3 id="approve-1"><a class="header" href="#approve-1">approve</a></h3>
+<p><em>Pausable ERC-20 <code>approve</code> function.</em></p>
+<pre><code class="language-solidity">function approve(address spender, uint256 value)
+    public
+    override(ERC20Upgradeable, IERC20)
+    whenNotPaused
+    returns (bool);
+</code></pre>
+<h3 id="permit-1"><a class="header" href="#permit-1">permit</a></h3>
+<p><em>Pausable ERC-20 Permit <code>permit</code> function.</em></p>
+<pre><code class="language-solidity">function permit(address owner, address spender, uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s)
+    public
+    override
+    whenNotPaused;
+</code></pre>
+<h3 id="stakedassets"><a class="header" href="#stakedassets">stakedAssets</a></h3>
+<p>The amount of the underlying token in the yield vault, as reported by the yield vault in real-time.</p>
+<pre><code class="language-solidity">function stakedAssets() public view returns (uint256);
+</code></pre>
+<h3 id="reservepercentage"><a class="header" href="#reservepercentage">reservePercentage</a></h3>
+<p>The reserve percentage in real-time.</p>
+<p>The reserve is based on the total supply of vbToken, and does not account for uncompleted migrations of backing from Layer Ys to Layer X. Please refer to <code>completeMigration</code> for more information.</p>
+<pre><code class="language-solidity">function reservePercentage() public view returns (uint256);
+</code></pre>
+<h3 id="yield"><a class="header" href="#yield">yield</a></h3>
+<p>The amount of yield available for collection.</p>
+<pre><code class="language-solidity">function yield() public view returns (uint256);
+</code></pre>
+<h3 id="backingdifference"><a class="header" href="#backingdifference">backingDifference</a></h3>
+<p>The difference between the total assets and the minimum assets required to back the total supply of vbToken in real-time.</p>
+<pre><code class="language-solidity">function backingDifference() public view returns (bool positive, uint256 difference);
+</code></pre>
+<h3 id="rebalancereserve"><a class="header" href="#rebalancereserve">rebalanceReserve</a></h3>
+<p>Rebalances the internal reserve by withdrawing the underlying token from, or depositing the underlying token into, the yield vault.</p>
+<p>This function can be called by a rebalancer only.</p>
+<p><em>Delegates the call to <code>VaultBridgeTokenPart2</code>.</em></p>
+<p><em>@note (ATTENTION) The <code>virtual</code> modifier allows <code>VaultBridgeTokenPart2</code> to override this function. Do not override the function yourself.</em></p>
+<pre><code class="language-solidity">function rebalanceReserve() external virtual delegatedToPart2;
+</code></pre>
+<h3 id="_rebalancereserve"><a class="header" href="#_rebalancereserve">_rebalanceReserve</a></h3>
+<p>Rebalances the internal reserve by withdrawing the underlying token from, or depositing the underlying token into, the yield vault.</p>
+<pre><code class="language-solidity">function _rebalanceReserve(bool force, bool allowRebalanceDown) internal;
+</code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>force</code></td><td><code>bool</code></td><td>Whether to revert if the reserve cannot be rebalanced.</td></tr>
+<tr><td><code>allowRebalanceDown</code></td><td><code>bool</code></td><td>Whether to allow the reserve to be rebalanced down (by depositing into the yield vault).</td></tr>
+</tbody></table>
+</div>
+<h3 id="collectyield"><a class="header" href="#collectyield">collectYield</a></h3>
+<p>Transfers yield produced by the yield vault to the yield recipient in the form of vbToken.</p>
+<p>Does not rebalance the reserve after collecting yield to allow usage while the contract is paused.</p>
+<p>This function can be called by a yield collector only.</p>
+<p><em>Increases the net collected yield.</em></p>
+<p><em>Delegates the call to <code>VaultBridgeTokenPart2</code>.</em></p>
+<p><em>@note (ATTENTION) The <code>virtual</code> modifier allows <code>VaultBridgeTokenPart2</code> to override this function. Do not override the function yourself.</em></p>
+<pre><code class="language-solidity">function collectYield() external virtual delegatedToPart2;
+</code></pre>
+<h3 id="burn-1"><a class="header" href="#burn-1">burn</a></h3>
+<p>Burns a specific amount of vbToken.</p>
+<p>This function can be used if the yield recipient has collected an unrealistic amount of yield over time.</p>
+<p>This function can be called by the yield recipient only.</p>
+<p><em>Decreases the net collected yield.</em></p>
+<p><em>Does not rebalance the reserve after burning to allow usage while the contract is paused.</em></p>
+<p><em>Delegates the call to <code>VaultBridgeTokenPart2</code>.</em></p>
+<p><em>@note (ATTENTION) The <code>virtual</code> modifier allows <code>VaultBridgeTokenPart2</code> to override this function. Do not override the function yourself.</em></p>
+<pre><code class="language-solidity">function burn(uint256 shares) external virtual delegatedToPart2;
+</code></pre>
+<h3 id="donateasyield"><a class="header" href="#donateasyield">donateAsYield</a></h3>
+<p>Adds a specific amount of the underlying token to the reserve by transferring it from the sender.</p>
+<p>This function can be used to restore backing difference by donating the underlying token.</p>
+<p>This function can be called by anyone.</p>
+<p><em>Delegates the call to <code>VaultBridgeTokenPart2</code>.</em></p>
+<p><em>@note (ATTENTION) The <code>virtual</code> modifier allows <code>VaultBridgeTokenPart2</code> to override this function. Do not override the function yourself.</em></p>
+<pre><code class="language-solidity">function donateAsYield(uint256 assets) external virtual delegatedToPart2;
+</code></pre>
+<h3 id="donateforcompletingmigration"><a class="header" href="#donateforcompletingmigration">donateForCompletingMigration</a></h3>
+<p>Adds a specific amount of the underlying token to a dedicated fund for covering any fees on Layer Y during a migration of backing to Layer X by transferring it from the sender. Please refer to <code>completeMigration</code> for more information.</p>
+<p><em>Delegates the call to <code>VaultBridgeTokenPart2</code>.</em></p>
+<p><em>@note (ATTENTION) The <code>virtual</code> modifier allows <code>VaultBridgeTokenPart2</code> to override this function. Do not override the function yourself.</em></p>
+<pre><code class="language-solidity">function donateForCompletingMigration(uint256 assets) external virtual delegatedToPart2;
+</code></pre>
+<h3 id="completemigration"><a class="header" href="#completemigration">completeMigration</a></h3>
+<p>Completes a migration of backing from a Layer Y to Layer X by minting and locking the required amount of vbToken in LxLy Bridge.</p>
+<p>Anyone can trigger the execution of this function by claiming the asset and message on LxLy Bridge. Please refer to <code>NativeConverter.sol</code> for more information.</p>
+<p><em>Backing for Custom Token minted by Native Converter on Layer Ys can be migrated to Layer X.</em></p>
+<p><em>When Native Converter migrates backing, it calls both <code>bridgeAsset</code> and <code>bridgeMessage</code> on LxLy Bridge to <code>migrateBackingToLayerX</code>.</em></p>
+<p><em>The asset must be claimed before the message on LxLy Bridge.</em></p>
+<p><em>The message tells vbToken how much Custom Token must be backed by vbToken, which is minted and bridged to address zero on the respective Layer Y. This action provides liquidity when bridging Custom Token to from Layer Ys to Layer X and increments the pessimistic proof.</em></p>
+<p><em>This function can be called by Migraton Manager only.</em></p>
+<p><em>Delegates the call to <code>VaultBridgeTokenPart2</code>.</em></p>
+<p><em>@note (ATTENTION) The <code>virtual</code> modifier allows <code>VaultBridgeTokenPart2</code> to override this function. Do not override the function yourself.</em></p>
+<pre><code class="language-solidity">function completeMigration(uint32 originNetwork, uint256 shares, uint256 assets) external virtual delegatedToPart2;
+</code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>originNetwork</code></td><td><code>uint32</code></td><td>The LxLy ID of Layer Y the backing is being migrated from.</td></tr>
+<tr><td><code>shares</code></td><td><code>uint256</code></td><td>The amount of vbToken required to mint and lock up in LxLy Bridge. Assets from a dedicated migration fees fund may be used to offset any fees incurred on Layer Y during the process. If a migration cannot be completed due to insufficient assets, anyone can donate the underlying token to the migration fees fund. Please refer to <code>donateForCompletingMigration</code> for more information.</td></tr>
+<tr><td><code>assets</code></td><td><code>uint256</code></td><td>The amount of the underlying token migrated from Layer Y (after any fees on Layer Y).</td></tr>
+</tbody></table>
+</div>
+<h3 id="drainyieldvault"><a class="header" href="#drainyieldvault">drainYieldVault</a></h3>
+<p>Drains the yield vault by redeeming yield vault shares. Assets will be put into the internal reserve.</p>
+<p>This function may utilize availabe yield to ensure successful draining if there is larger slippage. Consider collecting yield before calling this function to disable this behavior.</p>
+<p><em>This function can be called by the owner only.</em></p>
+<p><em>Delegates the call to <code>VaultBridgeTokenPart2</code>.</em></p>
+<p><em>@note (ATTENTION) The <code>virtual</code> modifier allows <code>VaultBridgeTokenPart2</code> to override this function. Do not override the function yourself.</em></p>
+<pre><code class="language-solidity">function drainYieldVault(uint256 shares, bool exact) external virtual delegatedToPart2;
+</code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>shares</code></td><td><code>uint256</code></td><td>The amount of the yield vault shares to redeem.</td></tr>
+<tr><td><code>exact</code></td><td><code>bool</code></td><td>Whether to revert if the exact amount of shares could not be redeemed.</td></tr>
+</tbody></table>
+</div>
+<h3 id="setminimumreservepercentage"><a class="header" href="#setminimumreservepercentage">setMinimumReservePercentage</a></h3>
+<p>Sets the minimum reserve percentage.</p>
+<p>@note (ATTENTION) Automatic reserve rebalancing will be disabled for values greater than <code>1e18</code> (100%).</p>
+<p>This function can be called by the owner only.</p>
+<p><em>Delegates the call to <code>VaultBridgeTokenPart2</code>.</em></p>
+<p><em>@note (ATTENTION) The <code>virtual</code> modifier allows <code>VaultBridgeTokenPart2</code> to override this function. Do not override the function yourself.</em></p>
+<pre><code class="language-solidity">function setMinimumReservePercentage(uint256 minimumReservePercentage_) external virtual delegatedToPart2;
+</code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>minimumReservePercentage_</code></td><td><code>uint256</code></td><td><code>1e18</code> is 100%.</td></tr>
+</tbody></table>
+</div>
+<h3 id="setyieldvault"><a class="header" href="#setyieldvault">setYieldVault</a></h3>
+<p>Sets the yield vault.</p>
+<p>@note CAUTION! Use <code>drainYieldVault</code> to drain the current yield vault completely before changing it. Any yield vault shares that are not redeemed will not count toward the underlying token backing after changing the yield vault.</p>
+<p>This function can be called by the owner only.</p>
+<p><em>Delegates the call to <code>VaultBridgeTokenPart2</code>.</em></p>
+<p><em>@note (ATTENTION) The <code>virtual</code> modifier allows <code>VaultBridgeTokenPart2</code> to override this function. Do not override the function yourself.</em></p>
+<pre><code class="language-solidity">function setYieldVault(address yieldVault_) external virtual delegatedToPart2;
+</code></pre>
+<h3 id="setyieldrecipient"><a class="header" href="#setyieldrecipient">setYieldRecipient</a></h3>
+<p>Sets the yield recipient.</p>
+<p>Yield will be collected before changing the recipient.</p>
+<p>This function can be called by the owner only.</p>
+<p><em>Delegates the call to <code>VaultBridgeTokenPart2</code>.</em></p>
+<p><em>@note (ATTENTION) The <code>virtual</code> modifier allows <code>VaultBridgeTokenPart2</code> to override this function. Do not override the function yourself.</em></p>
+<pre><code class="language-solidity">function setYieldRecipient(address yieldRecipient_) external virtual delegatedToPart2;
+</code></pre>
+<h3 id="setminimumyieldvaultdeposit"><a class="header" href="#setminimumyieldvaultdeposit">setMinimumYieldVaultDeposit</a></h3>
+<p>The minimum amount of the underlying token that triggers a yield vault deposit.</p>
+<p>Amounts below this value will be reserved regardless of the reserve percentage, in order to save gas for users.</p>
+<p>The limit does not apply when rebalancing the reserve.</p>
+<p>This function can be called by the owner only.</p>
+<p><em>Delegates the call to <code>VaultBridgeTokenPart2</code>.</em></p>
+<p><em>@note (ATTENTION) The <code>virtual</code> modifier allows <code>VaultBridgeTokenPart2</code> to override this function. Do not override the function yourself.</em></p>
+<pre><code class="language-solidity">function setMinimumYieldVaultDeposit(uint256 minimumYieldVaultDeposit_) external virtual delegatedToPart2;
+</code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>minimumYieldVaultDeposit_</code></td><td><code>uint256</code></td><td>Set to <code>0</code> to disable.</td></tr>
+</tbody></table>
+</div>
+<h3 id="setyieldvaultmaximumslippagepercentage"><a class="header" href="#setyieldvaultmaximumslippagepercentage">setYieldVaultMaximumSlippagePercentage</a></h3>
+<p>The maximum slippage percentage when depositing into or withdrawing from the yield vault.</p>
+<p>@note IMPORTANT: Any losses incurred due to slippage (and not fully covered by produced yield) will need to be covered by whomever is responsible for this contract.</p>
+<p><em>Delegates the call to <code>VaultBridgeTokenPart2</code>.</em></p>
+<p><em>@note (ATTENTION) The <code>virtual</code> modifier allows <code>VaultBridgeTokenPart2</code> to override this function. Do not override the function yourself.</em></p>
+<pre><code class="language-solidity">function setYieldVaultMaximumSlippagePercentage(uint256 maximumSlippagePercentage) external virtual delegatedToPart2;
+</code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>maximumSlippagePercentage</code></td><td><code>uint256</code></td><td>1e18 is 100%. The recommended value is <code>0.01e18</code> (1%).</td></tr>
+</tbody></table>
+</div>
+<h3 id="_calculateamounttoreserve"><a class="header" href="#_calculateamounttoreserve">_calculateAmountToReserve</a></h3>
+<p>Calculates the amount of assets to reserve (as opposed to depositing into the yield vault) based on the current and minimum reserve percentages.</p>
+<p><em>@note (ATTENTION) <code>reservedAssets</code> must be up-to-date before using this function.</em></p>
+<pre><code class="language-solidity">function _calculateAmountToReserve(uint256 assets, uint256 nonMintedShares)
+    internal
+    view
+    returns (uint256 assetsToReserve);
+</code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>assets</code></td><td><code>uint256</code></td><td>The amount of the underlying token being deposited.</td></tr>
+<tr><td><code>nonMintedShares</code></td><td><code>uint256</code></td><td>The amount of vbToken that will be minted after using this function as a result of the deposit. (Set to <code>0</code> if you have already minted all the shares).</td></tr>
+</tbody></table>
+</div>
+<h3 id="_depositintoyieldvault"><a class="header" href="#_depositintoyieldvault">_depositIntoYieldVault</a></h3>
+<p>Deposit a specific amount of the underlying token into the yield vault.</p>
+<pre><code class="language-solidity">function _depositIntoYieldVault(uint256 assets, bool exact) internal returns (uint256 nonDepositedAssets);
+</code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>assets</code></td><td><code>uint256</code></td><td>The amount of the underlying token to deposit into the yield vault.</td></tr>
+<tr><td><code>exact</code></td><td><code>bool</code></td><td>Whether to revert if the exact amount of the underlying token could not be deposited into the yield vault.</td></tr>
+</tbody></table>
+</div>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>nonDepositedAssets</code></td><td><code>uint256</code></td><td>The amount of the underlying token that could not be deposited into the yield vault. The value will be <code>0</code> if <code>exact</code> is set to <code>true</code>.</td></tr>
+</tbody></table>
+</div>
+<h3 id="performreversibleyieldvaultdeposit"><a class="header" href="#performreversibleyieldvaultdeposit">performReversibleYieldVaultDeposit</a></h3>
+<p>Enables infinte deposits regardless of the behavior of the yield vault.</p>
+<p>This function can be called by the this contract only.</p>
+<p><em>This function reverts if the yield vault deposit fails, or the solvency check does not pass with revert data ABI-encoded in the following format: <code>abi.encode(depositSucceeded, depositData, solvencyCheckPassed)</code>, which can be decoded in another function.</em></p>
+<pre><code class="language-solidity">function performReversibleYieldVaultDeposit(uint256 assets) external whenNotPaused onlySelf;
+</code></pre>
+<h3 id="_withdrawfromyieldvault"><a class="header" href="#_withdrawfromyieldvault">_withdrawFromYieldVault</a></h3>
+<p>Withdraws a specific amount of the underlying token from the yield vault.</p>
+<pre><code class="language-solidity">function _withdrawFromYieldVault(
+    uint256 assets,
+    bool exact,
+    address receiver,
+    uint256 originalTotalSupply,
+    uint256 originalUncollectedYield,
+    uint256 originalReservedAssets
+) internal returns (uint256 nonWithdrawnAssets, uint256 receivedAssets);
+</code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>assets</code></td><td><code>uint256</code></td><td>The amount of the underlying token to withdraw from the yield vault.</td></tr>
+<tr><td><code>exact</code></td><td><code>bool</code></td><td>Whether to revert if the exact amount of the underlying token could not be withdrawn from the yield vault.</td></tr>
+<tr><td><code>receiver</code></td><td><code>address</code></td><td>The address to withdraw the underlying token to.</td></tr>
+<tr><td><code>originalTotalSupply</code></td><td><code>uint256</code></td><td>The total supply of vbToken before burning the required amount of vbToken or updating the reserve. Used for the solvency check.</td></tr>
+<tr><td><code>originalUncollectedYield</code></td><td><code>uint256</code></td><td>The uncollected yield before burning the required amount of vbToken or updating the reserve. Used for the solvency check.</td></tr>
+<tr><td><code>originalReservedAssets</code></td><td><code>uint256</code></td><td></td></tr>
+</tbody></table>
+</div>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>nonWithdrawnAssets</code></td><td><code>uint256</code></td><td>The amount of the underlying token that could not be withdrawn from the yield vault. The value will be <code>0</code> if <code>exact</code> is set to <code>true</code>.</td></tr>
+<tr><td><code>receivedAssets</code></td><td><code>uint256</code></td><td>The amount of the underlying token actually received (e.g., after any fees). The value will be <code>0</code> if <code>receiver</code> is not <code>address(this)</code>.</td></tr>
+</tbody></table>
+</div>
+<h3 id="_receiveunderlyingtoken-1"><a class="header" href="#_receiveunderlyingtoken-1">_receiveUnderlyingToken</a></h3>
+<p>Transfers the underlying token from an external account to self.</p>
+<p><em>@note CAUTION! This function MUST NOT introduce reentrancy/crossentrancy vulnerabilities.</em></p>
+<pre><code class="language-solidity">function _receiveUnderlyingToken(address from, uint256 value) internal;
+</code></pre>
+<h3 id="_sendunderlyingtoken-1"><a class="header" href="#_sendunderlyingtoken-1">_sendUnderlyingToken</a></h3>
+<p>Transfers the underlying token to an external account.</p>
+<p><em>@note CAUTION! This function MUST NOT introduce reentrancy/crossentrancy vulnerabilities.</em></p>
+<pre><code class="language-solidity">function _sendUnderlyingToken(address to, uint256 value) internal;
+</code></pre>
+<h3 id="pause-3"><a class="header" href="#pause-3">pause</a></h3>
+<p>Prevents usage of functions with the <code>whenNotPaused</code> modifier.</p>
+<p>This function can be called by a pauser only.</p>
+<p><em>Delegates the call to <code>VaultBridgeTokenPart2</code>.</em></p>
+<p><em>@note (ATTENTION) The <code>virtual</code> modifier allows <code>VaultBridgeTokenPart2</code> to override this function. Do not override the function yourself.</em></p>
+<pre><code class="language-solidity">function pause() external virtual delegatedToPart2;
+</code></pre>
+<h3 id="unpause-3"><a class="header" href="#unpause-3">unpause</a></h3>
+<p>Allows usage of functions with the <code>whenNotPaused</code> modifier.</p>
+<p>This function can be called by the owner only.</p>
+<p><em>Delegates the call to <code>VaultBridgeTokenPart2</code>.</em></p>
+<p><em>@note (ATTENTION) The <code>virtual</code> modifier allows <code>VaultBridgeTokenPart2</code> to override this function. Do not override the function yourself.</em></p>
+<pre><code class="language-solidity">function unpause() external virtual delegatedToPart2;
+</code></pre>
+<h3 id="_delegatetopart2"><a class="header" href="#_delegatetopart2">_delegateToPart2</a></h3>
+<p>Delegates the call to <code>VaultBridgeTokenPart2</code>.</p>
+<pre><code class="language-solidity">function _delegateToPart2() private;
+</code></pre>
+<h2 id="events-5"><a class="header" href="#events-5">Events</a></h2>
+<h3 id="reserverebalanced"><a class="header" href="#reserverebalanced">ReserveRebalanced</a></h3>
+<pre><code class="language-solidity">event ReserveRebalanced(uint256 oldReservedAssets, uint256 newReservedAssets, uint256 reservePercentage);
+</code></pre>
+<h3 id="yieldcollected"><a class="header" href="#yieldcollected">YieldCollected</a></h3>
+<pre><code class="language-solidity">event YieldCollected(address indexed yieldRecipient, uint256 vbTokenAmount);
+</code></pre>
+<h3 id="burned"><a class="header" href="#burned">Burned</a></h3>
+<pre><code class="language-solidity">event Burned(uint256 vbTokenAmount);
+</code></pre>
+<h3 id="donatedasyield"><a class="header" href="#donatedasyield">DonatedAsYield</a></h3>
+<pre><code class="language-solidity">event DonatedAsYield(address indexed who, uint256 assets);
+</code></pre>
+<h3 id="donatedforcompletingmigration"><a class="header" href="#donatedforcompletingmigration">DonatedForCompletingMigration</a></h3>
+<pre><code class="language-solidity">event DonatedForCompletingMigration(address indexed who, uint256 assets);
+</code></pre>
+<h3 id="migrationcompleted"><a class="header" href="#migrationcompleted">MigrationCompleted</a></h3>
+<pre><code class="language-solidity">event MigrationCompleted(
+    uint32 indexed originNetwork, uint256 indexed shares, uint256 indexed assets, uint256 migrationFeesFundUtilization
+);
+</code></pre>
+<h3 id="yieldrecipientset"><a class="header" href="#yieldrecipientset">YieldRecipientSet</a></h3>
+<pre><code class="language-solidity">event YieldRecipientSet(address indexed yieldRecipient);
+</code></pre>
+<h3 id="minimumreservepercentageset"><a class="header" href="#minimumreservepercentageset">MinimumReservePercentageSet</a></h3>
+<pre><code class="language-solidity">event MinimumReservePercentageSet(uint256 minimumReservePercentage);
+</code></pre>
+<h3 id="yieldvaultdrained"><a class="header" href="#yieldvaultdrained">YieldVaultDrained</a></h3>
+<pre><code class="language-solidity">event YieldVaultDrained(uint256 redeemedShares, uint256 receivedAssets);
+</code></pre>
+<h3 id="yieldvaultset"><a class="header" href="#yieldvaultset">YieldVaultSet</a></h3>
+<pre><code class="language-solidity">event YieldVaultSet(address yieldVault);
+</code></pre>
+<h3 id="yieldvaultmaximumslippagepercentageset"><a class="header" href="#yieldvaultmaximumslippagepercentageset">YieldVaultMaximumSlippagePercentageSet</a></h3>
+<pre><code class="language-solidity">event YieldVaultMaximumSlippagePercentageSet(uint256 slippagePercentage);
+</code></pre>
+<h2 id="errors-7"><a class="header" href="#errors-7">Errors</a></h2>
+<h3 id="unauthorized-2"><a class="header" href="#unauthorized-2">Unauthorized</a></h3>
+<pre><code class="language-solidity">error Unauthorized();
+</code></pre>
+<h3 id="invalidinitializer"><a class="header" href="#invalidinitializer">InvalidInitializer</a></h3>
+<pre><code class="language-solidity">error InvalidInitializer();
+</code></pre>
+<h3 id="invalidowner-3"><a class="header" href="#invalidowner-3">InvalidOwner</a></h3>
+<pre><code class="language-solidity">error InvalidOwner();
+</code></pre>
+<h3 id="invalidname"><a class="header" href="#invalidname">InvalidName</a></h3>
+<pre><code class="language-solidity">error InvalidName();
+</code></pre>
+<h3 id="invalidsymbol"><a class="header" href="#invalidsymbol">InvalidSymbol</a></h3>
+<pre><code class="language-solidity">error InvalidSymbol();
+</code></pre>
+<h3 id="invalidunderlyingtoken-2"><a class="header" href="#invalidunderlyingtoken-2">InvalidUnderlyingToken</a></h3>
+<pre><code class="language-solidity">error InvalidUnderlyingToken();
+</code></pre>
+<h3 id="invalidminimumreservepercentage"><a class="header" href="#invalidminimumreservepercentage">InvalidMinimumReservePercentage</a></h3>
+<pre><code class="language-solidity">error InvalidMinimumReservePercentage();
+</code></pre>
+<h3 id="invalidyieldvault"><a class="header" href="#invalidyieldvault">InvalidYieldVault</a></h3>
+<pre><code class="language-solidity">error InvalidYieldVault();
+</code></pre>
+<h3 id="invalidyieldrecipient"><a class="header" href="#invalidyieldrecipient">InvalidYieldRecipient</a></h3>
+<pre><code class="language-solidity">error InvalidYieldRecipient();
+</code></pre>
+<h3 id="invalidlxlybridge-3"><a class="header" href="#invalidlxlybridge-3">InvalidLxLyBridge</a></h3>
+<pre><code class="language-solidity">error InvalidLxLyBridge();
+</code></pre>
+<h3 id="invalidmigrationmanager-1"><a class="header" href="#invalidmigrationmanager-1">InvalidMigrationManager</a></h3>
+<pre><code class="language-solidity">error InvalidMigrationManager();
+</code></pre>
+<h3 id="invalidyieldvaultmaximumslippagepercentage"><a class="header" href="#invalidyieldvaultmaximumslippagepercentage">InvalidYieldVaultMaximumSlippagePercentage</a></h3>
+<pre><code class="language-solidity">error InvalidYieldVaultMaximumSlippagePercentage();
+</code></pre>
+<h3 id="invalidvaultbridgetokenpart2"><a class="header" href="#invalidvaultbridgetokenpart2">InvalidVaultBridgeTokenPart2</a></h3>
+<pre><code class="language-solidity">error InvalidVaultBridgeTokenPart2();
+</code></pre>
+<h3 id="invalidassets-1"><a class="header" href="#invalidassets-1">InvalidAssets</a></h3>
+<pre><code class="language-solidity">error InvalidAssets();
+</code></pre>
+<h3 id="invaliddestinationnetworkid-1"><a class="header" href="#invaliddestinationnetworkid-1">InvalidDestinationNetworkId</a></h3>
+<pre><code class="language-solidity">error InvalidDestinationNetworkId();
+</code></pre>
+<h3 id="invalidreceiver-1"><a class="header" href="#invalidreceiver-1">InvalidReceiver</a></h3>
+<pre><code class="language-solidity">error InvalidReceiver();
+</code></pre>
+<h3 id="invalidpermitdata-1"><a class="header" href="#invalidpermitdata-1">InvalidPermitData</a></h3>
+<pre><code class="language-solidity">error InvalidPermitData();
+</code></pre>
+<h3 id="invalidshares-1"><a class="header" href="#invalidshares-1">InvalidShares</a></h3>
+<pre><code class="language-solidity">error InvalidShares();
+</code></pre>
+<h3 id="incorrectamountofsharesminted"><a class="header" href="#incorrectamountofsharesminted">IncorrectAmountOfSharesMinted</a></h3>
+<pre><code class="language-solidity">error IncorrectAmountOfSharesMinted(uint256 mintedShares, uint256 requiredShares);
+</code></pre>
+<h3 id="assetstoolarge-2"><a class="header" href="#assetstoolarge-2">AssetsTooLarge</a></h3>
+<pre><code class="language-solidity">error AssetsTooLarge(uint256 availableAssets, uint256 requestedAssets);
+</code></pre>
+<h3 id="incorrectamountofsharesredeemed"><a class="header" href="#incorrectamountofsharesredeemed">IncorrectAmountOfSharesRedeemed</a></h3>
+<pre><code class="language-solidity">error IncorrectAmountOfSharesRedeemed(uint256 redeemedShares, uint256 requiredShares);
+</code></pre>
+<h3 id="cannotrebalancereserve"><a class="header" href="#cannotrebalancereserve">CannotRebalanceReserve</a></h3>
+<pre><code class="language-solidity">error CannotRebalanceReserve();
+</code></pre>
+<h3 id="noneedtorebalancereserve"><a class="header" href="#noneedtorebalancereserve">NoNeedToRebalanceReserve</a></h3>
+<pre><code class="language-solidity">error NoNeedToRebalanceReserve();
+</code></pre>
+<h3 id="noyield"><a class="header" href="#noyield">NoYield</a></h3>
+<pre><code class="language-solidity">error NoYield();
+</code></pre>
+<h3 id="invalidoriginnetwork"><a class="header" href="#invalidoriginnetwork">InvalidOriginNetwork</a></h3>
+<pre><code class="language-solidity">error InvalidOriginNetwork();
+</code></pre>
+<h3 id="cannotcompletemigration"><a class="header" href="#cannotcompletemigration">CannotCompleteMigration</a></h3>
+<pre><code class="language-solidity">error CannotCompleteMigration(uint256 requiredAssets, uint256 receivedAssets, uint256 assetsInMigrationFund);
+</code></pre>
+<h3 id="yieldvaultredemptionfailed"><a class="header" href="#yieldvaultredemptionfailed">YieldVaultRedemptionFailed</a></h3>
+<pre><code class="language-solidity">error YieldVaultRedemptionFailed(uint256 sharesToRedeem, uint256 redemptionLimit);
+</code></pre>
+<h3 id="minimumyieldvaultdepositnotmet"><a class="header" href="#minimumyieldvaultdepositnotmet">MinimumYieldVaultDepositNotMet</a></h3>
+<pre><code class="language-solidity">error MinimumYieldVaultDepositNotMet(uint256 assetsToDeposit, uint256 minimumYieldVaultDeposit);
+</code></pre>
+<h3 id="yieldvaultdepositfailed"><a class="header" href="#yieldvaultdepositfailed">YieldVaultDepositFailed</a></h3>
+<pre><code class="language-solidity">error YieldVaultDepositFailed(uint256 assetsToDeposit, uint256 depositLimit);
+</code></pre>
+<h3 id="insufficientyieldvaultsharesminted"><a class="header" href="#insufficientyieldvaultsharesminted">InsufficientYieldVaultSharesMinted</a></h3>
+<pre><code class="language-solidity">error InsufficientYieldVaultSharesMinted(uint256 depositedAssets, uint256 mintedShares);
+</code></pre>
+<h3 id="unknownerror"><a class="header" href="#unknownerror">UnknownError</a></h3>
+<pre><code class="language-solidity">error UnknownError(bytes data);
+</code></pre>
+<h3 id="yieldvaultwithdrawalfailed"><a class="header" href="#yieldvaultwithdrawalfailed">YieldVaultWithdrawalFailed</a></h3>
+<pre><code class="language-solidity">error YieldVaultWithdrawalFailed(uint256 assetsToWithdraw, uint256 withdrawalLimit);
+</code></pre>
+<h3 id="excessiveyieldvaultsharesburned"><a class="header" href="#excessiveyieldvaultsharesburned">ExcessiveYieldVaultSharesBurned</a></h3>
+<pre><code class="language-solidity">error ExcessiveYieldVaultSharesBurned(uint256 burnedShares, uint256 withdrawnAssets);
+</code></pre>
+<h3 id="insufficientunderlyingtokenreceived"><a class="header" href="#insufficientunderlyingtokenreceived">InsufficientUnderlyingTokenReceived</a></h3>
+<pre><code class="language-solidity">error InsufficientUnderlyingTokenReceived(uint256 receivedAssets, uint256 requestedAssets);
+</code></pre>
+<h3 id="unknownfunction"><a class="header" href="#unknownfunction">UnknownFunction</a></h3>
+<pre><code class="language-solidity">error UnknownFunction(bytes4 functionSelector);
+</code></pre>
+<h2 id="structs-5"><a class="header" href="#structs-5">Structs</a></h2>
+<h3 id="vaultbridgetokenstorage"><a class="header" href="#vaultbridgetokenstorage">VaultBridgeTokenStorage</a></h3>
+<p><em>Storage of Vault Bridge Token contract.</em></p>
+<p><em>It's implemented on a custom ERC-7201 namespace to reduce the risk of storage collisions when using with upgradeable contracts.</em></p>
+<p><strong>Note:</strong>
+storage-location: erc7201:agglayer.vault-bridge.VaultBridgeToken.storage</p>
+<pre><code class="language-solidity">struct VaultBridgeTokenStorage {
+    IERC20 underlyingToken;
+    uint8 decimals;
+    uint256 minimumReservePercentage;
+    uint256 reservedAssets;
+    IERC4626 yieldVault;
+    address yieldRecipient;
+    uint256 _netCollectedYield;
+    uint32 lxlyId;
+    ILxLyBridge lxlyBridge;
+    uint256 migrationFeesFund;
+    uint256 minimumYieldVaultDeposit;
+    address migrationManager;
+    uint256 yieldVaultMaximumSlippagePercentage;
+    address _vaultBridgeTokenPart2;
+}
+</code></pre>
+<h3 id="initializationparameters"><a class="header" href="#initializationparameters">InitializationParameters</a></h3>
+<p><em>Parameters for initializing Vault Bridge Token contract.</em></p>
+<p><em>@note (ATTENTION) <code>decimals</code> will match the underlying token. Defaults to 18 decimals if the underlying token reverts on <code>decimals</code>.</em></p>
+<pre><code class="language-solidity">struct InitializationParameters {
+    address owner;
+    string name;
+    string symbol;
+    address underlyingToken;
+    uint256 minimumReservePercentage;
+    address yieldVault;
+    address yieldRecipient;
+    address lxlyBridge;
+    uint256 minimumYieldVaultDeposit;
+    address migrationManager;
+    uint256 yieldVaultMaximumSlippagePercentage;
+    address vaultBridgeTokenPart2;
+}
+</code></pre>
+<p><strong>Properties</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>owner</code></td><td><code>address</code></td><td>(ATTENTION) This address will be granted the <code>DEFAULT_ADMIN_ROLE</code>, as well as all basic roles. Roles can be modified at any time.</td></tr>
+<tr><td><code>name</code></td><td><code>string</code></td><td></td></tr>
+<tr><td><code>symbol</code></td><td><code>string</code></td><td></td></tr>
+<tr><td><code>underlyingToken</code></td><td><code>address</code></td><td></td></tr>
+<tr><td><code>minimumReservePercentage</code></td><td><code>uint256</code></td><td>vbTokens can maintain an internal reserve of the underlying token for serving withdrawals from first (as opposed to staking all assets). <code>1e18</code> is 100%. @note (ATTENTION) Automatic reserve rebalancing will be disabled for values greater than <code>1e18</code> (100%).</td></tr>
+<tr><td><code>yieldVault</code></td><td><code>address</code></td><td>An external, ERC-4246 compliant vault into which the underlying token is deposited to produce yield.</td></tr>
+<tr><td><code>yieldRecipient</code></td><td><code>address</code></td><td>The address that receives yield produced by the yield vault. The yield collector collects yield, while the yield recipient receives it.</td></tr>
+<tr><td><code>lxlyBridge</code></td><td><code>address</code></td><td></td></tr>
+<tr><td><code>minimumYieldVaultDeposit</code></td><td><code>uint256</code></td><td>The minimum amount of the underlying token that triggers a yield vault deposit. Amounts below this value will be reserved regardless of the reserve percentage, in order to save gas for users. The limit does not apply when rebalancing the reserve. Set to <code>0</code> to disable.</td></tr>
+<tr><td><code>migrationManager</code></td><td><code>address</code></td><td></td></tr>
+<tr><td><code>yieldVaultMaximumSlippagePercentage</code></td><td><code>uint256</code></td><td>The maximum slippage percentage when depositing into or withdrawing from the yield vault. @note IMPORTANT: Any losses incurred due to slippage (and not fully covered by produced yield) will need to be covered by whomever is responsible for this contract. <code>1e18</code> is 100%. The recommended value is <code>0.01e18</code> (1%).</td></tr>
+<tr><td><code>vaultBridgeTokenPart2</code></td><td><code>address</code></td><td></td></tr>
+</tbody></table>
+</div><div style="break-before: page; page-break-before: always;"></div><h1 id="vaultbridgetokeninitializer"><a class="header" href="#vaultbridgetokeninitializer">VaultBridgeTokenInitializer</a></h1>
+<p><a href="https://github.com/agglayer/vault-bridge/blob/2c76a3249f25aa635aad39bd435c00f1c4cfe601/src/VaultBridgeTokenInitializer.sol">Git Source</a></p>
+<p><strong>Inherits:</strong>
+<a href="src/VaultBridgeTokenInitializer.sol//src/etc/IVaultBridgeTokenInitializer.sol/interface.IVaultBridgeTokenInitializer.html">IVaultBridgeTokenInitializer</a>, <a href="src/VaultBridgeTokenInitializer.sol//src/VaultBridgeToken.sol/abstract.VaultBridgeToken.html">VaultBridgeToken</a></p>
+<p><strong>Author:</strong>
+See https://github.com/agglayer/vault-bridge</p>
+<p>A singleton contract used by Vault Bridge Token for initialization.</p>
+<p><em>This contract exists because of the contract size limit of the EVM.</em></p>
+<h2 id="state-variables-7"><a class="header" href="#state-variables-7">State Variables</a></h2>
+<h3 id="_vault_bridge_token_storage-1"><a class="header" href="#_vault_bridge_token_storage-1">_VAULT_BRIDGE_TOKEN_STORAGE</a></h3>
+<p><em>The storage slot at which Vault Bridge Token storage starts, following the EIP-7201 standard.</em></p>
+<p><em>Calculated as <code>keccak256(abi.encode(uint256(keccak256("agglayer.vault-bridge.VaultBridgeToken.storage")) - 1)) &amp; ~bytes32(uint256(0xff))</code>.</em></p>
+<pre><code class="language-solidity">bytes32 private constant _VAULT_BRIDGE_TOKEN_STORAGE =
+    hex"f082fbc4cfb4d172ba00d34227e208a31ceb0982bc189440d519185302e44700";
+</code></pre>
+<h2 id="functions-16"><a class="header" href="#functions-16">Functions</a></h2>
+<h3 id="constructor-7"><a class="header" href="#constructor-7">constructor</a></h3>
+<pre><code class="language-solidity">constructor();
+</code></pre>
+<h3 id="__getvaultbridgetokenstorage"><a class="header" href="#__getvaultbridgetokenstorage">__getVaultBridgeTokenStorage</a></h3>
+<p><em>Returns a pointer to the ERC-7201 storage namespace.</em></p>
+<pre><code class="language-solidity">function __getVaultBridgeTokenStorage() private pure returns (VaultBridgeTokenStorage storage $);
+</code></pre>
+<h3 id="initialize-6"><a class="header" href="#initialize-6">initialize</a></h3>
+<p><em>Vault Bridge Token delegates the initialization to this contract.</em></p>
+<pre><code class="language-solidity">function initialize(VaultBridgeToken.InitializationParameters calldata initParams)
+    external
+    override
+    onlyInitializing
+    nonReentrant;
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="vaultbridgetokenpart2"><a class="header" href="#vaultbridgetokenpart2">VaultBridgeTokenPart2</a></h1>
+<p><a href="https://github.com/agglayer/vault-bridge/blob/2c76a3249f25aa635aad39bd435c00f1c4cfe601/src/VaultBridgeTokenPart2.sol">Git Source</a></p>
+<p><strong>Inherits:</strong>
+<a href="src/VaultBridgeTokenPart2.sol//src/VaultBridgeToken.sol/abstract.VaultBridgeToken.html">VaultBridgeToken</a></p>
+<p><strong>Author:</strong>
+See https://github.com/agglayer/vault-bridge</p>
+<p><em>This contract exists because of the contract size limit of the EVM.</em></p>
+<h2 id="state-variables-8"><a class="header" href="#state-variables-8">State Variables</a></h2>
+<h3 id="_vault_bridge_token_storage-2"><a class="header" href="#_vault_bridge_token_storage-2">_VAULT_BRIDGE_TOKEN_STORAGE</a></h3>
+<p><em>The storage slot at which Vault Bridge Token storage starts, following the EIP-7201 standard.</em></p>
+<p><em>Calculated as <code>keccak256(abi.encode(uint256(keccak256("agglayer.vault-bridge.VaultBridgeToken.storage")) - 1)) &amp; ~bytes32(uint256(0xff))</code>.</em></p>
+<pre><code class="language-solidity">bytes32 private constant _VAULT_BRIDGE_TOKEN_STORAGE =
+    hex"f082fbc4cfb4d172ba00d34227e208a31ceb0982bc189440d519185302e44700";
+</code></pre>
+<h2 id="functions-17"><a class="header" href="#functions-17">Functions</a></h2>
+<h3 id="fallback"><a class="header" href="#fallback">fallback</a></h3>
+<pre><code class="language-solidity">fallback() external;
+</code></pre>
+<h3 id="constructor-8"><a class="header" href="#constructor-8">constructor</a></h3>
+<pre><code class="language-solidity">constructor();
+</code></pre>
+<h3 id="__getvaultbridgetokenstorage-1"><a class="header" href="#__getvaultbridgetokenstorage-1">__getVaultBridgeTokenStorage</a></h3>
+<p><em>Returns a pointer to the ERC-7201 storage namespace.</em></p>
+<pre><code class="language-solidity">function __getVaultBridgeTokenStorage() private pure returns (VaultBridgeTokenStorage storage $);
+</code></pre>
+<h3 id="rebalancereserve-1"><a class="header" href="#rebalancereserve-1">rebalanceReserve</a></h3>
+<p>Rebalances the internal reserve by withdrawing the underlying token from, or depositing the underlying token into, the yield vault.</p>
+<p><em>Delegates the call to <code>VaultBridgeTokenPart2</code>.</em></p>
+<pre><code class="language-solidity">function rebalanceReserve() external override whenNotPaused onlyRole(REBALANCER_ROLE) nonReentrant;
+</code></pre>
+<h3 id="collectyield-1"><a class="header" href="#collectyield-1">collectYield</a></h3>
+<p>Transfers yield produced by the yield vault to the yield recipient in the form of vbToken.</p>
+<p><em>Increases the net collected yield.</em></p>
+<pre><code class="language-solidity">function collectYield() external override onlyRole(YIELD_COLLECTOR_ROLE) nonReentrant;
+</code></pre>
+<h3 id="_collectyield"><a class="header" href="#_collectyield">_collectYield</a></h3>
+<p>Transfers yield produced by the yield vault to the yield recipient in the form of vbToken.</p>
+<p><em>Does not rebalance the reserve after collecting yield to allow usage while the contract is paused.</em></p>
+<pre><code class="language-solidity">function _collectYield(bool force) internal;
+</code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>force</code></td><td><code>bool</code></td><td>Whether to revert if no yield can be collected.</td></tr>
+</tbody></table>
+</div>
+<h3 id="burn-2"><a class="header" href="#burn-2">burn</a></h3>
+<p>Burns a specific amount of vbToken.</p>
+<p><em>Decreases the net collected yield.</em></p>
+<pre><code class="language-solidity">function burn(uint256 shares) external override onlyYieldRecipient nonReentrant;
+</code></pre>
+<h3 id="donateasyield-1"><a class="header" href="#donateasyield-1">donateAsYield</a></h3>
+<p>Adds a specific amount of the underlying token to the reserve by transferring it from the sender.</p>
+<p><em>Delegates the call to <code>VaultBridgeTokenPart2</code>.</em></p>
+<pre><code class="language-solidity">function donateAsYield(uint256 assets) external override nonReentrant;
+</code></pre>
+<h3 id="completemigration-1"><a class="header" href="#completemigration-1">completeMigration</a></h3>
+<p>Completes a migration of backing from a Layer Y to Layer X by minting and locking the required amount of vbToken in LxLy Bridge.</p>
+<p><em>Backing for Custom Token minted by Native Converter on Layer Ys can be migrated to Layer X.</em></p>
+<pre><code class="language-solidity">function completeMigration(uint32 originNetwork, uint256 shares, uint256 assets)
+    external
+    override
+    whenNotPaused
+    onlyMigrationManager
+    nonReentrant;
+</code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>originNetwork</code></td><td><code>uint32</code></td><td>The LxLy ID of Layer Y the backing is being migrated from.</td></tr>
+<tr><td><code>shares</code></td><td><code>uint256</code></td><td>The amount of vbToken required to mint and lock up in LxLy Bridge. Assets from a dedicated migration fees fund may be used to offset any fees incurred on Layer Y during the process. If a migration cannot be completed due to insufficient assets, anyone can donate the underlying token to the migration fees fund. Please refer to <code>donateForCompletingMigration</code> for more information.</td></tr>
+<tr><td><code>assets</code></td><td><code>uint256</code></td><td>The amount of the underlying token migrated from Layer Y (after any fees on Layer Y).</td></tr>
+</tbody></table>
+</div>
+<h3 id="donateforcompletingmigration-1"><a class="header" href="#donateforcompletingmigration-1">donateForCompletingMigration</a></h3>
+<p>Adds a specific amount of the underlying token to a dedicated fund for covering any fees on Layer Y during a migration of backing to Layer X by transferring it from the sender. Please refer to <code>completeMigration</code> for more information.</p>
+<p><em>Delegates the call to <code>VaultBridgeTokenPart2</code>.</em></p>
+<pre><code class="language-solidity">function donateForCompletingMigration(uint256 assets) external override whenNotPaused nonReentrant;
+</code></pre>
+<h3 id="setyieldrecipient-1"><a class="header" href="#setyieldrecipient-1">setYieldRecipient</a></h3>
+<p>Sets the yield recipient.</p>
+<p><em>Delegates the call to <code>VaultBridgeTokenPart2</code>.</em></p>
+<pre><code class="language-solidity">function setYieldRecipient(address yieldRecipient_)
+    external
+    override
+    whenNotPaused
+    onlyRole(DEFAULT_ADMIN_ROLE)
+    nonReentrant;
+</code></pre>
+<h3 id="setminimumreservepercentage-1"><a class="header" href="#setminimumreservepercentage-1">setMinimumReservePercentage</a></h3>
+<p>Sets the minimum reserve percentage.</p>
+<p><em>Delegates the call to <code>VaultBridgeTokenPart2</code>.</em></p>
+<pre><code class="language-solidity">function setMinimumReservePercentage(uint256 minimumReservePercentage_)
+    external
+    override
+    onlyRole(DEFAULT_ADMIN_ROLE)
+    nonReentrant;
+</code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>minimumReservePercentage_</code></td><td><code>uint256</code></td><td><code>1e18</code> is 100%.</td></tr>
+</tbody></table>
+</div>
+<h3 id="drainyieldvault-1"><a class="header" href="#drainyieldvault-1">drainYieldVault</a></h3>
+<p>Drains the yield vault by redeeming yield vault shares. Assets will be put into the internal reserve.</p>
+<p><em>This function can be called by the owner only.</em></p>
+<pre><code class="language-solidity">function drainYieldVault(uint256 shares, bool exact) external override onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant;
+</code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>shares</code></td><td><code>uint256</code></td><td>The amount of the yield vault shares to redeem.</td></tr>
+<tr><td><code>exact</code></td><td><code>bool</code></td><td>Whether to revert if the exact amount of shares could not be redeemed.</td></tr>
+</tbody></table>
+</div>
+<h3 id="setyieldvault-1"><a class="header" href="#setyieldvault-1">setYieldVault</a></h3>
+<p>Sets the yield vault.</p>
+<p><em>Delegates the call to <code>VaultBridgeTokenPart2</code>.</em></p>
+<pre><code class="language-solidity">function setYieldVault(address yieldVault_) external override onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant;
+</code></pre>
+<h3 id="setminimumyieldvaultdeposit-1"><a class="header" href="#setminimumyieldvaultdeposit-1">setMinimumYieldVaultDeposit</a></h3>
+<p>The minimum amount of the underlying token that triggers a yield vault deposit.</p>
+<p><em>Delegates the call to <code>VaultBridgeTokenPart2</code>.</em></p>
+<pre><code class="language-solidity">function setMinimumYieldVaultDeposit(uint256 minimumYieldVaultDeposit_)
+    external
+    override
+    onlyRole(DEFAULT_ADMIN_ROLE)
+    nonReentrant;
+</code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>minimumYieldVaultDeposit_</code></td><td><code>uint256</code></td><td>Set to <code>0</code> to disable.</td></tr>
+</tbody></table>
+</div>
+<h3 id="setyieldvaultmaximumslippagepercentage-1"><a class="header" href="#setyieldvaultmaximumslippagepercentage-1">setYieldVaultMaximumSlippagePercentage</a></h3>
+<p>The maximum slippage percentage when depositing into or withdrawing from the yield vault.</p>
+<p><em>Delegates the call to <code>VaultBridgeTokenPart2</code>.</em></p>
+<pre><code class="language-solidity">function setYieldVaultMaximumSlippagePercentage(uint256 maximumSlippagePercentage)
+    external
+    override
+    onlyRole(DEFAULT_ADMIN_ROLE)
+    nonReentrant;
+</code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>maximumSlippagePercentage</code></td><td><code>uint256</code></td><td>1e18 is 100%. The recommended value is <code>0.01e18</code> (1%).</td></tr>
+</tbody></table>
+</div>
+<h3 id="pause-4"><a class="header" href="#pause-4">pause</a></h3>
+<p>Prevents usage of functions with the <code>whenNotPaused</code> modifier.</p>
+<p><em>Delegates the call to <code>VaultBridgeTokenPart2</code>.</em></p>
+<pre><code class="language-solidity">function pause() external override onlyRole(PAUSER_ROLE) nonReentrant;
+</code></pre>
+<h3 id="unpause-4"><a class="header" href="#unpause-4">unpause</a></h3>
+<p>Allows usage of functions with the <code>whenNotPaused</code> modifier.</p>
+<p><em>Delegates the call to <code>VaultBridgeTokenPart2</code>.</em></p>
+<pre><code class="language-solidity">function unpause() external override onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant;
+</code></pre>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="solidity.min.js"></script>
+
+        <script>
+        window.addEventListener('load', function() {
+            MathJax.Hub.Register.StartupHook('End', function() {
+                window.setTimeout(window.print, 100);
+            });
+        });
+        </script>
+
+    </div>
+    </body>
+</html>

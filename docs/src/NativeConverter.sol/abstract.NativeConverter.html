@@ -1,0 +1,580 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>NativeConverter - Technical Reference</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../../favicon.svg">
+        <link rel="shortcut icon" href="../../favicon.png">
+        <link rel="stylesheet" href="../../css/variables.css">
+        <link rel="stylesheet" href="../../css/general.css">
+        <link rel="stylesheet" href="../../css/chrome.css">
+        <link rel="stylesheet" href="../../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../../book.css">
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../../";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../../toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Technical Reference</h1>
+
+                    <div class="right-buttons">
+                        <a href="../../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/agglayer/vault-bridge" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="nativeconverter"><a class="header" href="#nativeconverter">NativeConverter</a></h1>
+<p><a href="https://github.com/agglayer/vault-bridge/blob/2c76a3249f25aa635aad39bd435c00f1c4cfe601/src/NativeConverter.sol">Git Source</a></p>
+<p><strong>Inherits:</strong>
+Initializable, AccessControlUpgradeable, PausableUpgradeable, ReentrancyGuardUpgradeable, <a href="/src/etc/ERC20PermitUser.sol/abstract.ERC20PermitUser.html">ERC20PermitUser</a>, <a href="/src/etc/Versioned.sol/abstract.Versioned.html">Versioned</a></p>
+<p><strong>Author:</strong>
+See https://github.com/agglayer/vault-bridge</p>
+<p>Native Converter is an optional contract on Layer Ys that converts the underlying token (usually the bridge-wrapped version of the original underlying token from Layer X) to Custom Token, and vice versa, on demand. It can also migrate backing for Custom Token it has minted to Layer X, where vbToken will be minted and locked in LxLy Bridge. Please refer to <code>migrateBackingToLayerX</code> for more information.</p>
+<p><em>A base contract used to create Native Converters.</em></p>
+<p><em>@note (ATTENTION) This contract MUST have mint and burn permission on Custom Token. Please refer to <code>CustomToken.sol</code> for more information.</em></p>
+<p><em>@note IMPORTANT: The underlying token MUST NOT be a rebasing token, and MUST NOT have transfer hooks (i.e., enable reentrancy); it MAY have a transfer fee.</em></p>
+<h2 id="state-variables"><a class="header" href="#state-variables">State Variables</a></h2>
+<h3 id="_native_converter_storage"><a class="header" href="#_native_converter_storage">_NATIVE_CONVERTER_STORAGE</a></h3>
+<p><em>The storage slot at which Native Converter storage starts, following the EIP-7201 standard.</em></p>
+<p><em>Calculated as <code>keccak256(abi.encode(uint256(keccak256("agglayer.vault-bridge.NativeConverter.storage")) - 1)) &amp; ~bytes32(uint256(0xff))</code>.</em></p>
+<pre><code class="language-solidity">bytes32 private constant _NATIVE_CONVERTER_STORAGE =
+    hex"a14770e0debfe4b8406a01c33ee3a7bbe0acc66b3bde7c71854bf7d080a9c600";
+</code></pre>
+<h3 id="migrator_role"><a class="header" href="#migrator_role">MIGRATOR_ROLE</a></h3>
+<pre><code class="language-solidity">bytes32 public constant MIGRATOR_ROLE = keccak256("MIGRATOR_ROLE");
+</code></pre>
+<h3 id="pauser_role"><a class="header" href="#pauser_role">PAUSER_ROLE</a></h3>
+<pre><code class="language-solidity">bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
+</code></pre>
+<h2 id="functions"><a class="header" href="#functions">Functions</a></h2>
+<h3 id="__nativeconverter_init"><a class="header" href="#__nativeconverter_init">__NativeConverter_init</a></h3>
+<p><em>The <code>customToken</code> and <code>underlyingToken</code> MUST have the same number of decimals. @note (ATTENTION) The decimals of the <code>customToken</code> and <code>underlyingToken</code> will default to <code>18</code> if they revert on <code>decimals</code>.</em></p>
+<pre><code class="language-solidity">function __NativeConverter_init(
+    address owner_,
+    address customToken_,
+    address underlyingToken_,
+    address lxlyBridge_,
+    uint32 layerXLxlyId_,
+    uint256 nonMigratableBackingPercentage_,
+    address migrationManager_
+) internal onlyInitializing;
+</code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>owner_</code></td><td><code>address</code></td><td>(ATTENTION) This address will be granted the <code>DEFAULT_ADMIN_ROLE</code>, as well as all basic roles. Roles can be modified at any time.</td></tr>
+<tr><td><code>customToken_</code></td><td><code>address</code></td><td>The upgraded version of the bridged vbToken. Native Converter must be able to mint and burn this token. Please refer to <code>CustomToken.sol</code> for more information.</td></tr>
+<tr><td><code>underlyingToken_</code></td><td><code>address</code></td><td>The token that represents the original underlying token on Layer Y. @note IMPORTANT: This token MUST be either the bridge-wrapped version of the original underlying token, or the original underlying token must be custom mapped to this token on LxLy Bridge on Layer Y.</td></tr>
+<tr><td><code>lxlyBridge_</code></td><td><code>address</code></td><td></td></tr>
+<tr><td><code>layerXLxlyId_</code></td><td><code>uint32</code></td><td></td></tr>
+<tr><td><code>nonMigratableBackingPercentage_</code></td><td><code>uint256</code></td><td>The percentage of backing that should remain in Native Converter when migrating backing to Layer X, based on the total supply of Custom Token. <code>1e18</code> is 100%. It is possible to game the system by manipulating the total supply of Custom Token, so this is more of a soft limit.</td></tr>
+<tr><td><code>migrationManager_</code></td><td><code>address</code></td><td>The address of the Migration Manager on Layer X.</td></tr>
+</tbody></table>
+</div>
+<h3 id="customtoken"><a class="header" href="#customtoken">customToken</a></h3>
+<p>The upgraded version of the bridged vbToken.</p>
+<pre><code class="language-solidity">function customToken() public view returns (IERC20);
+</code></pre>
+<h3 id="underlyingtoken"><a class="header" href="#underlyingtoken">underlyingToken</a></h3>
+<p>The token that represent the original underlying token on Layer Y.</p>
+<pre><code class="language-solidity">function underlyingToken() public view returns (IERC20);
+</code></pre>
+<h3 id="backingonlayery"><a class="header" href="#backingonlayery">backingOnLayerY</a></h3>
+<p>The amount of the underlying token that backs Custom Token minted by Native Converter on Layer Y that has not been migrated to Layer X.</p>
+<p><em>The amount is used in accounting and may be different from Native Converter's underlying token balance. @note IMPORTANT: You may do as you wish with surplus underlying token balance, but you MUST NOT designate it as backing.</em></p>
+<pre><code class="language-solidity">function backingOnLayerY() public view returns (uint256);
+</code></pre>
+<h3 id="lxlyid"><a class="header" href="#lxlyid">lxlyId</a></h3>
+<p>The LxLy ID of this network.</p>
+<pre><code class="language-solidity">function lxlyId() public view returns (uint32);
+</code></pre>
+<h3 id="lxlybridge"><a class="header" href="#lxlybridge">lxlyBridge</a></h3>
+<p>LxLy Bridge, which connects AggLayer networks.</p>
+<pre><code class="language-solidity">function lxlyBridge() public view returns (ILxLyBridge);
+</code></pre>
+<h3 id="layerxlxlyid"><a class="header" href="#layerxlxlyid">layerXLxlyId</a></h3>
+<p>The LxLy ID of Layer X.</p>
+<pre><code class="language-solidity">function layerXLxlyId() public view returns (uint32);
+</code></pre>
+<h3 id="nonmigratablebackingpercentage"><a class="header" href="#nonmigratablebackingpercentage">nonMigratableBackingPercentage</a></h3>
+<p>The percentage of backing that should remain in Native Converter when migrating backing to Layer X, based on the total supply of Custom Token.</p>
+<p><em>It is possible to game the system by manipulating the total supply of Custom Token, so this is more of a soft limit.</em></p>
+<pre><code class="language-solidity">function nonMigratableBackingPercentage() public view returns (uint256);
+</code></pre>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>&lt;none&gt;</code></td><td><code>uint256</code></td><td>1e18 is 100%.</td></tr>
+</tbody></table>
+</div>
+<h3 id="migrationmanager"><a class="header" href="#migrationmanager">migrationManager</a></h3>
+<p>The address of the Migration Manager on Layer X.</p>
+<pre><code class="language-solidity">function migrationManager() public view returns (MigrationManager);
+</code></pre>
+<h3 id="_getnativeconverterstorage"><a class="header" href="#_getnativeconverterstorage">_getNativeConverterStorage</a></h3>
+<p><em>Returns a pointer to the ERC-7201 storage namespace.</em></p>
+<pre><code class="language-solidity">function _getNativeConverterStorage() private pure returns (NativeConverterStorage storage $);
+</code></pre>
+<h3 id="convert"><a class="header" href="#convert">convert</a></h3>
+<p>Deposit a specific amount of the underlying token and get Custom Token.</p>
+<pre><code class="language-solidity">function convert(uint256 assets, address receiver) external whenNotPaused nonReentrant returns (uint256 shares);
+</code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>assets</code></td><td><code>uint256</code></td><td>The amount of the underlying token to convert to Custom Token.</td></tr>
+<tr><td><code>receiver</code></td><td><code>address</code></td><td></td></tr>
+</tbody></table>
+</div>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>shares</code></td><td><code>uint256</code></td><td>The amount of Custom Token minted to the receiver.</td></tr>
+</tbody></table>
+</div>
+<h3 id="_convert"><a class="header" href="#_convert">_convert</a></h3>
+<p>Deposit a specific amount of the underlying token and get Custom Token.</p>
+<pre><code class="language-solidity">function _convert(uint256 assets, address receiver) internal returns (uint256 shares);
+</code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>assets</code></td><td><code>uint256</code></td><td>The amount of the underlying token to convert to Custom Token.</td></tr>
+<tr><td><code>receiver</code></td><td><code>address</code></td><td></td></tr>
+</tbody></table>
+</div>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>shares</code></td><td><code>uint256</code></td><td>The amount of Custom Token minted to the receiver.</td></tr>
+</tbody></table>
+</div>
+<h3 id="convertwithpermit"><a class="header" href="#convertwithpermit">convertWithPermit</a></h3>
+<p>Deposit a specific amount of the underlying token and get Custom Token.</p>
+<p><em>Uses EIP-2612 permit to transfer the underlying token from the sender to self.</em></p>
+<pre><code class="language-solidity">function convertWithPermit(uint256 assets, address receiver, bytes calldata permitData)
+    external
+    whenNotPaused
+    nonReentrant
+    returns (uint256 shares);
+</code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>assets</code></td><td><code>uint256</code></td><td>The amount of the underlying token to convert to Custom Token.</td></tr>
+<tr><td><code>receiver</code></td><td><code>address</code></td><td></td></tr>
+<tr><td><code>permitData</code></td><td><code>bytes</code></td><td></td></tr>
+</tbody></table>
+</div>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>shares</code></td><td><code>uint256</code></td><td>The amount of Custom Token minted to the receiver.</td></tr>
+</tbody></table>
+</div>
+<h3 id="maxdeconvert"><a class="header" href="#maxdeconvert">maxDeconvert</a></h3>
+<p>How much Custom Token a specific user can burn. (Deconverting Custom Token burns it and unlocks the underlying token).</p>
+<pre><code class="language-solidity">function maxDeconvert(address owner) external view returns (uint256 maxShares);
+</code></pre>
+<h3 id="_simulatedeconvert"><a class="header" href="#_simulatedeconvert">_simulateDeconvert</a></h3>
+<p><em>Calculates the amount of Custom Token that can be deconverted right now.</em></p>
+<pre><code class="language-solidity">function _simulateDeconvert(uint256 shares, bool force) internal view returns (uint256 deconvertedShares);
+</code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>shares</code></td><td><code>uint256</code></td><td>The maximum amount of Custom Token to simulate deconversion for.</td></tr>
+<tr><td><code>force</code></td><td><code>bool</code></td><td>Whether to revert if the all of the <code>shares</code> would not be deconverted.</td></tr>
+</tbody></table>
+</div>
+<h3 id="deconvert"><a class="header" href="#deconvert">deconvert</a></h3>
+<p>Burn a specific amount of Custom Token to unlock a respective amount of the underlying token.</p>
+<pre><code class="language-solidity">function deconvert(uint256 shares, address receiver) external whenNotPaused nonReentrant returns (uint256 assets);
+</code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>shares</code></td><td><code>uint256</code></td><td>The amount of Custom Token to deconvert to the underlying token.</td></tr>
+<tr><td><code>receiver</code></td><td><code>address</code></td><td></td></tr>
+</tbody></table>
+</div>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>assets</code></td><td><code>uint256</code></td><td>The amount of the underlying token unlocked to the receiver.</td></tr>
+</tbody></table>
+</div>
+<h3 id="deconvertandbridge"><a class="header" href="#deconvertandbridge">deconvertAndBridge</a></h3>
+<p>Burn a specific amount of Custom Token to unlock a respective amount of the underlying token, and bridge it to another network.</p>
+<pre><code class="language-solidity">function deconvertAndBridge(
+    uint256 shares,
+    address receiver,
+    uint32 destinationNetworkId,
+    bool forceUpdateGlobalExitRoot
+) external whenNotPaused nonReentrant returns (uint256 assets);
+</code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>shares</code></td><td><code>uint256</code></td><td>The amount of Custom Token to deconvert to the underlying token.</td></tr>
+<tr><td><code>receiver</code></td><td><code>address</code></td><td></td></tr>
+<tr><td><code>destinationNetworkId</code></td><td><code>uint32</code></td><td></td></tr>
+<tr><td><code>forceUpdateGlobalExitRoot</code></td><td><code>bool</code></td><td></td></tr>
+</tbody></table>
+</div>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>assets</code></td><td><code>uint256</code></td><td>The amount of the underlying token unlocked to the receiver.</td></tr>
+</tbody></table>
+</div>
+<h3 id="_deconvert"><a class="header" href="#_deconvert">_deconvert</a></h3>
+<p>Burn a specific amount of Custom Token to unlock a respective amount of the underlying token, and optionally bridge it to another network.</p>
+<pre><code class="language-solidity">function _deconvert(uint256 shares, uint32 destinationNetworkId, address receiver, bool forceUpdateGlobalExitRoot)
+    internal
+    returns (uint256 assets);
+</code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>shares</code></td><td><code>uint256</code></td><td>The amount of Custom Token to deconvert to the underlying token.</td></tr>
+<tr><td><code>destinationNetworkId</code></td><td><code>uint32</code></td><td></td></tr>
+<tr><td><code>receiver</code></td><td><code>address</code></td><td></td></tr>
+<tr><td><code>forceUpdateGlobalExitRoot</code></td><td><code>bool</code></td><td></td></tr>
+</tbody></table>
+</div>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>assets</code></td><td><code>uint256</code></td><td>The amount of the underlying token unlocked to the receiver.</td></tr>
+</tbody></table>
+</div>
+<h3 id="_converttoshares"><a class="header" href="#_converttoshares">_convertToShares</a></h3>
+<p><em>Tells how much a specific amount of underlying token is worth in Custom Token.</em></p>
+<p><em>The underlying token backs vbToken 1:1.</em></p>
+<pre><code class="language-solidity">function _convertToShares(uint256 assets) internal pure returns (uint256 shares);
+</code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>assets</code></td><td><code>uint256</code></td><td>The amount of the underlying token.</td></tr>
+</tbody></table>
+</div>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>shares</code></td><td><code>uint256</code></td><td>The amount of Custom Token.</td></tr>
+</tbody></table>
+</div>
+<h3 id="_converttoassets"><a class="header" href="#_converttoassets">_convertToAssets</a></h3>
+<p><em>Tells how much a specific amount of Custom Token is worth in the underlying token.</em></p>
+<p><em>vbToken is backed by the underlying token 1:1.</em></p>
+<pre><code class="language-solidity">function _convertToAssets(uint256 shares) internal pure returns (uint256 assets);
+</code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>shares</code></td><td><code>uint256</code></td><td>The amount of Custom Token.</td></tr>
+</tbody></table>
+</div>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>assets</code></td><td><code>uint256</code></td><td>The amount of the underlying token.</td></tr>
+</tbody></table>
+</div>
+<h3 id="migratablebacking"><a class="header" href="#migratablebacking">migratableBacking</a></h3>
+<p>The maximum amount of backing that can be migrated to Layer X.</p>
+<pre><code class="language-solidity">function migratableBacking() public view returns (uint256);
+</code></pre>
+<h3 id="migratebackingtolayerx"><a class="header" href="#migratebackingtolayerx">migrateBackingToLayerX</a></h3>
+<p>Migrates a specific amount of backing to Layer X.</p>
+<p>This action provides vbToken liquidity on LxLy Bridge on Layer X.</p>
+<p>The bridged asset and message must be claimed manually on LxLy Bridge on Layer X to complete the migration.</p>
+<p>This function can be called by a migrator only.</p>
+<p>The migration can be completed by anyone on Layer X.</p>
+<p><em>Consider calling this function periodically; anyone can complete a migration on Layer X.</em></p>
+<pre><code class="language-solidity">function migrateBackingToLayerX(uint256 assets) external whenNotPaused onlyRole(MIGRATOR_ROLE) nonReentrant;
+</code></pre>
+<h3 id="setnonmigratablebackingpercentage"><a class="header" href="#setnonmigratablebackingpercentage">setNonMigratableBackingPercentage</a></h3>
+<p>Sets the percentage of backing that should remain in Native Converter after a migration, based on the total supply of Custom Token.</p>
+<p>It is possible to game the system by manipulating the total supply of Custom Token, so this is a soft limit.</p>
+<p>This function can be called by the owner only.</p>
+<pre><code class="language-solidity">function setNonMigratableBackingPercentage(uint256 nonMigratableBackingPercentage_)
+    external
+    onlyRole(DEFAULT_ADMIN_ROLE)
+    nonReentrant;
+</code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>nonMigratableBackingPercentage_</code></td><td><code>uint256</code></td><td>1e18 is 100%.</td></tr>
+</tbody></table>
+</div>
+<h3 id="_receiveunderlyingtoken"><a class="header" href="#_receiveunderlyingtoken">_receiveUnderlyingToken</a></h3>
+<p>Transfers the underlying token from an external account to itself.</p>
+<p><em>@note CAUTION! This function MUST NOT introduce reentrancy/cross-entrancy vulnerabilities.</em></p>
+<pre><code class="language-solidity">function _receiveUnderlyingToken(address from, uint256 value) internal returns (uint256 receivedValue);
+</code></pre>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>receivedValue</code></td><td><code>uint256</code></td><td>The amount of the underlying actually received (e.g., after transfer fees).</td></tr>
+</tbody></table>
+</div>
+<h3 id="_sendunderlyingtoken"><a class="header" href="#_sendunderlyingtoken">_sendUnderlyingToken</a></h3>
+<p>Transfers the underlying token to an external account.</p>
+<p><em>@note CAUTION! This function MUST NOT introduce reentrancy/cross-entrancy vulnerabilities.</em></p>
+<pre><code class="language-solidity">function _sendUnderlyingToken(address to, uint256 value) internal;
+</code></pre>
+<h3 id="pause"><a class="header" href="#pause">pause</a></h3>
+<p>Prevents usage of functions with the <code>whenNotPaused</code> modifier.</p>
+<p>This function can be called by a pauser only.</p>
+<pre><code class="language-solidity">function pause() external onlyRole(PAUSER_ROLE) nonReentrant;
+</code></pre>
+<h3 id="unpause"><a class="header" href="#unpause">unpause</a></h3>
+<p>Allows usage of functions with the <code>whenNotPaused</code> modifier.</p>
+<p>This function can be called by the owner only.</p>
+<pre><code class="language-solidity">function unpause() external onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant;
+</code></pre>
+<h2 id="events"><a class="header" href="#events">Events</a></h2>
+<h3 id="migrationstarted"><a class="header" href="#migrationstarted">MigrationStarted</a></h3>
+<pre><code class="language-solidity">event MigrationStarted(uint256 indexed mintedCustomToken, uint256 indexed migratedBacking);
+</code></pre>
+<h3 id="nonmigratablebackingpercentageset"><a class="header" href="#nonmigratablebackingpercentageset">NonMigratableBackingPercentageSet</a></h3>
+<pre><code class="language-solidity">event NonMigratableBackingPercentageSet(uint256 nonMigratableBackingPercentage);
+</code></pre>
+<h2 id="errors"><a class="header" href="#errors">Errors</a></h2>
+<h3 id="invalidowner"><a class="header" href="#invalidowner">InvalidOwner</a></h3>
+<pre><code class="language-solidity">error InvalidOwner();
+</code></pre>
+<h3 id="invalidcustomtoken"><a class="header" href="#invalidcustomtoken">InvalidCustomToken</a></h3>
+<pre><code class="language-solidity">error InvalidCustomToken();
+</code></pre>
+<h3 id="invalidunderlyingtoken"><a class="header" href="#invalidunderlyingtoken">InvalidUnderlyingToken</a></h3>
+<pre><code class="language-solidity">error InvalidUnderlyingToken();
+</code></pre>
+<h3 id="invalidlxlybridge"><a class="header" href="#invalidlxlybridge">InvalidLxLyBridge</a></h3>
+<pre><code class="language-solidity">error InvalidLxLyBridge();
+</code></pre>
+<h3 id="invalidlayerxlxlyid"><a class="header" href="#invalidlayerxlxlyid">InvalidLayerXLxlyId</a></h3>
+<pre><code class="language-solidity">error InvalidLayerXLxlyId();
+</code></pre>
+<h3 id="invalidmigrationmanager"><a class="header" href="#invalidmigrationmanager">InvalidMigrationManager</a></h3>
+<pre><code class="language-solidity">error InvalidMigrationManager();
+</code></pre>
+<h3 id="nonmatchingtokendecimals"><a class="header" href="#nonmatchingtokendecimals">NonMatchingTokenDecimals</a></h3>
+<pre><code class="language-solidity">error NonMatchingTokenDecimals(uint8 customTokenDecimals, uint8 underlyingTokenDecimals);
+</code></pre>
+<h3 id="invalidassets"><a class="header" href="#invalidassets">InvalidAssets</a></h3>
+<pre><code class="language-solidity">error InvalidAssets();
+</code></pre>
+<h3 id="invalidreceiver"><a class="header" href="#invalidreceiver">InvalidReceiver</a></h3>
+<pre><code class="language-solidity">error InvalidReceiver();
+</code></pre>
+<h3 id="invalidpermitdata"><a class="header" href="#invalidpermitdata">InvalidPermitData</a></h3>
+<pre><code class="language-solidity">error InvalidPermitData();
+</code></pre>
+<h3 id="invalidshares"><a class="header" href="#invalidshares">InvalidShares</a></h3>
+<pre><code class="language-solidity">error InvalidShares();
+</code></pre>
+<h3 id="invalidnonmigratablebackingpercentage"><a class="header" href="#invalidnonmigratablebackingpercentage">InvalidNonMigratableBackingPercentage</a></h3>
+<pre><code class="language-solidity">error InvalidNonMigratableBackingPercentage();
+</code></pre>
+<h3 id="assetstoolarge"><a class="header" href="#assetstoolarge">AssetsTooLarge</a></h3>
+<pre><code class="language-solidity">error AssetsTooLarge(uint256 availableAssets, uint256 requestedAssets);
+</code></pre>
+<h3 id="invaliddestinationnetworkid"><a class="header" href="#invaliddestinationnetworkid">InvalidDestinationNetworkId</a></h3>
+<pre><code class="language-solidity">error InvalidDestinationNetworkId();
+</code></pre>
+<h3 id="onlymigrator"><a class="header" href="#onlymigrator">OnlyMigrator</a></h3>
+<pre><code class="language-solidity">error OnlyMigrator();
+</code></pre>
+<h2 id="structs"><a class="header" href="#structs">Structs</a></h2>
+<h3 id="nativeconverterstorage"><a class="header" href="#nativeconverterstorage">NativeConverterStorage</a></h3>
+<p><em>Storage of Native Converter contract.</em></p>
+<p><em>It's implemented on a custom ERC-7201 namespace to reduce the risk of storage collisions when using with upgradeable contracts.</em></p>
+<p><strong>Note:</strong>
+storage-location: erc7201:agglayer.vault-bridge.NativeConverter.storage</p>
+<pre><code class="language-solidity">struct NativeConverterStorage {
+    CustomToken customToken;
+    IERC20 underlyingToken;
+    uint256 backingOnLayerY;
+    uint32 lxlyId;
+    ILxLyBridge lxlyBridge;
+    uint32 layerXLxlyId;
+    uint256 nonMigratableBackingPercentage;
+    address migrationManager;
+    bool _underlyingTokenIsNotMintable;
+}
+</code></pre>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../../src/MigrationManager.sol/contract.MigrationManager.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../../src/VaultBridgeToken.sol/abstract.VaultBridgeToken.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../../src/MigrationManager.sol/contract.MigrationManager.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../../src/VaultBridgeToken.sol/abstract.VaultBridgeToken.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../../elasticlunr.min.js"></script>
+        <script src="../../mark.min.js"></script>
+        <script src="../../searcher.js"></script>
+
+        <script src="../../clipboard.min.js"></script>
+        <script src="../../highlight.js"></script>
+        <script src="../../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../../solidity.min.js"></script>
+
+
+    </div>
+    </body>
+</html>
