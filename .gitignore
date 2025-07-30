@@ -22,3 +22,8 @@ coverage
 lcov.info
 
 .DS_Store
+
+# certora
+.certora_internal/
+zkevm-contracts/
+emv-*/*
