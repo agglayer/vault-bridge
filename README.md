@@ -9,6 +9,8 @@
 
 </div>
 
+<br>
+
 ## Contents
 
 - [Contents](#contents)
@@ -22,11 +24,9 @@
 - [Documentation](#documentation)
 - [Deployments](#deployments)
 - [Usage](#usage)
-  - [Install](#install)
-  - [Build](#build)
-  - [Test](#test)
-  - [Coverage](#coverage)
 - [License](#license)
+
+<br>
 
 ## Overview
 
@@ -100,46 +100,46 @@ Full support for non-Agglayer chains, third-party bridges, as well as non-EVM ch
 
 ## Deployments
 
-| Chain  | Contract                           | Address                                                                                                                           |
-| ------ | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| 1      | Vault Bridge ETH                   | [`0x2DC70fb75b88d2eB4715bc06E1595E6D97c34DFF`](http://etherscan.io/address/0x2DC70fb75b88d2eB4715bc06E1595E6D97c34DFF)            |
-| 1      | Vault Bridge USDC                  | [`0x53E82ABbb12638F09d9e624578ccB666217a765e`](http://etherscan.io/address/0x53E82ABbb12638F09d9e624578ccB666217a765e)            |
-| 1      | Vault Bridge USDT                  | [`0x6d4f9f9f8f0155509ecd6Ac6c544fF27999845CC`](http://etherscan.io/address/0x6d4f9f9f8f0155509ecd6Ac6c544fF27999845CC)            |
-| 1      | Vault Bridge WBTC                  | [`0x2C24B57e2CCd1f273045Af6A5f632504C432374F`](http://etherscan.io/address/0x2C24B57e2CCd1f273045Af6A5f632504C432374F)            |
-| 1      | Vault Bridge USDS                  | [`0x3DD459dE96F9C28e3a343b831cbDC2B93c8C4855`](http://etherscan.io/address/0x3DD459dE96F9C28e3a343b831cbDC2B93c8C4855)            |
-| 1      | Migration Manager                  | [`0x417d01B64Ea30C4E163873f3a1f77b727c689e02`](http://etherscan.io/address/0x417d01B64Ea30C4E163873f3a1f77b727c689e02)            |
-| 747474 | Bridged Vault Bridge ETH           | [`0xEE7D8BCFb72bC1880D0Cf19822eB0A2e6577aB62`](https://explorer.katanarpc.com/address/0xEE7D8BCFb72bC1880D0Cf19822eB0A2e6577aB62) |
-| 747474 | Bridged Vault Bridge USDC          | [`0x203A662b0BD271A6ed5a60EdFbd04bFce608FD36`](https://explorer.katanarpc.com/address/0x203A662b0BD271A6ed5a60EdFbd04bFce608FD36) |
-| 747474 | Bridged Vault Bridge USDT          | [`0x2DCa96907fde857dd3D816880A0df407eeB2D2F2`](https://explorer.katanarpc.com/address/0x2DCa96907fde857dd3D816880A0df407eeB2D2F2) |
-| 747474 | Bridged Vault Bridge WBTC          | [`0x0913DA6Da4b42f538B445599b46Bb4622342Cf52`](https://explorer.katanarpc.com/address/0x0913DA6Da4b42f538B445599b46Bb4622342Cf52) |
-| 747474 | Bridged Vault Bridge USDS          | [`0x62D6A123E8D19d06d68cf0d2294F9A3A0362c6b3`](https://explorer.katanarpc.com/address/0x62D6A123E8D19d06d68cf0d2294F9A3A0362c6b3) |
-| 747474 | Vault Bridge ETH Native Converter  | [`0xa6b0db1293144ebe9478b6a84f75dd651e45914a`](http://explorer.katanarpc.com/address/0xa6b0db1293144ebe9478b6a84f75dd651e45914a)  |
-| 747474 | Vault Bridge USDC Native Converter | [`0x97a3500083348A147F419b8a65717909762c389f`](http://explorer.katanarpc.com/address/0x97a3500083348A147F419b8a65717909762c389f)  |
-| 747474 | Vault Bridge USDT Native Converter | [`0x053FA9b934b83E1E0ffc7e98a41aAdc3640bB462`](http://explorer.katanarpc.com/address/0x053FA9b934b83E1E0ffc7e98a41aAdc3640bB462)  |
-| 747474 | Vault Bridge WBTC Native Converter | [`0xb00aa68b87256E2F22058fB2Ba3246EEc54A44fc`](http://explorer.katanarpc.com/address/0xb00aa68b87256E2F22058fB2Ba3246EEc54A44fc)  |
-| 747474 | Vault Bridge USDS Native Converter | [`0x639f13D5f30B47c792b6851238c05D0b623C77DE`](http://explorer.katanarpc.com/address/0x639f13D5f30B47c792b6851238c05D0b623C77DE)  |
+| Chain  | Contract                           | Address                                                                                                                   |
+| ------ | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| 1      | Vault Bridge ETH                   | [`0x2DC70fb75b88d2eB4715bc06E1595E6D97c34DFF`](http://etherscan.io/address/0x2DC70fb75b88d2eB4715bc06E1595E6D97c34DFF)    |
+| 1      | Vault Bridge USDC                  | [`0x53E82ABbb12638F09d9e624578ccB666217a765e`](http://etherscan.io/address/0x53E82ABbb12638F09d9e624578ccB666217a765e)    |
+| 1      | Vault Bridge USDT                  | [`0x6d4f9f9f8f0155509ecd6Ac6c544fF27999845CC`](http://etherscan.io/address/0x6d4f9f9f8f0155509ecd6Ac6c544fF27999845CC)    |
+| 1      | Vault Bridge WBTC                  | [`0x2C24B57e2CCd1f273045Af6A5f632504C432374F`](http://etherscan.io/address/0x2C24B57e2CCd1f273045Af6A5f632504C432374F)    |
+| 1      | Vault Bridge USDS                  | [`0x3DD459dE96F9C28e3a343b831cbDC2B93c8C4855`](http://etherscan.io/address/0x3DD459dE96F9C28e3a343b831cbDC2B93c8C4855)    |
+| 1      | Migration Manager                  | [`0x417d01B64Ea30C4E163873f3a1f77b727c689e02`](http://etherscan.io/address/0x417d01B64Ea30C4E163873f3a1f77b727c689e02)    |
+| 747474 | Bridged Vault Bridge ETH           | [`0xEE7D8BCFb72bC1880D0Cf19822eB0A2e6577aB62`](https://katanascan.com/address/0xEE7D8BCFb72bC1880D0Cf19822eB0A2e6577aB62) |
+| 747474 | Bridged Vault Bridge USDC          | [`0x203A662b0BD271A6ed5a60EdFbd04bFce608FD36`](https://katanascan.com/address/0x203A662b0BD271A6ed5a60EdFbd04bFce608FD36) |
+| 747474 | Bridged Vault Bridge USDT          | [`0x2DCa96907fde857dd3D816880A0df407eeB2D2F2`](https://katanascan.com/address/0x2DCa96907fde857dd3D816880A0df407eeB2D2F2) |
+| 747474 | Bridged Vault Bridge WBTC          | [`0x0913DA6Da4b42f538B445599b46Bb4622342Cf52`](https://katanascan.com/address/0x0913DA6Da4b42f538B445599b46Bb4622342Cf52) |
+| 747474 | Bridged Vault Bridge USDS          | [`0x62D6A123E8D19d06d68cf0d2294F9A3A0362c6b3`](https://katanascan.com/address/0x62D6A123E8D19d06d68cf0d2294F9A3A0362c6b3) |
+| 747474 | Vault Bridge ETH Native Converter  | [`0xa6b0db1293144ebe9478b6a84f75dd651e45914a`](https://katanascan.com/address/0xa6b0db1293144ebe9478b6a84f75dd651e45914a) |
+| 747474 | Vault Bridge USDC Native Converter | [`0x97a3500083348A147F419b8a65717909762c389f`](https://katanascan.com/address/0x97a3500083348A147F419b8a65717909762c389f) |
+| 747474 | Vault Bridge USDT Native Converter | [`0x053FA9b934b83E1E0ffc7e98a41aAdc3640bB462`](https://katanascan.com/address/0x053FA9b934b83E1E0ffc7e98a41aAdc3640bB462) |
+| 747474 | Vault Bridge WBTC Native Converter | [`0xb00aa68b87256E2F22058fB2Ba3246EEc54A44fc`](https://katanascan.com/address/0xb00aa68b87256E2F22058fB2Ba3246EEc54A44fc) |
+| 747474 | Vault Bridge USDS Native Converter | [`0x639f13D5f30B47c792b6851238c05D0b623C77DE`](https://katanascan.com/address/0x639f13D5f30B47c792b6851238c05D0b623C77DE) |
 
 ## Usage
 
-### Install
+**Install**
 
 ```
 forge soldeer install & npm install
 ```
 
-### Build
+**Build**
 
 ```
 forge build
 ```
 
-### Test
+**Test**
 
 ```
 forge test
 ```
 
-### Coverage
+**Coverage**
 
 ```
 forge coverage --ir-minimum --report lcov && genhtml -o coverage lcov.info
