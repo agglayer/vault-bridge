@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-PolygonLabs-Open-Attribution OR LicenseRef-PolygonLabs-Source-Available
+// SPDX-License-Identifier: LicenseRef-PolygonLabs-Source-Available
 // Vault Bridge (last updated v1.0.0) (VaultBridgeToken.sol)
 
 pragma solidity 0.8.29;
@@ -305,7 +305,7 @@ abstract contract VaultBridgeToken is
     }
 
     /// @dev Returns a pointer to the ERC-7201 storage namespace.
-    function _getVaultBridgeTokenStorage() internal pure returns (VaultBridgeTokenStorage storage $) {
+    function _getVaultBridgeTokenStorage() private pure returns (VaultBridgeTokenStorage storage $) {
         assembly {
             $.slot := _VAULT_BRIDGE_TOKEN_STORAGE
         }
@@ -892,6 +892,7 @@ abstract contract VaultBridgeToken is
     /// @notice Rebalances the internal reserve by withdrawing the underlying token from, or depositing the underlying token into, the yield vault.
     /// @notice This function can be called by a rebalancer only.
     /// @dev Delegates the call to `VaultBridgeTokenPart2`.
+    /// @dev @note (ATTENTION) The `virtual` modifier allows `VaultBridgeTokenPart2` to override this function. Do not override the function yourself.
     function rebalanceReserve() external virtual delegatedToPart2 {}
 
     /// @notice Rebalances the internal reserve by withdrawing the underlying token from, or depositing the underlying token into, the yield vault.
@@ -957,6 +958,7 @@ abstract contract VaultBridgeToken is
     /// @notice This function can be called by a yield collector only.
     /// @dev Increases the net collected yield.
     /// @dev Delegates the call to `VaultBridgeTokenPart2`.
+    /// @dev @note (ATTENTION) The `virtual` modifier allows `VaultBridgeTokenPart2` to override this function. Do not override the function yourself.
     function collectYield() external virtual delegatedToPart2 {}
 
     /// @notice Burns a specific amount of vbToken.
@@ -965,6 +967,7 @@ abstract contract VaultBridgeToken is
     /// @dev Decreases the net collected yield.
     /// @dev Does not rebalance the reserve after burning to allow usage while the contract is paused.
     /// @dev Delegates the call to `VaultBridgeTokenPart2`.
+    /// @dev @note (ATTENTION) The `virtual` modifier allows `VaultBridgeTokenPart2` to override this function. Do not override the function yourself.
     function burn(uint256 shares) external virtual delegatedToPart2 {
         // Silence the Solidity compiler.
         shares;
@@ -974,6 +977,7 @@ abstract contract VaultBridgeToken is
     /// @notice This function can be used to restore backing difference by donating the underlying token.
     /// @notice This function can be called by anyone.
     /// @dev Delegates the call to `VaultBridgeTokenPart2`.
+    /// @dev @note (ATTENTION) The `virtual` modifier allows `VaultBridgeTokenPart2` to override this function. Do not override the function yourself.
     function donateAsYield(uint256 assets) external virtual delegatedToPart2 {
         // Silence the Solidity compiler.
         assets;
@@ -981,6 +985,7 @@ abstract contract VaultBridgeToken is
 
     /// @notice Adds a specific amount of the underlying token to a dedicated fund for covering any fees on Layer Y during a migration of backing to Layer X by transferring it from the sender. Please refer to `completeMigration` for more information.
     /// @dev Delegates the call to `VaultBridgeTokenPart2`.
+    /// @dev @note (ATTENTION) The `virtual` modifier allows `VaultBridgeTokenPart2` to override this function. Do not override the function yourself.
     function donateForCompletingMigration(uint256 assets) external virtual delegatedToPart2 {
         // Silence the Solidity compiler.
         assets;
@@ -994,6 +999,7 @@ abstract contract VaultBridgeToken is
     /// @dev The message tells vbToken how much Custom Token must be backed by vbToken, which is minted and bridged to address zero on the respective Layer Y. This action provides liquidity when bridging Custom Token to from Layer Ys to Layer X and increments the pessimistic proof.
     /// @dev This function can be called by Migraton Manager only.
     /// @dev Delegates the call to `VaultBridgeTokenPart2`.
+    /// @dev @note (ATTENTION) The `virtual` modifier allows `VaultBridgeTokenPart2` to override this function. Do not override the function yourself.
     /// @param originNetwork The LxLy ID of Layer Y the backing is being migrated from.
     /// @param shares The amount of vbToken required to mint and lock up in LxLy Bridge. Assets from a dedicated migration fees fund may be used to offset any fees incurred on Layer Y during the process. If a migration cannot be completed due to insufficient assets, anyone can donate the underlying token to the migration fees fund. Please refer to `donateForCompletingMigration` for more information.
     /// @param assets The amount of the underlying token migrated from Layer Y (after any fees on Layer Y).
@@ -1012,6 +1018,7 @@ abstract contract VaultBridgeToken is
     /// @notice This function may utilize availabe yield to ensure successful draining if there is larger slippage. Consider collecting yield before calling this function to disable this behavior.
     /// @dev This function can be called by the owner only.
     /// @dev Delegates the call to `VaultBridgeTokenPart2`.
+    /// @dev @note (ATTENTION) The `virtual` modifier allows `VaultBridgeTokenPart2` to override this function. Do not override the function yourself.
     /// @param shares The amount of the yield vault shares to redeem.
     /// @param exact Whether to revert if the exact amount of shares could not be redeemed.
     function drainYieldVault(uint256 shares, bool exact) external virtual delegatedToPart2 {
@@ -1024,6 +1031,7 @@ abstract contract VaultBridgeToken is
     /// @notice @note (ATTENTION) Automatic reserve rebalancing will be disabled for values greater than `1e18` (100%).
     /// @notice This function can be called by the owner only.
     /// @dev Delegates the call to `VaultBridgeTokenPart2`.
+    /// @dev @note (ATTENTION) The `virtual` modifier allows `VaultBridgeTokenPart2` to override this function. Do not override the function yourself.
     /// @param minimumReservePercentage_ `1e18` is 100%.
     function setMinimumReservePercentage(uint256 minimumReservePercentage_) external virtual delegatedToPart2 {
         // Silence the Solidity compiler.
@@ -1034,6 +1042,7 @@ abstract contract VaultBridgeToken is
     /// @notice @note CAUTION! Use `drainYieldVault` to drain the current yield vault completely before changing it. Any yield vault shares that are not redeemed will not count toward the underlying token backing after changing the yield vault.
     /// @notice This function can be called by the owner only.
     /// @dev Delegates the call to `VaultBridgeTokenPart2`.
+    /// @dev @note (ATTENTION) The `virtual` modifier allows `VaultBridgeTokenPart2` to override this function. Do not override the function yourself.
     function setYieldVault(address yieldVault_) external virtual delegatedToPart2 {
         // Silence the Solidity compiler.
         yieldVault_;
@@ -1043,6 +1052,7 @@ abstract contract VaultBridgeToken is
     /// @notice Yield will be collected before changing the recipient.
     /// @notice This function can be called by the owner only.
     /// @dev Delegates the call to `VaultBridgeTokenPart2`.
+    /// @dev @note (ATTENTION) The `virtual` modifier allows `VaultBridgeTokenPart2` to override this function. Do not override the function yourself.
     function setYieldRecipient(address yieldRecipient_) external virtual delegatedToPart2 {
         // Silence the Solidity compiler.
         yieldRecipient_;
@@ -1053,6 +1063,7 @@ abstract contract VaultBridgeToken is
     /// @notice The limit does not apply when rebalancing the reserve.
     /// @notice This function can be called by the owner only.
     /// @dev Delegates the call to `VaultBridgeTokenPart2`.
+    /// @dev @note (ATTENTION) The `virtual` modifier allows `VaultBridgeTokenPart2` to override this function. Do not override the function yourself.
     /// @param minimumYieldVaultDeposit_ Set to `0` to disable.
     function setMinimumYieldVaultDeposit(uint256 minimumYieldVaultDeposit_) external virtual delegatedToPart2 {
         // Silence the Solidity compiler.
@@ -1061,6 +1072,8 @@ abstract contract VaultBridgeToken is
 
     /// @notice The maximum slippage percentage when depositing into or withdrawing from the yield vault.
     /// @notice @note IMPORTANT: Any losses incurred due to slippage (and not fully covered by produced yield) will need to be covered by whomever is responsible for this contract.
+    /// @dev Delegates the call to `VaultBridgeTokenPart2`.
+    /// @dev @note (ATTENTION) The `virtual` modifier allows `VaultBridgeTokenPart2` to override this function. Do not override the function yourself.
     /// @param maximumSlippagePercentage 1e18 is 100%. The recommended value is `0.01e18` (1%).
     function setYieldVaultMaximumSlippagePercentage(uint256 maximumSlippagePercentage)
         external
@@ -1294,11 +1307,13 @@ abstract contract VaultBridgeToken is
     /// @notice Prevents usage of functions with the `whenNotPaused` modifier.
     /// @notice This function can be called by a pauser only.
     /// @dev Delegates the call to `VaultBridgeTokenPart2`.
+    /// @dev @note (ATTENTION) The `virtual` modifier allows `VaultBridgeTokenPart2` to override this function. Do not override the function yourself.
     function pause() external virtual delegatedToPart2 {}
 
     /// @notice Allows usage of functions with the `whenNotPaused` modifier.
     /// @notice This function can be called by the owner only.
     /// @dev Delegates the call to `VaultBridgeTokenPart2`.
+    /// @dev @note (ATTENTION) The `virtual` modifier allows `VaultBridgeTokenPart2` to override this function. Do not override the function yourself.
     function unpause() external virtual delegatedToPart2 {}
 
     // -----================= ::: PART 2 ::: =================-----
