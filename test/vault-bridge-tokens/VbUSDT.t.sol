@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-PolygonLabs-Open-Attribution OR LicenseRef-PolygonLabs-Source-Available
+// SPDX-License-Identifier: LicenseRef-PolygonLabs-Source-Available
 pragma solidity ^0.8.29;
 
 import {VaultBridgeToken} from "src/VaultBridgeToken.sol";
@@ -27,7 +27,7 @@ contract VbUSDTTest is GenericVaultBridgeTokenTest {
 
         asset = USDT;
         vbTokenVault = new TestVault(asset);
-        version = "0.5.0";
+        version = "1.0.0";
         name = "Vault USDT";
         symbol = "vbUSDT";
         decimals = 6;

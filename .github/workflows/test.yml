@@ -36,7 +36,6 @@ jobs:
 
       - name: Run Forge build
         run: |
-          forge --version
           forge soldeer install
           forge build --sizes
         id: build
@@ -54,6 +53,4 @@ jobs:
         run: |
           npm install
           forge test --no-match-contract "Generic" -vvv
-        env:
-          TATARA_TOKEN: ${{ secrets.TATARA_TOKEN }}
         id: test

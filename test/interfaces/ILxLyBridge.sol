@@ -1,17 +1,14 @@
-// SPDX-License-Identifier: LicenseRef-PolygonLabs-Open-Attribution OR LicenseRef-PolygonLabs-Source-Available
+// SPDX-License-Identifier: LicenseRef-PolygonLabs-Source-Available
 pragma solidity 0.8.29;
 
 import {ILxLyBridge as _ILxLyBridge} from "../../src/etc/ILxLyBridge.sol";
 
 interface ILxLyBridge is _ILxLyBridge {
     function depositCount() external view returns (uint32);
-    function precalculatedWrapperAddress(
-        uint32 originNetwork,
-        address originTokenAddress,
-        string calldata name,
-        string calldata symbol,
-        uint8 decimals
-    ) external view returns (address);
+    function computeTokenProxyAddress(uint32 originNetwork, address originTokenAddress)
+        external
+        view
+        returns (address);
     function getLeafValue(
         uint8 leafType,
         uint32 originNetwork,

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-PolygonLabs-Open-Attribution OR LicenseRef-PolygonLabs-Source-Available
+// SPDX-License-Identifier: LicenseRef-PolygonLabs-Source-Available
 pragma solidity 0.8.29;
 
 import {VbETH} from "src/vault-bridge-tokens/vbETH/VbETH.sol";
@@ -7,11 +7,11 @@ import {ILxLyBridge} from "src/etc/ILxLyBridge.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {IWETH9} from "src/etc/IWETH9.sol";
 import {
-    GenericVaultBridgeTokenTest,
     GenericVaultBridgeToken,
-    VaultBridgeTokenPart2,
+    GenericVaultBridgeTokenTest,
     IERC20,
-    SafeERC20
+    SafeERC20,
+    VaultBridgeTokenPart2
 } from "test/GenericVaultBridgeToken.t.sol";
 import {VaultBridgeTokenInitializer} from "src/VaultBridgeTokenInitializer.sol";
 import {TestVault} from "test/etc/TestVault.sol";
@@ -59,7 +59,7 @@ contract VbETHTest is GenericVaultBridgeTokenTest {
         lxlyBridgeMock = new LXLYBridgeMock();
         asset = WETH;
         vbTokenVault = new TestVault(asset);
-        version = "0.5.0";
+        version = "1.0.0";
         name = "Vault Bridge ETH";
         symbol = "vbETH";
         decimals = 18;
@@ -344,7 +344,7 @@ contract VbETHTest is GenericVaultBridgeTokenTest {
         vm.expectEmit();
         emit IERC4626.Withdraw(address(this), address(this), address(this), amountToWithdraw, amountToWithdraw);
         vbToken.withdraw(amountToWithdraw, address(this), address(this));
-        assertEq(IWETH9(WETH).balanceOf(address(vbETH)), 0); // reserve assets reduced
+        assertEq(IWETH9(WETH).balanceOf(address(vbETH)), 1); // reserve assets reduced (minimum reserve is 1 due to rounding)
         assertEq(IWETH9(WETH).balanceOf(address(this)), initialBalance + amountToWithdraw); // assets returned to sender
         assertEq(vbETH.balanceOf(address(this)), amount - amountToWithdraw); // shares reduced
     }

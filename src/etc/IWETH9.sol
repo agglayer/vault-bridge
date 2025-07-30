@@ -1,4 +1,6 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+// SPDX-License-Identifier: LicenseRef-PolygonLabs-Source-Available
+// Vault Bridge (last updated v0.5.0) (etc/IWETH9.sol)
+
 pragma solidity 0.8.29;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";

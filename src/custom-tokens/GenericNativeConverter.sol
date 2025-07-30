@@ -1,11 +1,13 @@
-// SPDX-License-Identifier: LicenseRef-PolygonLabs-Open-Attribution OR LicenseRef-PolygonLabs-Source-Available
+// SPDX-License-Identifier: LicenseRef-PolygonLabs-Source-Available
+// Vault Bridge (last updated v1.0.0) (custom-tokens/GenericNativeConverter.sol)
+
 pragma solidity 0.8.29;
 
 // Main functionality.
 import {NativeConverter} from "../NativeConverter.sol";
 
 // Other functionality.
-import {IVersioned} from "../etc/IVersioned.sol";
+import {Versioned} from "../etc/Versioned.sol";
 
 /// @title Generic Native Converter
 /// @author See https://github.com/agglayer/vault-bridge
@@ -19,7 +21,6 @@ contract GenericNativeConverter is NativeConverter {
 
     function initialize(
         address owner_,
-        uint8 originalUnderlyingTokenDecimals_,
         address customToken_,
         address underlyingToken_,
         address lxlyBridge_,
@@ -30,7 +31,6 @@ contract GenericNativeConverter is NativeConverter {
         // Initialize the base implementation.
         __NativeConverter_init(
             owner_,
-            originalUnderlyingTokenDecimals_,
             customToken_,
             underlyingToken_,
             lxlyBridge_,
@@ -38,12 +38,5 @@ contract GenericNativeConverter is NativeConverter {
             nonMigratableBackingPercentage_,
             migrationManager_
         );
-    }
-
-    // -----================= ::: INFO ::: =================-----
-
-    /// @inheritdoc IVersioned
-    function version() external pure virtual returns (string memory) {
-        return "0.5.0";
     }
 }
