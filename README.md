@@ -91,14 +91,8 @@ forge coverage --ir-minimum --report lcov && genhtml -o coverage lcov.info
 
 ## License
 
-This codebase is licensed under a dual license model:
+This codebase is licensed under Source Available License.
 
-1. Open Attribution License – this license is similar to the MIT License and permits broad 
-use (including for commercial purposes), but is only available when the codebase is used in 
-connection with cryptoasset deposits into the Agglayer’s unified LxLy bridge. See: [LICENSE-OPEN-LICENSE](<LICENSE-OPEN-LICENSE>)
-2. Source Available License – for all other use cases, including cryptoasset deposits into 
-elsewhere than the Agglayer’s unified LxLy bridge, you may use the codebase under the Source 
-Available License. See: [LICENSE-SOURCE-AVAILABLE-LICENSE](<LICENSE-SOURCE-AVAILABLE-LICENSE>)
+See [`LICENSE-SOURCE-AVAILABLE`](https://github.com/agglayer/vault-bridge/blob/main/LICENSE-SOURCE-AVAILABLE).
 
-Your use of this software constitutes acceptance of these license terms. If you are unsure whether
-your use qualifies under the Open Attribution license, please contact: legal@polygon.technology
+Your use of this software constitutes acceptance of these license terms.
