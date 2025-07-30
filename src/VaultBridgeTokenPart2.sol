@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-PolygonLabs-Open-Attribution OR LicenseRef-PolygonLabs-Source-Available
+// SPDX-License-Identifier: LicenseRef-PolygonLabs-Source-Available
 // Vault Bridge (last updated v1.0.0) (VaultBridgeTokenPart2.sol)
 
 pragma solidity 0.8.29;
@@ -21,6 +21,11 @@ contract VaultBridgeTokenPart2 is VaultBridgeToken {
     // Libraries.
     using SafeERC20 for IERC20;
 
+    /// @dev The storage slot at which Vault Bridge Token storage starts, following the EIP-7201 standard.
+    /// @dev Calculated as `keccak256(abi.encode(uint256(keccak256("agglayer.vault-bridge.VaultBridgeToken.storage")) - 1)) & ~bytes32(uint256(0xff))`.
+    bytes32 private constant _VAULT_BRIDGE_TOKEN_STORAGE =
+        hex"f082fbc4cfb4d172ba00d34227e208a31ceb0982bc189440d519185302e44700";
+
     // -----================= ::: SOLIDITY ::: =================-----
 
     fallback() external {
@@ -31,6 +36,15 @@ contract VaultBridgeTokenPart2 is VaultBridgeToken {
 
     constructor() {
         _disableInitializers();
+    }
+
+    // -----================= ::: STORAGE ::: =================-----
+
+    /// @dev Returns a pointer to the ERC-7201 storage namespace.
+    function __getVaultBridgeTokenStorage() private pure returns (VaultBridgeTokenStorage storage $) {
+        assembly {
+            $.slot := _VAULT_BRIDGE_TOKEN_STORAGE
+        }
     }
 
     // -----================= ::: VAULT BRIDGE TOKEN ::: =================-----
@@ -49,7 +63,7 @@ contract VaultBridgeTokenPart2 is VaultBridgeToken {
     /// @dev Does not rebalance the reserve after collecting yield to allow usage while the contract is paused.
     /// @param force Whether to revert if no yield can be collected.
     function _collectYield(bool force) internal {
-        VaultBridgeTokenStorage storage $ = _getVaultBridgeTokenStorage();
+        VaultBridgeTokenStorage storage $ = __getVaultBridgeTokenStorage();
 
         // Calculate the yield.
         uint256 yield_ = yield();
@@ -71,7 +85,7 @@ contract VaultBridgeTokenPart2 is VaultBridgeToken {
 
     /// @inheritdoc VaultBridgeToken
     function burn(uint256 shares) external override onlyYieldRecipient nonReentrant {
-        VaultBridgeTokenStorage storage $ = _getVaultBridgeTokenStorage();
+        VaultBridgeTokenStorage storage $ = __getVaultBridgeTokenStorage();
 
         // Check the inputs.
         require(shares > 0, InvalidShares());
@@ -88,7 +102,7 @@ contract VaultBridgeTokenPart2 is VaultBridgeToken {
 
     /// @inheritdoc VaultBridgeToken
     function donateAsYield(uint256 assets) external override nonReentrant {
-        VaultBridgeTokenStorage storage $ = _getVaultBridgeTokenStorage();
+        VaultBridgeTokenStorage storage $ = __getVaultBridgeTokenStorage();
 
         // Check the input.
         require(assets > 0, InvalidAssets());
@@ -111,7 +125,7 @@ contract VaultBridgeTokenPart2 is VaultBridgeToken {
         onlyMigrationManager
         nonReentrant
     {
-        VaultBridgeTokenStorage storage $ = _getVaultBridgeTokenStorage();
+        VaultBridgeTokenStorage storage $ = __getVaultBridgeTokenStorage();
 
         // Check the inputs.
         require(originNetwork != $.lxlyId, InvalidOriginNetwork());
@@ -167,7 +181,7 @@ contract VaultBridgeTokenPart2 is VaultBridgeToken {
 
     /// @inheritdoc VaultBridgeToken
     function donateForCompletingMigration(uint256 assets) external override whenNotPaused nonReentrant {
-        VaultBridgeTokenStorage storage $ = _getVaultBridgeTokenStorage();
+        VaultBridgeTokenStorage storage $ = __getVaultBridgeTokenStorage();
 
         // Check the input.
         require(assets > 0, InvalidAssets());
@@ -190,7 +204,7 @@ contract VaultBridgeTokenPart2 is VaultBridgeToken {
         onlyRole(DEFAULT_ADMIN_ROLE)
         nonReentrant
     {
-        VaultBridgeTokenStorage storage $ = _getVaultBridgeTokenStorage();
+        VaultBridgeTokenStorage storage $ = __getVaultBridgeTokenStorage();
 
         // Check the input.
         require(yieldRecipient_ != address(0), InvalidYieldRecipient());
@@ -212,7 +226,7 @@ contract VaultBridgeTokenPart2 is VaultBridgeToken {
         onlyRole(DEFAULT_ADMIN_ROLE)
         nonReentrant
     {
-        VaultBridgeTokenStorage storage $ = _getVaultBridgeTokenStorage();
+        VaultBridgeTokenStorage storage $ = __getVaultBridgeTokenStorage();
 
         // Check the input.
         require(minimumReservePercentage_ <= 1e18, InvalidMinimumReservePercentage());
@@ -226,7 +240,7 @@ contract VaultBridgeTokenPart2 is VaultBridgeToken {
 
     /// @inheritdoc VaultBridgeToken
     function drainYieldVault(uint256 shares, bool exact) external override onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant {
-        VaultBridgeTokenStorage storage $ = _getVaultBridgeTokenStorage();
+        VaultBridgeTokenStorage storage $ = __getVaultBridgeTokenStorage();
 
         // Check the input.
         require(shares > 0, InvalidShares());
@@ -289,7 +303,7 @@ contract VaultBridgeTokenPart2 is VaultBridgeToken {
 
     /// @inheritdoc VaultBridgeToken
     function setYieldVault(address yieldVault_) external override onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant {
-        VaultBridgeTokenStorage storage $ = _getVaultBridgeTokenStorage();
+        VaultBridgeTokenStorage storage $ = __getVaultBridgeTokenStorage();
 
         // Check the input.
         require(yieldVault_ != address(0), InvalidYieldVault());
@@ -314,7 +328,7 @@ contract VaultBridgeTokenPart2 is VaultBridgeToken {
         onlyRole(DEFAULT_ADMIN_ROLE)
         nonReentrant
     {
-        VaultBridgeTokenStorage storage $ = _getVaultBridgeTokenStorage();
+        VaultBridgeTokenStorage storage $ = __getVaultBridgeTokenStorage();
         $.minimumYieldVaultDeposit = minimumYieldVaultDeposit_;
     }
 
@@ -325,7 +339,7 @@ contract VaultBridgeTokenPart2 is VaultBridgeToken {
         onlyRole(DEFAULT_ADMIN_ROLE)
         nonReentrant
     {
-        VaultBridgeTokenStorage storage $ = _getVaultBridgeTokenStorage();
+        VaultBridgeTokenStorage storage $ = __getVaultBridgeTokenStorage();
 
         // Check the input.
         require(maximumSlippagePercentage <= 1e18, InvalidYieldVaultMaximumSlippagePercentage());

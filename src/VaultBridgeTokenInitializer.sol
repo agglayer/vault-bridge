@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-PolygonLabs-Open-Attribution OR LicenseRef-PolygonLabs-Source-Available
+// SPDX-License-Identifier: LicenseRef-PolygonLabs-Source-Available
 // Vault Bridge (last updated v1.0.0) (VaultBridgeTokenInitializer.sol)
 
 pragma solidity 0.8.29;
@@ -24,10 +24,24 @@ contract VaultBridgeTokenInitializer is IVaultBridgeTokenInitializer, VaultBridg
     // Libraries.
     using SafeERC20 for IERC20;
 
+    /// @dev The storage slot at which Vault Bridge Token storage starts, following the EIP-7201 standard.
+    /// @dev Calculated as `keccak256(abi.encode(uint256(keccak256("agglayer.vault-bridge.VaultBridgeToken.storage")) - 1)) & ~bytes32(uint256(0xff))`.
+    bytes32 private constant _VAULT_BRIDGE_TOKEN_STORAGE =
+        hex"f082fbc4cfb4d172ba00d34227e208a31ceb0982bc189440d519185302e44700";
+
     // -----================= ::: SETUP ::: =================-----
 
     constructor() {
         _disableInitializers();
+    }
+
+    // -----================= ::: STORAGE ::: =================-----
+
+    /// @dev Returns a pointer to the ERC-7201 storage namespace.
+    function __getVaultBridgeTokenStorage() private pure returns (VaultBridgeTokenStorage storage $) {
+        assembly {
+            $.slot := _VAULT_BRIDGE_TOKEN_STORAGE
+        }
     }
 
     // -----================= ::: VAULT BRIDGE TOKEN ::: =================-----
@@ -39,7 +53,7 @@ contract VaultBridgeTokenInitializer is IVaultBridgeTokenInitializer, VaultBridg
         onlyInitializing
         nonReentrant
     {
-        VaultBridgeTokenStorage storage $ = _getVaultBridgeTokenStorage();
+        VaultBridgeTokenStorage storage $ = __getVaultBridgeTokenStorage();
 
         // Check the inputs.
         require(initParams.owner != address(0), InvalidOwner());

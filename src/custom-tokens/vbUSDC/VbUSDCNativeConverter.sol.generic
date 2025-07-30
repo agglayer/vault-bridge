@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-PolygonLabs-Open-Attribution OR LicenseRef-PolygonLabs-Source-Available
+// SPDX-License-Identifier: LicenseRef-PolygonLabs-Source-Available
 // Vault Bridge (last updated v0.5.0) (custom-tokens/VbUSDC/VbUSDCNativeConverter.sol.generic)
 
 pragma solidity 0.8.29;

@@ -35,6 +35,6 @@ sepolia = "https://sepolia.gateway.tenderly.co"
 bokuto = "https://rpc-bokuto.katanarpc.com"
 
 [doc]
-title = "Vault Bridge Technical Reference"
+title = "Technical Reference"
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
