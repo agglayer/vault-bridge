@@ -5,6 +5,7 @@
             "ownerMigrationManager": "0x9d851f8b8751c5FbC09b9E74E6e68E9950949052",
             "lxlyBridge": "0x2a3DD3EB832aF982ec71669E178424b10Dca2EDe",
             "address": "0x417d01B64Ea30C4E163873f3a1f77b727c689e02",
+            "wrappedGasToken": "TBD",
             "layerYNetworkId": 20,
             "vbUSDSNativeConverter": "0x639f13D5f30B47c792b6851238c05D0b623C77DE",
             "vbUSDTNativeConverter": "0x053FA9b934b83E1E0ffc7e98a41aAdc3640bB462",
@@ -29,6 +30,7 @@
             "lxlyBridge": "using above",
             "minimumYieldVaultDeposit": 0,
             "migrationManager": "using from deployment",
+            "wrappedGasToken": "using above",
             "yieldVaultMaximumSlippagePercentage": 0.01e18
         },
         "vbUSDT": {
@@ -43,6 +45,7 @@
             "lxlyBridge": "using above",
             "minimumYieldVaultDeposit": 0,
             "migrationManager": "using from deployment",
+            "wrappedGasToken": "using above",
             "yieldVaultMaximumSlippagePercentage": 0.01e18
         },
         "vbUSDC": {
@@ -57,6 +60,7 @@
             "lxlyBridge": "using above",
             "minimumYieldVaultDeposit": 0,
             "migrationManager": "using from deployment",
+            "wrappedGasToken": "using above",
             "yieldVaultMaximumSlippagePercentage": 0.01e18
         },
         "vbWBTC": {
@@ -71,6 +75,7 @@
             "lxlyBridge": "using above",
             "minimumYieldVaultDeposit": 0,
             "migrationManager": "using from deployment",
+            "wrappedGasToken": "using above",
             "yieldVaultMaximumSlippagePercentage": 0.01e18
         },
         "vbETH": {
@@ -85,6 +90,7 @@
             "lxlyBridge": "using above",
             "minimumYieldVaultDeposit": 0,
             "migrationManager": "using from deployment",
+            "wrappedGasToken": "using above",
             "yieldVaultMaximumSlippagePercentage": 0.01e18
         }
     },
@@ -141,8 +147,10 @@
     "31337": {
         "proxyAdmin": "0x0000c6A4e8C654dF65503CBb0eDc82B4Ce9158e6",
         "migrationManager": {
+            "proxyAdmin": "0x0000c6A4e8C654dF65503CBb0eDc82B4Ce9158e6",
             "ownerMigrationManager": "0x0000c6A4e8C654dF65503CBb0eDc82B4Ce9158e6",
-            "lxlyBridge": "0x0000c6A4e8C654dF65503CBb0eDc82B4Ce9158e6"
+            "lxlyBridge": "0x0000c6A4e8C654dF65503CBb0eDc82B4Ce9158e6",
+            "wrappedGasToken": "0x0000c6A4e8C654dF65503CBb0eDc82B4Ce9158e6"
         },
         "vbETH": {
             "owner": "0x0000c6A4e8C654dF65503CBb0eDc82B4Ce9158e6",
@@ -155,6 +163,7 @@
             "lxlyBridge": "0x0000c6A4e8C654dF65503CBb0eDc82B4Ce9158e6",
             "minimumYieldVaultDeposit": 0,
             "migrationManager": "0x0000c6A4e8C654dF65503CBb0eDc82B4Ce9158e6",
+            "wrappedGasToken": "0x0000c6A4e8C654dF65503CBb0eDc82B4Ce9158e6",
             "yieldVaultMaximumSlippagePercentage": 0
         },
         "vbUSDC": {
@@ -168,6 +177,7 @@
             "lxlyBridge": "0x0000c6A4e8C654dF65503CBb0eDc82B4Ce9158e6",
             "minimumYieldVaultDeposit": 0,
             "migrationManager": "0x0000c6A4e8C654dF65503CBb0eDc82B4Ce9158e6",
+            "wrappedGasToken": "0x0000c6A4e8C654dF65503CBb0eDc82B4Ce9158e6",
             "yieldVaultMaximumSlippagePercentage": 0
         },
         "vbUSDS": {
@@ -181,6 +191,7 @@
             "lxlyBridge": "0x0000c6A4e8C654dF65503CBb0eDc82B4Ce9158e6",
             "minimumYieldVaultDeposit": 0,
             "migrationManager": "0x0000c6A4e8C654dF65503CBb0eDc82B4Ce9158e6",
+            "wrappedGasToken": "0x0000c6A4e8C654dF65503CBb0eDc82B4Ce9158e6",
             "yieldVaultMaximumSlippagePercentage": 0
         },
         "vbUSDT": {
@@ -194,6 +205,7 @@
             "lxlyBridge": "0x0000c6A4e8C654dF65503CBb0eDc82B4Ce9158e6",
             "minimumYieldVaultDeposit": 0,
             "migrationManager": "0x0000c6A4e8C654dF65503CBb0eDc82B4Ce9158e6",
+            "wrappedGasToken": "0x0000c6A4e8C654dF65503CBb0eDc82B4Ce9158e6",
             "yieldVaultMaximumSlippagePercentage": 0
         },
         "vbWBTC": {
@@ -207,6 +219,7 @@
             "lxlyBridge": "0x0000c6A4e8C654dF65503CBb0eDc82B4Ce9158e6",
             "minimumYieldVaultDeposit": 0,
             "migrationManager": "0x0000c6A4e8C654dF65503CBb0eDc82B4Ce9158e6",
+            "wrappedGasToken": "0x0000c6A4e8C654dF65503CBb0eDc82B4Ce9158e6",
             "yieldVaultMaximumSlippagePercentage": 0
         }
     }

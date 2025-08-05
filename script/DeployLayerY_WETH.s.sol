@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-PolygonLabs-Open-Attribution OR LicenseRef-PolygonLabs-Source-Available
+// SPDX-License-Identifier: LicenseRef-PolygonLabs-Source-Available
 pragma solidity ^0.8.29;
 
 import "forge-std/Script.sol";
@@ -33,8 +33,6 @@ contract DeployLayerY_WETH is Script {
 
         address vbWETH = input.readAddress(string.concat(vbETHSlug, ".customToken"));
         address wETH = input.readAddress(string.concat(vbETHSlug, ".underlyingToken"));
-        string memory name = input.readString(string.concat(vbETHSlug, ".name"));
-        string memory symbol = input.readString(string.concat(vbETHSlug, ".symbol"));
         uint8 decimals = uint8(input.readUint(string.concat(vbETHSlug, ".decimals")));
         uint256 nonMigratableGasBackingPercentage =
             input.readUint(string.concat(vbETHSlug, ".nonMigratableGasBackingPercentage"));
@@ -45,7 +43,6 @@ contract DeployLayerY_WETH is Script {
             WETHNativeConverter.initialize,
             (
                 polygonEngineeringMultisig,
-                decimals,
                 vbWETH,
                 wETH,
                 lxlyBridge,
@@ -62,9 +59,8 @@ contract DeployLayerY_WETH is Script {
         WETH wethImpl = new WETH();
 
         // update vbWETH
-        bytes memory data = abi.encodeCall(
-            WETH.reinitialize, (polygonEngineeringMultisig, name, symbol, decimals, lxlyBridge, wethNativeConverter)
-        );
+        bytes memory data =
+            abi.encodeCall(WETH.reinitialize, (polygonEngineeringMultisig, decimals, lxlyBridge, wethNativeConverter));
 
         IERC1967Proxy vbWethProxy = IERC1967Proxy(payable(vbWETH));
         bytes memory payload = abi.encodeCall(vbWethProxy.upgradeToAndCall, (address(wethImpl), data));

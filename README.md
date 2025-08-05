@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="https://github.com/agglayer/vault-bridge/blob/feat/v1/.github/assets/banner.png?raw=true" alt="Vault Bridge Banner"/>
+# Vault Bridge
 
 **[⛓️ Deployments](#deployments)**
 **&nbsp;&nbsp; [📗 Documentation](#documentation)**
@@ -9,16 +9,26 @@
 
 </div>
 
-# *Contents*
+<br>
 
+## Contents
+
+- [Contents](#contents)
 - [Overview](#overview)
-- [Getting Started](#getting-started)
+  - [TL;DR](#tldr)
+  - [Vault Bridge Token](#vault-bridge-token)
+  - [Migration Manager](#migration-manager)
+  - [Custom Token](#custom-token)
+  - [Native Converter](#native-converter)
+- [Get Started](#get-started)
 - [Documentation](#documentation)
 - [Deployments](#deployments)
 - [Usage](#usage)
 - [License](#license)
 
-# *Overview*
+<br>
+
+## Overview
 
 Vault Bridge enables chains and apps to generate native yield on TVL by putting bridged assets to work.
 
@@ -31,13 +41,13 @@ The protocol is comprised of:
   - [Custom Token](#custom-token)
   - [Native Converter](#native-converter)
 
-## *TL;DR*
+### TL;DR
 
 Select assets are bridged from Layer X to Layer Y. These assets are deposited into Vault Bridge Token contract on Layer X, which mints and bridges vbToken to Layer Y. Deposited assets are used to generate yield on Layer X, while bridged vbTokens are used in DeFi on Layer Y. Generated yield gets distributed to chains and apps participating in the revenue sharing program.
 
 Native Converter contract can be deployed on Layer Y to enable acquisition of vbToken on Layer Y without having to bridge from Layer X. Accumulated backing in Native Converter on Layer Y gets migrated to Layer X and deposited into Vault Bridge Token contract.
 
-## *Vault Bridge Token*
+### Vault Bridge Token
 
 A Vault Bridge Token is:
 
@@ -47,7 +57,7 @@ A Vault Bridge Token is:
 
 Assets in high demand with available yield strategies, such as WETH and USDC, can get their versions of vbTokens. The underlying asset is deposited into Vault Bridge Token contract, and vbToken is minted in a 1:1 ratio. The same can be withdrawn by burning vbToken. Vault Bridge Token contract doubles a pseudo bridge, so vbToken can be minted and bridged, or claimed and redeemed, in a single call. Deposited underlying assets are put into an external, ERC-4626 compatible vault ("yield vault") where they generate yield. Yield is distributed to chains and apps that participate in the revenue sharing program. Vault Bridge Token contracts also includes functionality that enables minting of vbToken directly on Layer Y via Native Converter, with backing migration to Layer X via Migration Manager.
 
-## *Migration Manager*
+### Migration Manager
 
 The Migration Manager is:
 
@@ -55,7 +65,7 @@ The Migration Manager is:
 
 vbTokens can be minted directly on Layer Y. In order for an underlying asset that backs vbToken minted on Layer Y to be deposited in Vault Bridge Token contract on Layer X, backing is migrated to Layer X via Native Converter and Migration Manager. Migration Manager completes migrations by interacting with Vault Bridge Token contract. All vbTokens share the same Migration Manager contract.
 
-## *Custom Token*
+### Custom Token
 
 A Custom Token is:
 
@@ -63,7 +73,7 @@ A Custom Token is:
 
 Bridged vbToken can be upgraded to Custom Token on Layer Y. This enables custom behavior, such as bridged vbETH to integrate WETH9 interface, replacing WETH on Layer Y.
 
-## *Native Converter*
+### Native Converter
 
 A Native Converter is:
 
@@ -72,7 +82,7 @@ A Native Converter is:
 
 Native Converter can be deployed on Layer Y to enable minting of vbToken directly on Layer Y by converting the bridged underlying asset, in a 1:1 ratio. The same can be deconverted to by burning bridged vbToken. Accumulated backing in Native Converter on Layer Y can be migrated to Layer X to be deposited into Vault Bridge Token contract via Migration Manger. For this reason, liqudity for deconverting to the bridged underlying token on Layer Y is guaranteed only up to a certain percentage. Native Converter doubles a bridge extension, so vbToken can be deconverted and bridged in a single call.
 
-# *Getting Started*
+## Get Started
 
 Getting started should be easy as Vault Bridge Token contracts follow the ERC-4626 interface. Variants of the standard ERC-4626 functions include `depositAndBridge` and `claimAndRedeem`. Please see [Documentation](#documentation) for more information.
 
@@ -82,69 +92,69 @@ If your chain is not part of Agglayer, you can start using the official vbTokens
 
 Full support for non-Agglayer chains, third-party bridges, as well as non-EVM chains is coming soon. [Contact our team](https://info.polygon.technology/vaultbridge-intake-form) to register interest.
 
-# *Documentation*
+## Documentation
 
 - [General Documentation](https://docs.agglayer.dev/)
 - [Technical Reference](https://agglayer.github.io/vault-bridge/)
 - In addition to General Documentation and Technical Reference, the [source code](https://github.com/agglayer/vault-bridge/tree/main/src) is 100% documented and you are encouraged to check it out.
 
-# *Deployments*
+## Deployments
 
-| Chain  | Contract                           | Address                                                                                                                           |
-| ------ | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| 1      | Vault Bridge ETH                   | [`0x2DC70fb75b88d2eB4715bc06E1595E6D97c34DFF`](http://etherscan.io/address/0x2DC70fb75b88d2eB4715bc06E1595E6D97c34DFF)            |
-| 1      | Vault Bridge USDC                  | [`0x53E82ABbb12638F09d9e624578ccB666217a765e`](http://etherscan.io/address/0x53E82ABbb12638F09d9e624578ccB666217a765e)            |
-| 1      | Vault Bridge USDT                  | [`0x6d4f9f9f8f0155509ecd6Ac6c544fF27999845CC`](http://etherscan.io/address/0x6d4f9f9f8f0155509ecd6Ac6c544fF27999845CC)            |
-| 1      | Vault Bridge WBTC                  | [`0x2C24B57e2CCd1f273045Af6A5f632504C432374F`](http://etherscan.io/address/0x2C24B57e2CCd1f273045Af6A5f632504C432374F)            |
-| 1      | Vault Bridge USDS                  | [`0x3DD459dE96F9C28e3a343b831cbDC2B93c8C4855`](http://etherscan.io/address/0x3DD459dE96F9C28e3a343b831cbDC2B93c8C4855)            |
-| 1      | Migration Manager                  | [`0x417d01B64Ea30C4E163873f3a1f77b727c689e02`](http://etherscan.io/address/0x417d01B64Ea30C4E163873f3a1f77b727c689e02)            |
-| 747474 | Bridged Vault Bridge ETH           | [`0xEE7D8BCFb72bC1880D0Cf19822eB0A2e6577aB62`](https://explorer.katanarpc.com/address/0xEE7D8BCFb72bC1880D0Cf19822eB0A2e6577aB62) |
-| 747474 | Bridged Vault Bridge USDC          | [`0x203A662b0BD271A6ed5a60EdFbd04bFce608FD36`](https://explorer.katanarpc.com/address/0x203A662b0BD271A6ed5a60EdFbd04bFce608FD36) |
-| 747474 | Bridged Vault Bridge USDT          | [`0x2DCa96907fde857dd3D816880A0df407eeB2D2F2`](https://explorer.katanarpc.com/address/0x2DCa96907fde857dd3D816880A0df407eeB2D2F2) |
-| 747474 | Bridged Vault Bridge WBTC          | [`0x0913DA6Da4b42f538B445599b46Bb4622342Cf52`](https://explorer.katanarpc.com/address/0x0913DA6Da4b42f538B445599b46Bb4622342Cf52) |
-| 747474 | Bridged Vault Bridge USDS          | [`0x62D6A123E8D19d06d68cf0d2294F9A3A0362c6b3`](https://explorer.katanarpc.com/address/0x62D6A123E8D19d06d68cf0d2294F9A3A0362c6b3) |
-| 747474 | Vault Bridge ETH Native Converter  | [`0xa6b0db1293144ebe9478b6a84f75dd651e45914a`](http://explorer.katanarpc.com/address/0xa6b0db1293144ebe9478b6a84f75dd651e45914a)  |
-| 747474 | Vault Bridge USDC Native Converter | [`0x97a3500083348A147F419b8a65717909762c389f`](http://explorer.katanarpc.com/address/0x97a3500083348A147F419b8a65717909762c389f)  |
-| 747474 | Vault Bridge USDT Native Converter | [`0x053FA9b934b83E1E0ffc7e98a41aAdc3640bB462`](http://explorer.katanarpc.com/address/0x053FA9b934b83E1E0ffc7e98a41aAdc3640bB462)  |
-| 747474 | Vault Bridge WBTC Native Converter | [`0xb00aa68b87256E2F22058fB2Ba3246EEc54A44fc`](http://explorer.katanarpc.com/address/0xb00aa68b87256E2F22058fB2Ba3246EEc54A44fc)  |
-| 747474 | Vault Bridge USDS Native Converter | [`0x639f13D5f30B47c792b6851238c05D0b623C77DE`](http://explorer.katanarpc.com/address/0x639f13D5f30B47c792b6851238c05D0b623C77DE)  |
+| Chain  | Contract                           | Address                                                                                                                   |
+| ------ | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| 1      | Vault Bridge ETH                   | [`0x2DC70fb75b88d2eB4715bc06E1595E6D97c34DFF`](http://etherscan.io/address/0x2DC70fb75b88d2eB4715bc06E1595E6D97c34DFF)    |
+| 1      | Vault Bridge USDC                  | [`0x53E82ABbb12638F09d9e624578ccB666217a765e`](http://etherscan.io/address/0x53E82ABbb12638F09d9e624578ccB666217a765e)    |
+| 1      | Vault Bridge USDT                  | [`0x6d4f9f9f8f0155509ecd6Ac6c544fF27999845CC`](http://etherscan.io/address/0x6d4f9f9f8f0155509ecd6Ac6c544fF27999845CC)    |
+| 1      | Vault Bridge WBTC                  | [`0x2C24B57e2CCd1f273045Af6A5f632504C432374F`](http://etherscan.io/address/0x2C24B57e2CCd1f273045Af6A5f632504C432374F)    |
+| 1      | Vault Bridge USDS                  | [`0x3DD459dE96F9C28e3a343b831cbDC2B93c8C4855`](http://etherscan.io/address/0x3DD459dE96F9C28e3a343b831cbDC2B93c8C4855)    |
+| 1      | Migration Manager                  | [`0x417d01B64Ea30C4E163873f3a1f77b727c689e02`](http://etherscan.io/address/0x417d01B64Ea30C4E163873f3a1f77b727c689e02)    |
+| 747474 | Bridged Vault Bridge ETH           | [`0xEE7D8BCFb72bC1880D0Cf19822eB0A2e6577aB62`](https://katanascan.com/address/0xEE7D8BCFb72bC1880D0Cf19822eB0A2e6577aB62) |
+| 747474 | Bridged Vault Bridge USDC          | [`0x203A662b0BD271A6ed5a60EdFbd04bFce608FD36`](https://katanascan.com/address/0x203A662b0BD271A6ed5a60EdFbd04bFce608FD36) |
+| 747474 | Bridged Vault Bridge USDT          | [`0x2DCa96907fde857dd3D816880A0df407eeB2D2F2`](https://katanascan.com/address/0x2DCa96907fde857dd3D816880A0df407eeB2D2F2) |
+| 747474 | Bridged Vault Bridge WBTC          | [`0x0913DA6Da4b42f538B445599b46Bb4622342Cf52`](https://katanascan.com/address/0x0913DA6Da4b42f538B445599b46Bb4622342Cf52) |
+| 747474 | Bridged Vault Bridge USDS          | [`0x62D6A123E8D19d06d68cf0d2294F9A3A0362c6b3`](https://katanascan.com/address/0x62D6A123E8D19d06d68cf0d2294F9A3A0362c6b3) |
+| 747474 | Vault Bridge ETH Native Converter  | [`0xa6b0db1293144ebe9478b6a84f75dd651e45914a`](https://katanascan.com/address/0xa6b0db1293144ebe9478b6a84f75dd651e45914a) |
+| 747474 | Vault Bridge USDC Native Converter | [`0x97a3500083348A147F419b8a65717909762c389f`](https://katanascan.com/address/0x97a3500083348A147F419b8a65717909762c389f) |
+| 747474 | Vault Bridge USDT Native Converter | [`0x053FA9b934b83E1E0ffc7e98a41aAdc3640bB462`](https://katanascan.com/address/0x053FA9b934b83E1E0ffc7e98a41aAdc3640bB462) |
+| 747474 | Vault Bridge WBTC Native Converter | [`0xb00aa68b87256E2F22058fB2Ba3246EEc54A44fc`](https://katanascan.com/address/0xb00aa68b87256E2F22058fB2Ba3246EEc54A44fc) |
+| 747474 | Vault Bridge USDS Native Converter | [`0x639f13D5f30B47c792b6851238c05D0b623C77DE`](https://katanascan.com/address/0x639f13D5f30B47c792b6851238c05D0b623C77DE) |
 
-# *Usage*
+## Usage
 
-#### Install
+Clone:
+
+```
+git clone git@github.com:agglayer/vault-bridge.git
+```
+
+Install:
 
 ```
 forge soldeer install & npm install
 ```
 
-#### Build
+Build:
 
 ```
 forge build
 ```
 
-#### Test
+Test:
 
 ```
 forge test
 ```
 
-#### Coverage
+Coverage:
 
 ```
 forge coverage --ir-minimum --report lcov && genhtml -o coverage lcov.info
 ```
 
-# *License*
+## License
 
-This codebase is licensed under a dual license model:
+This codebase is licensed under Source Available License.
 
-1. Open Attribution License – this license is similar to the MIT License and permits broad 
-use (including for commercial purposes), but is only available when the codebase is used in 
-connection with cryptoasset deposits into the Agglayer’s unified LxLy bridge. See: [LICENSE-OPEN-LICENSE](https://github.com/agglayer/vault-bridge/blob/main/LICENSE-OPEN-LICENSE)
-1. Source Available License – for all other use cases, including cryptoasset deposits into 
-elsewhere than the Agglayer’s unified LxLy bridge, you may use the codebase under the Source 
-Available License. See: [LICENSE-SOURCE-AVAILABLE-LICENSE](https://github.com/agglayer/vault-bridge/blob/main/LICENSE-SOURCE-AVAILABLE-LICENSE)
+See [`LICENSE-SOURCE-AVAILABLE`](https://github.com/agglayer/vault-bridge/blob/main/LICENSE-SOURCE-AVAILABLE).
 
-Your use of this software constitutes acceptance of these license terms. If you are unsure whether
-your use qualifies under the Open Attribution license, please contact: legal@polygon.technology
+Your use of this software constitutes acceptance of these license terms.

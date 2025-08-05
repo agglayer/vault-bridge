@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-PolygonLabs-Open-Attribution OR LicenseRef-PolygonLabs-Source-Available
+// SPDX-License-Identifier: LicenseRef-PolygonLabs-Source-Available
 pragma solidity ^0.8.29;
 
 import "forge-std/Script.sol";
@@ -47,8 +47,6 @@ contract DeployLayerY is Script {
 
             address customToken = input.readAddress(string.concat(vbSlug, ".customToken"));
             address underlyingToken = input.readAddress(string.concat(vbSlug, ".underlyingToken"));
-            string memory name = input.readString(string.concat(vbSlug, ".name"));
-            string memory symbol = input.readString(string.concat(vbSlug, ".symbol"));
             uint8 decimals = uint8(input.readUint(string.concat(vbSlug, ".decimals")));
             uint256 nonMigratableBackingPercentage =
                 input.readUint(string.concat(vbSlug, ".nonMigratableBackingPercentage"));
@@ -57,7 +55,6 @@ contract DeployLayerY is Script {
                 GenericNativeConverter.initialize,
                 (
                     polygonEngineeringMultisig,
-                    decimals,
                     customToken,
                     underlyingToken,
                     lxlyBridge,
@@ -75,8 +72,7 @@ contract DeployLayerY is Script {
 
             // update custom token
             bytes memory data = abi.encodeCall(
-                GenericCustomToken.reinitialize,
-                (polygonEngineeringMultisig, name, symbol, decimals, lxlyBridge, nativeConverter)
+                GenericCustomToken.reinitialize, (polygonEngineeringMultisig, decimals, lxlyBridge, nativeConverter)
             );
 
             IERC1967Proxy customTokenProxy = IERC1967Proxy(payable(customToken));

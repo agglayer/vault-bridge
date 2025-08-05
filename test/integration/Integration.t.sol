@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-PolygonLabs-Open-Attribution OR LicenseRef-PolygonLabs-Source-Available
+// SPDX-License-Identifier: LicenseRef-PolygonLabs-Source-Available
 pragma solidity ^0.8.29;
 
 import "forge-std/Test.sol";
@@ -389,7 +389,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
             (
                 owner,
                 address(customToken),
-                address(bwUnderlyingAsset),
+                address(bwVbToken),
                 LXLY_BRIDGE_Y,
                 NETWORK_ID_X,
                 MAX_NON_MIGRATABLE_BACKING_PERCENTAGE,
@@ -453,7 +453,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
         _claimAndVerifyAssetLayerY(bwVbToken, claimPayload);
     }
 
-    function test_depositAndBridge_customTokenMapping() public {
+    function test_depositAndBridge_underlyingTokenMapping() public {
         uint256 depositAmount = 100;
 
         LeafPayload memory leaf = LeafPayload({
@@ -476,9 +476,9 @@ contract IntegrationTest is Test, ZkEVMCommon {
 
         vm.selectFork(forkIdLayerY);
 
-        // map the custom token to the vbToken
-        _mapTokenLayerYToLayerX(address(vbToken), address(customToken), false);
-        _claimAndVerifyAssetLayerY(customToken, claimPayload);
+        // map the underlying token to the vbToken and claim it
+        _mapTokenLayerYToLayerX(address(vbToken), address(bwUnderlyingAsset), false);
+        _claimAndVerifyAssetLayerY(bwUnderlyingAsset, claimPayload);
     }
 
     // Add test for not being able to withdraw the needed amount from external vault
@@ -501,16 +501,17 @@ contract IntegrationTest is Test, ZkEVMCommon {
         });
         _depositAndBridgeLayerX(sender, depositAmount, depositLeaf);
         bytes32 lastLayerXExitRoot = IPolygonZkEVMGlobalExitRoot(GER_X).lastMainnetExitRoot();
+        ClaimPayload memory depositClaimPayload = _getClaimPayloadLayerX(depositLeaf, lastLayerXExitRoot);
 
         vm.selectFork(forkIdLayerY);
-
         uint256 withdrawAmount = 100;
+        _mapTokenLayerYToLayerX(address(vbToken), address(bwVbToken), false);
+        deal(address(bwVbToken), sender, withdrawAmount);
 
-        _mapTokenLayerYToLayerX(address(vbToken), address(customToken), false);
-        deal(address(customToken), sender, withdrawAmount);
+        _claimAndVerifyAssetLayerY(bwVbToken, depositClaimPayload);
 
         vm.startPrank(sender);
-        customToken.approve(LXLY_BRIDGE_Y, withdrawAmount);
+        bwVbToken.approve(LXLY_BRIDGE_Y, withdrawAmount);
 
         // make the withdrawal leaf
         LeafPayload memory withdrawLeaf = LeafPayload({
@@ -520,7 +521,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
             destinationNetwork: NETWORK_ID_X,
             destinationAddress: address(vbToken),
             amount: withdrawAmount,
-            metadata: customTokenMetaData
+            metadata: bwVbTokenMetaData
         });
 
         // bridge the custom token
@@ -536,9 +537,9 @@ contract IntegrationTest is Test, ZkEVMCommon {
             _ILxLyBridge(LXLY_BRIDGE_Y).depositCount()
         );
         ILxLyBridge(LXLY_BRIDGE_Y).bridgeAsset(
-            NETWORK_ID_X, address(vbToken), withdrawAmount, address(customToken), true, ""
-        ); // @todo fix -> error: LocalBalanceTreeUnderflow(uint32,address,uint256,uint256)
-        assertEq(customToken.balanceOf(LXLY_BRIDGE_Y), 0); // custom token is burned as it is custom mapped to vbToken
+            NETWORK_ID_X, address(vbToken), withdrawAmount, address(bwVbToken), true, ""
+        );
+        assertEq(bwVbToken.balanceOf(LXLY_BRIDGE_Y), 0);
         vm.stopPrank();
 
         LeafPayload[] memory leafPayloads = new LeafPayload[](1);
@@ -556,33 +557,45 @@ contract IntegrationTest is Test, ZkEVMCommon {
         vm.selectFork(forkIdLayerX);
 
         // create liquidity on the bridge on layer X
-        deal(address(underlyingAsset), LXLY_BRIDGE_X, amount);
+        deal(address(underlyingAsset), sender, amount);
+        LeafPayload memory depositLeaf = LeafPayload({
+            leafType: LEAF_TYPE_ASSET,
+            originNetwork: NETWORK_ID_X,
+            originAddress: address(vbToken),
+            destinationNetwork: NETWORK_ID_Y,
+            destinationAddress: recipient,
+            amount: amount,
+            metadata: vbTokenMetaData
+        });
+        _depositAndBridgeLayerX(sender, amount, depositLeaf);
         bytes32 lastLayerXExitRoot = IPolygonZkEVMGlobalExitRoot(GER_X).lastMainnetExitRoot();
+        ClaimPayload memory depositClaimPayload = _getClaimPayloadLayerX(depositLeaf, lastLayerXExitRoot);
 
         vm.selectFork(forkIdLayerY);
 
-        // create backing on layer Y
-        uint256 backingOnLayerY = 0;
         uint256 convertAmount = 100;
-        deal(address(bwUnderlyingAsset), owner, convertAmount);
+
+        _mapTokenLayerYToLayerX(address(vbToken), address(bwVbToken), false);
+        _claimAndVerifyAssetLayerY(bwVbToken, depositClaimPayload); // claim the bridge wrapped vbToken
+
+        // create backing on the bridge on layer Y: necessary for deconversion
+        uint256 backingOnLayerY = 0;
+        deal(address(bwVbToken), owner, convertAmount);
         vm.startPrank(owner);
-        bwUnderlyingAsset.approve(address(nativeConverter), convertAmount);
+        bwVbToken.approve(address(nativeConverter), convertAmount);
         backingOnLayerY = nativeConverter.convert(convertAmount, recipient);
         vm.stopPrank();
-
-        _mapTokenLayerYToLayerX(address(vbToken), address(customToken), false);
-        _mapTokenLayerYToLayerX(address(underlyingAsset), address(bwUnderlyingAsset), false);
 
         deal(address(customToken), sender, convertAmount);
 
         LeafPayload memory withdrawLeaf = LeafPayload({
             leafType: LEAF_TYPE_ASSET,
             originNetwork: NETWORK_ID_X,
-            originAddress: address(underlyingAsset),
+            originAddress: address(vbToken),
             destinationNetwork: NETWORK_ID_X,
             destinationAddress: recipient,
             amount: convertAmount,
-            metadata: bwUnderlyingAssetMetaData // since we deconvert the custom token to the underlying token we'll bridge the underlying token
+            metadata: bwVbTokenMetaData // deconversion would give us back the bwVbToken so we'll bridge it back to layer X
         });
         _deconvertAndBridgeLayerY(sender, convertAmount, withdrawLeaf);
 
@@ -591,7 +604,8 @@ contract IntegrationTest is Test, ZkEVMCommon {
         ClaimPayload[] memory withdrawClaimPayload = _getClaimPayloadsLayerY(leafPayloads, lastLayerXExitRoot);
 
         vm.selectFork(forkIdLayerX);
-        _claimAndVerifyAssetLayerX(underlyingAsset, withdrawClaimPayload[0]);
+
+        _claimAndVerifyAssetLayerX(vbToken, withdrawClaimPayload[0]);
     }
 
     function test_migrateBackingToLayerX() public {
@@ -599,26 +613,37 @@ contract IntegrationTest is Test, ZkEVMCommon {
 
         uint256 vbTokenTotalSupplyBefore = vbToken.totalSupply();
 
-        // switch to Layer X
         vm.selectFork(forkIdLayerX);
 
         // create liquidity on the bridge on layer X
-        deal(address(underlyingAsset), LXLY_BRIDGE_X, amount);
+        deal(address(underlyingAsset), sender, amount);
+        LeafPayload memory depositLeaf = LeafPayload({
+            leafType: LEAF_TYPE_ASSET,
+            originNetwork: NETWORK_ID_X,
+            originAddress: address(vbToken),
+            destinationNetwork: NETWORK_ID_Y,
+            destinationAddress: recipient,
+            amount: amount,
+            metadata: vbTokenMetaData
+        });
+        _depositAndBridgeLayerX(sender, amount, depositLeaf);
         bytes32 lastLayerXExitRoot = IPolygonZkEVMGlobalExitRoot(GER_X).lastMainnetExitRoot();
+        ClaimPayload memory depositClaimPayload = _getClaimPayloadLayerX(depositLeaf, lastLayerXExitRoot);
 
         vm.selectFork(forkIdLayerY);
 
-        // create backing on layer Y
-        uint256 backingOnLayerY = 0;
         uint256 convertAmount = 100;
-        deal(address(bwUnderlyingAsset), owner, convertAmount);
+
+        _mapTokenLayerYToLayerX(address(vbToken), address(bwVbToken), false);
+        _claimAndVerifyAssetLayerY(bwVbToken, depositClaimPayload); // claim the bridge wrapped vbToken
+
+        // create backing on the native converter on layer Y
+        uint256 backingOnLayerY = 0;
+        deal(address(bwVbToken), owner, convertAmount);
         vm.startPrank(owner);
-        bwUnderlyingAsset.approve(address(nativeConverter), convertAmount);
+        bwVbToken.approve(address(nativeConverter), convertAmount);
         backingOnLayerY = nativeConverter.convert(convertAmount, recipient);
         vm.stopPrank();
-
-        _mapTokenLayerYToLayerX(address(vbToken), address(customToken), false);
-        _mapTokenLayerYToLayerX(address(underlyingAsset), address(bwUnderlyingAsset), false);
 
         uint256 maxNonMigratableBacking = backingOnLayerY * MAX_NON_MIGRATABLE_BACKING_PERCENTAGE / 1e18;
         uint256 amountToMigrate = backingOnLayerY - maxNonMigratableBacking;
@@ -627,7 +652,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
         LeafPayload memory assetLeaf = LeafPayload({
             leafType: LEAF_TYPE_ASSET,
             originNetwork: NETWORK_ID_X,
-            originAddress: address(underlyingAsset),
+            originAddress: address(vbToken),
             destinationNetwork: NETWORK_ID_X,
             destinationAddress: address(migrationManager),
             amount: amountToMigrate,
@@ -672,7 +697,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
         vm.expectEmit();
         emit NativeConverter.MigrationStarted(amountToMigrate, amountToMigrate);
         vm.prank(owner);
-        nativeConverter.migrateBackingToLayerX(amountToMigrate); // @todo fix -> error: LocalBalanceTreeUnderflow(uint32,address,uint256,uint256)
+        nativeConverter.migrateBackingToLayerX(amountToMigrate);
 
         LeafPayload[] memory leafPayloads = new LeafPayload[](2);
         leafPayloads[0] = assetLeaf;
@@ -682,8 +707,11 @@ contract IntegrationTest is Test, ZkEVMCommon {
         // switch to Layer X
         vm.selectFork(forkIdLayerX);
 
+        // Fund the Migration Manager with the underlying asset
+        deal(address(underlyingAsset), address(migrationManager), amountToMigrate);
+
         // claim and withdraw on Layer X
-        _claimAndVerifyAssetLayerX(underlyingAsset, claimPayloads[0]);
+        _claimAndVerifyAssetLayerX(vbToken, claimPayloads[0]);
         _claimMessageLayerX(claimPayloads[1]);
 
         uint256 vbTokenTotalSupplyAfter = vbToken.totalSupply();
@@ -993,7 +1021,8 @@ contract IntegrationTest is Test, ZkEVMCommon {
             _claimPayload.exitRootLayerY,
             _claimPayload.destinationAddress,
             _claimPayload.amount,
-            recipient
+            recipient,
+            _claimPayload.metadata
         );
 
         assertEq(vbToken.underlyingToken().balanceOf(recipient), _claimPayload.amount);
@@ -1021,7 +1050,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
             _ILxLyBridge(LXLY_BRIDGE_Y).depositCount()
         );
 
-        nativeConverter.deconvertAndBridge(_amount, _leaf.destinationAddress, _leaf.destinationNetwork, true); // @todo fix -> error: LocalBalanceTreeUnderflow(uint32,address,uint256,uint256)
+        nativeConverter.deconvertAndBridge(_amount, _leaf.destinationAddress, _leaf.destinationNetwork, true);
 
         vm.stopPrank();
 

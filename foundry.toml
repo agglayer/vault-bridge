@@ -30,11 +30,11 @@ forge-std = { version = "1.9.4" }
 
 [rpc_endpoints]
 mainnet = "wss://mainnet.gateway.tenderly.co"
-katana = "https://rpc.katanarpc.com/${KATANA_API_KEY}"
+katana = "https://rpc.katanarpc.com"
 sepolia = "https://sepolia.gateway.tenderly.co"
-bokuto = "https://rpc-bokuto.katanarpc.com/${BOKUTO_API_KEY}"
+bokuto = "https://rpc-bokuto.katanarpc.com"
 
 [doc]
-title = "Vault Bridge Technical Reference"
+title = "Technical Reference"
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options

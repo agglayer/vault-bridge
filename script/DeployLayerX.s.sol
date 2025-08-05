@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-PolygonLabs-Open-Attribution OR LicenseRef-PolygonLabs-Source-Available
+// SPDX-License-Identifier: LicenseRef-PolygonLabs-Source-Available
 pragma solidity ^0.8.29;
 
 import "forge-std/Script.sol";
@@ -35,6 +35,7 @@ contract DeployLayerX is Script {
         address ownerMigrationManager = input.readAddress(string.concat(migrationManagerSlug, ".ownerMigrationManager"));
         address lxlyBridge = input.readAddress(string.concat(migrationManagerSlug, ".lxlyBridge"));
         address proxyAdmin = input.readAddress(string.concat(migrationManagerSlug, ".proxyAdmin"));
+        address wrappedGasToken = input.readAddress(string.concat(migrationManagerSlug, ".wrappedGasToken"));
 
         vm.startBroadcast(deployerPrivateKey);
 
@@ -47,7 +48,7 @@ contract DeployLayerX is Script {
         MigrationManager migrationManagerImpl = new MigrationManager();
 
         bytes memory migrationManagerInitData =
-            abi.encodeCall(MigrationManager.initialize, (ownerMigrationManager, lxlyBridge));
+            abi.encodeCall(MigrationManager.initialize, (ownerMigrationManager, lxlyBridge, wrappedGasToken));
         migrationManager =
             MigrationManager(payable(_proxify(address(migrationManagerImpl), proxyAdmin, migrationManagerInitData)));
 
