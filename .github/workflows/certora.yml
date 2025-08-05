@@ -24,6 +24,7 @@ jobs:
       contents: read
       statuses: write
       pull-requests: write
+      id-token: write
     steps:
       - name: checkout repository
         uses: actions/checkout@v4
@@ -52,9 +53,9 @@ jobs:
         run: ./certora/scripts/munge.sh
 
       - name: run configs
-        uses: Certora/certora-run-action@v1
+        uses: Certora/certora-run-action@v2
         with:
-          cli-release: "beta"
+          cli-release: beta
           configurations: ${{ env.CONFIGS }}
           solc-versions: 0.8.28 0.8.29
           solc-remove-version-prefix: "0."
