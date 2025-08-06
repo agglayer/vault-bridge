@@ -35,7 +35,7 @@ index db15f14..25a6009 100644
      /// @dev @note (ATTENTION) The `virtual` modifier allows `VaultBridgeTokenPart2` to override this function. Do not override the function yourself.
 -    function collectYield() external virtual delegatedToPart2 {}
 +    function collectYield() external virtual {
-+        PART2.delegatecall(abi.encodeWithSignature("collectYield()"));
++        PART2.delegatecall(abi.encodeWithSignature("collectYield()")); }
  
      /// @notice Burns a specific amount of vbToken.
      /// @notice This function can be used if the yield recipient has collected an unrealistic amount of yield over time.
