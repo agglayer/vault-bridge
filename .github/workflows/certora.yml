@@ -1,0 +1,62 @@
+name: test
+
+on: pull_request
+
+env:
+  FOUNDRY_PROFILE: ci
+  CONFIGS: |
+    certora/confs/GenericVaultBridgeToken.conf
+    certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GenericVaultBridgeToken_invariants.spec --rule netCollectedYieldAccounted --rule netCollectedYieldLimited
+    certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GenericVaultBridgeToken_invariants.spec --rule minimumReservePercentageLimit --rule reserveBacked
+    certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GenericVaultBridgeToken_invariants.spec --rule vaultBridgeTokenSolvency --rule vaultBridgeTokenSolvency_simple
+    certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GenericVaultBridgeToken_invariants.spec --rule assetsMoreThanSupply --rule noSupplyIfNoAssets
+    certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GenericVaultBridgeToken_invariants.spec --rule zeroAllowanceOnAssets --rule zeroAllowanceOnShares
+    certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GenericVaultBridgeToken_allowedChanges.spec
+    certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GenericVaultBridgeToken_integrity.spec
+    certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GVBTBalances.spec
+    certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/tokenMockBalances.spec
+    certora/confs/GenericNativeConverter.conf
+    certora/confs/MigrationManager-generic.conf --rule onMsgReceived_doesntAlwaysRevert
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      statuses: write
+      pull-requests: write
+      id-token: write
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: install foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - name: install bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: bun install
+        run: |
+          forge soldeer install
+          bun install || true
+      
+      - name: setup bridge repo
+        run: |
+          git clone https://github.com/0xPolygonHermez/zkevm-contracts.git
+          cd zkevm-contracts/
+          git checkout v10.1.0-rc.1
+          npm install
+
+      - name: run configs
+        uses: Certora/certora-run-action@v2
+        with:
+          cli-release: beta
+          configurations: ${{ env.CONFIGS }}
+          solc-versions: 0.8.28 0.8.29
+          solc-remove-version-prefix: "0."
+          job-name: "Verified Rules"
+          certora-key: ${{ secrets.CERTORAKEY }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
