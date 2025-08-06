@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-PolygonLabs-Open-Attribution OR LicenseRef-PolygonLabs-Source-Available
+// SPDX-License-Identifier: LicenseRef-PolygonLabs-Source-Available
 pragma solidity 0.8.29;
 
 import {VbETH} from "src/vault-bridge-tokens/vbETH/VbETH.sol";
