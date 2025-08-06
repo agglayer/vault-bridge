@@ -2,23 +2,17 @@ diff --git a/src/VaultBridgeToken.sol b/src/VaultBridgeToken.sol
 index db15f14..25a6009 100644
 --- a/src/VaultBridgeToken.sol
 +++ b/src/VaultBridgeToken.sol
-@@ -1,4 +1,5 @@
- // SPDX-License-Identifier: LicenseRef-PolygonLabs-Source-Available
-+// SPDX-License-Identifier: LicenseRef-PolygonLabs-Source-Available
- // Vault Bridge (last updated v1.0.0) (VaultBridgeToken.sol)
- 
- pragma solidity 0.8.29;
-@@ -90,6 +91,9 @@
-         uint256 yieldVaultMaximumSlippagePercentage;
+@@ -91,6 +91,9 @@
          address vaultBridgeTokenPart2;
      }
-+
+ 
 +    // Certora: munge to simplify delegation to Part2
 +    address PART2;
- 
++
      // Basic roles.
      bytes32 public constant REBALANCER_ROLE = keccak256("REBALANCER_ROLE");
-@@ -893,7 +897,9 @@
+     bytes32 public constant YIELD_COLLECTOR_ROLE = keccak256("YIELD_COLLECTOR_ROLE");
+@@ -893,7 +896,9 @@
      /// @notice This function can be called by a rebalancer only.
      /// @dev Delegates the call to `VaultBridgeTokenPart2`.
      /// @dev @note (ATTENTION) The `virtual` modifier allows `VaultBridgeTokenPart2` to override this function. Do not override the function yourself.
@@ -29,13 +23,14 @@ index db15f14..25a6009 100644
  
      /// @notice Rebalances the internal reserve by withdrawing the underlying token from, or depositing the underlying token into, the yield vault.
      /// @param force Whether to revert if the reserve cannot be rebalanced.
-@@ -959,7 +965,8 @@
+@@ -959,7 +964,9 @@
      /// @dev Increases the net collected yield.
      /// @dev Delegates the call to `VaultBridgeTokenPart2`.
      /// @dev @note (ATTENTION) The `virtual` modifier allows `VaultBridgeTokenPart2` to override this function. Do not override the function yourself.
 -    function collectYield() external virtual delegatedToPart2 {}
 +    function collectYield() external virtual {
-+        PART2.delegatecall(abi.encodeWithSignature("collectYield()")); }
++        PART2.delegatecall(abi.encodeWithSignature("collectYield()"));
++    }
  
      /// @notice Burns a specific amount of vbToken.
      /// @notice This function can be used if the yield recipient has collected an unrealistic amount of yield over time.
@@ -153,14 +148,15 @@ index db15f14..25a6009 100644
          external
          virtual
 -        delegatedToPart2
-     {
+-    {
 -        // Silence the Solidity compiler.
 -        maximumSlippagePercentage;
++    {
 +        PART2.delegatecall(abi.encodeWithSignature("setYieldVaultMaximumSlippagePercentage(uint256)", maximumSlippagePercentage));
      }
  
      /// @notice Calculates the amount of assets to reserve (as opposed to depositing into the yield vault) based on the current and minimum reserve percentages.
-@@ -1308,13 +1300,17 @@
+@@ -1308,14 +1300,24 @@
      /// @notice This function can be called by a pauser only.
      /// @dev Delegates the call to `VaultBridgeTokenPart2`.
      /// @dev @note (ATTENTION) The `virtual` modifier allows `VaultBridgeTokenPart2` to override this function. Do not override the function yourself.
@@ -178,5 +174,12 @@ index db15f14..25a6009 100644
 +        PART2.delegatecall(abi.encodeWithSignature("unpause()"));
 +    }
  
++    /// Method added by Certora
++    function getNetCollectedYield() public view returns (uint256) {
++        VaultBridgeTokenStorage storage $ = _getVaultBridgeTokenStorage();
++        return $._netCollectedYield;
++    }
++
      // -----================= ::: PART 2 ::: =================-----
  
+     /// @notice Delegates the call to `VaultBridgeTokenPart2`.

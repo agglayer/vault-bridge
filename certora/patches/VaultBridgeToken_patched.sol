@@ -965,7 +965,8 @@ abstract contract VaultBridgeToken is
     /// @dev Delegates the call to `VaultBridgeTokenPart2`.
     /// @dev @note (ATTENTION) The `virtual` modifier allows `VaultBridgeTokenPart2` to override this function. Do not override the function yourself.
     function collectYield() external virtual {
-        PART2.delegatecall(abi.encodeWithSignature("collectYield()")); }
+        PART2.delegatecall(abi.encodeWithSignature("collectYield()"));
+    }
 
     /// @notice Burns a specific amount of vbToken.
     /// @notice This function can be used if the yield recipient has collected an unrealistic amount of yield over time.
@@ -1309,6 +1310,12 @@ abstract contract VaultBridgeToken is
     /// @dev @note (ATTENTION) The `virtual` modifier allows `VaultBridgeTokenPart2` to override this function. Do not override the function yourself.
     function unpause() external virtual {
         PART2.delegatecall(abi.encodeWithSignature("unpause()"));
+    }
+
+    /// Method added by Certora
+    function getNetCollectedYield() public view returns (uint256) {
+        VaultBridgeTokenStorage storage $ = _getVaultBridgeTokenStorage();
+        return $._netCollectedYield;
     }
 
     // -----================= ::: PART 2 ::: =================-----
