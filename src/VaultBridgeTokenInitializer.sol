@@ -13,7 +13,7 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 // External contracts.
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
-import {ILxLyBridge} from "./etc/ILxLyBridge.sol";
+import {IAgglayerBridge} from "./etc/IAgglayerBridge.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /// @title Vault Bridge Token Initializer (singleton)
@@ -63,7 +63,7 @@ contract VaultBridgeTokenInitializer is IVaultBridgeTokenInitializer, VaultBridg
         require(initParams.minimumReservePercentage <= 1e18, InvalidMinimumReservePercentage());
         require(initParams.yieldVault != address(0), InvalidYieldVault());
         require(initParams.yieldRecipient != address(0), InvalidYieldRecipient());
-        require(initParams.lxlyBridge != address(0), InvalidLxLyBridge());
+        require(initParams.agglayerBridge != address(0), InvalidAgglayerBridge());
         require(initParams.migrationManager != address(0), InvalidMigrationManager());
         require(initParams.yieldVaultMaximumSlippagePercentage <= 1e18, InvalidYieldVaultMaximumSlippagePercentage());
         require(initParams.vaultBridgeTokenPart2 != address(0), InvalidVaultBridgeTokenPart2());
@@ -100,8 +100,8 @@ contract VaultBridgeTokenInitializer is IVaultBridgeTokenInitializer, VaultBridg
         $.minimumReservePercentage = initParams.minimumReservePercentage;
         $.yieldVault = IERC4626(initParams.yieldVault);
         $.yieldRecipient = initParams.yieldRecipient;
-        $.lxlyId = ILxLyBridge(initParams.lxlyBridge).networkID();
-        $.lxlyBridge = ILxLyBridge(initParams.lxlyBridge);
+        $.agglayerId = IAgglayerBridge(initParams.agglayerBridge).networkID();
+        $.agglayerBridge = IAgglayerBridge(initParams.agglayerBridge);
         $.minimumYieldVaultDeposit = initParams.minimumYieldVaultDeposit;
         $.migrationManager = initParams.migrationManager;
         $.yieldVaultMaximumSlippagePercentage = initParams.yieldVaultMaximumSlippagePercentage;
@@ -109,6 +109,6 @@ contract VaultBridgeTokenInitializer is IVaultBridgeTokenInitializer, VaultBridg
 
         // Approve the yield vault and LxLy Bridge.
         IERC20(initParams.underlyingToken).forceApprove(initParams.yieldVault, type(uint256).max);
-        _approve(address(this), address(initParams.lxlyBridge), type(uint256).max);
+        _approve(address(this), address(initParams.agglayerBridge), type(uint256).max);
     }
 }

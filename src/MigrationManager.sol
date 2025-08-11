@@ -20,7 +20,7 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 /// @dev External contracts.
 import {VaultBridgeToken} from "./VaultBridgeToken.sol";
 import {VaultBridgeTokenPart2} from "./VaultBridgeTokenPart2.sol";
-import {ILxLyBridge} from "./etc/ILxLyBridge.sol";
+import {IAgglayerBridge} from "./etc/IAgglayerBridge.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IWETH9} from "./etc/IWETH9.sol";
 
@@ -56,9 +56,9 @@ contract MigrationManager is
     /// @dev It's implemented on a custom ERC-7201 namespace to reduce the risk of storage collisions when using with upgradeable contracts.
     /// @custom:storage-location erc7201:agglayer.vault-bridge.MigrationManager.storage
     struct MigrationManagerStorage {
-        ILxLyBridge lxlyBridge;
-        uint32 _lxlyId;
-        mapping(uint32 layerYLxLyId => mapping(address nativeConverter => TokenPair tokenPair))
+        IAgglayerBridge agglayerBridge;
+        uint32 _agglayerId;
+        mapping(uint32 secondaryChainAgglayerId => mapping(address nativeConverter => TokenPair tokenPair))
             nativeConvertersConfiguration;
         IWETH9 _wrappedGasToken;
     }
@@ -73,10 +73,10 @@ contract MigrationManager is
 
     // Errors.
     error InvalidOwner();
-    error InvalidLxLyBridge();
+    error InvalidAgglayerBridge();
     error InvalidWrappedGasToken();
     error NonMatchingInputLengths();
-    error InvalidLayerYLxLyId();
+    error InvalidSecondaryChainAgglayerId();
     error InvalidNativeConverter();
     error InvalidUnderlyingToken();
     error Unauthorized();
@@ -85,15 +85,15 @@ contract MigrationManager is
 
     // Events.
     event NativeConverterConfigured(
-        uint32 indexed layerYLxlyId, address indexed nativeConverter, address indexed vbToken
+        uint32 indexed secondaryChainAgglayerId, address indexed nativeConverter, address indexed vbToken
     );
 
     // -----================= ::: MODIFIERS ::: =================-----
 
     /// @dev Checks if the sender is LxLy Bridge.
-    modifier onlyLxLyBridge() {
+    modifier onlyAgglayerBridge() {
         MigrationManagerStorage storage $ = _getMigrationManagerStorage();
-        require(msg.sender == address($.lxlyBridge), Unauthorized());
+        require(msg.sender == address($.agglayerBridge), Unauthorized());
         _;
     }
 
@@ -110,12 +110,12 @@ contract MigrationManager is
     /// @notice Initializes the Migration Manager contract.
     /// @param owner_ (ATTENTION) This address will be granted the `DEFAULT_ADMIN_ROLE`, as well as all basic roles. Roles can be modified at any time.
     /// @param wrappedGasToken_ The address of the wrapped gas token (e.g., WETH, if the gas token is ETH). Must be the same as the underlying token of the corresponding vbToken (e.g., vbETH, if the gas token is ETH).
-    function initialize(address owner_, address lxlyBridge_, address wrappedGasToken_) external initializer {
+    function initialize(address owner_, address agglayerBridge_, address wrappedGasToken_) external initializer {
         MigrationManagerStorage storage $ = _getMigrationManagerStorage();
 
         // Check the inputs.
         require(owner_ != address(0), InvalidOwner());
-        require(lxlyBridge_ != address(0), InvalidLxLyBridge());
+        require(agglayerBridge_ != address(0), InvalidAgglayerBridge());
         require(wrappedGasToken_ != address(0), InvalidWrappedGasToken());
 
         // Initialize the inherited contracts.
@@ -130,29 +130,29 @@ contract MigrationManager is
         _grantRole(PAUSER_ROLE, owner_);
 
         // Initialize the storage.
-        $.lxlyBridge = ILxLyBridge(lxlyBridge_);
-        $._lxlyId = $.lxlyBridge.networkID();
+        $.agglayerBridge = IAgglayerBridge(agglayerBridge_);
+        $._agglayerId = $.agglayerBridge.networkID();
         $._wrappedGasToken = IWETH9(wrappedGasToken_);
     }
 
     // -----================= ::: STORAGE ::: =================-----
 
     /// @notice LxLy Bridge, which connects AggLayer networks.
-    function lxlyBridge() public view returns (ILxLyBridge) {
+    function agglayerBridge() public view returns (IAgglayerBridge) {
         MigrationManagerStorage storage $ = _getMigrationManagerStorage();
-        return $.lxlyBridge;
+        return $.agglayerBridge;
     }
 
     /// @notice Tells which vbToken Native Converter on Layer a Y belongs to.
-    /// @param layerYLxlyId Layer Y's LxLy ID.
+    /// @param secondaryChainAgglayerId Layer Y's LxLy ID.
     /// @param nativeConverter The address of Native Converter on Layer Y.
-    function nativeConvertersConfiguration(uint32 layerYLxlyId, address nativeConverter)
+    function nativeConvertersConfiguration(uint32 secondaryChainAgglayerId, address nativeConverter)
         public
         view
         returns (TokenPair memory tokenPair)
     {
         MigrationManagerStorage storage $ = _getMigrationManagerStorage();
-        return $.nativeConvertersConfiguration[layerYLxlyId][nativeConverter];
+        return $.nativeConvertersConfiguration[secondaryChainAgglayerId][nativeConverter];
     }
 
     /// @dev Returns a pointer to the ERC-7201 storage namespace.
@@ -167,33 +167,33 @@ contract MigrationManager is
     /// @notice Maps Native Converters on Layer Ys to vbToken and underlying token on Layer X.
     /// @dev CAUTION! Misconfiguration could allow an attacker to gain unauthorized access to vbToken and other contracts.
     /// @notice This function can be called by the owner only.
-    /// @param layerYLxlyIds The Layer Ys' LxLy IDs.
+    /// @param secondaryChainAgglayerIds The Layer Ys' LxLy IDs.
     /// @param nativeConverters The addresses of Native Converters on Layer Ys.
     /// @param vbToken The address of vbToken on Layer X Native Converter belongs to. Set to address zero to unset the tokens. You can override tokens without unsetting them first.
     function configureNativeConverters(
-        uint32[] calldata layerYLxlyIds,
+        uint32[] calldata secondaryChainAgglayerIds,
         address[] calldata nativeConverters,
         address payable vbToken
     ) external onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant {
         MigrationManagerStorage storage $ = _getMigrationManagerStorage();
 
         // Check the inputs.
-        require(layerYLxlyIds.length == nativeConverters.length, NonMatchingInputLengths());
+        require(secondaryChainAgglayerIds.length == nativeConverters.length, NonMatchingInputLengths());
 
         // Cache Layer X LxLy ID.
-        uint32 lxlyId = $._lxlyId;
+        uint32 agglayerId = $._agglayerId;
 
-        for (uint256 i; i < layerYLxlyIds.length; ++i) {
+        for (uint256 i; i < secondaryChainAgglayerIds.length; ++i) {
             // Cache the inputs.
-            uint32 layerYLxlyId = layerYLxlyIds[i];
+            uint32 secondaryChainAgglayerId = secondaryChainAgglayerIds[i];
             address nativeConverter = nativeConverters[i];
 
             // Check the inputs.
-            require(layerYLxlyId != lxlyId, InvalidLayerYLxLyId());
+            require(secondaryChainAgglayerId != agglayerId, InvalidSecondaryChainAgglayerId());
             require(nativeConverter != address(0), InvalidNativeConverter());
 
             // Cache the current tokens.
-            TokenPair memory oldTokens = $.nativeConvertersConfiguration[layerYLxlyId][nativeConverter];
+            TokenPair memory oldTokens = $.nativeConvertersConfiguration[secondaryChainAgglayerId][nativeConverter];
 
             // Set or override tokens.
             /* Set tokens. */
@@ -210,7 +210,7 @@ contract MigrationManager is
                 }
 
                 // Set the tokens.
-                $.nativeConvertersConfiguration[layerYLxlyId][nativeConverter] =
+                $.nativeConvertersConfiguration[secondaryChainAgglayerId][nativeConverter] =
                     TokenPair(VaultBridgeToken(vbToken), underlyingToken);
 
                 // Approve vbToken.
@@ -222,15 +222,15 @@ contract MigrationManager is
                 oldTokens.underlyingToken.forceApprove(address(oldTokens.vbToken), 0);
 
                 // Unset the tokens.
-                delete $.nativeConvertersConfiguration[layerYLxlyId][nativeConverter];
+                delete $.nativeConvertersConfiguration[secondaryChainAgglayerId][nativeConverter];
             }
 
             // Emit the event.
-            emit NativeConverterConfigured(layerYLxlyId, nativeConverter, vbToken);
+            emit NativeConverterConfigured(secondaryChainAgglayerId, nativeConverter, vbToken);
         }
     }
 
-    /// @dev When Native Converter migrates backing, it calls both `bridgeAsset` and `bridgeMessage` on LxLy Bridge to `migrateBackingToLayerX`.
+    /// @dev When Native Converter migrates backing, it calls both `bridgeAsset` and `bridgeMessage` on LxLy Bridge to `migrateBackingToPrimaryChain`.
     /// @dev The asset must be claimed before the message on LxLy Bridge.
     /// @dev The message tells vbToken how much Custom Token must be backed by vbToken, which is minted and bridged to address zero on the respective Layer Y. This action provides liquidity when bridging Custom Token to from Layer Ys to Layer X and increments the pessimistic proof.
     /// @dev This function can be called by LxLy Bridge only.
@@ -238,7 +238,7 @@ contract MigrationManager is
         external
         payable
         whenNotPaused
-        onlyLxLyBridge
+        onlyAgglayerBridge
         nonReentrant
     {
         MigrationManagerStorage storage $ = _getMigrationManagerStorage();
