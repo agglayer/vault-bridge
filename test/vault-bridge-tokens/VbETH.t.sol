@@ -3,7 +3,7 @@ pragma solidity 0.8.29;
 
 import {VbETH} from "src/vault-bridge-tokens/vbETH/VbETH.sol";
 import {VaultBridgeToken, PausableUpgradeable} from "src/VaultBridgeToken.sol";
-import {ILxLyBridge} from "src/etc/ILxLyBridge.sol";
+import {IAgglayerBridge} from "src/etc/IAgglayerBridge.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {IWETH9} from "src/etc/IWETH9.sol";
 import {
@@ -15,7 +15,7 @@ import {
 } from "test/GenericVaultBridgeToken.t.sol";
 import {VaultBridgeTokenInitializer} from "src/VaultBridgeTokenInitializer.sol";
 import {TestVault} from "test/etc/TestVault.sol";
-import {ILxLyBridge as _ILxLyBridge} from "test/interfaces/ILxLyBridge.sol";
+import {IAgglayerBridge as _IAgglayerBridge} from "test/interfaces/IAgglayerBridge.sol";
 import {WETHNativeConverter} from "src/custom-tokens/WETH/WETHNativeConverter.sol";
 
 contract LXLYBridgeMock {
@@ -44,7 +44,7 @@ contract VbETHTest is GenericVaultBridgeTokenTest {
     using SafeERC20 for IERC20;
 
     VbETH public vbETH;
-    LXLYBridgeMock public lxlyBridgeMock;
+    LXLYBridgeMock public agglayerBridgeMock;
     address public morphoVault;
 
     address constant DUMMY_ADDRESS = 0xAd1490c248c5d3CbAE399Fd529b79B42984277DF;
@@ -56,7 +56,7 @@ contract VbETHTest is GenericVaultBridgeTokenTest {
     function setUp() public override {
         mainnetFork = vm.createSelectFork("mainnet");
 
-        lxlyBridgeMock = new LXLYBridgeMock();
+        agglayerBridgeMock = new LXLYBridgeMock();
         asset = WETH;
         vbTokenVault = new TestVault(asset);
         version = "1.0.0";
@@ -87,7 +87,7 @@ contract VbETHTest is GenericVaultBridgeTokenTest {
             minimumReservePercentage: minimumReservePercentage,
             yieldVault: address(vbTokenVault),
             yieldRecipient: yieldRecipient,
-            lxlyBridge: LXLY_BRIDGE,
+            agglayerBridge: LXLY_BRIDGE,
             minimumYieldVaultDeposit: MINIMUM_YIELD_VAULT_DEPOSIT,
             migrationManager: migrationManager,
             yieldVaultMaximumSlippagePercentage: YIELD_VAULT_ALLOWED_SLIPPAGE,
@@ -115,7 +115,7 @@ contract VbETHTest is GenericVaultBridgeTokenTest {
         vm.label(recipient, "Recipient");
         vm.label(sender, "Sender");
         vm.label(yieldRecipient, "Yield Recipient");
-        vm.label(LXLY_BRIDGE, "Lxly Bridge");
+        vm.label(LXLY_BRIDGE, "Agglayer Bridge");
     }
 
     function test_initialize() public override {
@@ -130,7 +130,7 @@ contract VbETHTest is GenericVaultBridgeTokenTest {
             minimumReservePercentage: minimumReservePercentage,
             yieldVault: address(vbTokenVault),
             yieldRecipient: yieldRecipient,
-            lxlyBridge: LXLY_BRIDGE,
+            agglayerBridge: LXLY_BRIDGE,
             minimumYieldVaultDeposit: MINIMUM_YIELD_VAULT_DEPOSIT,
             migrationManager: migrationManager,
             yieldVaultMaximumSlippagePercentage: YIELD_VAULT_ALLOWED_SLIPPAGE,
@@ -184,12 +184,12 @@ contract VbETHTest is GenericVaultBridgeTokenTest {
         vbToken = GenericVaultBridgeToken(payable(_proxify(vbTokenImplementation, address(this), initData)));
 
         initParams.yieldRecipient = yieldRecipient;
-        initParams.lxlyBridge = address(0);
+        initParams.agglayerBridge = address(0);
         initData = abi.encodeCall(vbToken.initialize, (initializer, initParams));
-        vm.expectRevert(VaultBridgeToken.InvalidLxLyBridge.selector);
+        vm.expectRevert(VaultBridgeToken.InvalidAgglayerBridge.selector);
         vbToken = GenericVaultBridgeToken(payable(_proxify(vbTokenImplementation, address(this), initData)));
 
-        initParams.lxlyBridge = address(lxlyBridgeMock);
+        initParams.agglayerBridge = address(agglayerBridgeMock);
         initParams.migrationManager = address(0);
         initData = abi.encodeCall(vbToken.initialize, (initializer, initParams));
         vm.expectRevert(VaultBridgeToken.InvalidMigrationManager.selector);
@@ -207,19 +207,19 @@ contract VbETHTest is GenericVaultBridgeTokenTest {
         vm.expectRevert(VaultBridgeToken.InvalidVaultBridgeTokenPart2.selector);
         vbToken = GenericVaultBridgeToken(payable(_proxify(vbTokenImplementation, address(this), initData)));
 
-        lxlyBridgeMock.setGasTokenAddress(address(0));
-        lxlyBridgeMock.setGasTokenNetwork(DUMMY_NETWORK_ID);
+        agglayerBridgeMock.setGasTokenAddress(address(0));
+        agglayerBridgeMock.setGasTokenNetwork(DUMMY_NETWORK_ID);
 
         initParams.vaultBridgeTokenPart2 = address(vbTokenPart2);
-        initParams.lxlyBridge = address(lxlyBridgeMock);
+        initParams.agglayerBridge = address(agglayerBridgeMock);
         initData = abi.encodeCall(vbToken.initialize, (initializer, initParams));
         vm.expectRevert(VbETH.ContractNotSupportedOnThisNetwork.selector);
         vbToken = GenericVaultBridgeToken(payable(_proxify(vbTokenImplementation, address(this), initData)));
 
-        lxlyBridgeMock.setGasTokenAddress(DUMMY_ADDRESS);
-        lxlyBridgeMock.setGasTokenNetwork(0);
+        agglayerBridgeMock.setGasTokenAddress(DUMMY_ADDRESS);
+        agglayerBridgeMock.setGasTokenNetwork(0);
 
-        initParams.lxlyBridge = address(lxlyBridgeMock);
+        initParams.agglayerBridge = address(agglayerBridgeMock);
         initData = abi.encodeCall(vbToken.initialize, (initializer, initParams));
         vm.expectRevert(VbETH.ContractNotSupportedOnThisNetwork.selector);
         vbToken = GenericVaultBridgeToken(payable(_proxify(vbTokenImplementation, address(this), initData)));
@@ -387,7 +387,7 @@ contract VbETHTest is GenericVaultBridgeTokenTest {
             address(0),
             shares,
             vbTokenMetaData,
-            _ILxLyBridge(LXLY_BRIDGE).depositCount()
+            _IAgglayerBridge(LXLY_BRIDGE).depositCount()
         );
         vm.expectEmit();
         emit IERC4626.Deposit(migrationManager, address(vbToken), assets, shares);
@@ -439,7 +439,7 @@ contract VbETHTest is GenericVaultBridgeTokenTest {
             address(0),
             shares,
             vbTokenMetaData,
-            _ILxLyBridge(LXLY_BRIDGE).depositCount()
+            _IAgglayerBridge(LXLY_BRIDGE).depositCount()
         );
         vm.expectEmit();
         emit IERC4626.Deposit(migrationManager, address(vbToken), assets, shares);

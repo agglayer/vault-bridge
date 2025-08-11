@@ -11,7 +11,7 @@ import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transpa
 import {IAccessControl} from "@openzeppelin-contracts/access/IAccessControl.sol";
 import {IERC20} from "@openzeppelin-contracts/token/ERC20/IERC20.sol";
 
-contract MockLxlyBridge {
+contract MockAgglayerBridge {
     function networkID() external pure returns (uint32) {
         return 0;
     }
@@ -52,7 +52,7 @@ contract MigrationManagerTest is Test {
     address internal migrationManagerImpl;
     MockERC20 internal underlyingToken;
     MockERC20WithDeposit internal wrappedGasToken;
-    MockLxlyBridge lxlyBridge;
+    MockAgglayerBridge agglayerBridge;
     MockVbToken vbToken;
 
     uint32 constant NETWORK_ID_X = 0; // mainnet/sepolia
@@ -67,8 +67,8 @@ contract MigrationManagerTest is Test {
         // deploy migration manager
         migrationManagerImpl = address(new MigrationManager());
 
-        // deploy mock lxly bridge
-        lxlyBridge = new MockLxlyBridge();
+        // deploy mock agglayer bridge
+        agglayerBridge = new MockAgglayerBridge();
 
         // deploy mock underlying token
         underlyingToken = new MockERC20("Underlying Token", "UT");
@@ -84,9 +84,9 @@ contract MigrationManagerTest is Test {
         stateBeforeInitialize = vm.snapshotState();
 
         // initialize migration manager
-        _initialize(migrationManagerImpl, owner, address(lxlyBridge), address(wrappedGasToken));
+        _initialize(migrationManagerImpl, owner, address(agglayerBridge), address(wrappedGasToken));
 
-        vm.label(address(lxlyBridge), "LxlyBridgeX");
+        vm.label(address(agglayerBridge), "AgglayerBridgeX");
         vm.label(address(migrationManager), "Migration Manager");
         vm.label(address(owner), "Owner");
         vm.label(address(underlyingToken), "Underlying Token");
@@ -96,31 +96,32 @@ contract MigrationManagerTest is Test {
     }
 
     function test_setup() public view {
-        assertEq(address(migrationManager.lxlyBridge()), address(lxlyBridge));
+        assertEq(address(migrationManager.agglayerBridge()), address(agglayerBridge));
     }
 
     function test_initialize() public {
         vm.revertToState(stateBeforeInitialize);
 
         vm.expectRevert(MigrationManager.InvalidOwner.selector);
-        _initialize(migrationManagerImpl, address(0), address(lxlyBridge), payable(address(wrappedGasToken)));
+        _initialize(migrationManagerImpl, address(0), address(agglayerBridge), payable(address(wrappedGasToken)));
 
-        vm.expectRevert(MigrationManager.InvalidLxLyBridge.selector);
+        vm.expectRevert(MigrationManager.InvalidAgglayerBridge.selector);
         _initialize(migrationManagerImpl, owner, address(0), payable(address(wrappedGasToken)));
 
         vm.expectRevert(MigrationManager.InvalidWrappedGasToken.selector);
-        _initialize(migrationManagerImpl, owner, address(lxlyBridge), address(0));
+        _initialize(migrationManagerImpl, owner, address(agglayerBridge), address(0));
     }
 
     function test_configureNativeConverters_reverts() public {
-        uint32[] memory layerYLxlyIds = new uint32[](1);
-        layerYLxlyIds[0] = NETWORK_ID_Y;
+        uint32[] memory secondaryChainAgglayerIds = new uint32[](1);
+        secondaryChainAgglayerIds[0] = NETWORK_ID_Y;
         address[] memory nativeConverters = new address[](1);
         nativeConverters[0] = nativeConverter;
 
         // test pause and unpause
         bytes memory callData = abi.encodeCall(
-            migrationManager.configureNativeConverters, (layerYLxlyIds, nativeConverters, payable(address(vbToken)))
+            migrationManager.configureNativeConverters,
+            (secondaryChainAgglayerIds, nativeConverters, payable(address(vbToken)))
         );
         _testPauseUnpause(owner, address(migrationManager), callData);
 
@@ -132,34 +133,44 @@ contract MigrationManagerTest is Test {
                 migrationManager.DEFAULT_ADMIN_ROLE()
             )
         );
-        migrationManager.configureNativeConverters(layerYLxlyIds, nativeConverters, payable(address(vbToken)));
+        migrationManager.configureNativeConverters(
+            secondaryChainAgglayerIds, nativeConverters, payable(address(vbToken))
+        );
 
         vm.startPrank(owner);
 
-        // test mismatched inputs: layerYLxlyIds
+        // test mismatched inputs: secondaryChainAgglayerIds
         vm.expectRevert(MigrationManager.NonMatchingInputLengths.selector);
         migrationManager.configureNativeConverters(new uint32[](2), nativeConverters, payable(address(vbToken)));
 
         // test mismatched inputs: nativeConverters
         vm.expectRevert(MigrationManager.NonMatchingInputLengths.selector);
-        migrationManager.configureNativeConverters(layerYLxlyIds, new address[](2), payable(address(vbToken)));
+        migrationManager.configureNativeConverters(
+            secondaryChainAgglayerIds, new address[](2), payable(address(vbToken))
+        );
 
-        // test invalid layerYLxlyId
-        layerYLxlyIds[0] = NETWORK_ID_X;
-        vm.expectRevert(MigrationManager.InvalidLayerYLxLyId.selector);
-        migrationManager.configureNativeConverters(layerYLxlyIds, nativeConverters, payable(address(vbToken)));
+        // test invalid secondaryChainAgglayerId
+        secondaryChainAgglayerIds[0] = NETWORK_ID_X;
+        vm.expectRevert(MigrationManager.InvalidSecondaryChainAgglayerId.selector);
+        migrationManager.configureNativeConverters(
+            secondaryChainAgglayerIds, nativeConverters, payable(address(vbToken))
+        );
 
         // test invalid native converter
-        layerYLxlyIds[0] = NETWORK_ID_Y;
+        secondaryChainAgglayerIds[0] = NETWORK_ID_Y;
         nativeConverters[0] = address(0);
         vm.expectRevert(MigrationManager.InvalidNativeConverter.selector);
-        migrationManager.configureNativeConverters(layerYLxlyIds, nativeConverters, payable(address(vbToken)));
+        migrationManager.configureNativeConverters(
+            secondaryChainAgglayerIds, nativeConverters, payable(address(vbToken))
+        );
 
         // test invalid underlying token
         nativeConverters[0] = nativeConverter;
         vbToken.setUnderlyingToken(address(0));
         vm.expectRevert(MigrationManager.InvalidUnderlyingToken.selector);
-        migrationManager.configureNativeConverters(layerYLxlyIds, nativeConverters, payable(address(vbToken)));
+        migrationManager.configureNativeConverters(
+            secondaryChainAgglayerIds, nativeConverters, payable(address(vbToken))
+        );
 
         vbToken.setUnderlyingToken(address(underlyingToken));
 
@@ -167,8 +178,8 @@ contract MigrationManagerTest is Test {
     }
 
     function test_configureNativeConverters() public {
-        uint32[] memory layerYLxlyIds = new uint32[](1);
-        layerYLxlyIds[0] = NETWORK_ID_Y;
+        uint32[] memory secondaryChainAgglayerIds = new uint32[](1);
+        secondaryChainAgglayerIds[0] = NETWORK_ID_Y;
         address[] memory nativeConverters = new address[](1);
         nativeConverters[0] = nativeConverter;
 
@@ -176,7 +187,9 @@ contract MigrationManagerTest is Test {
         vm.expectEmit();
         emit MigrationManager.NativeConverterConfigured(NETWORK_ID_Y, nativeConverter, (address(vbToken)));
         vm.startPrank(owner);
-        migrationManager.configureNativeConverters(layerYLxlyIds, nativeConverters, payable(address(vbToken)));
+        migrationManager.configureNativeConverters(
+            secondaryChainAgglayerIds, nativeConverters, payable(address(vbToken))
+        );
 
         MigrationManager.TokenPair memory tokenPair =
             migrationManager.nativeConvertersConfiguration(NETWORK_ID_Y, nativeConverter);
@@ -192,7 +205,9 @@ contract MigrationManagerTest is Test {
 
         vm.expectEmit();
         emit MigrationManager.NativeConverterConfigured(NETWORK_ID_Y, nativeConverter, payable(address(newVbToken)));
-        migrationManager.configureNativeConverters(layerYLxlyIds, nativeConverters, payable(address(newVbToken)));
+        migrationManager.configureNativeConverters(
+            secondaryChainAgglayerIds, nativeConverters, payable(address(newVbToken))
+        );
 
         tokenPair = migrationManager.nativeConvertersConfiguration(NETWORK_ID_Y, nativeConverter);
 
@@ -206,7 +221,7 @@ contract MigrationManagerTest is Test {
         // unset vbToken
         vm.expectEmit();
         emit MigrationManager.NativeConverterConfigured(NETWORK_ID_Y, nativeConverter, address(0));
-        migrationManager.configureNativeConverters(layerYLxlyIds, nativeConverters, payable(address(0)));
+        migrationManager.configureNativeConverters(secondaryChainAgglayerIds, nativeConverters, payable(address(0)));
 
         tokenPair = migrationManager.nativeConvertersConfiguration(NETWORK_ID_Y, nativeConverter);
         assertEq(address(tokenPair.vbToken), address(0));
@@ -217,8 +232,8 @@ contract MigrationManagerTest is Test {
     }
 
     function test_onMessageReceived_reverts() public {
-        uint32[] memory layerYLxlyIds = new uint32[](1);
-        layerYLxlyIds[0] = NETWORK_ID_Y;
+        uint32[] memory secondaryChainAgglayerIds = new uint32[](1);
+        secondaryChainAgglayerIds[0] = NETWORK_ID_Y;
         address[] memory nativeConverters = new address[](1);
         nativeConverters[0] = nativeConverter;
 
@@ -227,7 +242,7 @@ contract MigrationManagerTest is Test {
             abi.encodeCall(migrationManager.onMessageReceived, (nativeConverter, NETWORK_ID_Y, bytes("")));
         _testPauseUnpause(owner, address(migrationManager), callData);
 
-        // test only callable by the lxly bridge
+        // test only callable by the agglayer bridge
         vm.expectRevert(MigrationManager.Unauthorized.selector);
         migrationManager.onMessageReceived(nativeConverter, NETWORK_ID_Y, bytes(""));
 
@@ -237,51 +252,59 @@ contract MigrationManagerTest is Test {
 
         // test unset vbToken
         vm.expectRevert(MigrationManager.Unauthorized.selector);
-        vm.prank(address(lxlyBridge));
+        vm.prank(address(agglayerBridge));
         migrationManager.onMessageReceived(nativeConverter, NETWORK_ID_Y, data);
 
         vm.prank(owner);
-        migrationManager.configureNativeConverters(layerYLxlyIds, nativeConverters, payable(address(vbToken)));
+        migrationManager.configureNativeConverters(
+            secondaryChainAgglayerIds, nativeConverters, payable(address(vbToken))
+        );
 
         // test wrapped native token with insufficient balance (balance does not match after receiving native token)
         MockERC20WithDeposit mockERC20WithDeposit = new MockERC20WithDeposit("Mock ERC20", "MERC20");
         vbToken.setUnderlyingToken(address(mockERC20WithDeposit));
         vm.prank(owner);
-        migrationManager.configureNativeConverters(layerYLxlyIds, nativeConverters, payable(address(vbToken)));
-        deal(address(lxlyBridge), 100);
+        migrationManager.configureNativeConverters(
+            secondaryChainAgglayerIds, nativeConverters, payable(address(vbToken))
+        );
+        deal(address(agglayerBridge), 100);
 
         bytes memory onMessageReceivedCallData =
             abi.encodeCall(migrationManager.onMessageReceived, (nativeConverter, NETWORK_ID_Y, data));
         vm.expectRevert(
             abi.encodeWithSelector(MigrationManager.InsufficientUnderlyingTokenBalanceAfterWrapping.selector, 0, 100)
         );
-        vm.prank(address(lxlyBridge));
+        vm.prank(address(agglayerBridge));
         (bool _ignored,) = address(migrationManager).call{value: 100}(onMessageReceivedCallData);
         _ignored = _ignored; // silence unused variable warning
     }
 
     function test_onMessageReceived() public {
-        uint32[] memory layerYLxlyIds = new uint32[](1);
-        layerYLxlyIds[0] = NETWORK_ID_Y;
+        uint32[] memory secondaryChainAgglayerIds = new uint32[](1);
+        secondaryChainAgglayerIds[0] = NETWORK_ID_Y;
         address[] memory nativeConverters = new address[](1);
         nativeConverters[0] = nativeConverter;
 
         vm.prank(owner);
-        migrationManager.configureNativeConverters(layerYLxlyIds, nativeConverters, payable(address(vbToken)));
+        migrationManager.configureNativeConverters(
+            secondaryChainAgglayerIds, nativeConverters, payable(address(vbToken))
+        );
 
         MockERC20WithDeposit mockERC20WithDeposit = new MockERC20WithDeposit("Mock ERC20", "MERC20");
         mockERC20WithDeposit.setCanDeposit(true);
         vbToken.setUnderlyingToken(address(mockERC20WithDeposit));
         vm.prank(owner);
-        migrationManager.configureNativeConverters(layerYLxlyIds, nativeConverters, payable(address(vbToken)));
+        migrationManager.configureNativeConverters(
+            secondaryChainAgglayerIds, nativeConverters, payable(address(vbToken))
+        );
 
-        deal(address(lxlyBridge), 100);
+        deal(address(agglayerBridge), 100);
 
         // test regular migration
         bytes memory data =
             abi.encode(MigrationManager.CrossNetworkInstruction._0_COMPLETE_MIGRATION, abi.encode(100, 100));
 
-        vm.prank(address(lxlyBridge));
+        vm.prank(address(agglayerBridge));
         (bool success,) = address(migrationManager).call(
             abi.encodeCall(migrationManager.onMessageReceived, (nativeConverter, NETWORK_ID_Y, data))
         );
@@ -293,25 +316,28 @@ contract MigrationManagerTest is Test {
 
         vm.prank(owner);
         migrationManager.configureNativeConverters(
-            layerYLxlyIds, nativeConverters, payable(address(wrappedGasTokenVbToken))
+            secondaryChainAgglayerIds, nativeConverters, payable(address(wrappedGasTokenVbToken))
         );
 
         data = abi.encode(
             MigrationManager.CrossNetworkInstruction._1_WRAP_GAS_TOKEN_AND_COMPLETE_MIGRATION, abi.encode(100, 100)
         );
 
-        vm.prank(address(lxlyBridge));
+        vm.prank(address(agglayerBridge));
         (success,) = address(migrationManager).call{value: 100}(
             abi.encodeCall(migrationManager.onMessageReceived, (nativeConverter, NETWORK_ID_Y, data))
         );
         assertTrue(success);
     }
 
-    function _initialize(address _migrationManagerImpl, address _owner, address _lxlyBridge, address _wrappedGasToken)
-        internal
-    {
+    function _initialize(
+        address _migrationManagerImpl,
+        address _owner,
+        address _agglayerBridge,
+        address _wrappedGasToken
+    ) internal {
         bytes memory migrationManagerInitData =
-            abi.encodeCall(MigrationManager.initialize, (_owner, _lxlyBridge, _wrappedGasToken));
+            abi.encodeCall(MigrationManager.initialize, (_owner, _agglayerBridge, _wrappedGasToken));
         migrationManager =
             MigrationManager(payable(_proxify(address(_migrationManagerImpl), address(this), migrationManagerInitData)));
     }
