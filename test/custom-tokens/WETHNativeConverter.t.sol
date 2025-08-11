@@ -49,7 +49,7 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
 
     MockERC20MintableBurnable internal wWETH;
     WETH internal wETH;
-    LXLYBridgeMock internal lxlyBridgeMock;
+    LXLYBridgeMock internal agglayerBridgeMock;
     address internal migrationManager_ = makeAddr("migrationManager");
 
     WETHNativeConverter internal wETHConverter;
@@ -76,7 +76,7 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
         address calculatedNativeConverterAddr = vm.computeCreateAddress(address(this), vm.getNonce(address(this)) + 1);
 
         vm.etch(LXLY_BRIDGE, SOVEREIGN_BRIDGE_BYTECODE);
-        _setLxlyBridgeAttributes(NETWORK_ID_L2, address(_globalExitRootManager), LXLY_BRIDGE);
+        _setAgglayerBridgeAttributes(NETWORK_ID_L2, address(_globalExitRootManager), LXLY_BRIDGE);
 
         bytes memory initData =
             abi.encodeCall(WETH.reinitialize, (address(this), 18, LXLY_BRIDGE, calculatedNativeConverterAddr));
@@ -121,14 +121,14 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
 
         wETHConverter = WETHNativeConverter(payable(address(nativeConverter)));
 
-        lxlyBridgeMock = new LXLYBridgeMock();
+        agglayerBridgeMock = new LXLYBridgeMock();
 
         vm.label(address(wETH), "wETH");
         vm.label(address(wWETH), "wWETH");
         vm.label(address(wETHBridgeImpl), "wETH Bridge Implementation");
         vm.label(address(wETHGenericImpl), "wETH Implementation");
         vm.label(address(this), "testerAddress");
-        vm.label(LXLY_BRIDGE, "lxlyBridge");
+        vm.label(LXLY_BRIDGE, "agglayerBridge");
         vm.label(migrationManager, "migrationManager");
         vm.label(owner, "owner");
         vm.label(recipient, "recipient");
@@ -203,7 +203,7 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
                 MAX_NON_MIGRATABLE_GAS_BACKING_PERCENTAGE
             )
         );
-        vm.expectRevert(NativeConverter.InvalidLxLyBridge.selector);
+        vm.expectRevert(NativeConverter.InvalidAgglayerBridge.selector);
         GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
 
         initData = abi.encodeCall(
@@ -219,7 +219,7 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
                 MAX_NON_MIGRATABLE_GAS_BACKING_PERCENTAGE
             )
         );
-        vm.expectRevert(NativeConverter.InvalidLxLyBridge.selector);
+        vm.expectRevert(NativeConverter.InvalidAgglayerBridge.selector);
         GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
 
         MockERC20 dummyToken = new MockERC20();
@@ -274,7 +274,7 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
         GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
     }
 
-    function test_migrateGasBackingToLayerX() public {
+    function test_migrateGasBackingToPrimaryChain() public {
         uint256 amount = 100;
         uint256 amountToMigrate = 50;
 
@@ -282,17 +282,17 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
 
         wETHConverter.pause();
         vm.expectRevert(PausableUpgradeable.EnforcedPause.selector);
-        wETHConverter.migrateGasBackingToLayerX(amountToMigrate);
+        wETHConverter.migrateGasBackingToPrimaryChain(amountToMigrate);
         wETHConverter.unpause();
 
         vm.expectRevert(NativeConverter.InvalidAssets.selector);
-        wETHConverter.migrateGasBackingToLayerX(0); // try with 0 backing
+        wETHConverter.migrateGasBackingToPrimaryChain(0); // try with 0 backing
 
         // create backing on layer Y
-        uint256 backingOnLayerY = 0;
+        uint256 backingOnSecondaryChain = 0;
         deal(address(underlyingToken), owner, amount);
         underlyingToken.approve(address(nativeConverter), amount);
-        backingOnLayerY = wETHConverter.convert(amount, recipient);
+        backingOnSecondaryChain = wETHConverter.convert(amount, recipient);
 
         deal(address(wETH), amount);
 
@@ -316,7 +316,7 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
         );
         vm.expectEmit();
         emit NativeConverter.MigrationStarted(amountToMigrate, amountToMigrate);
-        wETHConverter.migrateGasBackingToLayerX(amountToMigrate);
+        wETHConverter.migrateGasBackingToPrimaryChain(amountToMigrate);
         assertEq(address(wETH).balance, amountToMigrate);
 
         uint256 currentBacking = address(wETH).balance;
@@ -327,7 +327,7 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
                 NativeConverter.AssetsTooLarge.selector, currentBacking - nonMigratableGasBacking, currentBacking + 1
             )
         );
-        wETHConverter.migrateGasBackingToLayerX(currentBacking + 1);
+        wETHConverter.migrateGasBackingToPrimaryChain(currentBacking + 1);
 
         vm.stopPrank();
     }
@@ -336,26 +336,26 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
         uint256 amount = 100;
         deal(address(this), amount);
 
-        lxlyBridgeMock.setGasTokenAddress(address(this));
-        lxlyBridgeMock.setGasTokenNetwork(0);
-        _deployWETHNativeConverter(address(lxlyBridgeMock));
+        agglayerBridgeMock.setGasTokenAddress(address(this));
+        agglayerBridgeMock.setGasTokenNetwork(0);
+        _deployWETHNativeConverter(address(agglayerBridgeMock));
         vm.expectRevert(WETHNativeConverter.FunctionNotSupportedOnThisNetwork.selector);
         (address(wETHConverter).call{value: amount}(""));
 
-        lxlyBridgeMock.setGasTokenAddress(address(0));
-        lxlyBridgeMock.setGasTokenNetwork(1);
-        _deployWETHNativeConverter(address(lxlyBridgeMock));
+        agglayerBridgeMock.setGasTokenAddress(address(0));
+        agglayerBridgeMock.setGasTokenNetwork(1);
+        _deployWETHNativeConverter(address(agglayerBridgeMock));
         vm.expectRevert(WETHNativeConverter.FunctionNotSupportedOnThisNetwork.selector);
         (address(wETHConverter).call{value: amount}(""));
 
-        lxlyBridgeMock.setGasTokenAddress(address(0));
-        lxlyBridgeMock.setGasTokenNetwork(0);
-        _deployWETHNativeConverter(address(lxlyBridgeMock));
+        agglayerBridgeMock.setGasTokenAddress(address(0));
+        agglayerBridgeMock.setGasTokenNetwork(0);
+        _deployWETHNativeConverter(address(agglayerBridgeMock));
         (address(wETHConverter).call{value: amount}(""));
         assertEq(address(wETHConverter).balance, amount);
     }
 
-    function _deployWETHNativeConverter(address _lxlyBridge) internal {
+    function _deployWETHNativeConverter(address _agglayerBridge) internal {
         wETHConverter = new WETHNativeConverter();
         bytes memory initData = abi.encodeCall(
             WETHNativeConverter.initialize,
@@ -363,7 +363,7 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
                 owner,
                 address(customToken),
                 address(underlyingToken),
-                _lxlyBridge,
+                _agglayerBridge,
                 NETWORK_ID_L1,
                 MAX_NON_MIGRATABLE_BACKING_PERCENTAGE,
                 migrationManager,
