@@ -128,7 +128,7 @@ contract VaultBridgeTokenPart2 is VaultBridgeToken {
         VaultBridgeTokenStorage storage $ = __getVaultBridgeTokenStorage();
 
         // Check the inputs.
-        require(originNetwork != $.lxlyId, InvalidOriginNetwork());
+        require(originNetwork != $.agglayerId, InvalidOriginNetwork());
         require(shares > 0, InvalidShares());
 
         // Transfer the underlying token from the sender to self.
@@ -170,7 +170,7 @@ contract VaultBridgeTokenPart2 is VaultBridgeToken {
         // Mint vbToken to self and bridge it to address zero on the origin network.
         // The vbToken will not be claimable on the origin network, but provides liquidity when bridging from Layer Ys to Layer X and increments the pessimistic proof.
         _mint(address(this), shares);
-        $.lxlyBridge.bridgeAsset(originNetwork, address(0), shares, address(this), true, "");
+        $.agglayerBridge.bridgeAsset(originNetwork, address(0), shares, address(this), true, "");
 
         // Emit the ERC-4626 event.
         emit IERC4626.Deposit(msg.sender, address(this), assets, shares);

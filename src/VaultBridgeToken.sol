@@ -23,7 +23,7 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
 // External contracts.
-import {ILxLyBridge} from "./etc/ILxLyBridge.sol";
+import {IAgglayerBridge} from "./etc/IAgglayerBridge.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 // Other.
@@ -59,8 +59,8 @@ abstract contract VaultBridgeToken is
         IERC4626 yieldVault;
         address yieldRecipient;
         uint256 _netCollectedYield;
-        uint32 lxlyId;
-        ILxLyBridge lxlyBridge;
+        uint32 agglayerId;
+        IAgglayerBridge agglayerBridge;
         uint256 migrationFeesFund;
         uint256 minimumYieldVaultDeposit;
         address migrationManager;
@@ -84,7 +84,7 @@ abstract contract VaultBridgeToken is
         uint256 minimumReservePercentage;
         address yieldVault;
         address yieldRecipient;
-        address lxlyBridge;
+        address agglayerBridge;
         uint256 minimumYieldVaultDeposit;
         address migrationManager;
         uint256 yieldVaultMaximumSlippagePercentage;
@@ -111,7 +111,7 @@ abstract contract VaultBridgeToken is
     error InvalidMinimumReservePercentage();
     error InvalidYieldVault();
     error InvalidYieldRecipient();
-    error InvalidLxLyBridge();
+    error InvalidAgglayerBridge();
     error InvalidMigrationManager();
     error InvalidYieldVaultMaximumSlippagePercentage();
     error InvalidVaultBridgeTokenPart2();
@@ -166,9 +166,9 @@ abstract contract VaultBridgeToken is
     }
 
     /// @dev Checks if the sender is LxLy Bridge.
-    modifier onlyLxLyBridge() {
+    modifier onlyAgglayerBridge() {
         VaultBridgeTokenStorage storage $ = _getVaultBridgeTokenStorage();
-        require(msg.sender == address($.lxlyBridge), Unauthorized());
+        require(msg.sender == address($.agglayerBridge), Unauthorized());
         _;
     }
 
@@ -266,15 +266,15 @@ abstract contract VaultBridgeToken is
     }
 
     /// @notice The LxLy ID of this network.
-    function lxlyId() public view returns (uint32) {
+    function agglayerId() public view returns (uint32) {
         VaultBridgeTokenStorage storage $ = _getVaultBridgeTokenStorage();
-        return $.lxlyId;
+        return $.agglayerId;
     }
 
     /// @notice LxLy Bridge, which connects AggLayer networks.
-    function lxlyBridge() public view returns (ILxLyBridge) {
+    function agglayerBridge() public view returns (IAgglayerBridge) {
         VaultBridgeTokenStorage storage $ = _getVaultBridgeTokenStorage();
-        return $.lxlyBridge;
+        return $.agglayerBridge;
     }
 
     /// @notice A dedicated fund for covering any fees on Layer Y during a migration of backing to Layer X. Please refer to `completeMigration` for more information.
@@ -354,7 +354,7 @@ abstract contract VaultBridgeToken is
     /// @notice Deposit a specific amount of the underlying token and mint vbToken.
     function deposit(uint256 assets, address receiver) external whenNotPaused nonReentrant returns (uint256 shares) {
         VaultBridgeTokenStorage storage $ = _getVaultBridgeTokenStorage();
-        (shares,) = _deposit(assets, $.lxlyId, receiver, false, 0);
+        (shares,) = _deposit(assets, $.agglayerId, receiver, false, 0);
     }
 
     /// @notice Deposit a specific amount of the underlying token, and bridge minted vbToken to another network.
@@ -368,7 +368,7 @@ abstract contract VaultBridgeToken is
         VaultBridgeTokenStorage storage $ = _getVaultBridgeTokenStorage();
 
         // Check the input.
-        require(destinationNetworkId != $.lxlyId, InvalidDestinationNetworkId());
+        require(destinationNetworkId != $.agglayerId, InvalidDestinationNetworkId());
 
         (shares,) = _deposit(assets, destinationNetworkId, receiver, forceUpdateGlobalExitRoot, 0);
     }
@@ -447,12 +447,12 @@ abstract contract VaultBridgeToken is
         $.reservedAssets += assetsToReserve;
 
         // Mint vbToken.
-        if (destinationNetworkId != $.lxlyId) {
+        if (destinationNetworkId != $.agglayerId) {
             // Mint to self.
             _mint(address(this), shares);
 
             //  Bridge to the receiver.
-            $.lxlyBridge.bridgeAsset(
+            $.agglayerBridge.bridgeAsset(
                 destinationNetworkId, receiver, shares, address(this), forceUpdateGlobalExitRoot, ""
             );
 
@@ -488,7 +488,7 @@ abstract contract VaultBridgeToken is
         returns (uint256 shares)
     {
         VaultBridgeTokenStorage storage $ = _getVaultBridgeTokenStorage();
-        (shares,) = _depositWithPermit(assets, permitData, $.lxlyId, receiver, false, 0);
+        (shares,) = _depositWithPermit(assets, permitData, $.agglayerId, receiver, false, 0);
     }
 
     /// @notice Deposit a specific amount of the underlying token, and bridge minted vbToken to another network.
@@ -504,7 +504,7 @@ abstract contract VaultBridgeToken is
         VaultBridgeTokenStorage storage $ = _getVaultBridgeTokenStorage();
 
         // Check the input.
-        require(destinationNetworkId != $.lxlyId, InvalidDestinationNetworkId());
+        require(destinationNetworkId != $.agglayerId, InvalidDestinationNetworkId());
 
         (shares,) = _depositWithPermit(assets, permitData, destinationNetworkId, receiver, forceUpdateGlobalExitRoot, 0);
     }
@@ -553,7 +553,7 @@ abstract contract VaultBridgeToken is
 
         // Mint vbToken to the receiver.
         uint256 mintedShares;
-        (mintedShares, assets) = _deposit(convertToAssets(shares), $.lxlyId, receiver, false, shares);
+        (mintedShares, assets) = _deposit(convertToAssets(shares), $.agglayerId, receiver, false, shares);
 
         // Check the output.
         require(mintedShares == shares, IncorrectAmountOfSharesMinted(mintedShares, shares));
@@ -783,15 +783,15 @@ abstract contract VaultBridgeToken is
         VaultBridgeTokenStorage storage $ = _getVaultBridgeTokenStorage();
 
         // Claim vbToken from LxLy Bridge.
-        $.lxlyBridge.claimAsset(
+        $.agglayerBridge.claimAsset(
             smtProofLocalExitRoot,
             smtProofRollupExitRoot,
             globalIndex,
             mainnetExitRoot,
             rollupExitRoot,
-            $.lxlyId,
+            $.agglayerId,
             address(this),
-            $.lxlyId,
+            $.agglayerId,
             destinationAddress,
             amount,
             metadata
@@ -994,7 +994,7 @@ abstract contract VaultBridgeToken is
     /// @notice Completes a migration of backing from a Layer Y to Layer X by minting and locking the required amount of vbToken in LxLy Bridge.
     /// @notice Anyone can trigger the execution of this function by claiming the asset and message on LxLy Bridge. Please refer to `NativeConverter.sol` for more information.
     /// @dev Backing for Custom Token minted by Native Converter on Layer Ys can be migrated to Layer X.
-    /// @dev When Native Converter migrates backing, it calls both `bridgeAsset` and `bridgeMessage` on LxLy Bridge to `migrateBackingToLayerX`.
+    /// @dev When Native Converter migrates backing, it calls both `bridgeAsset` and `bridgeMessage` on LxLy Bridge to `migrateBackingToPrimaryChain`.
     /// @dev The asset must be claimed before the message on LxLy Bridge.
     /// @dev The message tells vbToken how much Custom Token must be backed by vbToken, which is minted and bridged to address zero on the respective Layer Y. This action provides liquidity when bridging Custom Token to from Layer Ys to Layer X and increments the pessimistic proof.
     /// @dev This function can be called by Migraton Manager only.

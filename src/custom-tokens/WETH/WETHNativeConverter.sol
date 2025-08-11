@@ -6,7 +6,7 @@ pragma solidity 0.8.29;
 import {NativeConverter, Math} from "../../NativeConverter.sol";
 import {WETH} from "./WETH.sol";
 import {MigrationManager} from "../../MigrationManager.sol";
-import {ILxLyBridge} from "../../etc/ILxLyBridge.sol";
+import {IAgglayerBridge} from "../../etc/IAgglayerBridge.sol";
 
 /// @title WETH Native Converter
 /// @author See https://github.com/agglayer/vault-bridge
@@ -44,8 +44,8 @@ contract WETHNativeConverter is NativeConverter {
         address owner_,
         address customToken_,
         address underlyingToken_,
-        address lxlyBridge_,
-        uint32 layerXNetworkId_,
+        address agglayerBridge_,
+        uint32 primaryChainNetworkId_,
         uint256 nonMigratableBackingPercentage_,
         address migrationManager_,
         uint256 nonMigratableGasBackingPercentage_
@@ -57,16 +57,16 @@ contract WETHNativeConverter is NativeConverter {
             owner_,
             customToken_,
             underlyingToken_,
-            lxlyBridge_,
-            layerXNetworkId_,
+            agglayerBridge_,
+            primaryChainNetworkId_,
             nonMigratableBackingPercentage_,
             migrationManager_
         );
 
         require(nonMigratableGasBackingPercentage_ <= 1e18, InvalidNonMigratableBackingPercentage());
 
-        $._gasTokenIsEth =
-            ILxLyBridge(lxlyBridge_).gasTokenAddress() == address(0) && ILxLyBridge(lxlyBridge_).gasTokenNetwork() == 0;
+        $._gasTokenIsEth = IAgglayerBridge(agglayerBridge_).gasTokenAddress() == address(0)
+            && IAgglayerBridge(agglayerBridge_).gasTokenNetwork() == 0;
         $.nonMigratableGasBackingPercentage = nonMigratableGasBackingPercentage_;
     }
 
@@ -99,7 +99,7 @@ contract WETHNativeConverter is NativeConverter {
     /// @notice It is known that this can lead to WETH not being able to perform withdrawals, because of a lack of gas backing.
     /// @notice However, this is acceptable, because WETH is a vault backed token so its backing should actually be staked.
     /// @notice Users can still bridge WETH back to Layer X to receive wETH or ETH.
-    function migrateGasBackingToLayerX(uint256 amount)
+    function migrateGasBackingToPrimaryChain(uint256 amount)
         external
         whenNotPaused
         onlyIfGasTokenIsEth
@@ -117,15 +117,15 @@ contract WETHNativeConverter is NativeConverter {
         // Precalculate the amount of Custom Token for which backing is being migrated.
         uint256 amountOfCustomToken = _convertToShares(amount);
 
-        // Taking lxlyBridge's gas balance here
-        weth.bridgeBackingToLayerX(amount);
-        lxlyBridge().bridgeAsset{value: amount}(
-            layerXLxlyId(), address(migrationManager()), amount, address(0), true, ""
+        // Taking agglayerBridge's gas balance here
+        weth.bridgeBackingToPrimaryChain(amount);
+        agglayerBridge().bridgeAsset{value: amount}(
+            primaryChainAgglayerId(), address(migrationManager()), amount, address(0), true, ""
         );
 
         // Bridge a message to Migration Manager on Layer X to complete the migration.
-        lxlyBridge().bridgeMessage(
-            layerXLxlyId(),
+        agglayerBridge().bridgeMessage(
+            primaryChainAgglayerId(),
             address(migrationManager()),
             true,
             abi.encode(

@@ -22,10 +22,10 @@ contract GenericCustomToken is CustomToken {
     function reinitialize(
         address owner_,
         uint8 originalUnderlyingTokenDecimals_,
-        address lxlyBridge_,
+        address agglayerBridge_,
         address nativeConverter_
     ) external reinitializer(2) {
         // Initialize the base implementation.
-        __CustomToken_init(owner_, originalUnderlyingTokenDecimals_, lxlyBridge_, nativeConverter_);
+        __CustomToken_init(owner_, originalUnderlyingTokenDecimals_, agglayerBridge_, nativeConverter_);
     }
 }

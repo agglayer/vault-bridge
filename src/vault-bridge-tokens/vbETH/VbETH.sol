@@ -3,7 +3,7 @@
 
 pragma solidity 0.8.29;
 
-import {VaultBridgeToken, ILxLyBridge} from "../../VaultBridgeToken.sol";
+import {VaultBridgeToken, IAgglayerBridge} from "../../VaultBridgeToken.sol";
 import {IWETH9} from "../../etc/IWETH9.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -29,8 +29,8 @@ contract VbETH is VaultBridgeToken {
         __VaultBridgeToken_init(initializer_, initParams);
 
         require(
-            ILxLyBridge(initParams.lxlyBridge).gasTokenAddress() == address(0)
-                && ILxLyBridge(initParams.lxlyBridge).gasTokenNetwork() == 0,
+            IAgglayerBridge(initParams.agglayerBridge).gasTokenAddress() == address(0)
+                && IAgglayerBridge(initParams.agglayerBridge).gasTokenNetwork() == 0,
             ContractNotSupportedOnThisNetwork()
         );
     }
@@ -38,7 +38,7 @@ contract VbETH is VaultBridgeToken {
     /// @dev deposit ETH to get vbETH
     function depositGasToken(address receiver) external payable whenNotPaused nonReentrant returns (uint256 shares) {
         (shares,) = _depositUsingCustomReceivingFunction(
-            _receiveUnderlyingTokenViaMsgValue, msg.value, lxlyId(), receiver, false, 0
+            _receiveUnderlyingTokenViaMsgValue, msg.value, agglayerId(), receiver, false, 0
         );
     }
 
@@ -73,7 +73,7 @@ contract VbETH is VaultBridgeToken {
         (mintedShares, assets) =
         // msg.value is used as assets value, if it exceeds shares value, WETH will be refunded
         _depositUsingCustomReceivingFunction(
-            _receiveUnderlyingTokenViaMsgValue, msg.value, lxlyId(), receiver, false, shares
+            _receiveUnderlyingTokenViaMsgValue, msg.value, agglayerId(), receiver, false, shares
         );
 
         // Check the output.
