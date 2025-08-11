@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: LicenseRef-PolygonLabs-Source-Available
 pragma solidity 0.8.29;
 
-import {ILxLyBridge as _ILxLyBridge} from "../../src/etc/ILxLyBridge.sol";
+import {IAgglayerBridge as _IAgglayerBridge} from "../../src/etc/IAgglayerBridge.sol";
 
-interface ILxLyBridge is _ILxLyBridge {
+interface IAgglayerBridge is _IAgglayerBridge {
     function depositCount() external view returns (uint32);
     function computeTokenProxyAddress(uint32 originNetwork, address originTokenAddress)
         external

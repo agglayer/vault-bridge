@@ -51,7 +51,7 @@ contract VbUSDTTest is GenericVaultBridgeTokenTest {
             minimumReservePercentage: minimumReservePercentage,
             yieldVault: address(vbTokenVault),
             yieldRecipient: yieldRecipient,
-            lxlyBridge: LXLY_BRIDGE,
+            agglayerBridge: LXLY_BRIDGE,
             minimumYieldVaultDeposit: MINIMUM_YIELD_VAULT_DEPOSIT,
             migrationManager: migrationManager,
             yieldVaultMaximumSlippagePercentage: YIELD_VAULT_ALLOWED_SLIPPAGE,
@@ -77,7 +77,7 @@ contract VbUSDTTest is GenericVaultBridgeTokenTest {
         vm.label(recipient, "Recipient");
         vm.label(sender, "Sender");
         vm.label(yieldRecipient, "Yield Recipient");
-        vm.label(LXLY_BRIDGE, "Lxly Bridge");
+        vm.label(LXLY_BRIDGE, "Agglayer Bridge");
     }
 
     function test_depositWithPermit() public override {
