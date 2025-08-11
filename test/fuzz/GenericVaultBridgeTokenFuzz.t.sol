@@ -80,7 +80,7 @@ contract GenericVaultBridgeTokenFuzzTest is Test {
             minimumReservePercentage: 1e17,
             yieldVault: address(vbTokenVault),
             yieldRecipient: yieldRecipient,
-            lxlyBridge: LXLY_BRIDGE,
+            agglayerBridge: LXLY_BRIDGE,
             minimumYieldVaultDeposit: MINIMUM_YIELD_VAULT_DEPOSIT,
             migrationManager: migrationManager,
             yieldVaultMaximumSlippagePercentage: YIELD_VAULT_ALLOWED_SLIPPAGE,
@@ -104,7 +104,7 @@ contract GenericVaultBridgeTokenFuzzTest is Test {
         vm.label(owner, "Owner");
         vm.label(sender, "Sender");
         vm.label(yieldRecipient, "Yield Recipient");
-        vm.label(LXLY_BRIDGE, "Lxly Bridge");
+        vm.label(LXLY_BRIDGE, "Agglayer Bridge");
         vm.label(address(vbTokenPart2), "vbToken Part 2");
     }
 
