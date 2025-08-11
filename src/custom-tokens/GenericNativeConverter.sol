@@ -23,8 +23,8 @@ contract GenericNativeConverter is NativeConverter {
         address owner_,
         address customToken_,
         address underlyingToken_,
-        address lxlyBridge_,
-        uint32 layerXLxlyId_,
+        address agglayerBridge_,
+        uint32 primaryChainAgglayerId_,
         uint256 nonMigratableBackingPercentage_,
         address migrationManager_
     ) external initializer {
@@ -33,8 +33,8 @@ contract GenericNativeConverter is NativeConverter {
             owner_,
             customToken_,
             underlyingToken_,
-            lxlyBridge_,
-            layerXLxlyId_,
+            agglayerBridge_,
+            primaryChainAgglayerId_,
             nonMigratableBackingPercentage_,
             migrationManager_
         );

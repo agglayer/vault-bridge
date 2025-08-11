@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: LicenseRef-PolygonLabs-Source-Available
-// Vault Bridge (last updated v0.5.0) (etc/ILxLyBridge.sol)
+// Vault Bridge (last updated v1.0.0) (etc/IAgglayerBridge.sol)
 
 pragma solidity 0.8.29;
 
 /// @author See https://github.com/agglayer/vault-bridge
-interface ILxLyBridge {
+interface IAgglayerBridge {
     function networkID() external view returns (uint32);
     function gasTokenAddress() external view returns (address);
     function gasTokenNetwork() external view returns (uint32);

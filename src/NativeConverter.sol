@@ -17,14 +17,14 @@ import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
 // External contracts.
 import {CustomToken} from "./CustomToken.sol";
-import {ILxLyBridge} from "./etc/ILxLyBridge.sol";
+import {IAgglayerBridge} from "./etc/IAgglayerBridge.sol";
 import {MigrationManager} from "./MigrationManager.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 /// @title Native Converter (optional)
 /// @author See https://github.com/agglayer/vault-bridge
-/// @notice Native Converter is an optional contract on Layer Ys that converts the underlying token (usually the bridge-wrapped version of the original underlying token from Layer X) to Custom Token, and vice versa, on demand. It can also migrate backing for Custom Token it has minted to Layer X, where vbToken will be minted and locked in LxLy Bridge. Please refer to `migrateBackingToLayerX` for more information.
+/// @notice Native Converter is an optional contract on Layer Ys that converts the underlying token (usually the bridge-wrapped version of the original underlying token from Layer X) to Custom Token, and vice versa, on demand. It can also migrate backing for Custom Token it has minted to Layer X, where vbToken will be minted and locked in LxLy Bridge. Please refer to `migrateBackingToPrimaryChain` for more information.
 /// @dev A base contract used to create Native Converters.
 /// @dev @note (ATTENTION) This contract MUST have mint and burn permission on Custom Token. Please refer to `CustomToken.sol` for more information.
 /// @dev @note IMPORTANT: The underlying token MUST NOT be a rebasing token, and MUST NOT have transfer hooks (i.e., enable reentrancy); it MAY have a transfer fee.
@@ -46,10 +46,10 @@ abstract contract NativeConverter is
     struct NativeConverterStorage {
         CustomToken customToken;
         IERC20 underlyingToken;
-        uint256 backingOnLayerY;
-        uint32 lxlyId;
-        ILxLyBridge lxlyBridge;
-        uint32 layerXLxlyId;
+        uint256 backingOnSecondaryChain;
+        uint32 agglayerId;
+        IAgglayerBridge agglayerBridge;
+        uint32 primaryChainAgglayerId;
         uint256 nonMigratableBackingPercentage;
         address migrationManager;
         bool _underlyingTokenIsNotMintable;
@@ -68,8 +68,8 @@ abstract contract NativeConverter is
     error InvalidOwner();
     error InvalidCustomToken();
     error InvalidUnderlyingToken();
-    error InvalidLxLyBridge();
-    error InvalidLayerXLxlyId();
+    error InvalidAgglayerBridge();
+    error InvalidPrimaryChainAgglayerId();
     error InvalidMigrationManager();
     error NonMatchingTokenDecimals(uint8 customTokenDecimals, uint8 underlyingTokenDecimals);
     error InvalidAssets();
@@ -97,8 +97,8 @@ abstract contract NativeConverter is
         address owner_,
         address customToken_,
         address underlyingToken_,
-        address lxlyBridge_,
-        uint32 layerXLxlyId_,
+        address agglayerBridge_,
+        uint32 primaryChainAgglayerId_,
         uint256 nonMigratableBackingPercentage_,
         address migrationManager_
     ) internal onlyInitializing {
@@ -108,8 +108,8 @@ abstract contract NativeConverter is
         require(owner_ != address(0), InvalidOwner());
         require(customToken_ != address(0), InvalidCustomToken());
         require(underlyingToken_ != address(0), InvalidUnderlyingToken());
-        require(lxlyBridge_ != address(0), InvalidLxLyBridge());
-        require(layerXLxlyId_ != ILxLyBridge(lxlyBridge_).networkID(), InvalidLxLyBridge());
+        require(agglayerBridge_ != address(0), InvalidAgglayerBridge());
+        require(primaryChainAgglayerId_ != IAgglayerBridge(agglayerBridge_).networkID(), InvalidAgglayerBridge());
         require(migrationManager_ != address(0), InvalidMigrationManager());
         require(nonMigratableBackingPercentage_ <= 1e18, InvalidNonMigratableBackingPercentage());
 
@@ -152,10 +152,10 @@ abstract contract NativeConverter is
         // Initialize the storage.
         $.customToken = CustomToken(customToken_);
         $.underlyingToken = IERC20(underlyingToken_);
-        $._underlyingTokenIsNotMintable = ILxLyBridge(lxlyBridge_).wrappedAddressIsNotMintable(underlyingToken_);
-        $.lxlyId = ILxLyBridge(lxlyBridge_).networkID();
-        $.lxlyBridge = ILxLyBridge(lxlyBridge_);
-        $.layerXLxlyId = layerXLxlyId_;
+        $._underlyingTokenIsNotMintable = IAgglayerBridge(agglayerBridge_).wrappedAddressIsNotMintable(underlyingToken_);
+        $.agglayerId = IAgglayerBridge(agglayerBridge_).networkID();
+        $.agglayerBridge = IAgglayerBridge(agglayerBridge_);
+        $.primaryChainAgglayerId = primaryChainAgglayerId_;
         $.migrationManager = migrationManager_;
         $.nonMigratableBackingPercentage = nonMigratableBackingPercentage_;
     }
@@ -176,27 +176,27 @@ abstract contract NativeConverter is
 
     /// @notice The amount of the underlying token that backs Custom Token minted by Native Converter on Layer Y that has not been migrated to Layer X.
     /// @dev The amount is used in accounting and may be different from Native Converter's underlying token balance. @note IMPORTANT: You may do as you wish with surplus underlying token balance, but you MUST NOT designate it as backing.
-    function backingOnLayerY() public view returns (uint256) {
+    function backingOnSecondaryChain() public view returns (uint256) {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
-        return $.backingOnLayerY;
+        return $.backingOnSecondaryChain;
     }
 
     /// @notice The LxLy ID of this network.
-    function lxlyId() public view returns (uint32) {
+    function agglayerId() public view returns (uint32) {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
-        return $.lxlyId;
+        return $.agglayerId;
     }
 
     /// @notice LxLy Bridge, which connects AggLayer networks.
-    function lxlyBridge() public view returns (ILxLyBridge) {
+    function agglayerBridge() public view returns (IAgglayerBridge) {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
-        return $.lxlyBridge;
+        return $.agglayerBridge;
     }
 
     /// @notice The LxLy ID of Layer X.
-    function layerXLxlyId() public view returns (uint32) {
+    function primaryChainAgglayerId() public view returns (uint32) {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
-        return $.layerXLxlyId;
+        return $.primaryChainAgglayerId;
     }
 
     /// @notice The percentage of backing that should remain in Native Converter when migrating backing to Layer X, based on the total supply of Custom Token.
@@ -243,7 +243,7 @@ abstract contract NativeConverter is
         assets = _receiveUnderlyingToken(msg.sender, assets);
 
         // Update the backing data.
-        $.backingOnLayerY += assets;
+        $.backingOnSecondaryChain += assets;
 
         // Set the return value.
         shares = _convertToShares(assets);
@@ -303,9 +303,9 @@ abstract contract NativeConverter is
         uint256 remainingAssets = assets;
 
         // Simulate deconversion.
-        uint256 backingOnLayerY_ = $.backingOnLayerY;
-        if (backingOnLayerY_ >= remainingAssets) return shares;
-        remainingAssets -= backingOnLayerY_;
+        uint256 backingOnSecondaryChain_ = $.backingOnSecondaryChain;
+        if (backingOnSecondaryChain_ >= remainingAssets) return shares;
+        remainingAssets -= backingOnSecondaryChain_;
 
         // Calculate the converted amount.
         uint256 convertedAssets = assets - remainingAssets;
@@ -322,7 +322,7 @@ abstract contract NativeConverter is
     /// @return assets The amount of the underlying token unlocked to the receiver.
     function deconvert(uint256 shares, address receiver) external whenNotPaused nonReentrant returns (uint256 assets) {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
-        return _deconvert(shares, $.lxlyId, receiver, false);
+        return _deconvert(shares, $.agglayerId, receiver, false);
     }
 
     /// @notice Burn a specific amount of Custom Token to unlock a respective amount of the underlying token, and bridge it to another network.
@@ -337,7 +337,7 @@ abstract contract NativeConverter is
         NativeConverterStorage storage $ = _getNativeConverterStorage();
 
         // Check the input.
-        require(destinationNetworkId != $.lxlyId, InvalidDestinationNetworkId());
+        require(destinationNetworkId != $.agglayerId, InvalidDestinationNetworkId());
 
         return _deconvert(shares, destinationNetworkId, receiver, forceUpdateGlobalExitRoot);
     }
@@ -360,24 +360,24 @@ abstract contract NativeConverter is
         assets = _convertToAssets(shares);
 
         // Get the available backing.
-        uint256 backingOnLayerY_ = backingOnLayerY();
+        uint256 backingOnSecondaryChain_ = backingOnSecondaryChain();
 
         // Revert if there is not enough backing.
-        require(backingOnLayerY_ >= assets, AssetsTooLarge(backingOnLayerY_, assets));
+        require(backingOnSecondaryChain_ >= assets, AssetsTooLarge(backingOnSecondaryChain_, assets));
 
         // Update the backing data.
-        $.backingOnLayerY -= assets;
+        $.backingOnSecondaryChain -= assets;
 
         // Burn Custom Token.
         $.customToken.burn(msg.sender, shares);
 
         // Withdraw the underlying token.
-        if (destinationNetworkId == $.lxlyId) {
+        if (destinationNetworkId == $.agglayerId) {
             // Withdraw to the receiver.
             _sendUnderlyingToken(receiver, assets);
         } else {
             // Bridge to the receiver.
-            $.lxlyBridge.bridgeAsset(
+            $.agglayerBridge.bridgeAsset(
                 destinationNetworkId, receiver, assets, address($.underlyingToken), forceUpdateGlobalExitRoot, ""
             );
         }
@@ -413,7 +413,7 @@ abstract contract NativeConverter is
         );
 
         // Return the amount of backing that can be migrated.
-        return $.backingOnLayerY > nonMigratableBacking ? $.backingOnLayerY - nonMigratableBacking : 0;
+        return $.backingOnSecondaryChain > nonMigratableBacking ? $.backingOnSecondaryChain - nonMigratableBacking : 0;
     }
 
     /// @notice Migrates a specific amount of backing to Layer X.
@@ -422,7 +422,7 @@ abstract contract NativeConverter is
     /// @notice This function can be called by a migrator only.
     /// @notice The migration can be completed by anyone on Layer X.
     /// @dev Consider calling this function periodically; anyone can complete a migration on Layer X.
-    function migrateBackingToLayerX(uint256 assets) external whenNotPaused onlyRole(MIGRATOR_ROLE) nonReentrant {
+    function migrateBackingToPrimaryChain(uint256 assets) external whenNotPaused onlyRole(MIGRATOR_ROLE) nonReentrant {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
 
         // Cache the migratable backing.
@@ -433,7 +433,7 @@ abstract contract NativeConverter is
         require(assets <= migratableBacking_, AssetsTooLarge(migratableBacking_, assets));
 
         // Update the backing data.
-        $.backingOnLayerY -= assets;
+        $.backingOnSecondaryChain -= assets;
 
         // Calculate the amount of Custom Token for which backing is being migrated.
         uint256 shares = _convertToShares(assets);
@@ -442,28 +442,32 @@ abstract contract NativeConverter is
         /* If the underlying token is not mintable by LxLy Bridge, we need to check for a transfer fee. */
         if ($._underlyingTokenIsNotMintable) {
             // Cache the balance.
-            uint256 balanceBefore = $.underlyingToken.balanceOf(address($.lxlyBridge));
+            uint256 balanceBefore = $.underlyingToken.balanceOf(address($.agglayerBridge));
 
             // Bridge.
             // @note IMPORTANT: Make sure the underlying token you are integrating does not enable reentrancy on `transferFrom`.
-            $.lxlyBridge.bridgeAsset($.layerXLxlyId, $.migrationManager, assets, address($.underlyingToken), true, "");
+            $.agglayerBridge.bridgeAsset(
+                $.primaryChainAgglayerId, $.migrationManager, assets, address($.underlyingToken), true, ""
+            );
 
             uint256 originalAssets = assets;
 
             // Calculate the bridged amount.
-            assets = $.underlyingToken.balanceOf(address($.lxlyBridge)) - balanceBefore;
+            assets = $.underlyingToken.balanceOf(address($.agglayerBridge)) - balanceBefore;
 
             // Try to prevent a mistake in case LxLy Bridge code changes.
             assert(assets > 0 && originalAssets >= assets);
         }
         /* If the underlying token is mintable by LxLy Bridge, it will be burned (not transferred). */
         else {
-            $.lxlyBridge.bridgeAsset($.layerXLxlyId, $.migrationManager, assets, address($.underlyingToken), true, "");
+            $.agglayerBridge.bridgeAsset(
+                $.primaryChainAgglayerId, $.migrationManager, assets, address($.underlyingToken), true, ""
+            );
         }
 
         // Bridge a message to Migration Manager on Layer X to complete the migration.
-        $.lxlyBridge.bridgeMessage(
-            $.layerXLxlyId,
+        $.agglayerBridge.bridgeMessage(
+            $.primaryChainAgglayerId,
             $.migrationManager,
             true,
             abi.encode(MigrationManager.CrossNetworkInstruction._0_COMPLETE_MIGRATION, abi.encode(shares, assets))
