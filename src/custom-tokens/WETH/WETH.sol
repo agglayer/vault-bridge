@@ -5,7 +5,7 @@ pragma solidity 0.8.29;
 
 import {CustomToken} from "../../CustomToken.sol";
 import {IWETH9} from "../../etc/IWETH9.sol";
-import {ILxLyBridge} from "../../etc/ILxLyBridge.sol";
+import {IAgglayerBridge} from "../../etc/IAgglayerBridge.sol";
 
 /// @title WETH
 /// @author See https://github.com/agglayer/vault-bridge
@@ -45,16 +45,16 @@ contract WETH is CustomToken {
     function reinitialize(
         address owner_,
         uint8 originalUnderlyingTokenDecimals_,
-        address lxlyBridge_,
+        address agglayerBridge_,
         address nativeConverter_
     ) external reinitializer(2) {
         WETHStorage storage $ = _getWETHStorage();
 
         // Initialize the inherited contracts.
-        __CustomToken_init(owner_, originalUnderlyingTokenDecimals_, lxlyBridge_, nativeConverter_);
+        __CustomToken_init(owner_, originalUnderlyingTokenDecimals_, agglayerBridge_, nativeConverter_);
 
-        $._gasTokenIsEth =
-            ILxLyBridge(lxlyBridge_).gasTokenAddress() == address(0) && ILxLyBridge(lxlyBridge_).gasTokenNetwork() == 0;
+        $._gasTokenIsEth = IAgglayerBridge(agglayerBridge_).gasTokenAddress() == address(0)
+            && IAgglayerBridge(agglayerBridge_).gasTokenNetwork() == 0;
     }
 
     function _getWETHStorage() private pure returns (WETHStorage storage $) {
@@ -63,7 +63,7 @@ contract WETH is CustomToken {
         }
     }
 
-    function bridgeBackingToLayerX(uint256 amount)
+    function bridgeBackingToPrimaryChain(uint256 amount)
         external
         whenNotPaused
         onlyIfGasTokenIsEth

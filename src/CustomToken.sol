@@ -32,7 +32,7 @@ abstract contract CustomToken is
     /// @custom:storage-location erc7201:agglayer.vault-bridge.CustomToken.storage
     struct CustomTokenStorage {
         uint8 decimals;
-        address lxlyBridge;
+        address agglayerBridge;
         address nativeConverter;
     }
 
@@ -48,7 +48,7 @@ abstract contract CustomToken is
     error Unauthorized();
     error InvalidOwner();
     error InvalidOriginalUnderlyingTokenDecimals();
-    error InvalidLxLyBridge();
+    error InvalidAgglayerBridge();
     error InvalidNativeConverter();
 
     // Events.
@@ -58,11 +58,11 @@ abstract contract CustomToken is
 
     /// @dev Checks if the sender is LxLy Bridge or Native Converter.
     /// @dev This modifier is used to restrict the minting and burning of Custom Token.
-    modifier onlyLxlyBridgeAndNativeConverter() {
+    modifier onlyAgglayerBridgeAndNativeConverter() {
         CustomTokenStorage storage $ = _getCustomTokenStorage();
 
         // Only LxLy Bridge and Native Converter can mint and burn Custom Token.
-        require(msg.sender == $.lxlyBridge || msg.sender == $.nativeConverter, Unauthorized());
+        require(msg.sender == $.agglayerBridge || msg.sender == $.nativeConverter, Unauthorized());
 
         _;
     }
@@ -75,7 +75,7 @@ abstract contract CustomToken is
     function __CustomToken_init(
         address owner_,
         uint8 originalUnderlyingTokenDecimals_,
-        address lxlyBridge_,
+        address agglayerBridge_,
         address nativeConverter_
     ) internal onlyInitializing {
         CustomTokenStorage storage $ = _getCustomTokenStorage();
@@ -83,7 +83,7 @@ abstract contract CustomToken is
         // Check the inputs.
         require(owner_ != address(0), InvalidOwner());
         require(originalUnderlyingTokenDecimals_ > 0, InvalidOriginalUnderlyingTokenDecimals());
-        require(lxlyBridge_ != address(0), InvalidLxLyBridge());
+        require(agglayerBridge_ != address(0), InvalidAgglayerBridge());
         require(nativeConverter_ != address(0), InvalidNativeConverter());
 
         // Preserve the `name` and `symbol` of the bridged vbToken.
@@ -111,7 +111,7 @@ abstract contract CustomToken is
 
         // Initialize the storage.
         $.decimals = originalUnderlyingTokenDecimals_;
-        $.lxlyBridge = lxlyBridge_;
+        $.agglayerBridge = agglayerBridge_;
         $.nativeConverter = nativeConverter_;
     }
 
@@ -125,9 +125,9 @@ abstract contract CustomToken is
     }
 
     /// @notice LxLy Bridge, which connects AggLayer networks.
-    function lxlyBridge() public view returns (address) {
+    function agglayerBridge() public view returns (address) {
         CustomTokenStorage storage $ = _getCustomTokenStorage();
-        return $.lxlyBridge;
+        return $.agglayerBridge;
     }
 
     /// @notice The address of Native Converter for this Custom Token.
@@ -177,7 +177,7 @@ abstract contract CustomToken is
     function mint(address account, uint256 value)
         external
         whenNotPaused
-        onlyLxlyBridgeAndNativeConverter
+        onlyAgglayerBridgeAndNativeConverter
         nonReentrant
     {
         // Do not mint if `account` is `address(0)`.
@@ -195,7 +195,7 @@ abstract contract CustomToken is
     function burn(address account, uint256 value)
         external
         whenNotPaused
-        onlyLxlyBridgeAndNativeConverter
+        onlyAgglayerBridgeAndNativeConverter
         nonReentrant
     {
         _burn(account, value);
