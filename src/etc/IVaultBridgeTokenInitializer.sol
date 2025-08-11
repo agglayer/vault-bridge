@@ -6,7 +6,7 @@ pragma solidity 0.8.29;
 // Main functionality.
 import {VaultBridgeToken} from "../VaultBridgeToken.sol";
 
-/// @title Vault Bridge Token Initializer (interface)
+/// @title Vault Bridge Token Initializer Interface
 /// @author See https://github.com/agglayer/vault-bridge
 /// @dev This interface exists because of a limitiation in the Solidity compiler.
 interface IVaultBridgeTokenInitializer {

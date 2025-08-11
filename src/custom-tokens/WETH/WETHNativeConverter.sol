@@ -15,7 +15,7 @@ contract WETHNativeConverter is NativeConverter {
     /// @dev It's implemented on a custom ERC-7201 namespace to reduce the risk of storage collisions when using with upgradeable contracts.
     /// @custom:storage-location erc7201:agglayer.vault-bridge.WETHNativeConverter.storage
     struct WETHNativeConverterStorage {
-        WETH _weth;
+        WETH __DEPRECATED___weth;
         bool _gasTokenIsEth;
         uint256 nonMigratableGasBackingPercentage;
     }
@@ -65,7 +65,6 @@ contract WETHNativeConverter is NativeConverter {
 
         require(nonMigratableGasBackingPercentage_ <= 1e18, InvalidNonMigratableBackingPercentage());
 
-        $._weth = WETH(payable(customToken_));
         $._gasTokenIsEth =
             ILxLyBridge(lxlyBridge_).gasTokenAddress() == address(0) && ILxLyBridge(lxlyBridge_).gasTokenNetwork() == 0;
         $.nonMigratableGasBackingPercentage = nonMigratableGasBackingPercentage_;
@@ -107,8 +106,7 @@ contract WETHNativeConverter is NativeConverter {
         onlyRole(MIGRATOR_ROLE)
         nonReentrant
     {
-        WETHNativeConverterStorage storage $ = _getWETHNativeConverterStorage();
-        WETH weth = $._weth;
+        WETH weth = WETH(payable(address(customToken())));
 
         uint256 migratableGasBacking_ = migratableGasBacking();
 
