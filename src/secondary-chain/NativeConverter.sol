@@ -8,8 +8,8 @@ import {Initializable} from "@openzeppelin-contracts-upgradeable/proxy/utils/Ini
 import {AccessControlUpgradeable} from "@openzeppelin-contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import {PausableUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/PausableUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
-import {ERC20PermitUser} from "./etc/ERC20PermitUser.sol";
-import {Versioned} from "./etc/Versioned.sol";
+import {ERC20PermitUser} from "../etc/ERC20PermitUser.sol";
+import {Versioned} from "../etc/Versioned.sol";
 
 // Libraries.
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -17,8 +17,8 @@ import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
 // External contracts.
 import {CustomToken} from "./CustomToken.sol";
-import {IAgglayerBridge} from "./etc/IAgglayerBridge.sol";
-import {MigrationManager} from "./MigrationManager.sol";
+import {IAgglayerBridge} from "../etc/IAgglayerBridge.sol";
+import {MigrationManager} from "../primary-chain/MigrationManager.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 

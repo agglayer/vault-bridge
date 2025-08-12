@@ -4,7 +4,7 @@
 pragma solidity 0.8.29;
 
 /// @dev Main functionality.
-import {IBridgeMessageReceiver} from "./etc/IBridgeMessageReceiver.sol";
+import {IBridgeMessageReceiver} from "../etc/IBridgeMessageReceiver.sol";
 
 /// @dev Other functionality.
 import {Initializable} from "@openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
@@ -12,7 +12,7 @@ import {AccessControlUpgradeable} from "@openzeppelin-contracts-upgradeable/acce
 import {PausableUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/PausableUpgradeable.sol";
 import {ReentrancyGuardTransientUpgradeable} from
     "@openzeppelin-contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
-import {Versioned} from "./etc/Versioned.sol";
+import {Versioned} from "../etc/Versioned.sol";
 
 /// @dev Libraries.
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -20,9 +20,9 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 /// @dev External contracts.
 import {VaultBridgeToken} from "./VaultBridgeToken.sol";
 import {VaultBridgeTokenPart2} from "./VaultBridgeTokenPart2.sol";
-import {IAgglayerBridge} from "./etc/IAgglayerBridge.sol";
+import {IAgglayerBridge} from "../etc/IAgglayerBridge.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IWETH9} from "./etc/IWETH9.sol";
+import {IWETH9} from "../etc/IWETH9.sol";
 
 /// @title Migration Manager (singleton)
 /// @author See https://github.com/agglayer/vault-bridge

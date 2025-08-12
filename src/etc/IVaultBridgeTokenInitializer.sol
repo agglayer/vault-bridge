@@ -4,7 +4,7 @@
 pragma solidity 0.8.29;
 
 // Main functionality.
-import {VaultBridgeToken} from "../VaultBridgeToken.sol";
+import {VaultBridgeToken} from "../primary-chain/VaultBridgeToken.sol";
 
 /// @title Vault Bridge Token Initializer Interface
 /// @author See https://github.com/agglayer/vault-bridge

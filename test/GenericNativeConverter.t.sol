@@ -2,10 +2,10 @@
 pragma solidity ^0.8.29;
 
 import "forge-std/Test.sol";
-import "src/custom-tokens/GenericNativeConverter.sol";
-import "src/NativeConverter.sol";
-import "src/MigrationManager.sol";
-import "src/custom-tokens/GenericCustomToken.sol";
+import "src/secondary-chain/agglayer/GenericNativeConverter.sol";
+import "src/secondary-chain/NativeConverter.sol";
+import "src/primary-chain/MigrationManager.sol";
+import "src/secondary-chain/agglayer/GenericCustomToken.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Errors} from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";

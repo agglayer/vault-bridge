@@ -2,23 +2,23 @@
 pragma solidity ^0.8.29;
 
 import "forge-std/Test.sol";
-import "src/VaultBridgeToken.sol";
+import "src/primary-chain/VaultBridgeToken.sol";
 
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {CustomToken} from "src/CustomToken.sol";
-import {MigrationManager} from "src/MigrationManager.sol";
-import {NativeConverter} from "src/NativeConverter.sol";
+import {CustomToken} from "src/secondary-chain/CustomToken.sol";
+import {MigrationManager} from "src/primary-chain/MigrationManager.sol";
+import {NativeConverter} from "src/secondary-chain/NativeConverter.sol";
 import {
     TransparentUpgradeableProxy,
     ITransparentUpgradeableProxy
 } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import {TestVault} from "test/etc/TestVault.sol";
 import {ZkEVMCommon} from "test/etc/ZkEVMCommon.sol";
-import {VaultBridgeTokenInitializer} from "src/VaultBridgeTokenInitializer.sol";
-import {GenericVaultBridgeToken} from "src/vault-bridge-tokens/GenericVaultBridgeToken.sol";
-import {VaultBridgeTokenPart2} from "src/VaultBridgeTokenPart2.sol";
-import {GenericNativeConverter} from "src/custom-tokens/GenericNativeConverter.sol";
-import {GenericCustomToken} from "src/custom-tokens/GenericCustomToken.sol";
+import {VaultBridgeTokenInitializer} from "src/primary-chain/VaultBridgeTokenInitializer.sol";
+import {GenericVaultBridgeToken} from "src/primary-chain/ethereum/GenericVaultBridgeToken.sol";
+import {VaultBridgeTokenPart2} from "src/primary-chain/VaultBridgeTokenPart2.sol";
+import {GenericNativeConverter} from "src/secondary-chain/agglayer/GenericNativeConverter.sol";
+import {GenericCustomToken} from "src/secondary-chain/agglayer/GenericCustomToken.sol";
 
 import {IBridgeL2SovereignChain} from "test/interfaces/IBridgeL2SovereignChain.sol";
 import {IAgglayerBridge as _IAgglayerBridge} from "test/interfaces/IAgglayerBridge.sol";
