@@ -16,9 +16,9 @@ import {IVersioned} from "./etc/IVersioned.sol";
 
 /// @title Custom Token (optional)
 /// @author See https://github.com/agglayer/vault-bridge
-/// @notice A Custom Token is an optional ERC-20 token on Layer Ys to represent the 'native' version of the original underlying token from Layer X on Layer Y, ideally (or, simply, the upgraded version of the bridged vbToken).
+/// @notice A Custom Token is an optional ERC-20 token on Secondary Chains to represent the 'native' version of the original underlying token from Primary Chain on Secondary Chain, ideally (or, simply, the upgraded version of the bridged vbToken).
 /// @dev A base contract used to create Custom Tokens.
-/// @dev @note IMPORTANT: Custom Token MUST be used as the new implementation for the bridged vbToken or be custom mapped to the corresponding vbToken on LxLy Bridge on Layer Y, and MUST give the minting and burning permission to LxLy Bridge and Native Converter. It MAY have a transfer fee.
+/// @dev @note IMPORTANT: Custom Token MUST be used as the new implementation for the bridged vbToken or be custom mapped to the corresponding vbToken on Agglayer Bridge on Secondary Chain, and MUST give the minting and burning permission to Agglayer Bridge and Native Converter. It MAY have a transfer fee.
 abstract contract CustomToken is
     Initializable,
     AccessControlUpgradeable,
@@ -56,12 +56,12 @@ abstract contract CustomToken is
 
     // -----================= ::: MODIFIERS ::: =================-----
 
-    /// @dev Checks if the sender is LxLy Bridge or Native Converter.
+    /// @dev Checks if the sender is Agglayer Bridge or Native Converter.
     /// @dev This modifier is used to restrict the minting and burning of Custom Token.
     modifier onlyAgglayerBridgeAndNativeConverter() {
         CustomTokenStorage storage $ = _getCustomTokenStorage();
 
-        // Only LxLy Bridge and Native Converter can mint and burn Custom Token.
+        // Only Agglayer Bridge and Native Converter can mint and burn Custom Token.
         require(msg.sender == $.agglayerBridge || msg.sender == $.nativeConverter, Unauthorized());
 
         _;
@@ -70,7 +70,7 @@ abstract contract CustomToken is
     // -----================= ::: SETUP ::: =================-----
 
     /// @dev Preserves the `name` and `symbol` of the bridged vbToken.
-    /// @param originalUnderlyingTokenDecimals_ The number of decimals of the original underlying token on Layer X. Custom Token will have the same number of decimals as the original underlying token.
+    /// @param originalUnderlyingTokenDecimals_ The number of decimals of the original underlying token on Primary Chain. Custom Token will have the same number of decimals as the original underlying token.
     /// @param nativeConverter_ The address of Native Converter for this Custom Token.
     function __CustomToken_init(
         address owner_,
@@ -118,13 +118,13 @@ abstract contract CustomToken is
     // -----================= ::: STORAGE ::: =================-----
 
     /// @notice The number of decimals of Custom Token.
-    /// @notice The number of decimals is the same as that of the original underlying token on Layer X.
+    /// @notice The number of decimals is the same as that of the original underlying token on Primary Chain.
     function decimals() public view override returns (uint8) {
         CustomTokenStorage storage $ = _getCustomTokenStorage();
         return $.decimals;
     }
 
-    /// @notice LxLy Bridge, which connects AggLayer networks.
+    /// @notice Agglayer Bridge, which connects AggLayer networks.
     function agglayerBridge() public view returns (address) {
         CustomTokenStorage storage $ = _getCustomTokenStorage();
         return $.agglayerBridge;
@@ -172,8 +172,8 @@ abstract contract CustomToken is
     // -----================= ::: CUSTOM TOKEN ::: =================-----
 
     /// @notice Mints Custom Tokens to the recipient.
-    /// @notice This function can be called by LxLy Bridge and Native Converter only.
-    /// @param account @note CAUTION! Minting to `address(0)` will result in no tokens minted! This is to enable vbToken on Layer X to bridge tokens to address zero on Layer Y at the end of the process of migrating backing from Native Converter to Layer X. Please refer to `NativeConverter.sol` for more information.
+    /// @notice This function can be called by Agglayer Bridge and Native Converter only.
+    /// @param account @note CAUTION! Minting to `address(0)` will result in no tokens minted! This is to enable vbToken on Primary Chain to bridge tokens to address zero on Secondary Chain at the end of the process of migrating backing from Native Converter to Primary Chain. Please refer to `NativeConverter.sol` for more information.
     function mint(address account, uint256 value)
         external
         whenNotPaused
@@ -191,7 +191,7 @@ abstract contract CustomToken is
     }
 
     /// @notice Burns Custom Tokens from a holder.
-    /// @notice This function can be called by LxLy Bridge and Native Converter only.
+    /// @notice This function can be called by Agglayer Bridge and Native Converter only.
     function burn(address account, uint256 value)
         external
         whenNotPaused

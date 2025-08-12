@@ -32,9 +32,9 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 
 /// @title Vault Bridge Token
 /// @author See https://github.com/agglayer/vault-bridge
-/// @notice A vbToken is an ERC-20 token, ERC-4626 vault, and LxLy Bridge extension, enabling deposits and bridging of select assets, such as WBTC, WETH, USDT, USDC, and USDS, while putting the assets to work to produce yield.
+/// @notice A vbToken is an ERC-20 token, ERC-4626 vault, and Agglayer Bridge extension, enabling deposits and bridging of select assets, such as WBTC, WETH, USDT, USDC, and USDS, while putting the assets to work to produce yield.
 /// @dev A base contract used to create vbTokens.
-/// @dev @note IMPORTANT: In order to not drive the complexity of the Vault Bridge protocol up, vbToken MUST NOT have transfer, deposit, or withdrawal fees. The underlying token on Layer X MUST NOT have a transfer fee; this contract will revert if it detects a transfer fee. The underlying token and Custom Token on Layer Ys MAY have transfer fees. The yield vault SHOULD NOT have deposit and/or withdrawal fees; however, it is expected that produced yield will offset any costs incurred when depositing to and withdrawing from the yield vault for the purpose of producing yield or rebalancing the internal reserve. The price of the yield vault's shares MUST NOT decrease (e.g., there is no bad debt realization); still, this contract implements solvency checks for protection with a configurable slippage parameter. Additionally, the underlying token MUST NOT be a rebasing token, and MUST NOT have transfer hooks (i.e., does not enable reentrancy/crossentrancy).
+/// @dev @note IMPORTANT: In order to not drive the complexity of the Vault Bridge protocol up, vbToken MUST NOT have transfer, deposit, or withdrawal fees. The underlying token on Primary Chain MUST NOT have a transfer fee; this contract will revert if it detects a transfer fee. The underlying token and Custom Token on Secondary Chains MAY have transfer fees. The yield vault SHOULD NOT have deposit and/or withdrawal fees; however, it is expected that produced yield will offset any costs incurred when depositing to and withdrawing from the yield vault for the purpose of producing yield or rebalancing the internal reserve. The price of the yield vault's shares MUST NOT decrease (e.g., there is no bad debt realization); still, this contract implements solvency checks for protection with a configurable slippage parameter. Additionally, the underlying token MUST NOT be a rebasing token, and MUST NOT have transfer hooks (i.e., does not enable reentrancy/crossentrancy).
 abstract contract VaultBridgeToken is
     Initializable,
     AccessControlUpgradeable,
@@ -165,7 +165,7 @@ abstract contract VaultBridgeToken is
         _;
     }
 
-    /// @dev Checks if the sender is LxLy Bridge.
+    /// @dev Checks if the sender is Agglayer Bridge.
     modifier onlyAgglayerBridge() {
         VaultBridgeTokenStorage storage $ = _getVaultBridgeTokenStorage();
         require(msg.sender == address($.agglayerBridge), Unauthorized());
@@ -265,19 +265,19 @@ abstract contract VaultBridgeToken is
         return $.yieldRecipient;
     }
 
-    /// @notice The LxLy ID of this network.
+    /// @notice The Agglayer ID of this network.
     function agglayerId() public view returns (uint32) {
         VaultBridgeTokenStorage storage $ = _getVaultBridgeTokenStorage();
         return $.agglayerId;
     }
 
-    /// @notice LxLy Bridge, which connects AggLayer networks.
+    /// @notice Agglayer Bridge, which connects AggLayer networks.
     function agglayerBridge() public view returns (IAgglayerBridge) {
         VaultBridgeTokenStorage storage $ = _getVaultBridgeTokenStorage();
         return $.agglayerBridge;
     }
 
-    /// @notice A dedicated fund for covering any fees on Layer Y during a migration of backing to Layer X. Please refer to `completeMigration` for more information.
+    /// @notice A dedicated fund for covering any fees on Secondary Chain during a migration of backing to Primary Chain. Please refer to `completeMigration` for more information.
     function migrationFeesFund() public view returns (uint256) {
         VaultBridgeTokenStorage storage $ = _getVaultBridgeTokenStorage();
         return $.migrationFeesFund;
@@ -768,7 +768,7 @@ abstract contract VaultBridgeToken is
         require(redeemedShares == shares, IncorrectAmountOfSharesRedeemed(redeemedShares, shares));
     }
 
-    /// @notice Claim vbToken from LxLy Bridge and redeem it.
+    /// @notice Claim vbToken from Agglayer Bridge and redeem it.
     function claimAndRedeem(
         bytes32[32] calldata smtProofLocalExitRoot,
         bytes32[32] calldata smtProofRollupExitRoot,
@@ -782,7 +782,7 @@ abstract contract VaultBridgeToken is
     ) external whenNotPaused nonReentrant returns (uint256 assets) {
         VaultBridgeTokenStorage storage $ = _getVaultBridgeTokenStorage();
 
-        // Claim vbToken from LxLy Bridge.
+        // Claim vbToken from Agglayer Bridge.
         $.agglayerBridge.claimAsset(
             smtProofLocalExitRoot,
             smtProofRollupExitRoot,
@@ -857,7 +857,7 @@ abstract contract VaultBridgeToken is
     }
 
     /// @notice The reserve percentage in real-time.
-    /// @notice The reserve is based on the total supply of vbToken, and does not account for uncompleted migrations of backing from Layer Ys to Layer X. Please refer to `completeMigration` for more information.
+    /// @notice The reserve is based on the total supply of vbToken, and does not account for uncompleted migrations of backing from Secondary Chains to Primary Chain. Please refer to `completeMigration` for more information.
     function reservePercentage() public view returns (uint256) {
         VaultBridgeTokenStorage storage $ = _getVaultBridgeTokenStorage();
 
@@ -983,7 +983,7 @@ abstract contract VaultBridgeToken is
         assets;
     }
 
-    /// @notice Adds a specific amount of the underlying token to a dedicated fund for covering any fees on Layer Y during a migration of backing to Layer X by transferring it from the sender. Please refer to `completeMigration` for more information.
+    /// @notice Adds a specific amount of the underlying token to a dedicated fund for covering any fees on Secondary Chain during a migration of backing to Primary Chain by transferring it from the sender. Please refer to `completeMigration` for more information.
     /// @dev Delegates the call to `VaultBridgeTokenPart2`.
     /// @dev @note (ATTENTION) The `virtual` modifier allows `VaultBridgeTokenPart2` to override this function. Do not override the function yourself.
     function donateForCompletingMigration(uint256 assets) external virtual delegatedToPart2 {
@@ -991,18 +991,18 @@ abstract contract VaultBridgeToken is
         assets;
     }
 
-    /// @notice Completes a migration of backing from a Layer Y to Layer X by minting and locking the required amount of vbToken in LxLy Bridge.
-    /// @notice Anyone can trigger the execution of this function by claiming the asset and message on LxLy Bridge. Please refer to `NativeConverter.sol` for more information.
-    /// @dev Backing for Custom Token minted by Native Converter on Layer Ys can be migrated to Layer X.
-    /// @dev When Native Converter migrates backing, it calls both `bridgeAsset` and `bridgeMessage` on LxLy Bridge to `migrateBackingToPrimaryChain`.
-    /// @dev The asset must be claimed before the message on LxLy Bridge.
-    /// @dev The message tells vbToken how much Custom Token must be backed by vbToken, which is minted and bridged to address zero on the respective Layer Y. This action provides liquidity when bridging Custom Token to from Layer Ys to Layer X and increments the pessimistic proof.
+    /// @notice Completes a migration of backing from a Secondary Chain to Primary Chain by minting and locking the required amount of vbToken in Agglayer Bridge.
+    /// @notice Anyone can trigger the execution of this function by claiming the asset and message on Agglayer Bridge. Please refer to `NativeConverter.sol` for more information.
+    /// @dev Backing for Custom Token minted by Native Converter on Secondary Chains can be migrated to Primary Chain.
+    /// @dev When Native Converter migrates backing, it calls both `bridgeAsset` and `bridgeMessage` on Agglayer Bridge to `migrateBackingToPrimaryChain`.
+    /// @dev The asset must be claimed before the message on Agglayer Bridge.
+    /// @dev The message tells vbToken how much Custom Token must be backed by vbToken, which is minted and bridged to address zero on the respective Secondary Chain. This action provides liquidity when bridging Custom Token to from Secondary Chains to Primary Chain and increments the pessimistic proof.
     /// @dev This function can be called by Migraton Manager only.
     /// @dev Delegates the call to `VaultBridgeTokenPart2`.
     /// @dev @note (ATTENTION) The `virtual` modifier allows `VaultBridgeTokenPart2` to override this function. Do not override the function yourself.
-    /// @param originNetwork The LxLy ID of Layer Y the backing is being migrated from.
-    /// @param shares The amount of vbToken required to mint and lock up in LxLy Bridge. Assets from a dedicated migration fees fund may be used to offset any fees incurred on Layer Y during the process. If a migration cannot be completed due to insufficient assets, anyone can donate the underlying token to the migration fees fund. Please refer to `donateForCompletingMigration` for more information.
-    /// @param assets The amount of the underlying token migrated from Layer Y (after any fees on Layer Y).
+    /// @param originNetwork The Agglayer ID of Secondary Chain the backing is being migrated from.
+    /// @param shares The amount of vbToken required to mint and lock up in Agglayer Bridge. Assets from a dedicated migration fees fund may be used to offset any fees incurred on Secondary Chain during the process. If a migration cannot be completed due to insufficient assets, anyone can donate the underlying token to the migration fees fund. Please refer to `donateForCompletingMigration` for more information.
+    /// @param assets The amount of the underlying token migrated from Secondary Chain (after any fees on Secondary Chain).
     function completeMigration(uint32 originNetwork, uint256 shares, uint256 assets)
         external
         virtual
