@@ -34,18 +34,18 @@ Vault Bridge enables chains and apps to generate native yield on TVL by putting 
 
 The protocol is comprised of:
 
-- One primary chain ("Layer X")
+- One Primary Chain
   - [Vault Bridge Token](#vault-bridge-token)
   - [Migration Manager](#migration-manager)
-- Many secondary chains ("Layer Y")
+- Many Secondary Chains
   - [Custom Token](#custom-token)
   - [Native Converter](#native-converter)
 
 ### TL;DR
 
-Select assets are bridged from Layer X to Layer Y. These assets are deposited into Vault Bridge Token contract on Layer X, which mints and bridges vbToken to Layer Y. Deposited assets are used to generate yield on Layer X, while bridged vbTokens are used in DeFi on Layer Y. Generated yield gets distributed to chains and apps participating in the revenue sharing program.
+Select assets are bridged from Primary Chain to Secondary Chain. These assets are deposited into Vault Bridge Token contract on Primary Chain, which mints and bridges vbToken to Secondary Chain. Deposited assets are used to generate yield on Primary Chain, while bridged vbTokens are used in DeFi on Secondary Chain. Generated yield gets distributed to chains and apps participating in the revenue sharing program.
 
-Native Converter contract can be deployed on Layer Y to enable acquisition of vbToken on Layer Y without having to bridge from Layer X. Accumulated backing in Native Converter on Layer Y gets migrated to Layer X and deposited into Vault Bridge Token contract.
+Native Converter contract can be deployed on Secondary Chain to enable acquisition of vbToken on Secondary Chain without having to bridge from Primary Chain. Accumulated backing in Native Converter on Secondary Chain gets migrated to Primary Chain and deposited into Vault Bridge Token contract.
 
 ### Vault Bridge Token
 
@@ -55,7 +55,7 @@ A Vault Bridge Token is:
 - [ERC-4626](https://eips.ethereum.org/EIPS/eip-4626) vault
 - [Unified Bridge](https://github.com/agglayer/agglayer-contracts) extension
 
-Assets in high demand with available yield strategies, such as WETH and USDC, can get their versions of vbTokens. The underlying asset is deposited into Vault Bridge Token contract, and vbToken is minted in a 1:1 ratio. The same can be withdrawn by burning vbToken. Vault Bridge Token contract doubles a pseudo bridge, so vbToken can be minted and bridged, or claimed and redeemed, in a single call. Deposited underlying assets are put into an external, ERC-4626 compatible vault ("yield vault") where they generate yield. Yield is distributed to chains and apps that participate in the revenue sharing program. Vault Bridge Token contracts also includes functionality that enables minting of vbToken directly on Layer Y via Native Converter, with backing migration to Layer X via Migration Manager.
+Assets in high demand with available yield strategies, such as WETH and USDC, can get their versions of vbTokens. The underlying asset is deposited into Vault Bridge Token contract, and vbToken is minted in a 1:1 ratio. The same can be withdrawn by burning vbToken. Vault Bridge Token contract doubles a pseudo bridge, so vbToken can be minted and bridged, or claimed and redeemed, in a single call. Deposited underlying assets are put into an external, ERC-4626 compatible vault ("yield vault") where they generate yield. Yield is distributed to chains and apps that participate in the revenue sharing program. Vault Bridge Token contracts also includes functionality that enables minting of vbToken directly on Secondary Chain via Native Converter, with backing migration to Primary Chain via Migration Manager.
 
 ### Migration Manager
 
@@ -63,7 +63,7 @@ The Migration Manager is:
 
 - [Vault Bridge Token](#vault-bridge-token) dependency
 
-vbTokens can be minted directly on Layer Y. In order for an underlying asset that backs vbToken minted on Layer Y to be deposited in Vault Bridge Token contract on Layer X, backing is migrated to Layer X via Native Converter and Migration Manager. Migration Manager completes migrations by interacting with Vault Bridge Token contract. All vbTokens share the same Migration Manager contract.
+vbTokens can be minted directly on Secondary Chain. In order for an underlying asset that backs vbToken minted on Secondary Chain to be deposited in Vault Bridge Token contract on Primary Chain, backing is migrated to Primary Chain via Native Converter and Migration Manager. Migration Manager completes migrations by interacting with Vault Bridge Token contract. All vbTokens share the same Migration Manager contract.
 
 ### Custom Token
 
@@ -71,7 +71,7 @@ A Custom Token is:
 
 - [ERC-20](https://eips.ethereum.org/EIPS/eip-20) token
 
-Bridged vbToken can be upgraded to Custom Token on Layer Y. This enables custom behavior, such as bridged vbETH to integrate WETH9 interface, replacing WETH on Layer Y.
+Bridged vbToken can be upgraded to Custom Token on Secondary Chain. This enables custom behavior, such as bridged vbETH to integrate WETH9 interface, replacing WETH on Secondary Chain.
 
 ### Native Converter
 
@@ -80,7 +80,7 @@ A Native Converter is:
 - [Vault Bridge Token](#vault-bridge-token) extension
 - [Unified Bridge](https://github.com/agglayer/agglayer-contracts) extension
 
-Native Converter can be deployed on Layer Y to enable minting of vbToken directly on Layer Y by converting the bridged underlying asset, in a 1:1 ratio. The same can be deconverted to by burning bridged vbToken. Accumulated backing in Native Converter on Layer Y can be migrated to Layer X to be deposited into Vault Bridge Token contract via Migration Manger. For this reason, liqudity for deconverting to the bridged underlying token on Layer Y is guaranteed only up to a certain percentage. Native Converter doubles a bridge extension, so vbToken can be deconverted and bridged in a single call.
+Native Converter can be deployed on Secondary Chain to enable minting of vbToken directly on Secondary Chain by converting the bridged underlying asset, in a 1:1 ratio. The same can be deconverted to by burning bridged vbToken. Accumulated backing in Native Converter on Secondary Chain can be migrated to Primary Chain to be deposited into Vault Bridge Token contract via Migration Manger. For this reason, liqudity for deconverting to the bridged underlying token on Secondary Chain is guaranteed only up to a certain percentage. Native Converter doubles a bridge extension, so vbToken can be deconverted and bridged in a single call.
 
 ## Get Started
 

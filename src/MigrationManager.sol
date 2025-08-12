@@ -26,9 +26,9 @@ import {IWETH9} from "./etc/IWETH9.sol";
 
 /// @title Migration Manager (singleton)
 /// @author See https://github.com/agglayer/vault-bridge
-/// @notice Migration Manager is a singleton contract on Layer X.
-/// @notice Backing for Custom Tokens minted by Native Converters on Layer Ys can be migrated to Migration Manager on Layer X. Migration Manager completes migrations by calling `completeMigration` on the corresponidng vbToken, which mints vbToken and bridges it to address zero on the Layer Ys, effectively locking the backing in LxLy Bridge. Please refer to `onMessageReceived` for more information.
-/// @dev This contract exists to prevent manipulation of vbTokens' internal accounting through reentrancy (specifically, claiming assets on LxLy Bridge to vbToken mid-execution).
+/// @notice Migration Manager is a singleton contract on Primary Chain.
+/// @notice Backing for Custom Tokens minted by Native Converters on Secondary Chains can be migrated to Migration Manager on Primary Chain. Migration Manager completes migrations by calling `completeMigration` on the corresponidng vbToken, which mints vbToken and bridges it to address zero on the Secondary Chains, effectively locking the backing in Agglayer Bridge. Please refer to `onMessageReceived` for more information.
+/// @dev This contract exists to prevent manipulation of vbTokens' internal accounting through reentrancy (specifically, claiming assets on Agglayer Bridge to vbToken mid-execution).
 contract MigrationManager is
     IBridgeMessageReceiver,
     Initializable,
@@ -90,7 +90,7 @@ contract MigrationManager is
 
     // -----================= ::: MODIFIERS ::: =================-----
 
-    /// @dev Checks if the sender is LxLy Bridge.
+    /// @dev Checks if the sender is Agglayer Bridge.
     modifier onlyAgglayerBridge() {
         MigrationManagerStorage storage $ = _getMigrationManagerStorage();
         require(msg.sender == address($.agglayerBridge), Unauthorized());
@@ -137,15 +137,15 @@ contract MigrationManager is
 
     // -----================= ::: STORAGE ::: =================-----
 
-    /// @notice LxLy Bridge, which connects AggLayer networks.
+    /// @notice Agglayer Bridge, which connects AggLayer networks.
     function agglayerBridge() public view returns (IAgglayerBridge) {
         MigrationManagerStorage storage $ = _getMigrationManagerStorage();
         return $.agglayerBridge;
     }
 
     /// @notice Tells which vbToken Native Converter on Layer a Y belongs to.
-    /// @param secondaryChainAgglayerId Layer Y's LxLy ID.
-    /// @param nativeConverter The address of Native Converter on Layer Y.
+    /// @param secondaryChainAgglayerId Secondary Chain's Agglayer ID.
+    /// @param nativeConverter The address of Native Converter on Secondary Chain.
     function nativeConvertersConfiguration(uint32 secondaryChainAgglayerId, address nativeConverter)
         public
         view
@@ -164,12 +164,12 @@ contract MigrationManager is
 
     // -----================= ::: MIGRATION MANAGER ::: =================-----
 
-    /// @notice Maps Native Converters on Layer Ys to vbToken and underlying token on Layer X.
+    /// @notice Maps Native Converters on Secondary Chains to vbToken and underlying token on Primary Chain.
     /// @dev CAUTION! Misconfiguration could allow an attacker to gain unauthorized access to vbToken and other contracts.
     /// @notice This function can be called by the owner only.
-    /// @param secondaryChainAgglayerIds The Layer Ys' LxLy IDs.
-    /// @param nativeConverters The addresses of Native Converters on Layer Ys.
-    /// @param vbToken The address of vbToken on Layer X Native Converter belongs to. Set to address zero to unset the tokens. You can override tokens without unsetting them first.
+    /// @param secondaryChainAgglayerIds The Secondary Chains' Agglayer IDs.
+    /// @param nativeConverters The addresses of Native Converters on Secondary Chains.
+    /// @param vbToken The address of vbToken on Primary Chain Native Converter belongs to. Set to address zero to unset the tokens. You can override tokens without unsetting them first.
     function configureNativeConverters(
         uint32[] calldata secondaryChainAgglayerIds,
         address[] calldata nativeConverters,
@@ -180,7 +180,7 @@ contract MigrationManager is
         // Check the inputs.
         require(secondaryChainAgglayerIds.length == nativeConverters.length, NonMatchingInputLengths());
 
-        // Cache Layer X LxLy ID.
+        // Cache Primary Chain Agglayer ID.
         uint32 agglayerId = $._agglayerId;
 
         for (uint256 i; i < secondaryChainAgglayerIds.length; ++i) {
@@ -230,10 +230,10 @@ contract MigrationManager is
         }
     }
 
-    /// @dev When Native Converter migrates backing, it calls both `bridgeAsset` and `bridgeMessage` on LxLy Bridge to `migrateBackingToPrimaryChain`.
-    /// @dev The asset must be claimed before the message on LxLy Bridge.
-    /// @dev The message tells vbToken how much Custom Token must be backed by vbToken, which is minted and bridged to address zero on the respective Layer Y. This action provides liquidity when bridging Custom Token to from Layer Ys to Layer X and increments the pessimistic proof.
-    /// @dev This function can be called by LxLy Bridge only.
+    /// @dev When Native Converter migrates backing, it calls both `bridgeAsset` and `bridgeMessage` on Agglayer Bridge to `migrateBackingToPrimaryChain`.
+    /// @dev The asset must be claimed before the message on Agglayer Bridge.
+    /// @dev The message tells vbToken how much Custom Token must be backed by vbToken, which is minted and bridged to address zero on the respective Secondary Chain. This action provides liquidity when bridging Custom Token to from Secondary Chains to Primary Chain and increments the pessimistic proof.
+    /// @dev This function can be called by Agglayer Bridge only.
     function onMessageReceived(address originAddress, uint32 originNetwork, bytes memory data)
         external
         payable

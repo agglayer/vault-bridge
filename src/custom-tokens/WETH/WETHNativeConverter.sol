@@ -95,10 +95,10 @@ contract WETHNativeConverter is NativeConverter {
     /// @dev This special function allows the NativeConverter owner to migrate the gas backing of the WETH Custom Token
     /// @dev It simply takes the amount of gas token from the WETH contract
     /// @dev and performs the migration using a special CrossNetworkInstruction called _1_WRAP_GAS_TOKEN_AND_COMPLETE_MIGRATION
-    /// @dev It instructs vbETH on Layer X to first wrap the gas token and then deposit it to complete the migration.
+    /// @dev It instructs vbETH on Primary Chain to first wrap the gas token and then deposit it to complete the migration.
     /// @notice It is known that this can lead to WETH not being able to perform withdrawals, because of a lack of gas backing.
     /// @notice However, this is acceptable, because WETH is a vault backed token so its backing should actually be staked.
-    /// @notice Users can still bridge WETH back to Layer X to receive wETH or ETH.
+    /// @notice Users can still bridge WETH back to Primary Chain to receive wETH or ETH.
     function migrateGasBackingToPrimaryChain(uint256 amount)
         external
         whenNotPaused
@@ -123,7 +123,7 @@ contract WETHNativeConverter is NativeConverter {
             primaryChainAgglayerId(), address(migrationManager()), amount, address(0), true, ""
         );
 
-        // Bridge a message to Migration Manager on Layer X to complete the migration.
+        // Bridge a message to Migration Manager on Primary Chain to complete the migration.
         agglayerBridge().bridgeMessage(
             primaryChainAgglayerId(),
             address(migrationManager()),

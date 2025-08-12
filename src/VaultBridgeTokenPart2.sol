@@ -135,8 +135,8 @@ contract VaultBridgeTokenPart2 is VaultBridgeToken {
         _receiveUnderlyingToken(msg.sender, assets);
 
         // Calculate the discrepancy between the required amount of vbToken (`shares`) and the amount of the underlying token received from Migration Manager (`assets`).
-        // A discrepancy is possible if the underlying token implements transfer fees on Layer Y. To offset the discrepancy, we mint more vbToken, backed by assets from the dedicated migration fees fund.
-        // This ensures that the amount of vbToken locked up in LxLy Bridge on Layer X matches the supply of Custom Token on Layer Ys down to a wei.
+        // A discrepancy is possible if the underlying token implements transfer fees on Secondary Chain. To offset the discrepancy, we mint more vbToken, backed by assets from the dedicated migration fees fund.
+        // This ensures that the amount of vbToken locked up in Agglayer Bridge on Primary Chain matches the supply of Custom Token on Secondary Chains down to a wei.
         uint256 requiredAssets = convertToAssets(shares);
         uint256 discrepancy = requiredAssets - assets;
         uint256 assetsInMigrationFund = $.migrationFeesFund;
@@ -168,7 +168,7 @@ contract VaultBridgeTokenPart2 is VaultBridgeToken {
         $.reservedAssets += assetsToReserve;
 
         // Mint vbToken to self and bridge it to address zero on the origin network.
-        // The vbToken will not be claimable on the origin network, but provides liquidity when bridging from Layer Ys to Layer X and increments the pessimistic proof.
+        // The vbToken will not be claimable on the origin network, but provides liquidity when bridging from Secondary Chains to Primary Chain and increments the pessimistic proof.
         _mint(address(this), shares);
         $.agglayerBridge.bridgeAsset(originNetwork, address(0), shares, address(this), true, "");
 
