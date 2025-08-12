@@ -288,7 +288,7 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
         vm.expectRevert(NativeConverter.InvalidAssets.selector);
         wETHConverter.migrateGasBackingToPrimaryChain(0); // try with 0 backing
 
-        // create backing on layer Y
+        // create backing on Secondary Chain
         uint256 backingOnSecondaryChain = 0;
         deal(address(underlyingToken), owner, amount);
         underlyingToken.approve(address(nativeConverter), amount);

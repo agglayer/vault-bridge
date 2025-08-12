@@ -107,7 +107,7 @@ contract VaultBridgeTokenInitializer is IVaultBridgeTokenInitializer, VaultBridg
         $.yieldVaultMaximumSlippagePercentage = initParams.yieldVaultMaximumSlippagePercentage;
         $._vaultBridgeTokenPart2 = initParams.vaultBridgeTokenPart2;
 
-        // Approve the yield vault and LxLy Bridge.
+        // Approve the yield vault and Agglayer Bridge.
         IERC20(initParams.underlyingToken).forceApprove(initParams.yieldVault, type(uint256).max);
         _approve(address(this), address(initParams.agglayerBridge), type(uint256).max);
     }

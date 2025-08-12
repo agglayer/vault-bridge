@@ -274,7 +274,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
 
     function setUp() public virtual {
         //////////////////////////////////////////////////////////////
-        // Layer X
+        // Primary Chain
         //////////////////////////////////////////////////////////////
         forkIdPrimaryChain = vm.createSelectFork("sepolia");
 
@@ -339,7 +339,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
         assertEq(migrationManagerAddr, address(migrationManager));
 
         //////////////////////////////////////////////////////////////
-        // Switch to Layer Y
+        // Switch to Secondary Chain
         //////////////////////////////////////////////////////////////
         forkIdSecondaryChain = vm.createSelectFork("bokuto");
 
@@ -369,7 +369,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
         bwVbToken =
             TokenWrapped(_IAgglayerBridge(LXLY_BRIDGE_Y).computeTokenProxyAddress(NETWORK_ID_X, address(vbToken)));
 
-        // deploy underlying token (note: normally we don't have to do this manually and this should be done automatically by bridging vbToken on Layer X)
+        // deploy underlying token (note: normally we don't have to do this manually and this should be done automatically by bridging vbToken on Primary Chain)
         vm.prank(LXLY_BRIDGE_Y);
         ERC20 tempBwVbToken = new TokenWrapped(BW_VBTOKEN_NAME, BW_VBTOKEN_SYMBOL, BW_VBTOKEN_DECIMALS);
         vm.etch(address(bwVbToken), address(tempBwVbToken).code);
@@ -379,7 +379,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
             _IAgglayerBridge(LXLY_BRIDGE_Y).computeTokenProxyAddress(NETWORK_ID_X, address(underlyingAsset))
         );
 
-        // deploy the bridge wrapped underlying asset (note: normally we don't have to do this manually and this should be done automatically by bridging underlying asset on Layer X)
+        // deploy the bridge wrapped underlying asset (note: normally we don't have to do this manually and this should be done automatically by bridging underlying asset on Primary Chain)
         vm.prank(LXLY_BRIDGE_Y);
         ERC20 tempBwUnderlyingAsset =
             new TokenWrapped(BW_UNDERLYING_ASSET_NAME, BW_UNDERLYING_ASSET_SYMBOL, BW_UNDERLYING_ASSET_DECIMALS);
@@ -404,15 +404,15 @@ contract IntegrationTest is Test, ZkEVMCommon {
         assertEq(nativeConverterAddr, address(nativeConverter));
 
         //////////////////////////////////////////////////////////////
-        // Layer X
+        // Primary Chain
         //////////////////////////////////////////////////////////////
         vm.selectFork(forkIdPrimaryChain);
 
         vm.label(BRIDGE_MANAGER, "Bridge Manager");
         vm.label(address(customToken), "Custom Token");
         vm.label(address(this), "Default Address");
-        vm.label(GER_X, "GlobalExitRoot Layer X");
-        vm.label(GER_Y, "GlobalExitRoot Layer Y");
+        vm.label(GER_X, "GlobalExitRoot Primary Chain");
+        vm.label(GER_Y, "GlobalExitRoot Secondary Chain");
         vm.label(LXLY_BRIDGE_X, "Agglayer Bridge X");
         vm.label(LXLY_BRIDGE_Y, "Agglayer Bridge Y");
         vm.label(address(nativeConverter), "Native Converter");
@@ -491,7 +491,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
 
         vm.selectFork(forkIdPrimaryChain);
 
-        // create backing on the bridge on layer X
+        // create backing on the bridge on Primary Chain
         deal(address(underlyingAsset), sender, depositAmount);
         LeafPayload memory depositLeaf = LeafPayload({
             leafType: LEAF_TYPE_ASSET,
@@ -560,7 +560,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
 
         vm.selectFork(forkIdPrimaryChain);
 
-        // create liquidity on the bridge on layer X
+        // create liquidity on the bridge on Primary Chain
         deal(address(underlyingAsset), sender, amount);
         LeafPayload memory depositLeaf = LeafPayload({
             leafType: LEAF_TYPE_ASSET,
@@ -582,7 +582,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
         _mapTokenSecondaryChainToPrimaryChain(address(vbToken), address(bwVbToken), false);
         _claimAndVerifyAssetSecondaryChain(bwVbToken, depositClaimPayload); // claim the bridge wrapped vbToken
 
-        // create backing on the bridge on layer Y: necessary for deconversion
+        // create backing on the bridge on Secondary Chain: necessary for deconversion
         uint256 backingOnSecondaryChain = 0;
         deal(address(bwVbToken), owner, convertAmount);
         vm.startPrank(owner);
@@ -599,7 +599,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
             destinationNetwork: NETWORK_ID_X,
             destinationAddress: recipient,
             amount: convertAmount,
-            metadata: bwVbTokenMetaData // deconversion would give us back the bwVbToken so we'll bridge it back to layer X
+            metadata: bwVbTokenMetaData // deconversion would give us back the bwVbToken so we'll bridge it back to Primary Chain
         });
         _deconvertAndBridgeSecondaryChain(sender, convertAmount, withdrawLeaf);
 
@@ -620,7 +620,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
 
         vm.selectFork(forkIdPrimaryChain);
 
-        // create liquidity on the bridge on layer X
+        // create liquidity on the bridge on Primary Chain
         deal(address(underlyingAsset), sender, amount);
         LeafPayload memory depositLeaf = LeafPayload({
             leafType: LEAF_TYPE_ASSET,
@@ -642,7 +642,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
         _mapTokenSecondaryChainToPrimaryChain(address(vbToken), address(bwVbToken), false);
         _claimAndVerifyAssetSecondaryChain(bwVbToken, depositClaimPayload); // claim the bridge wrapped vbToken
 
-        // create backing on the native converter on layer Y
+        // create backing on the native converter on Secondary Chain
         uint256 backingOnSecondaryChain = 0;
         deal(address(bwVbToken), owner, convertAmount);
         vm.startPrank(owner);
@@ -676,7 +676,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
             )
         });
 
-        // migrate backing to Layer X
+        // migrate backing to Primary Chain
         vm.expectEmit();
         emit BridgeEvent(
             assetLeaf.leafType,
@@ -709,13 +709,13 @@ contract IntegrationTest is Test, ZkEVMCommon {
         leafPayloads[1] = messageLeaf;
         ClaimPayload[] memory claimPayloads = _getClaimPayloadsSecondaryChain(leafPayloads, lastPrimaryChainExitRoot);
 
-        // switch to Layer X
+        // switch to Primary Chain
         vm.selectFork(forkIdPrimaryChain);
 
         // Fund the Migration Manager with the underlying asset
         deal(address(underlyingAsset), address(migrationManager), amountToMigrate);
 
-        // claim and withdraw on Layer X
+        // claim and withdraw on Primary Chain
         _claimAndVerifyAssetPrimaryChain(vbToken, claimPayloads[0]);
         _claimMessagePrimaryChain(claimPayloads[1]);
 
@@ -724,7 +724,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
     }
 
     function _depositAndBridgePrimaryChain(address _sender, uint256 _amount, LeafPayload memory _leaf) internal {
-        // make sure we are on Layer X
+        // make sure we are on Primary Chain
         assertEq(vm.activeFork(), forkIdPrimaryChain);
 
         vm.startPrank(_sender);
@@ -758,7 +758,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
         address _sovereignTokenAddress,
         bool _isNotMintable
     ) internal {
-        // make sure we are on Layer Y
+        // make sure we are on Secondary Chain
         assertEq(vm.activeFork(), forkIdSecondaryChain);
 
         uint32[] memory originNetworks = new uint32[](1);
@@ -780,10 +780,10 @@ contract IntegrationTest is Test, ZkEVMCommon {
         internal
         returns (ClaimPayload memory)
     {
-        // make sure we are on Layer X
+        // make sure we are on Primary Chain
         assertEq(vm.activeFork(), forkIdPrimaryChain);
 
-        // simulate the Merkle trees on Layer X
+        // simulate the Merkle trees on Primary Chain
         bytes32[] memory merkleTreePrimaryChain = new bytes32[](1);
         merkleTreePrimaryChain[0] = _IAgglayerBridge(LXLY_BRIDGE_X).getLeafValue(
             _leaf.leafType,
@@ -795,27 +795,27 @@ contract IntegrationTest is Test, ZkEVMCommon {
             keccak256(abi.encodePacked(_leaf.metadata))
         );
 
-        // layer X leaf index
+        // Primary Chain leaf index
         uint256 leafIndexPrimaryChain = 0;
 
-        // layer X Merkle tree root
+        // Primary Chain Merkle tree root
         bytes32 merkleTreeRootPrimaryChain = _getMerkleTreeRoot(_encodeLeaves(merkleTreePrimaryChain));
 
-        // layer X proof
+        // Primary Chain proof
         bytes32[32] memory proofPrimaryChain =
             _getProofByIndex(_encodeLeaves(merkleTreePrimaryChain), vm.toString(leafIndexPrimaryChain));
 
-        // simulate the Merkle tree on Layer Y
+        // simulate the Merkle tree on Secondary Chain
         bytes32[] memory merkleTreeSecondaryChain = new bytes32[](1);
         merkleTreeSecondaryChain[0] = merkleTreeRootPrimaryChain;
 
-        // layer Y leaf index
+        // Secondary Chain leaf index
         uint256 leafIndexSecondaryChain = 0;
 
-        // layer Y Merkle tree root
+        // Secondary Chain Merkle tree root
         bytes32 merkleTreeRootSecondaryChain = _getMerkleTreeRoot(_encodeLeaves(merkleTreeSecondaryChain));
 
-        // layer Y proof
+        // Secondary Chain proof
         bytes32[32] memory proofSecondaryChain =
             _getProofByIndex(_encodeLeaves(merkleTreeSecondaryChain), vm.toString(leafIndexSecondaryChain));
 
@@ -838,10 +838,10 @@ contract IntegrationTest is Test, ZkEVMCommon {
         internal
         returns (ClaimPayload[] memory)
     {
-        // make sure we are on Layer Y
+        // make sure we are on Secondary Chain
         assertEq(vm.activeFork(), forkIdSecondaryChain);
 
-        // simulate the Merkle trees on Layer Y
+        // simulate the Merkle trees on Secondary Chain
         bytes32[] memory merkleTreePrimaryChain = new bytes32[](_leaves.length);
         for (uint256 i = 0; i < _leaves.length; i++) {
             merkleTreePrimaryChain[i] = _IAgglayerBridge(LXLY_BRIDGE_Y).getLeafValue(
@@ -855,31 +855,31 @@ contract IntegrationTest is Test, ZkEVMCommon {
             );
         }
 
-        // layer X Merkle tree root
+        // Primary Chain Merkle tree root
         bytes32 merkleTreeRootPrimaryChain = _getMerkleTreeRoot(_encodeLeaves(merkleTreePrimaryChain));
 
         bytes32[] memory merkleTreeSecondaryChain = new bytes32[](2);
         merkleTreeSecondaryChain[0] = merkleTreeRootPrimaryChain;
         merkleTreeSecondaryChain[1] = merkleTreeRootPrimaryChain;
 
-        // layer Y Merkle tree root
+        // Secondary Chain Merkle tree root
         bytes32 merkleExitRootSecondaryChain = _getMerkleTreeRoot(_encodeLeaves(merkleTreeSecondaryChain));
 
         ClaimPayload[] memory claimPayloads = new ClaimPayload[](_leaves.length);
         for (uint256 i = 0; i < _leaves.length; i++) {
             LeafPayload memory leaf = _leaves[i];
 
-            // layer X leaf index
+            // Primary Chain leaf index
             uint256 leafIndexPrimaryChain = i;
 
-            // proof for Layer X
+            // proof for Primary Chain
             bytes32[32] memory proofPrimaryChain =
                 _getProofByIndex(_encodeLeaves(merkleTreePrimaryChain), vm.toString(leafIndexPrimaryChain));
 
-            // layer Y leaf index
+            // Secondary Chain leaf index
             uint256 leafIndexSecondaryChain = i;
 
-            // proof for Layer Y
+            // proof for Secondary Chain
             bytes32[32] memory proofSecondaryChain =
                 _getProofByIndex(_encodeLeaves(merkleTreeSecondaryChain), vm.toString(leafIndexSecondaryChain));
 
@@ -902,14 +902,14 @@ contract IntegrationTest is Test, ZkEVMCommon {
     }
 
     function _claimAndVerifyAssetPrimaryChain(IERC20 _token, ClaimPayload memory _claimPayload) internal {
-        // make sure we are on Layer X
+        // make sure we are on Primary Chain
         assertEq(vm.activeFork(), forkIdPrimaryChain);
 
-        // update Layer X exit root
+        // update Primary Chain exit root
         vm.prank(address(ROLLUP_MANAGER));
         IPolygonZkEVMGlobalExitRoot(GER_X).updateExitRoot(_claimPayload.exitRootSecondaryChain);
 
-        // claim asset on Layer X
+        // claim asset on Primary Chain
         vm.expectEmit();
         emit ClaimEvent(
             _claimPayload.globalIndex,
@@ -937,14 +937,14 @@ contract IntegrationTest is Test, ZkEVMCommon {
     }
 
     function _claimMessagePrimaryChain(ClaimPayload memory _claimPayload) internal {
-        // make sure we are on Layer X
+        // make sure we are on Primary Chain
         assertEq(vm.activeFork(), forkIdPrimaryChain);
 
-        // update Layer X exit root
+        // update Primary Chain exit root
         vm.prank(address(ROLLUP_MANAGER));
         IPolygonZkEVMGlobalExitRoot(GER_X).updateExitRoot(_claimPayload.exitRootSecondaryChain);
 
-        // claim asset on Layer X
+        // claim asset on Primary Chain
         vm.expectEmit();
         emit ClaimEvent(
             _claimPayload.globalIndex,
@@ -969,20 +969,20 @@ contract IntegrationTest is Test, ZkEVMCommon {
     }
 
     function _claimAndVerifyAssetSecondaryChain(IERC20 _token, ClaimPayload memory _claimPayload) internal {
-        // make sure we are on Layer Y
+        // make sure we are on Secondary Chain
         assertEq(vm.activeFork(), forkIdSecondaryChain);
 
-        // update Layer Y exit root
+        // update Secondary Chain exit root
         vm.prank(address(LXLY_BRIDGE_Y));
         IPolygonZkEVMGlobalExitRoot(GER_Y).updateExitRoot(_claimPayload.exitRootSecondaryChain);
 
-        // insert Layer Y global exit root
+        // insert Secondary Chain global exit root
         vm.prank(GER_Y_UPDATER);
         IPolygonZkEVMGlobalExitRoot(GER_Y).insertGlobalExitRoot(
             _calculateGlobalExitRoot(_claimPayload.exitRootPrimaryChain, _claimPayload.exitRootSecondaryChain)
         );
 
-        // claim asset on Layer Y
+        // claim asset on Secondary Chain
         vm.expectEmit();
         emit ClaimEvent(
             _claimPayload.globalIndex,
@@ -1010,14 +1010,14 @@ contract IntegrationTest is Test, ZkEVMCommon {
     }
 
     function _claimAndRedeemPrimaryChainAndVerify(ClaimPayload memory _claimPayload) internal {
-        // make sure we are on Layer X
+        // make sure we are on Primary Chain
         assertEq(vm.activeFork(), forkIdPrimaryChain);
 
-        // update Layer X exit root
+        // update Primary Chain exit root
         vm.prank(address(ROLLUP_MANAGER));
         IPolygonZkEVMGlobalExitRoot(GER_X).updateExitRoot(_claimPayload.exitRootSecondaryChain);
 
-        // claim and withdraw on Layer X
+        // claim and withdraw on Primary Chain
         vm.prank(address(vbToken));
         vbToken.approve(recipient, _claimPayload.amount);
 
@@ -1038,7 +1038,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
     }
 
     function _deconvertAndBridgeSecondaryChain(address _sender, uint256 _amount, LeafPayload memory _leaf) internal {
-        // make sure we are on Layer Y
+        // make sure we are on Secondary Chain
         assertEq(vm.activeFork(), forkIdSecondaryChain);
 
         vm.startPrank(_sender);

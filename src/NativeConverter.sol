@@ -24,7 +24,7 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 
 /// @title Native Converter (optional)
 /// @author See https://github.com/agglayer/vault-bridge
-/// @notice Native Converter is an optional contract on Layer Ys that converts the underlying token (usually the bridge-wrapped version of the original underlying token from Layer X) to Custom Token, and vice versa, on demand. It can also migrate backing for Custom Token it has minted to Layer X, where vbToken will be minted and locked in LxLy Bridge. Please refer to `migrateBackingToPrimaryChain` for more information.
+/// @notice Native Converter is an optional contract on Secondary Chains that converts the underlying token (usually the bridge-wrapped version of the original underlying token from Primary Chain) to Custom Token, and vice versa, on demand. It can also migrate backing for Custom Token it has minted to Primary Chain, where vbToken will be minted and locked in Agglayer Bridge. Please refer to `migrateBackingToPrimaryChain` for more information.
 /// @dev A base contract used to create Native Converters.
 /// @dev @note (ATTENTION) This contract MUST have mint and burn permission on Custom Token. Please refer to `CustomToken.sol` for more information.
 /// @dev @note IMPORTANT: The underlying token MUST NOT be a rebasing token, and MUST NOT have transfer hooks (i.e., enable reentrancy); it MAY have a transfer fee.
@@ -90,9 +90,9 @@ abstract contract NativeConverter is
     /// @dev The `customToken` and `underlyingToken` MUST have the same number of decimals. @note (ATTENTION) The decimals of the `customToken` and `underlyingToken` will default to `18` if they revert on `decimals`.
     /// @param owner_ (ATTENTION) This address will be granted the `DEFAULT_ADMIN_ROLE`, as well as all basic roles. Roles can be modified at any time.
     /// @param customToken_ The upgraded version of the bridged vbToken. Native Converter must be able to mint and burn this token. Please refer to `CustomToken.sol` for more information.
-    /// @param underlyingToken_ The token that represents the original underlying token on Layer Y. @note IMPORTANT: This token MUST be either the bridge-wrapped version of the original underlying token, or the original underlying token must be custom mapped to this token on LxLy Bridge on Layer Y.
-    /// @param nonMigratableBackingPercentage_ The percentage of backing that should remain in Native Converter when migrating backing to Layer X, based on the total supply of Custom Token. `1e18` is 100%. It is possible to game the system by manipulating the total supply of Custom Token, so this is more of a soft limit.
-    /// @param migrationManager_ The address of the Migration Manager on Layer X.
+    /// @param underlyingToken_ The token that represents the original underlying token on Secondary Chain. @note IMPORTANT: This token MUST be either the bridge-wrapped version of the original underlying token, or the original underlying token must be custom mapped to this token on Agglayer Bridge on Secondary Chain.
+    /// @param nonMigratableBackingPercentage_ The percentage of backing that should remain in Native Converter when migrating backing to Primary Chain, based on the total supply of Custom Token. `1e18` is 100%. It is possible to game the system by manipulating the total supply of Custom Token, so this is more of a soft limit.
+    /// @param migrationManager_ The address of the Migration Manager on Primary Chain.
     function __NativeConverter_init(
         address owner_,
         address customToken_,
@@ -168,38 +168,38 @@ abstract contract NativeConverter is
         return $.customToken;
     }
 
-    /// @notice The token that represent the original underlying token on Layer Y.
+    /// @notice The token that represent the original underlying token on Secondary Chain.
     function underlyingToken() public view returns (IERC20) {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
         return $.underlyingToken;
     }
 
-    /// @notice The amount of the underlying token that backs Custom Token minted by Native Converter on Layer Y that has not been migrated to Layer X.
+    /// @notice The amount of the underlying token that backs Custom Token minted by Native Converter on Secondary Chain that has not been migrated to Primary Chain.
     /// @dev The amount is used in accounting and may be different from Native Converter's underlying token balance. @note IMPORTANT: You may do as you wish with surplus underlying token balance, but you MUST NOT designate it as backing.
     function backingOnSecondaryChain() public view returns (uint256) {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
         return $.backingOnSecondaryChain;
     }
 
-    /// @notice The LxLy ID of this network.
+    /// @notice The Agglayer ID of this network.
     function agglayerId() public view returns (uint32) {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
         return $.agglayerId;
     }
 
-    /// @notice LxLy Bridge, which connects AggLayer networks.
+    /// @notice Agglayer Bridge, which connects AggLayer networks.
     function agglayerBridge() public view returns (IAgglayerBridge) {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
         return $.agglayerBridge;
     }
 
-    /// @notice The LxLy ID of Layer X.
+    /// @notice The Agglayer ID of Primary Chain.
     function primaryChainAgglayerId() public view returns (uint32) {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
         return $.primaryChainAgglayerId;
     }
 
-    /// @notice The percentage of backing that should remain in Native Converter when migrating backing to Layer X, based on the total supply of Custom Token.
+    /// @notice The percentage of backing that should remain in Native Converter when migrating backing to Primary Chain, based on the total supply of Custom Token.
     /// @dev It is possible to game the system by manipulating the total supply of Custom Token, so this is more of a soft limit.
     /// @return 1e18 is 100%.
     function nonMigratableBackingPercentage() public view returns (uint256) {
@@ -207,7 +207,7 @@ abstract contract NativeConverter is
         return $.nonMigratableBackingPercentage;
     }
 
-    /// @notice The address of the Migration Manager on Layer X.
+    /// @notice The address of the Migration Manager on Primary Chain.
     function migrationManager() public view returns (MigrationManager) {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
         return MigrationManager(payable($.migrationManager));
@@ -403,7 +403,7 @@ abstract contract NativeConverter is
 
     // -----================= ::: NATIVE CONVERTER ::: =================-----
 
-    /// @notice The maximum amount of backing that can be migrated to Layer X.
+    /// @notice The maximum amount of backing that can be migrated to Primary Chain.
     function migratableBacking() public view returns (uint256) {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
 
@@ -416,12 +416,12 @@ abstract contract NativeConverter is
         return $.backingOnSecondaryChain > nonMigratableBacking ? $.backingOnSecondaryChain - nonMigratableBacking : 0;
     }
 
-    /// @notice Migrates a specific amount of backing to Layer X.
-    /// @notice This action provides vbToken liquidity on LxLy Bridge on Layer X.
-    /// @notice The bridged asset and message must be claimed manually on LxLy Bridge on Layer X to complete the migration.
+    /// @notice Migrates a specific amount of backing to Primary Chain.
+    /// @notice This action provides vbToken liquidity on Agglayer Bridge on Primary Chain.
+    /// @notice The bridged asset and message must be claimed manually on Agglayer Bridge on Primary Chain to complete the migration.
     /// @notice This function can be called by a migrator only.
-    /// @notice The migration can be completed by anyone on Layer X.
-    /// @dev Consider calling this function periodically; anyone can complete a migration on Layer X.
+    /// @notice The migration can be completed by anyone on Primary Chain.
+    /// @dev Consider calling this function periodically; anyone can complete a migration on Primary Chain.
     function migrateBackingToPrimaryChain(uint256 assets) external whenNotPaused onlyRole(MIGRATOR_ROLE) nonReentrant {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
 
@@ -438,8 +438,8 @@ abstract contract NativeConverter is
         // Calculate the amount of Custom Token for which backing is being migrated.
         uint256 shares = _convertToShares(assets);
 
-        // Bridge the backing to Migration Manager on Layer X.
-        /* If the underlying token is not mintable by LxLy Bridge, we need to check for a transfer fee. */
+        // Bridge the backing to Migration Manager on Primary Chain.
+        /* If the underlying token is not mintable by Agglayer Bridge, we need to check for a transfer fee. */
         if ($._underlyingTokenIsNotMintable) {
             // Cache the balance.
             uint256 balanceBefore = $.underlyingToken.balanceOf(address($.agglayerBridge));
@@ -455,17 +455,17 @@ abstract contract NativeConverter is
             // Calculate the bridged amount.
             assets = $.underlyingToken.balanceOf(address($.agglayerBridge)) - balanceBefore;
 
-            // Try to prevent a mistake in case LxLy Bridge code changes.
+            // Try to prevent a mistake in case Agglayer Bridge code changes.
             assert(assets > 0 && originalAssets >= assets);
         }
-        /* If the underlying token is mintable by LxLy Bridge, it will be burned (not transferred). */
+        /* If the underlying token is mintable by Agglayer Bridge, it will be burned (not transferred). */
         else {
             $.agglayerBridge.bridgeAsset(
                 $.primaryChainAgglayerId, $.migrationManager, assets, address($.underlyingToken), true, ""
             );
         }
 
-        // Bridge a message to Migration Manager on Layer X to complete the migration.
+        // Bridge a message to Migration Manager on Primary Chain to complete the migration.
         $.agglayerBridge.bridgeMessage(
             $.primaryChainAgglayerId,
             $.migrationManager,
