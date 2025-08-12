@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: LicenseRef-PolygonLabs-Source-Available
 pragma solidity 0.8.29;
 
-import {VbETH} from "src/vault-bridge-tokens/vbETH/VbETH.sol";
-import {VaultBridgeToken, PausableUpgradeable} from "src/VaultBridgeToken.sol";
+import {VbETH} from "src/primary-chain/ethereum/vbETH/VbETH.sol";
+import {VaultBridgeToken, PausableUpgradeable} from "src/primary-chain/VaultBridgeToken.sol";
 import {IAgglayerBridge} from "src/etc/IAgglayerBridge.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {IWETH9} from "src/etc/IWETH9.sol";
@@ -13,10 +13,10 @@ import {
     SafeERC20,
     VaultBridgeTokenPart2
 } from "test/GenericVaultBridgeToken.t.sol";
-import {VaultBridgeTokenInitializer} from "src/VaultBridgeTokenInitializer.sol";
+import {VaultBridgeTokenInitializer} from "src/primary-chain/VaultBridgeTokenInitializer.sol";
 import {TestVault} from "test/etc/TestVault.sol";
 import {IAgglayerBridge as _IAgglayerBridge} from "test/interfaces/IAgglayerBridge.sol";
-import {WETHNativeConverter} from "src/custom-tokens/WETH/WETHNativeConverter.sol";
+import {WETHNativeConverter} from "src/secondary-chain/agglayer/WETH/WETHNativeConverter.sol";
 
 contract LXLYBridgeMock {
     address public gasTokenAddress;

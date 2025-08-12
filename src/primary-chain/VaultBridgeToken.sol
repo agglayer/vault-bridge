@@ -7,7 +7,7 @@ pragma solidity 0.8.29;
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {ERC20PermitUpgradeable} from
     "@openzeppelin-contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
-import {IVaultBridgeTokenInitializer} from "./etc/IVaultBridgeTokenInitializer.sol";
+import {IVaultBridgeTokenInitializer} from "../etc/IVaultBridgeTokenInitializer.sol";
 
 // Other functionality.
 import {Initializable} from "@openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
@@ -15,15 +15,15 @@ import {AccessControlUpgradeable} from "@openzeppelin-contracts-upgradeable/acce
 import {PausableUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/PausableUpgradeable.sol";
 import {ReentrancyGuardTransientUpgradeable} from
     "@openzeppelin-contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
-import {ERC20PermitUser} from "./etc/ERC20PermitUser.sol";
-import {Versioned} from "./etc/Versioned.sol";
+import {ERC20PermitUser} from "../etc/ERC20PermitUser.sol";
+import {Versioned} from "../etc/Versioned.sol";
 
 // Libraries.
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
 // External contracts.
-import {IAgglayerBridge} from "./etc/IAgglayerBridge.sol";
+import {IAgglayerBridge} from "../etc/IAgglayerBridge.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 // Other.

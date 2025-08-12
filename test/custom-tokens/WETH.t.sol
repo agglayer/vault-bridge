@@ -3,7 +3,7 @@ pragma solidity ^0.8.29;
 
 import "forge-std/Test.sol";
 
-import {WETH} from "../../src/custom-tokens/WETH/WETH.sol";
+import {WETH} from "../../src/secondary-chain/agglayer/WETH/WETH.sol";
 import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import {MockERC20MintableBurnable} from "../GenericNativeConverter.t.sol";
 

@@ -4,8 +4,8 @@
 pragma solidity 0.8.29;
 
 import {CustomToken} from "../../CustomToken.sol";
-import {IWETH9} from "../../etc/IWETH9.sol";
-import {IAgglayerBridge} from "../../etc/IAgglayerBridge.sol";
+import {IWETH9} from "../../../etc/IWETH9.sol";
+import {IAgglayerBridge} from "../../../etc/IAgglayerBridge.sol";
 
 /// @title WETH
 /// @author See https://github.com/agglayer/vault-bridge

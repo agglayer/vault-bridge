@@ -3,12 +3,12 @@ pragma solidity ^0.8.29;
 
 import "forge-std/Test.sol";
 
-import {GenericVaultBridgeToken} from "src/vault-bridge-tokens/GenericVaultBridgeToken.sol";
+import {GenericVaultBridgeToken} from "src/primary-chain/ethereum/GenericVaultBridgeToken.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
-import {VaultBridgeToken, PausableUpgradeable, Initializable} from "src/VaultBridgeToken.sol";
-import {VaultBridgeTokenInitializer} from "src/VaultBridgeTokenInitializer.sol";
-import {VaultBridgeTokenPart2} from "src/VaultBridgeTokenPart2.sol";
+import {VaultBridgeToken, PausableUpgradeable, Initializable} from "src/primary-chain/VaultBridgeToken.sol";
+import {VaultBridgeTokenInitializer} from "src/primary-chain/VaultBridgeTokenInitializer.sol";
+import {VaultBridgeTokenPart2} from "src/primary-chain/VaultBridgeTokenPart2.sol";
 
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
