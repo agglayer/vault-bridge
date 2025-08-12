@@ -53,7 +53,7 @@ A Vault Bridge Token is:
 
 - [ERC-20](https://eips.ethereum.org/EIPS/eip-20) token
 - [ERC-4626](https://eips.ethereum.org/EIPS/eip-4626) vault
-- [Unified Bridge](https://github.com/agglayer/agglayer-contracts) extension
+- [Agglayer Bridge](https://github.com/agglayer/agglayer-contracts) extension
 
 Assets in high demand with available yield strategies, such as WETH and USDC, can get their versions of vbTokens. The underlying asset is deposited into Vault Bridge Token contract, and vbToken is minted in a 1:1 ratio. The same can be withdrawn by burning vbToken. Vault Bridge Token contract doubles a pseudo bridge, so vbToken can be minted and bridged, or claimed and redeemed, in a single call. Deposited underlying assets are put into an external, ERC-4626 compatible vault ("yield vault") where they generate yield. Yield is distributed to chains and apps that participate in the revenue sharing program. Vault Bridge Token contracts also includes functionality that enables minting of vbToken directly on Secondary Chain via Native Converter, with backing migration to Primary Chain via Migration Manager.
 
@@ -78,7 +78,7 @@ Bridged vbToken can be upgraded to Custom Token on Secondary Chain. This enables
 A Native Converter is:
 
 - [Vault Bridge Token](#vault-bridge-token) extension
-- [Unified Bridge](https://github.com/agglayer/agglayer-contracts) extension
+- [Agglayer Bridge](https://github.com/agglayer/agglayer-contracts) extension
 
 Native Converter can be deployed on Secondary Chain to enable minting of vbToken directly on Secondary Chain by converting the bridged underlying asset, in a 1:1 ratio. The same can be deconverted to by burning bridged vbToken. Accumulated backing in Native Converter on Secondary Chain can be migrated to Primary Chain to be deposited into Vault Bridge Token contract via Migration Manger. For this reason, liqudity for deconverting to the bridged underlying token on Secondary Chain is guaranteed only up to a certain percentage. Native Converter doubles a bridge extension, so vbToken can be deconverted and bridged in a single call.
 
