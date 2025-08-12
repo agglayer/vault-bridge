@@ -372,7 +372,7 @@ contract GenericNativeConverterTest is Test {
         uint256 backingOnSecondaryChain = 0;
         assertEq(nativeConverter.maxDeconvert(sender), backingOnSecondaryChain);
 
-        // create backing on layer Y
+        // create backing on Secondary Chain
         deal(address(underlyingToken), owner, amount);
 
         underlyingToken.approve(address(nativeConverter), amount);
@@ -383,7 +383,7 @@ contract GenericNativeConverterTest is Test {
         assertEq(nativeConverter.maxDeconvert(sender), backingOnSecondaryChain);
 
         deal(address(customToken), sender, amount); // mint additional shares
-        assertLe(nativeConverter.maxDeconvert(sender), backingOnSecondaryChain); // sender has more shares than the backing on layer Y
+        assertLe(nativeConverter.maxDeconvert(sender), backingOnSecondaryChain); // sender has more shares than the backing on Secondary Chain
     }
 
     function test_deconvert() public {
@@ -404,9 +404,9 @@ contract GenericNativeConverterTest is Test {
         nativeConverter.deconvert(amount, address(0));
 
         vm.expectRevert(abi.encodeWithSelector(NativeConverter.AssetsTooLarge.selector, 0, amount));
-        nativeConverter.deconvert(amount, recipient); // no backing on layer Y
+        nativeConverter.deconvert(amount, recipient); // no backing on Secondary Chain
 
-        // create backing on layer Y
+        // create backing on Secondary Chain
         uint256 backingOnSecondaryChain = 0;
         deal(address(underlyingToken), owner, amount);
         vm.startPrank(owner);
@@ -444,7 +444,7 @@ contract GenericNativeConverterTest is Test {
         vm.expectRevert(NativeConverter.InvalidDestinationNetworkId.selector);
         nativeConverter.deconvertAndBridge(amount, recipient, NETWORK_ID_L2, true);
 
-        // create backing on layer Y
+        // create backing on Secondary Chain
         uint256 backingOnSecondaryChain = 0;
         underlyingToken.mint(owner, amount);
         vm.startPrank(owner);
@@ -505,7 +505,7 @@ contract GenericNativeConverterTest is Test {
         );
         nativeConverter.migrateBackingToPrimaryChain(currentBacking + 1);
 
-        // create backing on layer Y
+        // create backing on Secondary Chain
         uint256 backingOnSecondaryChain = 0;
         underlyingToken.approve(address(nativeConverter), amount);
         backingOnSecondaryChain = nativeConverter.convert(amount, recipient);
@@ -548,7 +548,7 @@ contract GenericNativeConverterTest is Test {
     }
 
     function _setAgglayerBridgeAttributes(uint32 _networkId, address _ger, address _agglayerBridge) internal {
-        uint256 slot = 104; // This is the storage slot for the networkId in the LXLY Bridge contract at offset 1~4
+        uint256 slot = 104; // This is the storage slot for the networkId in the Agglayer Bridge contract at offset 1~4
         bytes32 original = vm.load(_agglayerBridge, bytes32(slot));
         bytes32 maskGer = bytes32(uint256(0xFFFFFFFFFFFFFF0000000000000000000000000000000000000000FFFFFFFFFF));
         bytes32 modified = (original & maskGer) | bytes32(uint256(uint160(_ger)) << 40);
