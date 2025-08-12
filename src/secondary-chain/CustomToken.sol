@@ -10,7 +10,7 @@ import {Initializable} from "@openzeppelin-contracts-upgradeable/proxy/utils/Ini
 import {AccessControlUpgradeable} from "@openzeppelin-contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import {PausableUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/PausableUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
-import {IVersioned} from "./etc/IVersioned.sol";
+import {Versioned} from "../etc/Versioned.sol";
 
 /// @title Custom Token
 /// @author See https://github.com/agglayer/vault-bridge

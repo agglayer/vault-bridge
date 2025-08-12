@@ -7,7 +7,7 @@ pragma solidity 0.8.29;
 import {CustomToken} from "../CustomToken.sol";
 
 // Other functionality.
-import {Versioned} from "../etc/Versioned.sol";
+import {Versioned} from "../../etc/Versioned.sol";
 
 /// @title Generic Custom Token
 /// @author See https://github.com/agglayer/vault-bridge

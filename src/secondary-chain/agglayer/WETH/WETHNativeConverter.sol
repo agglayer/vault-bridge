@@ -5,8 +5,8 @@ pragma solidity 0.8.29;
 
 import {NativeConverter, Math} from "../../NativeConverter.sol";
 import {WETH} from "./WETH.sol";
-import {MigrationManager} from "../../MigrationManager.sol";
-import {IAgglayerBridge} from "../../etc/IAgglayerBridge.sol";
+import {MigrationManager} from "../../../primary-chain/MigrationManager.sol";
+import {IAgglayerBridge} from "../../../etc/IAgglayerBridge.sol";
 
 /// @title WETH Native Converter
 /// @author See https://github.com/agglayer/vault-bridge

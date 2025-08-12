@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: LicenseRef-PolygonLabs-Source-Available
 pragma solidity ^0.8.29;
 
-import {VaultBridgeToken} from "src/VaultBridgeToken.sol";
+import {VaultBridgeToken} from "src/primary-chain/VaultBridgeToken.sol";
 import {TestVault} from "test/etc/TestVault.sol";
 import {
     IERC20,
@@ -12,7 +12,7 @@ import {
     stdStorage,
     StdStorage
 } from "test/GenericVaultBridgeToken.t.sol";
-import {VaultBridgeTokenInitializer} from "src/VaultBridgeTokenInitializer.sol";
+import {VaultBridgeTokenInitializer} from "src/primary-chain/VaultBridgeTokenInitializer.sol";
 
 contract VbUSDTTest is GenericVaultBridgeTokenTest {
     using SafeERC20 for IERC20;
