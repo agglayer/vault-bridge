@@ -4,7 +4,7 @@
 pragma solidity 0.8.29;
 
 // Main functionality.
-import {IVaultBridgeTokenInitializer} from "./etc/IVaultBridgeTokenInitializer.sol";
+import {IVaultBridgeTokenInitializer} from "../etc/IVaultBridgeTokenInitializer.sol";
 import {VaultBridgeToken} from "./VaultBridgeToken.sol";
 
 // Libraries.
@@ -13,7 +13,7 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 // External contracts.
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
-import {IAgglayerBridge} from "./etc/IAgglayerBridge.sol";
+import {IAgglayerBridge} from "../etc/IAgglayerBridge.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /// @title Vault Bridge Token Initializer (singleton)

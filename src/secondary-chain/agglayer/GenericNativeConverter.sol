@@ -7,7 +7,7 @@ pragma solidity 0.8.29;
 import {NativeConverter} from "../NativeConverter.sol";
 
 // Other functionality.
-import {Versioned} from "../etc/Versioned.sol";
+import {Versioned} from "../../etc/Versioned.sol";
 
 /// @title Generic Native Converter
 /// @author See https://github.com/agglayer/vault-bridge

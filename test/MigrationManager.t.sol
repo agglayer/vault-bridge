@@ -3,7 +3,7 @@ pragma solidity ^0.8.29;
 
 import "forge-std/Test.sol";
 
-import {MigrationManager, PausableUpgradeable} from "../src/MigrationManager.sol";
+import {MigrationManager, PausableUpgradeable} from "../src/primary-chain/MigrationManager.sol";
 
 import {ERC20} from "@openzeppelin-contracts/token/ERC20/ERC20.sol";
 import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
