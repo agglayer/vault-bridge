@@ -3,7 +3,7 @@
 # Vault Bridge
 
 **[⛓️ Deployments](#deployments)**
-**&nbsp;&nbsp; [📗 Documentation](#documentation)**
+**&nbsp;&nbsp; [📙 Documentation](#documentation)**
 **&nbsp;&nbsp; [🧭 Website](https://www.agglayer.dev/agglayer-vaultbridge)**
 **&nbsp;&nbsp; [🐈‍⬛ GitHub](https://github.com/agglayer/vault-bridge/)**
 
@@ -100,8 +100,14 @@ Full support for non-Agglayer chains, third-party bridges, as well as non-EVM ch
 
 ## Deployments
 
-- [Ethereum Primary Chain](https://github.com/agglayer/vault-bridge/blob/main/src/primary-chain/ethereum/README.md)
+Primary Chains:
+
+- [Ethereum](https://github.com/agglayer/vault-bridge/blob/main/src/primary-chain/ethereum/README.md)
+
+Secondary Chains:
+
 - [Agglayer Secondary Chains](https://github.com/agglayer/vault-bridge/blob/main/src/secondary-chain/agglayer/README.md)
+- Wormhole Secondary Chains
 
 ## Usage
 
