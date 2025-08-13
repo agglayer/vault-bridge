@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: LicenseRef-PolygonLabs-Source-Available
-// Vault Bridge (last updated v1.0.0) (custom-tokens/WETH/WETHNativeConverter.sol)
+// Vault Bridge (last updated v1.0.0) (secondary-chain/agglayer/vbETH/WETHNativeConverter.sol)
 
 pragma solidity 0.8.29;
 
@@ -8,7 +8,7 @@ import {WETH} from "./WETH.sol";
 import {MigrationManager} from "../../../primary-chain/MigrationManager.sol";
 import {IAgglayerBridge} from "../../../etc/IAgglayerBridge.sol";
 
-/// @title WETH Native Converter
+/// @title WETH Native Converter (Agglayer)
 /// @author See https://github.com/agglayer/vault-bridge
 contract WETHNativeConverter is NativeConverter {
     /// @dev Storage of WETHNativeConverter contract.

@@ -1,0 +1,13 @@
+// SPDX-License-Identifier: LicenseRef-PolygonLabs-Source-Available
+// Vault Bridge (last updated v1.0.0) (primary-chain/ethereum/vbWBTC/VbWBTC.sol)
+
+pragma solidity 0.8.29;
+
+// Main functionality.
+import {GenericVaultBridgeToken} from "../GenericVaultBridgeToken.sol";
+
+/// @title Vault Bridge WBTC
+/// @author See https://github.com/agglayer/vault-bridge
+/// @dev No customization is required.
+/// @dev This contract does not need to be deployed. You can point `VbWBTC` proxy to `GenericVaultBridgeToken` instead.
+contract VbWBTC is GenericVaultBridgeToken {}

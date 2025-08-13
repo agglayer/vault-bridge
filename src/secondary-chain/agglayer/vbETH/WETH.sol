@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: LicenseRef-PolygonLabs-Source-Available
-// Vault Bridge (last updated v1.0.0) (custom-tokens/WETH/WETH.sol)
+// Vault Bridge (last updated v1.0.0) (secondary-chain/agglayer/vbETH/WETH.sol)
 
 pragma solidity 0.8.29;
 
@@ -7,7 +7,7 @@ import {CustomToken} from "../../CustomToken.sol";
 import {IWETH9} from "../../../etc/IWETH9.sol";
 import {IAgglayerBridge} from "../../../etc/IAgglayerBridge.sol";
 
-/// @title WETH
+/// @title WETH (Agglayer)
 /// @author See https://github.com/agglayer/vault-bridge
 /// @dev based on https://github.com/gnosis/canonical-weth/blob/master/contracts/WETH9.sol
 contract WETH is CustomToken {
