@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: LicenseRef-PolygonLabs-Source-Available
-// Vault Bridge (last updated v1.0.0) (NativeConverter.sol)
+// Vault Bridge (last updated v1.0.0) (secondary-chain/NativeConverter.sol)
 
 pragma solidity 0.8.29;
 
@@ -61,6 +61,7 @@ abstract contract NativeConverter is
         hex"a14770e0debfe4b8406a01c33ee3a7bbe0acc66b3bde7c71854bf7d080a9c600";
 
     // Basic roles.
+    // @remind Document.
     bytes32 public constant MIGRATOR_ROLE = keccak256("MIGRATOR_ROLE");
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
 

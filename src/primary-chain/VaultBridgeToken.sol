@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: LicenseRef-PolygonLabs-Source-Available
-// Vault Bridge (last updated v1.0.0) (VaultBridgeToken.sol)
+// Vault Bridge (last updated v1.0.0) (primary-chain/VaultBridgeToken.sol)
 
 pragma solidity 0.8.29;
 
@@ -92,6 +92,7 @@ abstract contract VaultBridgeToken is
     }
 
     // Basic roles.
+    // @remind Document.
     bytes32 public constant REBALANCER_ROLE = keccak256("REBALANCER_ROLE");
     bytes32 public constant YIELD_COLLECTOR_ROLE = keccak256("YIELD_COLLECTOR_ROLE");
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");

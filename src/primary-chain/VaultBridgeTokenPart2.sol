@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: LicenseRef-PolygonLabs-Source-Available
-// Vault Bridge (last updated v1.0.0) (VaultBridgeTokenPart2.sol)
+// Vault Bridge (last updated v1.0.0) (primary-chain/VaultBridgeTokenPart2.sol)
 
 pragma solidity 0.8.29;
 
