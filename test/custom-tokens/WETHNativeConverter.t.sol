@@ -8,7 +8,7 @@ import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC2
 
 import {MockERC20} from "forge-std/mocks/MockERC20.sol";
 import {MockERC20MintableBurnable} from "../GenericNativeConverter.t.sol";
-import {WETH} from "src/secondary-chain/agglayer/WETH/WETH.sol";
+import {WETH} from "src/secondary-chain/agglayer/vbETH/WETH.sol";
 
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {
@@ -18,7 +18,7 @@ import {
 import {PausableUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/PausableUpgradeable.sol";
 
 import {CustomGlobalExitRootManager, GenericNativeConverterTest} from "../GenericNativeConverter.t.sol";
-import {WETHNativeConverter} from "../../src/secondary-chain/agglayer/WETH/WETHNativeConverter.sol";
+import {WETHNativeConverter} from "../../src/secondary-chain/agglayer/vbETH/WETHNativeConverter.sol";
 import {GenericNativeConverter, NativeConverter} from "../../src/secondary-chain/agglayer/GenericNativeConverter.sol";
 import {MigrationManager} from "../../src/primary-chain/MigrationManager.sol";
 

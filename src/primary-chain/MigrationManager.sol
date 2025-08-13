@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: LicenseRef-PolygonLabs-Source-Available
-// Vault Bridge (last updated v1.0.0) (MigrationManager.sol)
+// Vault Bridge (last updated v1.0.0) (primary-chain/MigrationManager.sol)
 
 pragma solidity 0.8.29;
 
@@ -69,6 +69,7 @@ contract MigrationManager is
         hex"30cf29e424d82bdf294fbec113ef39ac73137edfdb802b37ef3fc9ad433c5000";
 
     // Basic roles.
+    // @remind Document.
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
 
     // Errors.
