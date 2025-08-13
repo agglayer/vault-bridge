@@ -106,8 +106,8 @@ Primary Chains:
 
 Secondary Chains:
 
-- [Agglayer Secondary Chains](https://github.com/agglayer/vault-bridge/blob/main/src/secondary-chain/agglayer/README.md)
-- Wormhole Secondary Chains
+- [Agglayer](https://github.com/agglayer/vault-bridge/blob/main/src/secondary-chain/agglayer/README.md)
+- Wormhole
 
 ## Usage
 
