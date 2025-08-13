@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: LicenseRef-PolygonLabs-Source-Available
-// Vault Bridge (last updated v1.0.0) (custom-tokens/GenericNativeConverter.sol)
+// Vault Bridge (last updated v1.0.0) (secondary-chain/agglayer/GenericNativeConverter.sol)
 
 pragma solidity 0.8.29;
 
@@ -9,7 +9,7 @@ import {NativeConverter} from "../NativeConverter.sol";
 // Other functionality.
 import {Versioned} from "../../etc/Versioned.sol";
 
-/// @title Generic Native Converter
+/// @title Generic Native Converter (Agglayer)
 /// @author See https://github.com/agglayer/vault-bridge
 /// @dev This contract can be used to deploy Native Converters that do not require any customization.
 contract GenericNativeConverter is NativeConverter {
