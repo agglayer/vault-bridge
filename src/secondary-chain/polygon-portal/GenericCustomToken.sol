@@ -4,7 +4,7 @@
 pragma solidity 0.8.29;
 
 // Main functionality.
-import {CustomTokenBase} from "../CustomToken.sol";
+import {CustomTokenBase} from "../CustomTokenBase.sol";
 
 // @remind Update documentation.
 /// @title Generic Custom Token (Polygon Portal)
