@@ -16,11 +16,35 @@ contract GenericVaultBridgeToken is VaultBridgeToken {
         _disableInitializers();
     }
 
+    // @remind Document.
     function initialize(address initializer_, VaultBridgeToken.InitializationParameters calldata initParams)
         external
+        whenNotPaused
         initializer
+        nonReentrant
     {
         // Initialize the base implementation.
         __VaultBridgeToken_init(initializer_, initParams);
     }
+
+    // @remind Document (the entire function).
+    function reinitialize2() external whenNotPaused reinitializer(2) nonReentrant {
+        _incrementGlobalInitializationCounter(1);
+        _incrementGlobalInitializationCounter(2);
+
+        __VaultBridgeToken_reinit2();
+    }
+
+    /*
+    /// @dev How to add a new reinitializer:
+    function reinitialize3()
+        external
+        whenNotPaused
+        reinitializer(_incrementGlobalInitializationCounter(3))
+        nonReentrant
+    {}
+    */
+
+    /// @inheritdoc VaultBridgeToken
+    function _VAULT_BRIDGE_TOKEN_REINIT_2_COMPATIBLE() internal pure override {}
 }

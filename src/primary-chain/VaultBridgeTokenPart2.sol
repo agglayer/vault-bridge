@@ -38,6 +38,9 @@ contract VaultBridgeTokenPart2 is VaultBridgeToken {
         _disableInitializers();
     }
 
+    /// @inheritdoc VaultBridgeToken
+    function _VAULT_BRIDGE_TOKEN_REINIT_2_COMPATIBLE() internal pure override {}
+
     // -----================= ::: STORAGE ::: =================-----
 
     /// @dev Returns a pointer to the ERC-7201 storage namespace.

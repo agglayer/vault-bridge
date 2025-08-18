@@ -9,6 +9,7 @@ import {AccessControlUpgradeable} from "@openzeppelin-contracts-upgradeable/acce
 import {PausableUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/PausableUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import {ERC20PermitUser} from "../etc/ERC20PermitUser.sol";
+import {InitializationCounter} from "../etc/InitializationCounter.sol";
 import {Versioned} from "../etc/Versioned.sol";
 
 // Libraries.
@@ -34,6 +35,7 @@ abstract contract NativeConverter is
     PausableUpgradeable,
     ReentrancyGuardUpgradeable,
     ERC20PermitUser,
+    InitializationCounter,
     Versioned
 {
     // Libraries.
@@ -119,7 +121,7 @@ abstract contract NativeConverter is
         try IERC20Metadata(customToken_).decimals() returns (uint8 decimals) {
             customTokenDecimals = decimals;
         } catch {
-            // Default to 18 decimals.
+            // Default to 18 decimals if Custom Token reverted.
             customTokenDecimals = 18;
         }
 
@@ -128,7 +130,7 @@ abstract contract NativeConverter is
         try IERC20Metadata(underlyingToken_).decimals() returns (uint8 decimals_) {
             underlyingTokenDecimals = decimals_;
         } catch {
-            // Default to 18 decimals.
+            // Default to 18 decimals if the underlying token reverted.
             underlyingTokenDecimals = 18;
         }
 
@@ -153,13 +155,32 @@ abstract contract NativeConverter is
         // Initialize the storage.
         $.customToken = CustomToken(customToken_);
         $.underlyingToken = IERC20(underlyingToken_);
-        $._underlyingTokenIsNotMintable = IAgglayerBridge(agglayerBridge_).wrappedAddressIsNotMintable(underlyingToken_);
         $.agglayerId = IAgglayerBridge(agglayerBridge_).networkID();
         $.agglayerBridge = IAgglayerBridge(agglayerBridge_);
         $.primaryChainAgglayerId = primaryChainAgglayerId_;
         $.migrationManager = migrationManager_;
         $.nonMigratableBackingPercentage = nonMigratableBackingPercentage_;
     }
+
+    // @remind Document (the entire function).
+    function __NativeConverter_reinit2()
+        internal
+        onlyInitializing
+        incrementsLocalInitializationCounter(1)
+        incrementsLocalInitializationCounter(2)
+    {
+        NativeConverterStorage storage $ = _getNativeConverterStorage();
+
+        $._underlyingTokenIsNotMintable = $.agglayerBridge.wrappedAddressIsNotMintable(address($.underlyingToken));
+    }
+
+    /*
+    /// @dev How to add a new reinit step:
+    function __NativeConverter_reinit3() internal onlyInitializing incrementsLocalInitializationCounter(3) {}
+    */
+
+    // @remind Document.
+    function _NATIVE_CONVERTER_REINIT_2_COMPATIBLE() internal pure virtual;
 
     // -----================= ::: STORAGE ::: =================-----
 
@@ -471,7 +492,7 @@ abstract contract NativeConverter is
             $.primaryChainAgglayerId,
             $.migrationManager,
             true,
-            abi.encode(MigrationManager.CrossNetworkInstruction._0_COMPLETE_MIGRATION, abi.encode(shares, assets))
+            abi.encode(MigrationManager.CrossChainInstruction._0_COMPLETE_MIGRATION, abi.encode(shares, assets))
         );
 
         // Emit the event.
