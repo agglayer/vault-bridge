@@ -51,7 +51,6 @@ contract VaultBridgeTokenInitializer is IVaultBridgeTokenInitializer, VaultBridg
         external
         override
         onlyInitializing
-        nonReentrant
     {
         VaultBridgeTokenStorage storage $ = __getVaultBridgeTokenStorage();
 
@@ -111,4 +110,12 @@ contract VaultBridgeTokenInitializer is IVaultBridgeTokenInitializer, VaultBridg
         IERC20(initParams.underlyingToken).forceApprove(initParams.yieldVault, type(uint256).max);
         _approve(address(this), address(initParams.agglayerBridge), type(uint256).max);
     }
+
+    /*
+    /// @dev How to add a new reinitializer:
+    function reinitialize3() external onlyInitializing {}
+    */
+
+    /// @inheritdoc VaultBridgeToken
+    function _VAULT_BRIDGE_TOKEN_REINIT_2_COMPATIBLE() internal pure override {}
 }

@@ -3,7 +3,8 @@
 
 pragma solidity 0.8.29;
 
-import {CustomToken} from "../../CustomToken.sol";
+import {CustomToken, CustomTokenBase} from "../../CustomToken.sol";
+import {ERC20Upgradeable} from "@openzeppelin-contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
 import {IWETH9} from "../../../etc/IWETH9.sol";
 import {IAgglayerBridge} from "../../../etc/IAgglayerBridge.sol";
 
@@ -23,7 +24,7 @@ contract WETH is CustomToken {
     bytes32 private constant _WETH_STORAGE = hex"df8caff5d0161908572492829df972cd19b1aabe3c3078d95299408cd561dc00";
 
     error AssetsTooLarge(uint256 availableAssets, uint256 requestedAssets);
-    error FunctionNotSupportedOnThisNetwork();
+    error FunctionNotSupportedOnThisChain();
 
     event Deposit(address indexed from, uint256 value);
     event Withdrawal(address indexed to, uint256 value);
@@ -38,24 +39,56 @@ contract WETH is CustomToken {
     }
 
     modifier onlyIfGasTokenIsEth() {
-        require(_getWETHStorage()._gasTokenIsEth, FunctionNotSupportedOnThisNetwork());
+        require(_getWETHStorage()._gasTokenIsEth, FunctionNotSupportedOnThisChain());
         _;
     }
 
-    function reinitialize(
+    function initialize(
         address owner_,
         uint8 originalUnderlyingTokenDecimals_,
         address agglayerBridge_,
         address nativeConverter_
-    ) external reinitializer(2) {
+    ) external whenNotPaused initializer nonReentrant {
         WETHStorage storage $ = _getWETHStorage();
 
-        // Initialize the inherited contracts.
-        __CustomToken_init(owner_, originalUnderlyingTokenDecimals_, agglayerBridge_, nativeConverter_);
+        // Preserve the `name` and `symbol` of the bridged vbToken.
+        string memory name_ = name();
+        string memory symbol_ = symbol();
+
+        // Prevent a mistake while initializing.
+        assert(ERC20Upgradeable.decimals() == originalUnderlyingTokenDecimals_);
+
+        // Initialize the base implementation.
+        __CustomToken_init(owner_, name_, symbol_, originalUnderlyingTokenDecimals_, agglayerBridge_, nativeConverter_);
 
         $._gasTokenIsEth = IAgglayerBridge(agglayerBridge_).gasTokenAddress() == address(0)
             && IAgglayerBridge(agglayerBridge_).gasTokenNetwork() == 0;
     }
+
+    function reinitialize2() external whenNotPaused reinitializer(2) nonReentrant {
+        __CustomToken_reinit2();
+    }
+
+    function reinitialize3() external whenNotPaused reinitializer(3) nonReentrant {
+        _incrementGlobalInitializationCounter(1);
+        _incrementGlobalInitializationCounter(2);
+        _incrementGlobalInitializationCounter(3);
+
+        __CustomToken_reinit3();
+    }
+
+    /*
+    /// @dev How to add a new reinitializer:
+    function reinitialize4()
+        external
+        whenNotPaused
+        reinitializer(_incrementGlobalInitializationCounter(4))
+        nonReentrant
+    {}
+    */
+
+    /// @inheritdoc CustomTokenBase
+    function _CUSTOM_TOKEN_REINIT_3_COMPATIBLE() internal pure override {}
 
     function _getWETHStorage() private pure returns (WETHStorage storage $) {
         assembly {

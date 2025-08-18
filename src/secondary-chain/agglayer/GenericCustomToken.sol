@@ -4,10 +4,8 @@
 pragma solidity 0.8.29;
 
 // Main functionality.
-import {CustomToken} from "../CustomToken.sol";
-
-// Other functionality.
-import {Versioned} from "../../etc/Versioned.sol";
+import {CustomToken, CustomTokenBase} from "../CustomToken.sol";
+import {ERC20Upgradeable} from "@openzeppelin-contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
 
 /// @title Generic Custom Token (Agglayer)
 /// @author See https://github.com/agglayer/vault-bridge
@@ -19,13 +17,45 @@ contract GenericCustomToken is CustomToken {
         _disableInitializers();
     }
 
-    function reinitialize(
+    function initialize(
         address owner_,
         uint8 originalUnderlyingTokenDecimals_,
         address agglayerBridge_,
         address nativeConverter_
-    ) external reinitializer(2) {
+    ) external whenNotPaused initializer nonReentrant {
+        // Preserve the `name` and `symbol` of the bridged vbToken.
+        string memory name_ = ERC20Upgradeable.name();
+        string memory symbol_ = ERC20Upgradeable.symbol();
+
+        // Prevent a mistake while initializing.
+        assert(ERC20Upgradeable.decimals() == originalUnderlyingTokenDecimals_);
+
         // Initialize the base implementation.
-        __CustomToken_init(owner_, originalUnderlyingTokenDecimals_, agglayerBridge_, nativeConverter_);
+        __CustomToken_init(owner_, name_, symbol_, originalUnderlyingTokenDecimals_, agglayerBridge_, nativeConverter_);
     }
+
+    function reinitialize2() external whenNotPaused reinitializer(2) nonReentrant {
+        __CustomToken_reinit2();
+    }
+
+    function reinitialize3() external whenNotPaused reinitializer(3) nonReentrant {
+        _incrementGlobalInitializationCounter(1);
+        _incrementGlobalInitializationCounter(2);
+        _incrementGlobalInitializationCounter(3);
+
+        __CustomToken_reinit3();
+    }
+
+    /*
+    /// @dev How to add a new reinitializer:
+    function reinitialize4()
+        external
+        whenNotPaused
+        reinitializer(_incrementGlobalInitializationCounter(4))
+        nonReentrant
+    {}
+    */
+
+    /// @inheritdoc CustomTokenBase
+    function _CUSTOM_TOKEN_REINIT_3_COMPATIBLE() internal pure override {}
 }
