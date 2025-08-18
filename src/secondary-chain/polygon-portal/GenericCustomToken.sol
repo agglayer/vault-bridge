@@ -62,13 +62,13 @@ contract GenericCustomToken is CustomTokenBase {
     // -----================= ::: CUSTOM TOKEN ::: =================-----
 
     // @remind Document (the entire function).
-    function deposit(address account, bytes calldata data) external onlyChildChainManager {
+    function deposit(address account, bytes calldata data) external whenNotPaused onlyChildChainManager nonReentrant {
         uint256 value = abi.decode(data, (uint256));
         _mint(account, value);
     }
 
     // @remind Document (the entire function).
-    function withdraw(uint256 value) external {
+    function withdraw(uint256 value) external whenNotPaused nonReentrant {
         _burn(msg.sender, value);
     }
 
