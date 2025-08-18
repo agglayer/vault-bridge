@@ -19,7 +19,7 @@ env:
     certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GVBTBalances.spec
     certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/tokenMockBalances.spec
     certora/confs/GenericNativeConverter.conf
-    certora/confs/MigrationManager-generic.conf --rule onMsgReceived_doesntAlwaysRevert
+    certora/confs/base/MigrationManager.conf --rule onMsgReceived_doesntAlwaysRevert
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -51,6 +51,9 @@ jobs:
           cd zkevm-contracts/
           git checkout v10.1.0-rc.1
           npm install
+
+      - name: Certora munge
+        run: ./certora/scripts/munge.sh
 
       - name: run configs
         uses: Certora/certora-run-action@v2
