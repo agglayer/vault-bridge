@@ -1,6 +1,9 @@
-name: test
+name: Certora - Verification
 
-on: pull_request
+on:
+  pull_request:
+    branches:
+      - staging
 
 env:
   FOUNDRY_PROFILE: ci
