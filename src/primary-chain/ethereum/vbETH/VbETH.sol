@@ -10,11 +10,11 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 
 /// @title Vault Bridge gas token
 /// @author See https://github.com/agglayer/vault-bridge
-/// @dev CAUTION! As-is, this contract MUST NOT be used on a network if the gas token is not ETH.
+/// @dev CAUTION! As-is, this contract MUST NOT be used on a chain if the gas token is not ETH.
 contract VbETH is VaultBridgeToken {
     using SafeERC20 for IWETH9;
 
-    error ContractNotSupportedOnThisNetwork();
+    error ContractNotSupportedOnThisChain();
     error IncorrectMsgValue(uint256 msgValue, uint256 requestedAssets);
 
     constructor() {
@@ -23,7 +23,9 @@ contract VbETH is VaultBridgeToken {
 
     function initialize(address initializer_, VaultBridgeToken.InitializationParameters calldata initParams)
         external
+        whenNotPaused
         initializer
+        nonReentrant
     {
         // Initialize the base implementation.
         __VaultBridgeToken_init(initializer_, initParams);
@@ -31,9 +33,29 @@ contract VbETH is VaultBridgeToken {
         require(
             IAgglayerBridge(initParams.agglayerBridge).gasTokenAddress() == address(0)
                 && IAgglayerBridge(initParams.agglayerBridge).gasTokenNetwork() == 0,
-            ContractNotSupportedOnThisNetwork()
+            ContractNotSupportedOnThisChain()
         );
     }
+
+    function reinitialize2() external whenNotPaused reinitializer(2) nonReentrant {
+        _incrementGlobalInitializationCounter(1);
+        _incrementGlobalInitializationCounter(2);
+
+        __VaultBridgeToken_reinit2();
+    }
+
+    /*
+    /// @dev How to add a new reinitializer:
+    function reinitialize3()
+        external
+        whenNotPaused
+        reinitializer(_incrementGlobalInitializationCounter(3))
+        nonReentrant
+    {}
+    */
+
+    /// @inheritdoc VaultBridgeToken
+    function _VAULT_BRIDGE_TOKEN_REINIT_2_COMPATIBLE() internal pure override {}
 
     /// @dev deposit ETH to get vbETH
     function depositGasToken(address receiver) external payable whenNotPaused nonReentrant returns (uint256 shares) {
