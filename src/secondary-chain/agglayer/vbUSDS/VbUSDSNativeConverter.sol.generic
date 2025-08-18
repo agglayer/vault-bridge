@@ -1,0 +1,13 @@
+// SPDX-License-Identifier: LicenseRef-PolygonLabs-Source-Available
+// Vault Bridge (last updated v1.0.0) (secondary-chain/agglayer/VbUSDS/VbUSDSNativeConverter.sol.generic)
+
+pragma solidity 0.8.29;
+
+// Main functionality.
+import {GenericNativeConverter} from "../GenericNativeConverter.sol";
+
+/// @title Vault Bridge USDS Native Converter
+/// @author See https://github.com/agglayer/vault-bridge
+/// @dev No customization is required.
+/// @dev This contract does not need to be deployed. You can point `VbUSDSNativeConverter` proxy to `GenericNativeConverter` instead.
+contract VbUSDSNativeConverter is GenericNativeConverter {}

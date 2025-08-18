@@ -16,6 +16,7 @@ import {PausableUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/Pau
 import {ReentrancyGuardTransientUpgradeable} from
     "@openzeppelin-contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
 import {ERC20PermitUser} from "../etc/ERC20PermitUser.sol";
+import {InitializationCounter} from "../etc/InitializationCounter.sol";
 import {Versioned} from "../etc/Versioned.sol";
 
 // Libraries.
@@ -43,6 +44,7 @@ abstract contract VaultBridgeToken is
     IERC4626,
     ERC20PermitUpgradeable,
     ERC20PermitUser,
+    InitializationCounter,
     Versioned
 {
     // Libraries.
@@ -222,6 +224,24 @@ abstract contract VaultBridgeToken is
             }
         }
     }
+
+    // @remind Document.
+    function __VaultBridgeToken_reinit2()
+        internal
+        onlyInitializing
+        incrementsLocalInitializationCounter(1)
+        incrementsLocalInitializationCounter(2)
+    {
+        // Empty function body.
+    }
+
+    /*
+    /// @dev How to add a new reinit step:
+    function __VaultBridgeToken_reinit3() internal onlyInitializing incrementsLocalInitializationCounter(3) {}
+    */
+
+    // @remind Document.
+    function _VAULT_BRIDGE_TOKEN_REINIT_2_COMPATIBLE() internal pure virtual;
 
     // -----================= ::: STORAGE ::: =================-----
 

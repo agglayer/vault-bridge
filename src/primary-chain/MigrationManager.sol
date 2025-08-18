@@ -12,6 +12,7 @@ import {AccessControlUpgradeable} from "@openzeppelin-contracts-upgradeable/acce
 import {PausableUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/PausableUpgradeable.sol";
 import {ReentrancyGuardTransientUpgradeable} from
     "@openzeppelin-contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
+import {InitializationCounter} from "../etc/InitializationCounter.sol";
 import {Versioned} from "../etc/Versioned.sol";
 
 /// @dev Libraries.
@@ -35,13 +36,14 @@ contract MigrationManager is
     AccessControlUpgradeable,
     PausableUpgradeable,
     ReentrancyGuardTransientUpgradeable,
+    InitializationCounter,
     Versioned
 {
     // Libraries.
     using SafeERC20 for IERC20;
 
-    /// @dev Used in cross-network communication.
-    enum CrossNetworkInstruction {
+    /// @dev Used in cross-chain communication.
+    enum CrossChainInstruction {
         _0_COMPLETE_MIGRATION,
         _1_WRAP_GAS_TOKEN_AND_COMPLETE_MIGRATION
     }
@@ -110,14 +112,12 @@ contract MigrationManager is
 
     /// @notice Initializes the Migration Manager contract.
     /// @param owner_ (ATTENTION) This address will be granted the `DEFAULT_ADMIN_ROLE`, as well as all basic roles. Roles can be modified at any time.
-    /// @param wrappedGasToken_ The address of the wrapped gas token (e.g., WETH, if the gas token is ETH). Must be the same as the underlying token of the corresponding vbToken (e.g., vbETH, if the gas token is ETH).
-    function initialize(address owner_, address agglayerBridge_, address wrappedGasToken_) external initializer {
+    function initialize(address owner_, address agglayerBridge_) external whenNotPaused initializer nonReentrant {
         MigrationManagerStorage storage $ = _getMigrationManagerStorage();
 
         // Check the inputs.
         require(owner_ != address(0), InvalidOwner());
         require(agglayerBridge_ != address(0), InvalidAgglayerBridge());
-        require(wrappedGasToken_ != address(0), InvalidWrappedGasToken());
 
         // Initialize the inherited contracts.
         __AccessControl_init();
@@ -133,8 +133,30 @@ contract MigrationManager is
         // Initialize the storage.
         $.agglayerBridge = IAgglayerBridge(agglayerBridge_);
         $._agglayerId = $.agglayerBridge.networkID();
+    }
+
+    // @remind Document (the entire function).
+    /// @param wrappedGasToken_ The address of the wrapped gas token (e.g., WETH, if the gas token is ETH). Must be the same as the underlying token of the corresponding vbToken (e.g., of vbETH, if the gas token is ETH).
+    function reinitialize2(address wrappedGasToken_) external whenNotPaused reinitializer(2) nonReentrant {
+        MigrationManagerStorage storage $ = _getMigrationManagerStorage();
+
+        _incrementGlobalInitializationCounter(1);
+        _incrementGlobalInitializationCounter(2);
+
+        require(wrappedGasToken_ != address(0), InvalidWrappedGasToken());
+
         $._wrappedGasToken = IWETH9(wrappedGasToken_);
     }
+
+    /*
+    /// @dev How to add a new reinitializer:
+    function reinitialize3()
+        external
+        whenNotPaused
+        reinitializer(_incrementGlobalInitializationCounter(3))
+        nonReentrant
+    {}
+    */
 
     // -----================= ::: STORAGE ::: =================-----
 
@@ -144,7 +166,7 @@ contract MigrationManager is
         return $.agglayerBridge;
     }
 
-    /// @notice Tells which vbToken Native Converter on Layer a Y belongs to.
+    /// @notice Tells which vbToken Native Converter on Secondary Chain belongs to.
     /// @param secondaryChainAgglayerId Secondary Chain's Agglayer ID.
     /// @param nativeConverter The address of Native Converter on Secondary Chain.
     function nativeConvertersConfiguration(uint32 secondaryChainAgglayerId, address nativeConverter)
@@ -244,15 +266,15 @@ contract MigrationManager is
     {
         MigrationManagerStorage storage $ = _getMigrationManagerStorage();
 
-        // Decode the cross-network instruction.
-        (CrossNetworkInstruction instruction, bytes memory instructionData) =
-            abi.decode(data, (CrossNetworkInstruction, bytes));
+        // Decode the cross-chain instruction.
+        (CrossChainInstruction instruction, bytes memory instructionData) =
+            abi.decode(data, (CrossChainInstruction, bytes));
 
         // Dispatch.
         /* Complete migration. */
         if (
-            instruction == CrossNetworkInstruction._0_COMPLETE_MIGRATION
-                || instruction == CrossNetworkInstruction._1_WRAP_GAS_TOKEN_AND_COMPLETE_MIGRATION
+            instruction == CrossChainInstruction._0_COMPLETE_MIGRATION
+                || instruction == CrossChainInstruction._1_WRAP_GAS_TOKEN_AND_COMPLETE_MIGRATION
         ) {
             // Cache vbToken.
             VaultBridgeToken vbToken = $.nativeConvertersConfiguration[originNetwork][originAddress].vbToken;
@@ -264,7 +286,7 @@ contract MigrationManager is
             (uint256 shares, uint256 assets) = abi.decode(instructionData, (uint256, uint256));
 
             // Wrap the gas token if instructed.
-            if (instruction == CrossNetworkInstruction._1_WRAP_GAS_TOKEN_AND_COMPLETE_MIGRATION) {
+            if (instruction == CrossChainInstruction._1_WRAP_GAS_TOKEN_AND_COMPLETE_MIGRATION) {
                 // Cache the underlying token.
                 IERC20 underlyingToken = $.nativeConvertersConfiguration[originNetwork][originAddress].underlyingToken;
 

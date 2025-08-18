@@ -25,14 +25,14 @@ contract WETHNativeConverter is NativeConverter {
     bytes32 private constant _WETH_NATIVE_CONVERTER_STORAGE =
         hex"f9565ea242552c2a1a216404344b0c8f6a3093382a21dd5bd6f5dc2ff1934d00";
 
-    error FunctionNotSupportedOnThisNetwork();
+    error FunctionNotSupportedOnThisChain();
     error InvalidNonMigratableGasBackingPercentage();
 
     event NonMigratableGasBackingPercentageSet(uint256 nonMigratableGasBackingPercentage_);
 
     modifier onlyIfGasTokenIsEth() {
         WETHNativeConverterStorage storage $ = _getWETHNativeConverterStorage();
-        require($._gasTokenIsEth, FunctionNotSupportedOnThisNetwork());
+        require($._gasTokenIsEth, FunctionNotSupportedOnThisChain());
         _;
     }
 
@@ -70,6 +70,26 @@ contract WETHNativeConverter is NativeConverter {
         $.nonMigratableGasBackingPercentage = nonMigratableGasBackingPercentage_;
     }
 
+    function reinitialize2() external whenNotPaused nonReentrant reinitializer(2) {
+        _incrementGlobalInitializationCounter(1);
+        _incrementGlobalInitializationCounter(2);
+
+        __NativeConverter_reinit2();
+    }
+
+    /*
+    /// @dev How to add a new reinitializer:
+    function reinitialize3()
+        external
+        whenNotPaused
+        reinitializer(_incrementGlobalInitializationCounter(3))
+        nonReentrant
+    {}
+    */
+
+    /// @inheritdoc NativeConverter
+    function _NATIVE_CONVERTER_REINIT_2_COMPATIBLE() internal pure override {}
+
     function nonMigratableGasBackingPercentage() public view returns (uint256) {
         WETHNativeConverterStorage storage $ = _getWETHNativeConverterStorage();
         return $.nonMigratableGasBackingPercentage;
@@ -94,7 +114,7 @@ contract WETHNativeConverter is NativeConverter {
 
     /// @dev This special function allows the NativeConverter owner to migrate the gas backing of the WETH Custom Token
     /// @dev It simply takes the amount of gas token from the WETH contract
-    /// @dev and performs the migration using a special CrossNetworkInstruction called _1_WRAP_GAS_TOKEN_AND_COMPLETE_MIGRATION
+    /// @dev and performs the migration using a special CrossChainInstruction called _1_WRAP_GAS_TOKEN_AND_COMPLETE_MIGRATION
     /// @dev It instructs vbETH on Primary Chain to first wrap the gas token and then deposit it to complete the migration.
     /// @notice It is known that this can lead to WETH not being able to perform withdrawals, because of a lack of gas backing.
     /// @notice However, this is acceptable, because WETH is a vault backed token so its backing should actually be staked.
@@ -129,7 +149,7 @@ contract WETHNativeConverter is NativeConverter {
             address(migrationManager()),
             true,
             abi.encode(
-                MigrationManager.CrossNetworkInstruction._1_WRAP_GAS_TOKEN_AND_COMPLETE_MIGRATION,
+                MigrationManager.CrossChainInstruction._1_WRAP_GAS_TOKEN_AND_COMPLETE_MIGRATION,
                 abi.encode(amountOfCustomToken, amount)
             )
         );

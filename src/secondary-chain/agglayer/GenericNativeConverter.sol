@@ -6,9 +6,6 @@ pragma solidity 0.8.29;
 // Main functionality.
 import {NativeConverter} from "../NativeConverter.sol";
 
-// Other functionality.
-import {Versioned} from "../../etc/Versioned.sol";
-
 /// @title Generic Native Converter (Agglayer)
 /// @author See https://github.com/agglayer/vault-bridge
 /// @dev This contract can be used to deploy Native Converters that do not require any customization.
@@ -27,7 +24,7 @@ contract GenericNativeConverter is NativeConverter {
         uint32 primaryChainAgglayerId_,
         uint256 nonMigratableBackingPercentage_,
         address migrationManager_
-    ) external initializer {
+    ) external whenNotPaused initializer nonReentrant {
         // Initialize the base implementation.
         __NativeConverter_init(
             owner_,
@@ -39,4 +36,24 @@ contract GenericNativeConverter is NativeConverter {
             migrationManager_
         );
     }
+
+    function reinitialize2() external whenNotPaused reinitializer(2) nonReentrant {
+        _incrementGlobalInitializationCounter(1);
+        _incrementGlobalInitializationCounter(2);
+
+        __NativeConverter_reinit2();
+    }
+
+    /*
+    /// @dev How to add a new reinitializer:
+    function reinitialize3()
+        external
+        whenNotPaused
+        reinitializer(_incrementGlobalInitializationCounter(3))
+        nonReentrant
+    {}
+    */
+
+    /// @inheritdoc NativeConverter
+    function _NATIVE_CONVERTER_REINIT_2_COMPATIBLE() internal pure override {}
 }
