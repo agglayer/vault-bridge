@@ -67,8 +67,8 @@ contract VaultBridgeTokenInitializer is IVaultBridgeTokenInitializer, VaultBridg
         require(initParams.yieldVaultMaximumSlippagePercentage <= 1e18, InvalidYieldVaultMaximumSlippagePercentage());
         require(initParams.vaultBridgeTokenPart2 != address(0), InvalidVaultBridgeTokenPart2());
         require(
-            keccak256(bytes(VaultBridgeToken(initParams.vaultBridgeTokenPart2).version()))
-                == keccak256(bytes(version())),
+            keccak256(bytes(VaultBridgeToken(initParams.vaultBridgeTokenPart2).vaultBridgeVersion()))
+                == keccak256(bytes(vaultBridgeVersion())),
             InvalidVaultBridgeTokenPart2()
         );
 
