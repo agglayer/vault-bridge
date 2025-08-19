@@ -44,6 +44,11 @@ abstract contract InitializationCounter {
     // @todo Make the modifier use a private function.
     // @remind Document (the entire modifier).
     modifier incrementsLocalInitializationCounter(uint64 expectedNewLocalInitializationCounterValue) {
+        _incrementLocalInitializationCounter(expectedNewLocalInitializationCounterValue);
+        _;
+    }
+
+    function _incrementLocalInitializationCounter(uint64 expectedNewLocalInitializationCounterValue) private {
         InitializationCounterStorage storage $ = _getInitializationCounterStorage();
 
         uint64 actualNewLocalInitializationCounterValue = $._localInitializationCounter + 1;
@@ -51,8 +56,6 @@ abstract contract InitializationCounter {
         assert(expectedNewLocalInitializationCounterValue == actualNewLocalInitializationCounterValue);
 
         $._localInitializationCounter++;
-
-        _;
     }
 
     // @remind Document (the entire function).

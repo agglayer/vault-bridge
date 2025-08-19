@@ -141,7 +141,7 @@ abstract contract CustomTokenBase is
     }
 
     /// @notice The address of Native Converter for this Custom Token.
-    /// @return Returns `address(0)` if not Native Converter is not connected.
+    /// @return Returns `address(0)` if Native Converter is not connected.
     function nativeConverter() public view returns (address) {
         CustomTokenStorage storage $ = _getCustomTokenStorage();
         return $.nativeConverter;
@@ -182,6 +182,7 @@ abstract contract CustomTokenBase is
 
     // -----================= ::: CUSTOM TOKEN ::: =================-----
 
+    // @todo Document.
     function _CUSTOM_TOKEN_IMPLEMENTS_MINT_BURN() internal virtual;
 
     // -----================= ::: ADMIN ::: =================-----
