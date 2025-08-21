@@ -163,7 +163,7 @@ abstract contract NativeConverter is
     }
 
     // @remind Document (the entire function).
-    function __NativeConverter_reinit2()
+    function __NativeConverter_init2()
         internal
         onlyInitializing
         incrementsLocalInitializationCounter(1)
@@ -175,12 +175,12 @@ abstract contract NativeConverter is
     }
 
     /*
-    /// @dev How to add a new reinit step:
-    function __NativeConverter_reinit3() internal onlyInitializing incrementsLocalInitializationCounter(3) {}
+    /// @dev How to add a new init step:
+    function __NativeConverter_init3() internal onlyInitializing incrementsLocalInitializationCounter(3) {}
     */
 
     // @remind Document.
-    function _NATIVE_CONVERTER_REINIT_2_COMPATIBLE() internal pure virtual;
+    function _NATIVE_CONVERTER_INIT_2_COMPATIBLE() internal pure virtual;
 
     // -----================= ::: STORAGE ::: =================-----
 
@@ -271,7 +271,7 @@ abstract contract NativeConverter is
         shares = _convertToShares(assets);
 
         // Mint Custom Token to the receiver.
-        $.customToken.mint(receiver, shares);
+        _mintCustomToken(receiver, shares);
     }
 
     /// @notice Deposit a specific amount of the underlying token and get Custom Token.
@@ -391,7 +391,7 @@ abstract contract NativeConverter is
         $.backingOnSecondaryChain -= assets;
 
         // Burn Custom Token.
-        $.customToken.burn(msg.sender, shares);
+        _burnCustomToken(msg.sender, shares);
 
         // Withdraw the underlying token.
         if (destinationNetworkId == $.agglayerId) {
@@ -562,4 +562,12 @@ abstract contract NativeConverter is
     function unpause() external onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant {
         _unpause();
     }
+
+    // -----================= ::: DEVELOPER ::: =================-----
+
+    // @remind Document (the entire function).
+    function _mintCustomToken(address account, uint256 value) internal virtual;
+
+    // @remind Document (the entire function).
+    function _burnCustomToken(address account, uint256 value) internal virtual;
 }

@@ -3,7 +3,8 @@
 
 pragma solidity 0.8.29;
 
-import {CustomToken, CustomTokenBase} from "../../CustomToken.sol";
+import {CustomTokenAgglayer} from "../CustomTokenAgglayer.sol";
+import {CustomToken} from "../../CustomToken.sol";
 import {ERC20Upgradeable} from "@openzeppelin-contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
 import {IWETH9} from "../../../etc/IWETH9.sol";
 import {IAgglayerBridge} from "../../../etc/IAgglayerBridge.sol";
@@ -11,7 +12,7 @@ import {IAgglayerBridge} from "../../../etc/IAgglayerBridge.sol";
 /// @title WETH (Agglayer)
 /// @author See https://github.com/agglayer/vault-bridge
 /// @dev based on https://github.com/gnosis/canonical-weth/blob/master/contracts/WETH9.sol
-contract WETH is CustomToken {
+contract WETH is CustomTokenAgglayer {
     /// @dev Storage of WETH contract.
     /// @dev It's implemented on a custom ERC-7201 namespace to reduce the risk of storage collisions when using with upgradeable contracts.
     /// @custom:storage-location erc7201:agglayer.vault-bridge.WETH.storage
@@ -43,12 +44,12 @@ contract WETH is CustomToken {
         _;
     }
 
-    function initialize(
+    function reinitialize1(
         address owner_,
         uint8 originalUnderlyingTokenDecimals_,
         address agglayerBridge_,
         address nativeConverter_
-    ) external whenNotPaused initializer nonReentrant {
+    ) external whenNotPaused reinitializer(1) nonReentrant {
         WETHStorage storage $ = _getWETHStorage();
 
         // Preserve the `name` and `symbol` of the bridged vbToken.
@@ -66,7 +67,7 @@ contract WETH is CustomToken {
     }
 
     function reinitialize2() external whenNotPaused reinitializer(2) nonReentrant {
-        __CustomToken_reinit2();
+        // Empty function body.
     }
 
     function reinitialize3() external whenNotPaused reinitializer(3) nonReentrant {
@@ -74,7 +75,7 @@ contract WETH is CustomToken {
         _incrementGlobalInitializationCounter(2);
         _incrementGlobalInitializationCounter(3);
 
-        __CustomToken_reinit3();
+        __CustomToken_init2();
     }
 
     /*
@@ -87,8 +88,8 @@ contract WETH is CustomToken {
     {}
     */
 
-    /// @inheritdoc CustomTokenBase
-    function _CUSTOM_TOKEN_REINIT_3_COMPATIBLE() internal pure override {}
+    /// @inheritdoc CustomToken
+    function _CUSTOM_TOKEN_INIT_2_COMPATIBLE() internal pure override {}
 
     function _getWETHStorage() private pure returns (WETHStorage storage $) {
         assembly {
