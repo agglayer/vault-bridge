@@ -208,8 +208,8 @@ abstract contract VaultBridgeToken is
         // Verify the version of the initializer.
         // The version string must be the same as that of this contract.
         require(
-            keccak256(bytes(VaultBridgeToken(initializer_).vaultBridgeVersion()))
-                == keccak256(bytes(vaultBridgeVersion())),
+            keccak256(bytes(VaultBridgeToken(initializer_).VAULT_BRIDGE_VERSION()))
+                == keccak256(bytes(VAULT_BRIDGE_VERSION())),
             InvalidInitializer()
         );
 
