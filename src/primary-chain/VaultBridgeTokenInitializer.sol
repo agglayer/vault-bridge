@@ -112,10 +112,10 @@ contract VaultBridgeTokenInitializer is IVaultBridgeTokenInitializer, VaultBridg
     }
 
     /*
-    /// @dev How to add a new reinitializer:
+    /// @dev How to add a new init step:
     function reinitialize3() external onlyInitializing {}
     */
 
     /// @inheritdoc VaultBridgeToken
-    function _VAULT_BRIDGE_TOKEN_REINIT_2_COMPATIBLE() internal pure override {}
+    function _VAULT_BRIDGE_TOKEN_INIT_2_COMPATIBLE() internal pure override {}
 }

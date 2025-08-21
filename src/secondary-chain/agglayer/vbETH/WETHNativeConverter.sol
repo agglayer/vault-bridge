@@ -3,6 +3,7 @@
 
 pragma solidity 0.8.29;
 
+import {NativeConverterAgglayer} from "../NativeConverterAgglayer.sol";
 import {NativeConverter, Math} from "../../NativeConverter.sol";
 import {WETH} from "./WETH.sol";
 import {MigrationManager} from "../../../primary-chain/MigrationManager.sol";
@@ -10,7 +11,7 @@ import {IAgglayerBridge} from "../../../etc/IAgglayerBridge.sol";
 
 /// @title WETH Native Converter (Agglayer)
 /// @author See https://github.com/agglayer/vault-bridge
-contract WETHNativeConverter is NativeConverter {
+contract WETHNativeConverter is NativeConverterAgglayer {
     /// @dev Storage of WETHNativeConverter contract.
     /// @dev It's implemented on a custom ERC-7201 namespace to reduce the risk of storage collisions when using with upgradeable contracts.
     /// @custom:storage-location erc7201:agglayer.vault-bridge.WETHNativeConverter.storage
@@ -40,7 +41,7 @@ contract WETHNativeConverter is NativeConverter {
         _disableInitializers();
     }
 
-    function initialize(
+    function reinitialize1(
         address owner_,
         address customToken_,
         address underlyingToken_,
@@ -49,7 +50,7 @@ contract WETHNativeConverter is NativeConverter {
         uint256 nonMigratableBackingPercentage_,
         address migrationManager_,
         uint256 nonMigratableGasBackingPercentage_
-    ) external initializer {
+    ) external reinitializer(1) {
         WETHNativeConverterStorage storage $ = _getWETHNativeConverterStorage();
 
         // Initialize the base implementation.
@@ -74,7 +75,7 @@ contract WETHNativeConverter is NativeConverter {
         _incrementGlobalInitializationCounter(1);
         _incrementGlobalInitializationCounter(2);
 
-        __NativeConverter_reinit2();
+        __NativeConverter_init2();
     }
 
     /*
@@ -88,7 +89,7 @@ contract WETHNativeConverter is NativeConverter {
     */
 
     /// @inheritdoc NativeConverter
-    function _NATIVE_CONVERTER_REINIT_2_COMPATIBLE() internal pure override {}
+    function _NATIVE_CONVERTER_INIT_2_COMPATIBLE() internal pure override {}
 
     function nonMigratableGasBackingPercentage() public view returns (uint256) {
         WETHNativeConverterStorage storage $ = _getWETHNativeConverterStorage();
