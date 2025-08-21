@@ -39,7 +39,7 @@ contract VaultBridgeTokenPart2 is VaultBridgeToken {
     }
 
     /// @inheritdoc VaultBridgeToken
-    function _VAULT_BRIDGE_TOKEN_REINIT_2_COMPATIBLE() internal pure override {}
+    function _VAULT_BRIDGE_TOKEN_INIT_2_COMPATIBLE() internal pure override {}
 
     // -----================= ::: STORAGE ::: =================-----
 

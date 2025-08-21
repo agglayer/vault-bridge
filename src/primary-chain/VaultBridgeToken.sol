@@ -227,7 +227,7 @@ abstract contract VaultBridgeToken is
     }
 
     // @remind Document.
-    function __VaultBridgeToken_reinit2()
+    function __VaultBridgeToken_init2()
         internal
         onlyInitializing
         incrementsLocalInitializationCounter(1)
@@ -237,12 +237,12 @@ abstract contract VaultBridgeToken is
     }
 
     /*
-    /// @dev How to add a new reinit step:
-    function __VaultBridgeToken_reinit3() internal onlyInitializing incrementsLocalInitializationCounter(3) {}
+    /// @dev How to add a new init step:
+    function __VaultBridgeToken_init3() internal onlyInitializing incrementsLocalInitializationCounter(3) {}
     */
 
     // @remind Document.
-    function _VAULT_BRIDGE_TOKEN_REINIT_2_COMPATIBLE() internal pure virtual;
+    function _VAULT_BRIDGE_TOKEN_INIT_2_COMPATIBLE() internal pure virtual;
 
     // -----================= ::: STORAGE ::: =================-----
 

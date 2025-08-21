@@ -112,7 +112,12 @@ contract MigrationManager is
 
     /// @notice Initializes the Migration Manager contract.
     /// @param owner_ (ATTENTION) This address will be granted the `DEFAULT_ADMIN_ROLE`, as well as all basic roles. Roles can be modified at any time.
-    function initialize(address owner_, address agglayerBridge_) external whenNotPaused initializer nonReentrant {
+    function reinitialize1(address owner_, address agglayerBridge_)
+        external
+        whenNotPaused
+        reinitializer(1)
+        nonReentrant
+    {
         MigrationManagerStorage storage $ = _getMigrationManagerStorage();
 
         // Check the inputs.

@@ -21,10 +21,10 @@ contract VbETH is VaultBridgeToken {
         _disableInitializers();
     }
 
-    function initialize(address initializer_, VaultBridgeToken.InitializationParameters calldata initParams)
+    function reinitialize1(address initializer_, VaultBridgeToken.InitializationParameters calldata initParams)
         external
         whenNotPaused
-        initializer
+        reinitializer(1)
         nonReentrant
     {
         // Initialize the base implementation.
@@ -41,7 +41,7 @@ contract VbETH is VaultBridgeToken {
         _incrementGlobalInitializationCounter(1);
         _incrementGlobalInitializationCounter(2);
 
-        __VaultBridgeToken_reinit2();
+        __VaultBridgeToken_init2();
     }
 
     /*
@@ -55,7 +55,7 @@ contract VbETH is VaultBridgeToken {
     */
 
     /// @inheritdoc VaultBridgeToken
-    function _VAULT_BRIDGE_TOKEN_REINIT_2_COMPATIBLE() internal pure override {}
+    function _VAULT_BRIDGE_TOKEN_INIT_2_COMPATIBLE() internal pure override {}
 
     /// @dev deposit ETH to get vbETH
     function depositGasToken(address receiver) external payable whenNotPaused nonReentrant returns (uint256 shares) {
