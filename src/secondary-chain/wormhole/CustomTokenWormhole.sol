@@ -13,7 +13,7 @@ abstract contract CustomTokenWormhole is CustomToken {
     /// @dev Checks if the sender is NTT Manager.
     /// @dev This modifier is used to restrict minting and burning of Custom Token.
     modifier onlyNttManager() {
-        // Only NTT Manager can mint Custom Token.
+        // Only NTT Manager can mint and burn Custom Token.
         require(msg.sender == bridge(), Unauthorized());
         _;
     }
