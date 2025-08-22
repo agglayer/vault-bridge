@@ -16,7 +16,7 @@ import {PausableUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/Pau
 import {ReentrancyGuardTransientUpgradeable} from
     "@openzeppelin-contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
 import {ERC20PermitUser} from "../etc/ERC20PermitUser.sol";
-import {InitializationCounter} from "../etc/InitializationCounter.sol";
+import {InitializationCounterUpgradeable} from "../etc/InitializationCounterUpgradeable.sol";
 import {Versioned} from "../etc/Versioned.sol";
 
 // Libraries.
@@ -44,7 +44,7 @@ abstract contract VaultBridgeToken is
     IERC4626,
     ERC20PermitUpgradeable,
     ERC20PermitUser,
-    InitializationCounter,
+    InitializationCounterUpgradeable,
     Versioned
 {
     // Libraries.

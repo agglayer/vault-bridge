@@ -12,7 +12,7 @@ import {Initializable} from "@openzeppelin-contracts-upgradeable/proxy/utils/Ini
 import {AccessControlUpgradeable} from "@openzeppelin-contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import {PausableUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/PausableUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
-import {InitializationCounter} from "../etc/InitializationCounter.sol";
+import {InitializationCounterUpgradeable} from "../etc/InitializationCounterUpgradeable.sol";
 import {Versioned} from "../etc/Versioned.sol";
 
 /// @title Custom Token (optional)
@@ -26,7 +26,7 @@ abstract contract CustomToken is
     PausableUpgradeable,
     ReentrancyGuardUpgradeable,
     ERC20PermitUpgradeable,
-    InitializationCounter,
+    InitializationCounterUpgradeable,
     Versioned
 {
     /// @dev Storage of Custom Token contract.
@@ -175,7 +175,7 @@ abstract contract CustomToken is
 
     // -----================= ::: CUSTOM TOKEN ::: =================-----
 
-    // @todo Document.
+    // @remind Document.
     function _CUSTOM_TOKEN_IS_MINTABLE_BURNABLE() internal virtual;
 
     // -----================= ::: ADMIN ::: =================-----

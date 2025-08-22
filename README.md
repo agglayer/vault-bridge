@@ -11,6 +11,7 @@
 **&nbsp;&nbsp; [📙 Documentation](#documentation)**
 **&nbsp;&nbsp; [🧭 Website](https://www.agglayer.dev/agglayer-vaultbridge)**
 **&nbsp;&nbsp; [🐈‍⬛ GitHub](https://github.com/agglayer/vault-bridge/)**
+**&nbsp;&nbsp; [🦙 DefiLllama](https://defillama.com/protocol/vault-bridge)**
 
 </div>
 
@@ -101,7 +102,8 @@ Full support for non-Agglayer chains, third-party bridges, as well as non-EVM ch
 
 - [General Documentation](https://docs.agglayer.dev/)
 - [Technical Reference](https://agglayer.github.io/vault-bridge/)
-- In addition to General Documentation and Technical Reference, the [source code](https://github.com/agglayer/vault-bridge/tree/main/src) is 100% documented and you are encouraged to check it out.
+- [Source Code](https://github.com/agglayer/vault-bridge/tree/main/src): In addition to General Documentation and Technical Reference, the Source Code is 100% documented and you are encouraged to take a look.
+  - Pay attention to the following bookmarks: `@note CAUTION!`, `@note IMPORTANT:`, `@note (ATTENTION)`.
 
 ## Deployments
 
