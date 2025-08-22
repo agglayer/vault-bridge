@@ -12,7 +12,7 @@ import {AccessControlUpgradeable} from "@openzeppelin-contracts-upgradeable/acce
 import {PausableUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/PausableUpgradeable.sol";
 import {ReentrancyGuardTransientUpgradeable} from
     "@openzeppelin-contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
-import {InitializationCounter} from "../etc/InitializationCounter.sol";
+import {InitializationCounterUpgradeable} from "../etc/InitializationCounterUpgradeable.sol";
 import {Versioned} from "../etc/Versioned.sol";
 
 /// @dev Libraries.
@@ -36,7 +36,7 @@ contract MigrationManager is
     AccessControlUpgradeable,
     PausableUpgradeable,
     ReentrancyGuardTransientUpgradeable,
-    InitializationCounter,
+    InitializationCounterUpgradeable,
     Versioned
 {
     // Libraries.

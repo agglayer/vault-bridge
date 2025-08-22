@@ -9,7 +9,7 @@ import {AccessControlUpgradeable} from "@openzeppelin-contracts-upgradeable/acce
 import {PausableUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/PausableUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import {ERC20PermitUser} from "../etc/ERC20PermitUser.sol";
-import {InitializationCounter} from "../etc/InitializationCounter.sol";
+import {InitializationCounterUpgradeable} from "../etc/InitializationCounterUpgradeable.sol";
 import {Versioned} from "../etc/Versioned.sol";
 
 // Libraries.
@@ -35,7 +35,7 @@ abstract contract NativeConverter is
     PausableUpgradeable,
     ReentrancyGuardUpgradeable,
     ERC20PermitUser,
-    InitializationCounter,
+    InitializationCounterUpgradeable,
     Versioned
 {
     // Libraries.

@@ -1,29 +1,29 @@
 // SPDX-License-Identifier: LicenseRef-PolygonLabs-Source-Available
-// Vault Bridge (last updated v1.0.0) (secondary-chain/agglayer/vbETH/WETHNativeConverter.sol)
+// Vault Bridge (last updated v1.0.0) (secondary-chain/agglayer/vbETH/WethNativeConverterAgglayer.sol)
 
 pragma solidity 0.8.29;
 
 import {NativeConverterAgglayer} from "../NativeConverterAgglayer.sol";
 import {NativeConverter, Math} from "../../NativeConverter.sol";
-import {WETH} from "./WETH.sol";
+import {WethAgglayer} from "./WethAgglayer.sol";
 import {MigrationManager} from "../../../primary-chain/MigrationManager.sol";
 import {IAgglayerBridge} from "../../../etc/IAgglayerBridge.sol";
 
 /// @title WETH Native Converter (Agglayer)
 /// @author See https://github.com/agglayer/vault-bridge
-contract WETHNativeConverter is NativeConverterAgglayer {
+contract WethNativeConverterAgglayer is NativeConverterAgglayer {
     /// @dev Storage of WETHNativeConverter contract.
     /// @dev It's implemented on a custom ERC-7201 namespace to reduce the risk of storage collisions when using with upgradeable contracts.
     /// @custom:storage-location erc7201:agglayer.vault-bridge.WETHNativeConverter.storage
     struct WETHNativeConverterStorage {
-        WETH __DEPRECATED___weth;
+        WethAgglayer __DEPRECATED___weth;
         bool _gasTokenIsEth;
         uint256 nonMigratableGasBackingPercentage;
     }
 
     /// @dev The storage slot at which WETHNativeConverter storage starts, following the EIP-7201 standard.
     /// @dev Calculated as `keccak256(abi.encode(uint256(keccak256("agglayer.vault-bridge.WETHNativeConverter.storage")) - 1)) & ~bytes32(uint256(0xff))`.
-    bytes32 private constant _WETH_NATIVE_CONVERTER_STORAGE =
+    bytes32 private constant _WETH_NATIVE_CONVERTER_AGGLAYER_STORAGE =
         hex"f9565ea242552c2a1a216404344b0c8f6a3093382a21dd5bd6f5dc2ff1934d00";
 
     error FunctionNotSupportedOnThisChain();
@@ -32,7 +32,7 @@ contract WETHNativeConverter is NativeConverterAgglayer {
     event NonMigratableGasBackingPercentageSet(uint256 nonMigratableGasBackingPercentage_);
 
     modifier onlyIfGasTokenIsEth() {
-        WETHNativeConverterStorage storage $ = _getWETHNativeConverterStorage();
+        WETHNativeConverterStorage storage $ = _getWethNativeConverterAgglayerStorage();
         require($._gasTokenIsEth, FunctionNotSupportedOnThisChain());
         _;
     }
@@ -51,7 +51,7 @@ contract WETHNativeConverter is NativeConverterAgglayer {
         address migrationManager_,
         uint256 nonMigratableGasBackingPercentage_
     ) external reinitializer(1) {
-        WETHNativeConverterStorage storage $ = _getWETHNativeConverterStorage();
+        WETHNativeConverterStorage storage $ = _getWethNativeConverterAgglayerStorage();
 
         // Initialize the base implementation.
         __NativeConverter_init(
@@ -92,18 +92,18 @@ contract WETHNativeConverter is NativeConverterAgglayer {
     function _NATIVE_CONVERTER_INIT_2_COMPATIBLE() internal pure override {}
 
     function nonMigratableGasBackingPercentage() public view returns (uint256) {
-        WETHNativeConverterStorage storage $ = _getWETHNativeConverterStorage();
+        WETHNativeConverterStorage storage $ = _getWethNativeConverterAgglayerStorage();
         return $.nonMigratableGasBackingPercentage;
     }
 
-    function _getWETHNativeConverterStorage() private pure returns (WETHNativeConverterStorage storage $) {
+    function _getWethNativeConverterAgglayerStorage() private pure returns (WETHNativeConverterStorage storage $) {
         assembly {
-            $.slot := _WETH_NATIVE_CONVERTER_STORAGE
+            $.slot := _WETH_NATIVE_CONVERTER_AGGLAYER_STORAGE
         }
     }
 
     function migratableGasBacking() public view returns (uint256) {
-        WETHNativeConverterStorage storage $ = _getWETHNativeConverterStorage();
+        WETHNativeConverterStorage storage $ = _getWethNativeConverterAgglayerStorage();
 
         uint256 nonMigratableGasBacking =
             _convertToAssets(Math.mulDiv(customToken().totalSupply(), $.nonMigratableGasBackingPercentage, 1e18));
@@ -127,7 +127,7 @@ contract WETHNativeConverter is NativeConverterAgglayer {
         onlyRole(MIGRATOR_ROLE)
         nonReentrant
     {
-        WETH weth = WETH(payable(address(customToken())));
+        WethAgglayer weth = WethAgglayer(payable(address(customToken())));
 
         uint256 migratableGasBacking_ = migratableGasBacking();
 
@@ -166,7 +166,7 @@ contract WETHNativeConverter is NativeConverterAgglayer {
         onlyRole(DEFAULT_ADMIN_ROLE)
         nonReentrant
     {
-        WETHNativeConverterStorage storage $ = _getWETHNativeConverterStorage();
+        WETHNativeConverterStorage storage $ = _getWethNativeConverterAgglayerStorage();
 
         // Check the input.
         require(nonMigratableGasBackingPercentage_ <= 1e18, InvalidNonMigratableGasBackingPercentage());
