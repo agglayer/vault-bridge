@@ -111,7 +111,7 @@ contract GenericVaultBridgeTokenTest is Test {
             yieldVaultMaximumSlippagePercentage: YIELD_VAULT_ALLOWED_SLIPPAGE,
             vaultBridgeTokenPart2: address(vbTokenPart2)
         });
-        bytes memory initData = abi.encodeCall(vbToken.initialize, (initializer, initParams));
+        bytes memory initData = abi.encodeCall(vbToken.reinitialize1, (initializer, initParams));
         vbToken = GenericVaultBridgeToken(payable(_proxify(address(vbTokenImplementation), address(this), initData)));
         vbTokenPart2 = VaultBridgeTokenPart2(payable(address(vbToken)));
 
@@ -166,7 +166,7 @@ contract GenericVaultBridgeTokenTest is Test {
             yieldVaultMaximumSlippagePercentage: YIELD_VAULT_ALLOWED_SLIPPAGE,
             vaultBridgeTokenPart2: address(vbTokenPart2)
         });
-        vbToken.initialize(initializer, initParams);
+        vbToken.reinitialize1(initializer, initParams);
     }
 
     function test_initialize() public virtual {
@@ -188,73 +188,73 @@ contract GenericVaultBridgeTokenTest is Test {
             vaultBridgeTokenPart2: address(vbTokenPart2)
         });
 
-        initData = abi.encodeCall(vbToken.initialize, (address(0), initParams));
+        initData = abi.encodeCall(vbToken.reinitialize1, (address(0), initParams));
         vm.expectRevert(VaultBridgeToken.InvalidInitializer.selector);
         vbToken = GenericVaultBridgeToken(payable(_proxify(vbTokenImplementation, address(this), initData)));
 
-        initData = abi.encodeCall(vbToken.initialize, (initializer, initParams));
+        initData = abi.encodeCall(vbToken.reinitialize1, (initializer, initParams));
         vm.expectRevert(VaultBridgeToken.InvalidOwner.selector);
         vbToken = GenericVaultBridgeToken(payable(_proxify(vbTokenImplementation, address(this), initData)));
         vm.revertToState(stateBeforeInitialize);
 
         initParams.owner = owner;
         initParams.name = "";
-        initData = abi.encodeCall(vbToken.initialize, (initializer, initParams));
+        initData = abi.encodeCall(vbToken.reinitialize1, (initializer, initParams));
         vm.expectRevert(VaultBridgeToken.InvalidName.selector);
         vbToken = GenericVaultBridgeToken(payable(_proxify(vbTokenImplementation, address(this), initData)));
 
         initParams.name = name;
         initParams.symbol = "";
-        initData = abi.encodeCall(vbToken.initialize, (initializer, initParams));
+        initData = abi.encodeCall(vbToken.reinitialize1, (initializer, initParams));
         vm.expectRevert(VaultBridgeToken.InvalidSymbol.selector);
         vbToken = GenericVaultBridgeToken(payable(_proxify(vbTokenImplementation, address(this), initData)));
 
         initParams.symbol = symbol;
         initParams.underlyingToken = address(0);
-        initData = abi.encodeCall(vbToken.initialize, (initializer, initParams));
+        initData = abi.encodeCall(vbToken.reinitialize1, (initializer, initParams));
         /// forge-config: default.allow_internal_expect_revert = true
         vm.expectRevert(VaultBridgeToken.InvalidUnderlyingToken.selector);
         vbToken = GenericVaultBridgeToken(payable(_proxify(vbTokenImplementation, address(this), initData)));
 
         initParams.underlyingToken = asset;
         initParams.minimumReservePercentage = 1e19;
-        initData = abi.encodeCall(vbToken.initialize, (initializer, initParams));
+        initData = abi.encodeCall(vbToken.reinitialize1, (initializer, initParams));
         vm.expectRevert(VaultBridgeToken.InvalidMinimumReservePercentage.selector);
         vbToken = GenericVaultBridgeToken(payable(_proxify(vbTokenImplementation, address(this), initData)));
 
         initParams.minimumReservePercentage = minimumReservePercentage;
         initParams.yieldVault = address(0);
-        initData = abi.encodeCall(vbToken.initialize, (initializer, initParams));
+        initData = abi.encodeCall(vbToken.reinitialize1, (initializer, initParams));
         vm.expectRevert(VaultBridgeToken.InvalidYieldVault.selector);
         vbToken = GenericVaultBridgeToken(payable(_proxify(vbTokenImplementation, address(this), initData)));
 
         initParams.yieldVault = address(vbTokenVault);
         initParams.yieldRecipient = address(0);
-        initData = abi.encodeCall(vbToken.initialize, (initializer, initParams));
+        initData = abi.encodeCall(vbToken.reinitialize1, (initializer, initParams));
         vm.expectRevert(VaultBridgeToken.InvalidYieldRecipient.selector);
         vbToken = GenericVaultBridgeToken(payable(_proxify(vbTokenImplementation, address(this), initData)));
 
         initParams.yieldRecipient = yieldRecipient;
         initParams.agglayerBridge = address(0);
-        initData = abi.encodeCall(vbToken.initialize, (initializer, initParams));
+        initData = abi.encodeCall(vbToken.reinitialize1, (initializer, initParams));
         vm.expectRevert(VaultBridgeToken.InvalidAgglayerBridge.selector);
         vbToken = GenericVaultBridgeToken(payable(_proxify(vbTokenImplementation, address(this), initData)));
 
         initParams.agglayerBridge = LXLY_BRIDGE;
         initParams.migrationManager = address(0);
-        initData = abi.encodeCall(vbToken.initialize, (initializer, initParams));
+        initData = abi.encodeCall(vbToken.reinitialize1, (initializer, initParams));
         vm.expectRevert(VaultBridgeToken.InvalidMigrationManager.selector);
         vbToken = GenericVaultBridgeToken(payable(_proxify(vbTokenImplementation, address(this), initData)));
 
         initParams.migrationManager = migrationManager;
         initParams.yieldVaultMaximumSlippagePercentage = 1e19;
-        initData = abi.encodeCall(vbToken.initialize, (initializer, initParams));
+        initData = abi.encodeCall(vbToken.reinitialize1, (initializer, initParams));
         vm.expectRevert(VaultBridgeToken.InvalidYieldVaultMaximumSlippagePercentage.selector);
         vbToken = GenericVaultBridgeToken(payable(_proxify(vbTokenImplementation, address(this), initData)));
 
         initParams.yieldVaultMaximumSlippagePercentage = YIELD_VAULT_ALLOWED_SLIPPAGE;
         initParams.vaultBridgeTokenPart2 = address(0);
-        initData = abi.encodeCall(vbToken.initialize, (initializer, initParams));
+        initData = abi.encodeCall(vbToken.reinitialize1, (initializer, initParams));
         vm.expectRevert(VaultBridgeToken.InvalidVaultBridgeTokenPart2.selector);
         vbToken = GenericVaultBridgeToken(payable(_proxify(vbTokenImplementation, address(this), initData)));
     }
@@ -1410,10 +1410,6 @@ contract GenericVaultBridgeTokenTest is Test {
         emit PausableUpgradeable.Unpaused(owner);
         vbTokenPart2.unpause();
         vm.stopPrank();
-    }
-
-    function test_version() public view {
-        assertEq(vbToken.version(), version);
     }
 
     function test_approve() public {

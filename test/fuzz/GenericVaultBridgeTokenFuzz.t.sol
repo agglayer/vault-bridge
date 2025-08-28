@@ -87,7 +87,7 @@ contract GenericVaultBridgeTokenFuzzTest is Test {
             vaultBridgeTokenPart2: address(vbTokenPart2)
         });
         bytes memory initData =
-            abi.encodeCall(vbToken.initialize, (address(new VaultBridgeTokenInitializer()), initParams));
+            abi.encodeCall(vbToken.reinitialize1, (address(new VaultBridgeTokenInitializer()), initParams));
         vbToken =
             GenericVaultBridgeTokenHarness(payable(_proxify(address(vbTokenImplementation), address(this), initData)));
         vbTokenPart2 = VaultBridgeTokenPart2(payable(address(vbToken)));

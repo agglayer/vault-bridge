@@ -2,10 +2,10 @@
 pragma solidity ^0.8.29;
 
 import "forge-std/Test.sol";
-import "src/secondary-chain/agglayer/GenericNativeConverter.sol";
+import "src/secondary-chain/agglayer/GenericNativeConverterAgglayer.sol";
 import "src/secondary-chain/NativeConverter.sol";
 import "src/primary-chain/MigrationManager.sol";
-import "src/secondary-chain/agglayer/GenericCustomToken.sol";
+import "src/secondary-chain/agglayer/GenericCustomTokenAgglayer.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Errors} from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
@@ -63,7 +63,7 @@ contract GenericNativeConverterTest is Test {
     bytes internal underlyingTokenMetadata;
     address internal migrationManager;
 
-    GenericNativeConverter internal nativeConverter;
+    GenericNativeConverterAgglayer internal nativeConverter;
 
     // initialization arguments
     address internal owner = makeAddr("owner");
@@ -101,7 +101,7 @@ contract GenericNativeConverterTest is Test {
             )
         );
 
-        GenericCustomToken genericCustomTokenImpl = new GenericCustomToken();
+        GenericCustomTokenAgglayer genericCustomTokenImpl = new GenericCustomTokenAgglayer();
 
         CustomGlobalExitRootManager _globalExitRootManager = new CustomGlobalExitRootManager();
         address calculatedNativeConverterAddr = vm.computeCreateAddress(address(this), vm.getNonce(address(this)) + 1);
@@ -110,7 +110,7 @@ contract GenericNativeConverterTest is Test {
         _setAgglayerBridgeAttributes(NETWORK_ID_L2, address(_globalExitRootManager), LXLY_BRIDGE);
 
         bytes memory initData = abi.encodeCall(
-            GenericCustomToken.reinitialize, (address(this), 18, LXLY_BRIDGE, calculatedNativeConverterAddr)
+            GenericCustomTokenAgglayer.reinitialize1, (address(this), 18, LXLY_BRIDGE, calculatedNativeConverterAddr)
         );
         bytes memory upgradeData =
             abi.encodeCall(ITransparentUpgradeableProxy.upgradeToAndCall, (address(genericCustomTokenImpl), initData));
@@ -123,14 +123,14 @@ contract GenericNativeConverterTest is Test {
         underlyingTokenMetadata = abi.encode("Underlying Token", "uTKN", 18);
 
         // Deploy and initialize converter
-        nativeConverter = GenericNativeConverter(address(new GenericNativeConverter()));
+        nativeConverter = GenericNativeConverterAgglayer(address(new GenericNativeConverterAgglayer()));
 
         /// important to assign customToken, underlyingToken, and nativeConverter
         /// before the snapshot, so test_initialize will work
         beforeInit = vm.snapshotState();
 
         initData = abi.encodeCall(
-            nativeConverter.initialize,
+            nativeConverter.reinitialize1,
             (
                 owner,
                 address(customToken), // custom token
@@ -141,7 +141,7 @@ contract GenericNativeConverterTest is Test {
                 migrationManager
             )
         );
-        nativeConverter = GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
+        nativeConverter = GenericNativeConverterAgglayer(_proxify(address(nativeConverter), address(this), initData));
         assertEq(address(nativeConverter), calculatedNativeConverterAddr);
 
         _mapCustomToken(originUnderlyingToken, address(underlyingToken), false);
@@ -169,7 +169,7 @@ contract GenericNativeConverterTest is Test {
 
         bytes memory initData;
         initData = abi.encodeCall(
-            nativeConverter.initialize,
+            nativeConverter.reinitialize1,
             (
                 address(0),
                 address(customToken),
@@ -181,10 +181,10 @@ contract GenericNativeConverterTest is Test {
             )
         );
         vm.expectRevert(NativeConverter.InvalidOwner.selector);
-        GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
+        GenericNativeConverterAgglayer(_proxify(address(nativeConverter), address(this), initData));
 
         initData = abi.encodeCall(
-            nativeConverter.initialize,
+            nativeConverter.reinitialize1,
             (
                 owner,
                 address(0),
@@ -196,10 +196,10 @@ contract GenericNativeConverterTest is Test {
             )
         );
         vm.expectRevert(NativeConverter.InvalidCustomToken.selector);
-        GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
+        GenericNativeConverterAgglayer(_proxify(address(nativeConverter), address(this), initData));
 
         initData = abi.encodeCall(
-            nativeConverter.initialize,
+            nativeConverter.reinitialize1,
             (
                 owner,
                 address(customToken),
@@ -211,10 +211,10 @@ contract GenericNativeConverterTest is Test {
             )
         );
         vm.expectRevert(NativeConverter.InvalidUnderlyingToken.selector);
-        GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
+        GenericNativeConverterAgglayer(_proxify(address(nativeConverter), address(this), initData));
 
         initData = abi.encodeCall(
-            nativeConverter.initialize,
+            nativeConverter.reinitialize1,
             (
                 owner,
                 address(customToken),
@@ -226,10 +226,10 @@ contract GenericNativeConverterTest is Test {
             )
         );
         vm.expectRevert(NativeConverter.InvalidAgglayerBridge.selector);
-        GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
+        GenericNativeConverterAgglayer(_proxify(address(nativeConverter), address(this), initData));
 
         initData = abi.encodeCall(
-            nativeConverter.initialize,
+            nativeConverter.reinitialize1,
             (
                 owner,
                 address(customToken),
@@ -241,18 +241,18 @@ contract GenericNativeConverterTest is Test {
             )
         );
         vm.expectRevert(NativeConverter.InvalidAgglayerBridge.selector);
-        GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
+        GenericNativeConverterAgglayer(_proxify(address(nativeConverter), address(this), initData));
 
         vm.revertToState(beforeInit);
         initData = abi.encodeCall(
-            nativeConverter.initialize,
+            nativeConverter.reinitialize1,
             (owner, address(customToken), address(underlyingToken), LXLY_BRIDGE, NETWORK_ID_L1, 1e19, migrationManager)
         );
         vm.expectRevert(NativeConverter.InvalidNonMigratableBackingPercentage.selector);
-        GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
+        GenericNativeConverterAgglayer(_proxify(address(nativeConverter), address(this), initData));
 
         initData = abi.encodeCall(
-            nativeConverter.initialize,
+            nativeConverter.reinitialize1,
             (
                 owner,
                 address(customToken),
@@ -264,7 +264,7 @@ contract GenericNativeConverterTest is Test {
             )
         );
         vm.expectRevert(NativeConverter.InvalidMigrationManager.selector);
-        GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
+        GenericNativeConverterAgglayer(_proxify(address(nativeConverter), address(this), initData));
     }
 
     function test_convert() public {
@@ -530,7 +530,7 @@ contract GenericNativeConverterTest is Test {
             migrationManager,
             0,
             abi.encode(
-                MigrationManager.CrossNetworkInstruction._0_COMPLETE_MIGRATION,
+                MigrationManager.CrossChainInstruction._0_COMPLETE_MIGRATION,
                 abi.encode(amountToMigrate, amountToMigrate)
             ),
             1
@@ -541,10 +541,6 @@ contract GenericNativeConverterTest is Test {
         assertEq(underlyingToken.balanceOf(address(nativeConverter)), backingOnSecondaryChain - amountToMigrate);
 
         vm.stopPrank();
-    }
-
-    function test_version() public view {
-        assertEq(nativeConverter.version(), NATIVE_CONVERTER_VERSION);
     }
 
     function _setAgglayerBridgeAttributes(uint32 _networkId, address _ger, address _agglayerBridge) internal {

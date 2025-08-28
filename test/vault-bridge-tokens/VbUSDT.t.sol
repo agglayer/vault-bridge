@@ -57,7 +57,7 @@ contract VbUSDTTest is GenericVaultBridgeTokenTest {
             yieldVaultMaximumSlippagePercentage: YIELD_VAULT_ALLOWED_SLIPPAGE,
             vaultBridgeTokenPart2: address(vbTokenPart2)
         });
-        bytes memory initData = abi.encodeCall(vbToken.initialize, (initializer, initParams));
+        bytes memory initData = abi.encodeCall(vbToken.reinitialize1, (initializer, initParams));
         vbToken = GenericVaultBridgeToken(payable(_proxify(address(vbToken), address(this), initData)));
         vbTokenPart2 = VaultBridgeTokenPart2(payable(address(vbToken)));
         vbUSDT = GenericVaultBridgeToken(payable(address(vbToken)));
