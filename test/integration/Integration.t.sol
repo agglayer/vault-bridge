@@ -17,8 +17,10 @@ import {ZkEVMCommon} from "test/etc/ZkEVMCommon.sol";
 import {VaultBridgeTokenInitializer} from "src/primary-chain/VaultBridgeTokenInitializer.sol";
 import {GenericVaultBridgeToken} from "src/primary-chain/ethereum/GenericVaultBridgeToken.sol";
 import {VaultBridgeTokenPart2} from "src/primary-chain/VaultBridgeTokenPart2.sol";
-import {GenericNativeConverterAgglayer as GenericNativeConverter} from "src/secondary-chain/agglayer/GenericNativeConverterAgglayer.sol";
-import {GenericCustomTokenAgglayer as GenericCustomToken} from "src/secondary-chain/agglayer/GenericCustomTokenAgglayer.sol";
+import {GenericNativeConverterAgglayer as GenericNativeConverter} from
+    "src/secondary-chain/agglayer/GenericNativeConverterAgglayer.sol";
+import {GenericCustomTokenAgglayer as GenericCustomToken} from
+    "src/secondary-chain/agglayer/GenericCustomTokenAgglayer.sol";
 
 import {IBridgeL2SovereignChain} from "test/interfaces/IBridgeL2SovereignChain.sol";
 import {IAgglayerBridge as _IAgglayerBridge} from "test/interfaces/IAgglayerBridge.sol";
@@ -328,8 +330,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
         wrappedGasToken = new MockERC20WithDeposit("Wrapped Gas Token", "WGT");
 
         MigrationManager migrationManagerImpl = new MigrationManager();
-        bytes memory migrationManagerInitData =
-            abi.encodeCall(MigrationManager.reinitialize1, (owner, LXLY_BRIDGE_X));
+        bytes memory migrationManagerInitData = abi.encodeCall(MigrationManager.reinitialize1, (owner, LXLY_BRIDGE_X));
         migrationManager =
             MigrationManager(payable(_proxify(address(migrationManagerImpl), address(this), migrationManagerInitData)));
         migrationManager.reinitialize2(address(wrappedGasToken));

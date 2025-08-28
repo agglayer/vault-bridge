@@ -16,7 +16,8 @@ import {
 import {VaultBridgeTokenInitializer} from "src/primary-chain/VaultBridgeTokenInitializer.sol";
 import {TestVault} from "test/etc/TestVault.sol";
 import {IAgglayerBridge as _IAgglayerBridge} from "test/interfaces/IAgglayerBridge.sol";
-import {WethNativeConverterAgglayer as WETHNativeConverter} from "src/secondary-chain/agglayer/vbETH/WethNativeConverterAgglayer.sol";
+import {WethNativeConverterAgglayer as WETHNativeConverter} from
+    "src/secondary-chain/agglayer/vbETH/WethNativeConverterAgglayer.sol";
 
 contract LXLYBridgeMock {
     address public gasTokenAddress;
