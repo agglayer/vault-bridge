@@ -74,7 +74,8 @@ contract DeployLayerY is Script {
 
             // update custom token
             bytes memory data = abi.encodeCall(
-                GenericCustomTokenAgglayer.reinitialize1, (polygonEngineeringMultisig, decimals, lxlyBridge, nativeConverter)
+                GenericCustomTokenAgglayer.reinitialize1,
+                (polygonEngineeringMultisig, decimals, lxlyBridge, nativeConverter)
             );
 
             IERC1967Proxy customTokenProxy = IERC1967Proxy(payable(customToken));
