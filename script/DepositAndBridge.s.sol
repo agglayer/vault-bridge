@@ -2,7 +2,7 @@
 pragma solidity ^0.8.29;
 
 import "forge-std/Script.sol";
-import "../src/vault-bridge-tokens/vbETH/VbETH.sol";
+import "../src/primary-chain/ethereum/vbETH/VbETH.sol";
 
 /// @dev this can be used to send some initial ETH to LayerY. Needs to be replicated for other tokens as well,
 /// @dev but can also be done manually. Ly token addresses are necessary for the rest of the deployment process.

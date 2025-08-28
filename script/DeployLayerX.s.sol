@@ -2,12 +2,12 @@
 pragma solidity ^0.8.29;
 
 import "forge-std/Script.sol";
-import "../src/MigrationManager.sol";
-import "../src/VaultBridgeTokenInitializer.sol";
-import "../src/VaultBridgeTokenPart2.sol";
-import "../src/VaultBridgeToken.sol";
-import "../src/vault-bridge-tokens/GenericVaultBridgeToken.sol";
-import "../src/vault-bridge-tokens/vbETH/VbETH.sol";
+import "../src/primary-chain/MigrationManager.sol";
+import "../src/primary-chain/VaultBridgeTokenInitializer.sol";
+import "../src/primary-chain/VaultBridgeTokenPart2.sol";
+import "../src/primary-chain/VaultBridgeToken.sol";
+import "../src/primary-chain/ethereum/GenericVaultBridgeToken.sol";
+import "../src/primary-chain/ethereum/vbETH/VbETH.sol";
 
 import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
@@ -33,7 +33,7 @@ contract DeployLayerX is Script {
 
         // Read from input.json based on current chain ID
         address ownerMigrationManager = input.readAddress(string.concat(migrationManagerSlug, ".ownerMigrationManager"));
-        address lxlyBridge = input.readAddress(string.concat(migrationManagerSlug, ".lxlyBridge"));
+        address agglayerBridge = input.readAddress(string.concat(migrationManagerSlug, ".agglayerBridge"));
         address proxyAdmin = input.readAddress(string.concat(migrationManagerSlug, ".proxyAdmin"));
         address wrappedGasToken = input.readAddress(string.concat(migrationManagerSlug, ".wrappedGasToken"));
 
@@ -48,9 +48,11 @@ contract DeployLayerX is Script {
         MigrationManager migrationManagerImpl = new MigrationManager();
 
         bytes memory migrationManagerInitData =
-            abi.encodeCall(MigrationManager.initialize, (ownerMigrationManager, lxlyBridge, wrappedGasToken));
+            abi.encodeCall(MigrationManager.reinitialize1, (ownerMigrationManager, agglayerBridge));
         migrationManager =
             MigrationManager(payable(_proxify(address(migrationManagerImpl), proxyAdmin, migrationManagerInitData)));
+
+        migrationManager.reinitialize2(wrappedGasToken);
 
         console.log("MigrationManager deployed at: ", address(migrationManager));
 
@@ -81,7 +83,7 @@ contract DeployLayerX is Script {
                 minimumReservePercentage: input.readUint(string.concat(vbTokenSlug, ".minimumReservePercentage")),
                 yieldVault: input.readAddress(string.concat(vbTokenSlug, ".yieldVault")),
                 yieldRecipient: input.readAddress(string.concat(vbTokenSlug, ".yieldRecipient")),
-                lxlyBridge: lxlyBridge,
+                agglayerBridge: agglayerBridge,
                 minimumYieldVaultDeposit: input.readUint(string.concat(vbTokenSlug, ".minimumYieldVaultDeposit")),
                 migrationManager: address(migrationManager),
                 yieldVaultMaximumSlippagePercentage: input.readUint(
@@ -92,13 +94,14 @@ contract DeployLayerX is Script {
 
             proxyAdmin = input.readAddress(string.concat(vbTokenSlug, ".proxyAdmin"));
 
-            bytes memory initData = abi.encodeCall(vbTokenImpl.initialize, (initializer, initParams));
+            bytes memory initData = abi.encodeCall(vbTokenImpl.reinitialize1, (initializer, initParams));
 
             if (i == 0) {
                 vbTokenContracts[i] = GenericVaultBridgeToken(_proxify(address(vbETHImpl), proxyAdmin, initData));
             } else {
                 vbTokenContracts[i] = GenericVaultBridgeToken(_proxify(address(vbTokenImpl), proxyAdmin, initData));
             }
+            vbTokenContracts[i].reinitialize2();
 
             console.log(vbTokens[i], "deployed at: ", address(vbTokenContracts[i]));
         }

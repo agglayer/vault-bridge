@@ -8,7 +8,7 @@ import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC2
 
 import {MockERC20} from "forge-std/mocks/MockERC20.sol";
 import {MockERC20MintableBurnable} from "../GenericNativeConverter.t.sol";
-import {WETH} from "src/secondary-chain/agglayer/vbETH/WETH.sol";
+import {WethAgglayer as WETH} from "src/secondary-chain/agglayer/vbETH/WethAgglayer.sol";
 
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {
@@ -18,8 +18,12 @@ import {
 import {PausableUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/PausableUpgradeable.sol";
 
 import {CustomGlobalExitRootManager, GenericNativeConverterTest} from "../GenericNativeConverter.t.sol";
-import {WETHNativeConverter} from "../../src/secondary-chain/agglayer/vbETH/WETHNativeConverter.sol";
-import {GenericNativeConverter, NativeConverter} from "../../src/secondary-chain/agglayer/GenericNativeConverter.sol";
+import {WethNativeConverterAgglayer as WethNativeConverter} from
+    "../../src/secondary-chain/agglayer/vbETH/WethNativeConverterAgglayer.sol";
+import {
+    GenericNativeConverterAgglayer as GenericNativeConverter,
+    NativeConverter
+} from "../../src/secondary-chain/agglayer/GenericNativeConverterAgglayer.sol";
 import {MigrationManager} from "../../src/primary-chain/MigrationManager.sol";
 
 contract LXLYBridgeMock {
@@ -52,7 +56,7 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
     LXLYBridgeMock internal agglayerBridgeMock;
     address internal migrationManager_ = makeAddr("migrationManager");
 
-    WETHNativeConverter internal wETHConverter;
+    WethNativeConverter internal wETHConverter;
 
     function setUp() public override {
         // Setup tokens
@@ -79,7 +83,7 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
         _setAgglayerBridgeAttributes(NETWORK_ID_L2, address(_globalExitRootManager), LXLY_BRIDGE);
 
         bytes memory initData =
-            abi.encodeCall(WETH.reinitialize, (address(this), 18, LXLY_BRIDGE, calculatedNativeConverterAddr));
+            abi.encodeCall(WETH.reinitialize1, (address(this), 18, LXLY_BRIDGE, calculatedNativeConverterAddr));
         bytes memory upgradeData = abi.encodeWithSelector(
             ITransparentUpgradeableProxy.upgradeToAndCall.selector, address(wETHGenericImpl), initData
         );
@@ -95,14 +99,14 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
         underlyingTokenMetadata = abi.encode("Wrapped WETH", "wWETH", 18);
 
         // Deploy and initialize converter
-        nativeConverter = GenericNativeConverter(address(new WETHNativeConverter()));
+        nativeConverter = GenericNativeConverter(address(new WethNativeConverter()));
 
         /// important to assign customToken, underlyingToken, and nativeConverter
         /// before the snapshot, so test_initialize will work
         beforeInit = vm.snapshotState();
 
         initData = abi.encodeCall(
-            WETHNativeConverter.initialize,
+            WethNativeConverter.reinitialize1,
             (
                 owner,
                 address(wETH), // custom token
@@ -119,7 +123,7 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
 
         _mapCustomToken(originUnderlyingToken, address(wWETH), false);
 
-        wETHConverter = WETHNativeConverter(payable(address(nativeConverter)));
+        wETHConverter = WethNativeConverter(payable(address(nativeConverter)));
 
         agglayerBridgeMock = new LXLYBridgeMock();
 
@@ -143,7 +147,7 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
         bytes memory initData;
 
         initData = abi.encodeCall(
-            WETHNativeConverter.initialize,
+            WethNativeConverter.reinitialize1,
             (
                 address(0),
                 address(customToken),
@@ -159,7 +163,7 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
         GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
 
         initData = abi.encodeCall(
-            WETHNativeConverter.initialize,
+            WethNativeConverter.reinitialize1,
             (
                 owner,
                 address(0),
@@ -175,7 +179,7 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
         GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
 
         initData = abi.encodeCall(
-            WETHNativeConverter.initialize,
+            WethNativeConverter.reinitialize1,
             (
                 owner,
                 address(customToken),
@@ -191,7 +195,7 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
         GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
 
         initData = abi.encodeCall(
-            WETHNativeConverter.initialize,
+            WethNativeConverter.reinitialize1,
             (
                 owner,
                 address(customToken),
@@ -207,7 +211,7 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
         GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
 
         initData = abi.encodeCall(
-            WETHNativeConverter.initialize,
+            WethNativeConverter.reinitialize1,
             (
                 owner,
                 address(customToken),
@@ -226,7 +230,7 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
         dummyToken.initialize("Dummy Token", "DT", 6);
 
         initData = abi.encodeCall(
-            WETHNativeConverter.initialize,
+            WethNativeConverter.reinitialize1,
             (
                 owner,
                 address(customToken),
@@ -242,7 +246,7 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
         GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
 
         initData = abi.encodeCall(
-            WETHNativeConverter.initialize,
+            WethNativeConverter.reinitialize1,
             (
                 owner,
                 address(customToken),
@@ -258,7 +262,7 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
         GenericNativeConverter(_proxify(address(nativeConverter), address(this), initData));
 
         initData = abi.encodeCall(
-            WETHNativeConverter.initialize,
+            WethNativeConverter.reinitialize1,
             (
                 owner,
                 address(customToken),
@@ -309,7 +313,7 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
             migrationManager,
             0,
             abi.encode(
-                MigrationManager.CrossNetworkInstruction._1_WRAP_GAS_TOKEN_AND_COMPLETE_MIGRATION,
+                MigrationManager.CrossChainInstruction._1_WRAP_GAS_TOKEN_AND_COMPLETE_MIGRATION,
                 abi.encode(amountToMigrate, amountToMigrate)
             ),
             1
@@ -339,13 +343,13 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
         agglayerBridgeMock.setGasTokenAddress(address(this));
         agglayerBridgeMock.setGasTokenNetwork(0);
         _deployWETHNativeConverter(address(agglayerBridgeMock));
-        vm.expectRevert(WETHNativeConverter.FunctionNotSupportedOnThisNetwork.selector);
+        vm.expectRevert(WethNativeConverter.FunctionNotSupportedOnThisChain.selector);
         (address(wETHConverter).call{value: amount}(""));
 
         agglayerBridgeMock.setGasTokenAddress(address(0));
         agglayerBridgeMock.setGasTokenNetwork(1);
         _deployWETHNativeConverter(address(agglayerBridgeMock));
-        vm.expectRevert(WETHNativeConverter.FunctionNotSupportedOnThisNetwork.selector);
+        vm.expectRevert(WethNativeConverter.FunctionNotSupportedOnThisChain.selector);
         (address(wETHConverter).call{value: amount}(""));
 
         agglayerBridgeMock.setGasTokenAddress(address(0));
@@ -356,9 +360,9 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
     }
 
     function _deployWETHNativeConverter(address _agglayerBridge) internal {
-        wETHConverter = new WETHNativeConverter();
+        wETHConverter = new WethNativeConverter();
         bytes memory initData = abi.encodeCall(
-            WETHNativeConverter.initialize,
+            WethNativeConverter.reinitialize1,
             (
                 owner,
                 address(customToken),
@@ -370,6 +374,6 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
                 MAX_NON_MIGRATABLE_GAS_BACKING_PERCENTAGE
             )
         );
-        wETHConverter = WETHNativeConverter(payable(_proxify(address(wETHConverter), address(this), initData)));
+        wETHConverter = WethNativeConverter(payable(_proxify(address(wETHConverter), address(this), initData)));
     }
 }
