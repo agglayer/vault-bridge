@@ -2,8 +2,8 @@
 pragma solidity ^0.8.29;
 
 import "forge-std/Script.sol";
-import "../src/custom-tokens/GenericCustomToken.sol";
-import "../src/custom-tokens/GenericNativeConverter.sol";
+import "../src/secondary-chain/agglayer/GenericCustomTokenAgglayer.sol";
+import "../src/secondary-chain/agglayer/GenericNativeConverterAgglayer.sol";
 import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import {ERC1967Proxy, ERC1967Utils} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
@@ -29,7 +29,7 @@ contract DeployLayerY is Script {
         address migrationManagerAddress = input.readAddress(string.concat(slug, ".migrationManager"));
         address lxlyBridge = input.readAddress(string.concat(slug, ".lxlyBridge"));
 
-        GenericNativeConverter[] memory nativeConverters = new GenericNativeConverter[](5);
+        GenericNativeConverterAgglayer[] memory nativeConverters = new GenericNativeConverterAgglayer[](5);
 
         string[] memory vbTokens = new string[](4);
         vbTokens[0] = "vbUSDC";
@@ -38,8 +38,8 @@ contract DeployLayerY is Script {
         vbTokens[3] = "vbUSDS";
 
         // deploy token impl
-        GenericCustomToken customTokenImpl = new GenericCustomToken();
-        GenericNativeConverter nativeConverterImpl = new GenericNativeConverter();
+        GenericCustomTokenAgglayer customTokenImpl = new GenericCustomTokenAgglayer();
+        GenericNativeConverterAgglayer nativeConverterImpl = new GenericNativeConverterAgglayer();
 
         for (uint256 i = 0; i < vbTokens.length; i++) {
             string memory vbSlug =
@@ -52,7 +52,7 @@ contract DeployLayerY is Script {
                 input.readUint(string.concat(vbSlug, ".nonMigratableBackingPercentage"));
 
             bytes memory initNativeConverter = abi.encodeCall(
-                GenericNativeConverter.initialize,
+                GenericNativeConverterAgglayer.reinitialize1,
                 (
                     polygonEngineeringMultisig,
                     customToken,
@@ -66,17 +66,21 @@ contract DeployLayerY is Script {
             address nativeConverter =
                 _proxify(address(nativeConverterImpl), polygonEngineeringMultisig, initNativeConverter);
 
-            nativeConverters[i] = GenericNativeConverter(nativeConverter);
+            GenericNativeConverterAgglayer(payable(nativeConverter)).reinitialize2();
+
+            nativeConverters[i] = GenericNativeConverterAgglayer(nativeConverter);
 
             console.log("Native converter ", vbTokens[i], " deployed at: ", nativeConverter);
 
             // update custom token
             bytes memory data = abi.encodeCall(
-                GenericCustomToken.reinitialize, (polygonEngineeringMultisig, decimals, lxlyBridge, nativeConverter)
+                GenericCustomTokenAgglayer.reinitialize1, (polygonEngineeringMultisig, decimals, lxlyBridge, nativeConverter)
             );
 
             IERC1967Proxy customTokenProxy = IERC1967Proxy(payable(customToken));
             bytes memory payload = abi.encodeCall(customTokenProxy.upgradeToAndCall, (address(customTokenImpl), data));
+
+            // TODO call other reinitialization functions?
 
             console.log("Payload for upgrading custom token", vbTokens[i]);
             console.logBytes(payload);
