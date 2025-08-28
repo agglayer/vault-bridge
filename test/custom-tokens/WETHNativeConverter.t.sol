@@ -83,7 +83,7 @@ contract WETHNativeConverterTest is Test, GenericNativeConverterTest {
         _setAgglayerBridgeAttributes(NETWORK_ID_L2, address(_globalExitRootManager), LXLY_BRIDGE);
 
         bytes memory initData =
-            abi.encodeCall(WETH.reinitialize1, (address(this), 18, LXLY_BRIDGE, calculatedNativeConverterAddr));
+            abi.encodeCall(WETH.reinitialize2, (address(this), 18, LXLY_BRIDGE, calculatedNativeConverterAddr));
         bytes memory upgradeData = abi.encodeWithSelector(
             ITransparentUpgradeableProxy.upgradeToAndCall.selector, address(wETHGenericImpl), initData
         );

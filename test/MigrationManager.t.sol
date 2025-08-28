@@ -84,7 +84,11 @@ contract MigrationManagerTest is Test {
         stateBeforeInitialize = vm.snapshotState();
 
         // initialize migration manager
-        _initialize(migrationManagerImpl, owner, address(agglayerBridge), address(wrappedGasToken));
+        bytes memory migrationManagerInitData =
+            abi.encodeCall(MigrationManager.reinitialize1, (owner, address(agglayerBridge)));
+        migrationManager =
+            MigrationManager(payable(_proxify(address(migrationManagerImpl), address(this), migrationManagerInitData)));
+        migrationManager.reinitialize2(address(wrappedGasToken));
 
         vm.label(address(agglayerBridge), "AgglayerBridgeX");
         vm.label(address(migrationManager), "Migration Manager");
@@ -99,17 +103,26 @@ contract MigrationManagerTest is Test {
         assertEq(address(migrationManager.agglayerBridge()), address(agglayerBridge));
     }
 
-    function test_initialize() public {
+    function test_reinitialize1() public {
         vm.revertToState(stateBeforeInitialize);
 
+        // Test reinitialize1 with invalid owner
+        bytes memory migrationManagerInitData =
+            abi.encodeCall(MigrationManager.reinitialize1, (address(0), address(agglayerBridge)));
         vm.expectRevert(MigrationManager.InvalidOwner.selector);
-        _initialize(migrationManagerImpl, address(0), address(agglayerBridge), payable(address(wrappedGasToken)));
+        _proxify(migrationManagerImpl, address(this), migrationManagerInitData);
 
+        // Test reinitialize1 with invalid agglayer bridge
+        migrationManagerInitData = abi.encodeCall(MigrationManager.reinitialize1, (owner, address(0)));
         vm.expectRevert(MigrationManager.InvalidAgglayerBridge.selector);
-        _initialize(migrationManagerImpl, owner, address(0), payable(address(wrappedGasToken)));
+        _proxify(migrationManagerImpl, address(this), migrationManagerInitData);
 
+        // Test reinitialize2 with invalid wrapped gas token
+        migrationManagerInitData = abi.encodeCall(MigrationManager.reinitialize1, (owner, address(agglayerBridge)));
+        MigrationManager testManager =
+            MigrationManager(payable(_proxify(migrationManagerImpl, address(this), migrationManagerInitData)));
         vm.expectRevert(MigrationManager.InvalidWrappedGasToken.selector);
-        _initialize(migrationManagerImpl, owner, address(agglayerBridge), address(0));
+        testManager.reinitialize2(address(0));
     }
 
     function test_configureNativeConverters_reverts() public {
@@ -328,19 +341,6 @@ contract MigrationManagerTest is Test {
             abi.encodeCall(migrationManager.onMessageReceived, (nativeConverter, NETWORK_ID_Y, data))
         );
         assertTrue(success);
-    }
-
-    function _initialize(
-        address _migrationManagerImpl,
-        address _owner,
-        address _agglayerBridge,
-        address _wrappedGasToken
-    ) internal {
-        bytes memory migrationManagerInitData =
-            abi.encodeCall(MigrationManager.reinitialize1, (_owner, _agglayerBridge));
-        migrationManager =
-            MigrationManager(payable(_proxify(address(_migrationManagerImpl), address(this), migrationManagerInitData)));
-        migrationManager.reinitialize2(_wrappedGasToken);
     }
 
     function _testPauseUnpause(address caller, address callee, bytes memory callData) internal {

@@ -119,12 +119,13 @@ contract WETHTest is Test {
 
         WETH wETHGenericImpl = new WETH();
         bytes memory initData =
-            abi.encodeCall(WETH.reinitialize1, (address(this), 18, _agglayerBridge, calculatedNativeConverterAddr));
+            abi.encodeCall(WETH.reinitialize2, (address(this), 18, _agglayerBridge, calculatedNativeConverterAddr));
         bytes memory upgradeData = abi.encodeWithSelector(
             ITransparentUpgradeableProxy.upgradeToAndCall.selector, address(wETHGenericImpl), initData
         );
         vm.prank(_getAdmin(address(wETHProxy)));
         (address(wETHProxy).call(upgradeData));
+        WETH(payable(address(wETHProxy))).reinitialize3();
         wETH = WETH(payable(address(wETHProxy)));
     }
 
