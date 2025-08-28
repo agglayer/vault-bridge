@@ -17,8 +17,8 @@ import {ZkEVMCommon} from "test/etc/ZkEVMCommon.sol";
 import {VaultBridgeTokenInitializer} from "src/primary-chain/VaultBridgeTokenInitializer.sol";
 import {GenericVaultBridgeToken} from "src/primary-chain/ethereum/GenericVaultBridgeToken.sol";
 import {VaultBridgeTokenPart2} from "src/primary-chain/VaultBridgeTokenPart2.sol";
-import {GenericNativeConverter} from "src/secondary-chain/agglayer/GenericNativeConverter.sol";
-import {GenericCustomToken} from "src/secondary-chain/agglayer/GenericCustomToken.sol";
+import {GenericNativeConverterAgglayer as GenericNativeConverter} from "src/secondary-chain/agglayer/GenericNativeConverterAgglayer.sol";
+import {GenericCustomTokenAgglayer as GenericCustomToken} from "src/secondary-chain/agglayer/GenericCustomTokenAgglayer.sol";
 
 import {IBridgeL2SovereignChain} from "test/interfaces/IBridgeL2SovereignChain.sol";
 import {IAgglayerBridge as _IAgglayerBridge} from "test/interfaces/IAgglayerBridge.sol";
@@ -315,7 +315,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
             yieldVaultMaximumSlippagePercentage: YIELD_VAULT_ALLOWED_SLIPPAGE,
             vaultBridgeTokenPart2: address(vbTokenPart2)
         });
-        bytes memory vbTokenInitData = abi.encodeCall(vbToken.initialize, (initializer, initParams));
+        bytes memory vbTokenInitData = abi.encodeCall(vbToken.reinitialize1, (initializer, initParams));
         vbToken = GenericVaultBridgeToken(payable(_proxify(address(vbToken), address(this), vbTokenInitData)));
         vbTokenPart2 = VaultBridgeTokenPart2(payable(address(vbToken)));
 
@@ -329,9 +329,11 @@ contract IntegrationTest is Test, ZkEVMCommon {
 
         MigrationManager migrationManagerImpl = new MigrationManager();
         bytes memory migrationManagerInitData =
-            abi.encodeCall(MigrationManager.initialize, (owner, LXLY_BRIDGE_X, address(wrappedGasToken)));
+            abi.encodeCall(MigrationManager.reinitialize1, (owner, LXLY_BRIDGE_X));
         migrationManager =
             MigrationManager(payable(_proxify(address(migrationManagerImpl), address(this), migrationManagerInitData)));
+        migrationManager.reinitialize2(address(wrappedGasToken));
+
         vm.prank(owner);
         migrationManager.configureNativeConverters(
             secondaryChainAgglayerIds, nativeConverters, payable(address(vbToken))
@@ -357,7 +359,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
 
         GenericCustomToken genericCustomTokenImpl = new GenericCustomToken();
         bytes memory initData = abi.encodeCall(
-            GenericCustomToken.reinitialize, (owner, CUSTOM_TOKEN_DECIMALS, LXLY_BRIDGE_Y, nativeConverterAddr)
+            GenericCustomToken.reinitialize1, (owner, CUSTOM_TOKEN_DECIMALS, LXLY_BRIDGE_Y, nativeConverterAddr)
         );
         bytes memory upgradeData =
             abi.encodeCall(ITransparentUpgradeableProxy.upgradeToAndCall, (address(genericCustomTokenImpl), initData));
@@ -388,7 +390,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
         // deploy native converter
         nativeConverter = new GenericNativeConverter();
         bytes memory nativeConverterInitData = abi.encodeCall(
-            GenericNativeConverter(nativeConverter).initialize,
+            GenericNativeConverter(nativeConverter).reinitialize1,
             (
                 owner,
                 address(customToken),
@@ -672,7 +674,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
             destinationAddress: address(migrationManager),
             amount: 0,
             metadata: abi.encode(
-                MigrationManager.CrossNetworkInstruction._0_COMPLETE_MIGRATION, abi.encode(amountToMigrate, amountToMigrate)
+                MigrationManager.CrossChainInstruction._0_COMPLETE_MIGRATION, abi.encode(amountToMigrate, amountToMigrate)
             )
         });
 

@@ -247,7 +247,7 @@ contract MigrationManagerTest is Test {
         migrationManager.onMessageReceived(nativeConverter, NETWORK_ID_Y, bytes(""));
 
         bytes memory data = abi.encode(
-            MigrationManager.CrossNetworkInstruction._1_WRAP_GAS_TOKEN_AND_COMPLETE_MIGRATION, abi.encode(100, 100)
+            MigrationManager.CrossChainInstruction._1_WRAP_GAS_TOKEN_AND_COMPLETE_MIGRATION, abi.encode(100, 100)
         );
 
         // test unset vbToken
@@ -302,7 +302,7 @@ contract MigrationManagerTest is Test {
 
         // test regular migration
         bytes memory data =
-            abi.encode(MigrationManager.CrossNetworkInstruction._0_COMPLETE_MIGRATION, abi.encode(100, 100));
+            abi.encode(MigrationManager.CrossChainInstruction._0_COMPLETE_MIGRATION, abi.encode(100, 100));
 
         vm.prank(address(agglayerBridge));
         (bool success,) = address(migrationManager).call(
@@ -320,7 +320,7 @@ contract MigrationManagerTest is Test {
         );
 
         data = abi.encode(
-            MigrationManager.CrossNetworkInstruction._1_WRAP_GAS_TOKEN_AND_COMPLETE_MIGRATION, abi.encode(100, 100)
+            MigrationManager.CrossChainInstruction._1_WRAP_GAS_TOKEN_AND_COMPLETE_MIGRATION, abi.encode(100, 100)
         );
 
         vm.prank(address(agglayerBridge));
@@ -337,9 +337,10 @@ contract MigrationManagerTest is Test {
         address _wrappedGasToken
     ) internal {
         bytes memory migrationManagerInitData =
-            abi.encodeCall(MigrationManager.initialize, (_owner, _agglayerBridge, _wrappedGasToken));
+            abi.encodeCall(MigrationManager.reinitialize1, (_owner, _agglayerBridge));
         migrationManager =
             MigrationManager(payable(_proxify(address(_migrationManagerImpl), address(this), migrationManagerInitData)));
+        migrationManager.reinitialize2(_wrappedGasToken);
     }
 
     function _testPauseUnpause(address caller, address callee, bytes memory callData) internal {

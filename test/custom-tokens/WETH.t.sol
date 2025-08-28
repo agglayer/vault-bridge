@@ -3,7 +3,9 @@ pragma solidity ^0.8.29;
 
 import "forge-std/Test.sol";
 
-import {WETH} from "../../src/secondary-chain/agglayer/vbETH/WETH.sol";
+import {WethCustomToken} from "../../src/secondary-chain/WethCustomToken.sol";
+import {WethAgglayer as WETH} from "../../src/secondary-chain/agglayer/vbETH/WethAgglayer.sol";
+
 import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import {MockERC20MintableBurnable} from "../GenericNativeConverter.t.sol";
 
@@ -58,7 +60,7 @@ contract WETHTest is Test {
         deal(address(this), amount);
 
         vm.expectEmit();
-        emit WETH.Deposit(address(this), amount);
+        emit WethCustomToken.Deposit(address(this), amount);
         wETH.deposit{value: amount}();
         assertEq(wETH.balanceOf(address(this)), amount);
     }
@@ -72,14 +74,10 @@ contract WETHTest is Test {
         assertEq(address(this).balance, 0);
 
         vm.expectEmit();
-        emit WETH.Withdrawal(address(this), amount);
+        emit WethCustomToken.Withdrawal(address(this), amount);
         wETH.withdraw(amount);
         assertEq(wETH.balanceOf(address(this)), 0);
         assertEq(address(this).balance, amount);
-    }
-
-    function test_wETH_version() public view {
-        assertEq(wETH.version(), "1.0.0");
     }
 
     function test_onlyIfGasTokenIsEth() public {
@@ -89,20 +87,20 @@ contract WETHTest is Test {
         agglayerBridgeMock.setGasTokenAddress(address(this));
         agglayerBridgeMock.setGasTokenNetwork(0);
         _deployWETH(address(agglayerBridgeMock));
-        vm.expectRevert(WETH.FunctionNotSupportedOnThisNetwork.selector);
+        vm.expectRevert(WethCustomToken.FunctionNotSupportedOnThisChain.selector);
         wETH.deposit{value: amount}();
 
         agglayerBridgeMock.setGasTokenAddress(address(0));
         agglayerBridgeMock.setGasTokenNetwork(1);
         _deployWETH(address(agglayerBridgeMock));
-        vm.expectRevert(WETH.FunctionNotSupportedOnThisNetwork.selector);
+        vm.expectRevert(WethCustomToken.FunctionNotSupportedOnThisChain.selector);
         wETH.deposit{value: amount}();
 
         agglayerBridgeMock.setGasTokenAddress(address(0));
         agglayerBridgeMock.setGasTokenNetwork(0);
         _deployWETH(address(agglayerBridgeMock));
         vm.expectEmit();
-        emit WETH.Deposit(address(this), amount);
+        emit WethCustomToken.Deposit(address(this), amount);
         wETH.deposit{value: amount}();
         assertEq(wETH.balanceOf(address(this)), amount);
     }
@@ -121,7 +119,7 @@ contract WETHTest is Test {
 
         WETH wETHGenericImpl = new WETH();
         bytes memory initData =
-            abi.encodeCall(WETH.reinitialize, (address(this), 18, _agglayerBridge, calculatedNativeConverterAddr));
+            abi.encodeCall(WETH.reinitialize1, (address(this), 18, _agglayerBridge, calculatedNativeConverterAddr));
         bytes memory upgradeData = abi.encodeWithSelector(
             ITransparentUpgradeableProxy.upgradeToAndCall.selector, address(wETHGenericImpl), initData
         );
