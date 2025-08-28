@@ -62,7 +62,7 @@ contract DeployLayerY_WETH is Script {
 
         // update vbWETH
         bytes memory data = abi.encodeCall(
-            WethAgglayer.reinitialize1, (polygonEngineeringMultisig, decimals, lxlyBridge, wethNativeConverter)
+            WethAgglayer.reinitialize2, (polygonEngineeringMultisig, decimals, lxlyBridge, wethNativeConverter)
         );
 
         IERC1967Proxy vbWethProxy = IERC1967Proxy(payable(vbWETH));

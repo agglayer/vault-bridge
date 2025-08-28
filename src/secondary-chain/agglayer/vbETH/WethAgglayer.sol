@@ -25,12 +25,17 @@ contract WethAgglayer is WethCustomToken, CustomTokenAgglayer {
     bytes32 private constant _WETH_AGGLAYER_STORAGE =
         hex"df8caff5d0161908572492829df972cd19b1aabe3c3078d95299408cd561dc00";
 
-    function reinitialize1(
+    /// @dev Since we upgrade an already initialized custom token, likely created by a bridge, we start at reinitializer(2)
+    /// @param owner_ owner of the contract.
+    /// @param originalUnderlyingTokenDecimals_ number of decimals of the underlying token on origin chain.
+    /// @param agglayerBridge_ address of the Agglayer Bridge.
+    /// @param nativeConverter_ address of the NativeConverter.
+    function reinitialize2(
         address owner_,
         uint8 originalUnderlyingTokenDecimals_,
         address agglayerBridge_,
         address nativeConverter_
-    ) external whenNotPaused reinitializer(1) nonReentrant {
+    ) external whenNotPaused reinitializer(2) nonReentrant {
         WETHStorage storage $ = _getWethAgglayerStorage();
 
         // Preserve the `name` and `symbol` of the bridged vbToken.
@@ -47,11 +52,7 @@ contract WethAgglayer is WethCustomToken, CustomTokenAgglayer {
             && IAgglayerBridge(agglayerBridge_).gasTokenNetwork() == 0;
     }
 
-    function reinitialize2() external whenNotPaused reinitializer(2) nonReentrant {
-        // Empty function body.
-    }
-
-    function reinitialize3() external whenNotPaused reinitializer(3) nonReentrant {
+    function reinitialize3() public whenNotPaused reinitializer(3) nonReentrant {
         _incrementGlobalInitializationCounter(1);
         _incrementGlobalInitializationCounter(2);
         _incrementGlobalInitializationCounter(3);
@@ -64,9 +65,10 @@ contract WethAgglayer is WethCustomToken, CustomTokenAgglayer {
     function reinitialize4()
         external
         whenNotPaused
-        reinitializer(_incrementGlobalInitializationCounter(4))
+        reinitializer(4)
         nonReentrant
-    {}
+    {
+        _incrementGlobalInitializationCounter(4)}
     */
 
     /// @inheritdoc CustomToken
