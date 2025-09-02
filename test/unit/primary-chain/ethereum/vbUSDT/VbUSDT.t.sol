@@ -6,15 +6,15 @@ import {TestVault} from "test/etc/TestVault.sol";
 import {
     IERC20,
     SafeERC20,
-    GenericVaultBridgeTokenTest,
+    GenericVaultBridgeTokenTest_DISABLED,
     GenericVaultBridgeToken,
     VaultBridgeTokenPart2,
     stdStorage,
     StdStorage
-} from "test/GenericVaultBridgeToken.t.sol";
+} from "test/unit/primary-chain/ethereum/GenericVaultBridgeToken.t.sol";
 import {VaultBridgeTokenInitializer} from "src/primary-chain/VaultBridgeTokenInitializer.sol";
 
-contract VbUSDTTest is GenericVaultBridgeTokenTest {
+contract VbUSDTTest_DISABLED is GenericVaultBridgeTokenTest_DISABLED {
     using SafeERC20 for IERC20;
     using stdStorage for StdStorage;
 

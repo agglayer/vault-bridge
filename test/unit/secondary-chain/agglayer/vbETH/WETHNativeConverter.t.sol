@@ -19,12 +19,12 @@ import {PausableUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/Pau
 
 import {CustomGlobalExitRootManager, GenericNativeConverterTest} from "../GenericNativeConverter.t.sol";
 import {WethNativeConverterAgglayer as WethNativeConverter} from
-    "../../src/secondary-chain/agglayer/vbETH/WethNativeConverterAgglayer.sol";
+    "src/secondary-chain/agglayer/vbETH/WethNativeConverterAgglayer.sol";
 import {
     GenericNativeConverterAgglayer as GenericNativeConverter,
     NativeConverter
-} from "../../src/secondary-chain/agglayer/GenericNativeConverterAgglayer.sol";
-import {MigrationManager} from "../../src/primary-chain/MigrationManager.sol";
+} from "src/secondary-chain/agglayer/GenericNativeConverterAgglayer.sol";
+import {MigrationManager} from "src/primary-chain/MigrationManager.sol";
 
 contract LXLYBridgeMock {
     address public gasTokenAddress;

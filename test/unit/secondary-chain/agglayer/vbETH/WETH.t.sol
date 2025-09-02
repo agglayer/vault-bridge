@@ -3,8 +3,8 @@ pragma solidity ^0.8.29;
 
 import "forge-std/Test.sol";
 
-import {WethCustomToken} from "../../src/secondary-chain/WethCustomToken.sol";
-import {WethAgglayer as WETH} from "../../src/secondary-chain/agglayer/vbETH/WethAgglayer.sol";
+import {WethCustomToken} from "src/secondary-chain/WethCustomToken.sol";
+import {WethAgglayer as WETH} from "src/secondary-chain/agglayer/vbETH/WethAgglayer.sol";
 
 import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import {MockERC20MintableBurnable} from "../GenericNativeConverter.t.sol";
