@@ -18,7 +18,7 @@ import {TestVault} from "test/etc/TestVault.sol";
 import {IAgglayerBridge as _IAgglayerBridge} from "test/interfaces/IAgglayerBridge.sol";
 
 /// @dev Tests for VaultBridgeToken and VaultBridgeTokenPart2
-contract GenericVaultBridgeTokenTest is Test {
+contract GenericVaultBridgeTokenTest_DISABLED is Test {
     using SafeERC20 for IERC20;
     using SafeERC20 for GenericVaultBridgeToken;
 

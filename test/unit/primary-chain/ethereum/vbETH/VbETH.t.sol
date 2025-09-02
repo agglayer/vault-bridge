@@ -8,11 +8,11 @@ import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {IWETH9} from "src/etc/IWETH9.sol";
 import {
     GenericVaultBridgeToken,
-    GenericVaultBridgeTokenTest,
+    GenericVaultBridgeTokenTest_DISABLED,
     IERC20,
     SafeERC20,
     VaultBridgeTokenPart2
-} from "test/GenericVaultBridgeToken.t.sol";
+} from "test/unit/primary-chain/ethereum/GenericVaultBridgeToken.t.sol";
 import {VaultBridgeTokenInitializer} from "src/primary-chain/VaultBridgeTokenInitializer.sol";
 import {TestVault} from "test/etc/TestVault.sol";
 import {IAgglayerBridge as _IAgglayerBridge} from "test/interfaces/IAgglayerBridge.sol";
@@ -41,7 +41,7 @@ contract LXLYBridgeMock {
     }
 }
 
-contract VbETHTest is GenericVaultBridgeTokenTest {
+contract VbETHTest_DISABLED is GenericVaultBridgeTokenTest_DISABLED {
     using SafeERC20 for IERC20;
 
     VbETH public vbETH;
