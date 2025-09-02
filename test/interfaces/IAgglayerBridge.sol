@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: LicenseRef-PolygonLabs-Source-Available
 pragma solidity 0.8.29;
 
-import {IAgglayerBridge as _IAgglayerBridge} from "../../src/etc/IAgglayerBridge.sol";
+import {IAgglayerBridge as _IAgglayerBridge} from "src/etc/IAgglayerBridge.sol";
 
 interface IAgglayerBridge is _IAgglayerBridge {
     function depositCount() external view returns (uint32);
