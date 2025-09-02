@@ -25,11 +25,8 @@ contract WethAgglayer is WethCustomToken, CustomTokenAgglayer {
     bytes32 private constant _WETH_AGGLAYER_STORAGE =
         hex"df8caff5d0161908572492829df972cd19b1aabe3c3078d95299408cd561dc00";
 
-    /// @dev Since we upgrade an already initialized custom token, likely created by a bridge, we start at reinitializer(2)
-    /// @param owner_ owner of the contract.
-    /// @param originalUnderlyingTokenDecimals_ number of decimals of the underlying token on origin chain.
-    /// @param agglayerBridge_ address of the Agglayer Bridge.
-    /// @param nativeConverter_ address of the NativeConverter.
+    /// @notice The reinitializers start from `2` because Agglayer Bridge has already initialized the token.
+    /// @dev @note (ATTENTION) There is no `reinitializer1`.
     function reinitialize2(
         address owner_,
         uint8 originalUnderlyingTokenDecimals_,
@@ -52,7 +49,7 @@ contract WethAgglayer is WethCustomToken, CustomTokenAgglayer {
             && IAgglayerBridge(agglayerBridge_).gasTokenNetwork() == 0;
     }
 
-    function reinitialize3() public whenNotPaused reinitializer(3) nonReentrant {
+    function reinitialize3() external whenNotPaused reinitializer(3) nonReentrant {
         _incrementGlobalInitializationCounter(1);
         _incrementGlobalInitializationCounter(2);
         _incrementGlobalInitializationCounter(3);
@@ -65,10 +62,9 @@ contract WethAgglayer is WethCustomToken, CustomTokenAgglayer {
     function reinitialize4()
         external
         whenNotPaused
-        reinitializer(4)
+        reinitializer(_incrementGlobalInitializationCounter(4))
         nonReentrant
-    {
-        _incrementGlobalInitializationCounter(4)}
+    {}
     */
 
     /// @inheritdoc CustomToken

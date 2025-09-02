@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> `migrateBackingToPrimaryChain` of Native Converter is not supported yet.
+
 # Bridged USDC Standard
 
 Based on `circlefin/stablecoin-evm` commit [`c8c31b2`](https://github.com/circlefin/stablecoin-evm/tree/c8c31b249341bf3ffb2e8dbff41977c392a260c5).
