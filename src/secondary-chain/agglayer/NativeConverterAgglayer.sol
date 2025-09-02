@@ -12,12 +12,12 @@ abstract contract NativeConverterAgglayer is NativeConverter {
     // -----================= ::: DEVELOPER ::: =================-----
 
     // @remind Document (the entire function).
-    function _mintCustomToken(address account, uint256 value) internal override {
+    function _mintCustomToken(address account, uint256 value) internal virtual override {
         GenericCustomTokenAgglayer(address(customToken())).mint(account, value);
     }
 
     // @remind Document (the entire function).
-    function _burnCustomToken(address account, uint256 value) internal override {
+    function _burnCustomToken(address account, uint256 value) internal virtual override {
         GenericCustomTokenAgglayer(address(customToken())).burn(account, value);
     }
 }
