@@ -18,13 +18,14 @@ contract GenericCustomTokenAgglayer is CustomTokenAgglayer {
         _disableInitializers();
     }
 
-    // @remind Document.
-    function reinitialize1(
+    /// @notice The reinitializers start from `2` because Agglayer Bridge has already initialized the token.
+    /// @dev @note (ATTENTION) There is no `reinitializer1`.
+    function reinitialize2(
         address owner_,
         uint8 originalUnderlyingTokenDecimals_,
         address agglayerBridge_,
         address nativeConverter_
-    ) external whenNotPaused reinitializer(1) nonReentrant {
+    ) external whenNotPaused reinitializer(2) nonReentrant {
         // Preserve the `name` and `symbol` of the bridged vbToken.
         string memory name_ = ERC20Upgradeable.name();
         string memory symbol_ = ERC20Upgradeable.symbol();
@@ -34,11 +35,6 @@ contract GenericCustomTokenAgglayer is CustomTokenAgglayer {
 
         // Initialize the base implementation.
         __CustomToken_init(owner_, name_, symbol_, originalUnderlyingTokenDecimals_, agglayerBridge_, nativeConverter_);
-    }
-
-    // @remind Document.
-    function reinitialize2() external whenNotPaused reinitializer(2) nonReentrant {
-        // Empty function body.
     }
 
     // @remind Document (the entire function).
