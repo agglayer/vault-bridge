@@ -24,7 +24,7 @@ contract GenericVaultBridgeToken is VaultBridgeToken {
         nonReentrant
     {
         // Initialize the base implementation.
-        __VaultBridgeToken_init(initializer_, initParams);
+        __VaultBridgeToken_init1(initializer_, initParams);
     }
 
     // @remind Document (the entire function).

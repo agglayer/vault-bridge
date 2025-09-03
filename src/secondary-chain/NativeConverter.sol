@@ -23,7 +23,7 @@ import {MigrationManager} from "../primary-chain/MigrationManager.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-/// @title Native Converter (optional)
+/// @title Native Converter
 /// @author See https://github.com/agglayer/vault-bridge
 /// @notice Native Converter is an optional contract on Secondary Chains that converts the underlying token (usually the bridge-wrapped version of the original underlying token from Primary Chain) to Custom Token, and vice versa, on demand. It can also migrate backing for Custom Token it has minted to Primary Chain, where vbToken will be minted and locked in Agglayer Bridge. Please refer to `migrateBackingToPrimaryChain` for more information.
 /// @dev A base contract used to create Native Converters.
@@ -96,7 +96,7 @@ abstract contract NativeConverter is
     /// @param underlyingToken_ The token that represents the original underlying token on Secondary Chain. @note IMPORTANT: This token MUST be either the bridge-wrapped version of the original underlying token, or the original underlying token must be custom mapped to this token on Agglayer Bridge on Secondary Chain.
     /// @param nonMigratableBackingPercentage_ The percentage of backing that should remain in Native Converter when migrating backing to Primary Chain, based on the total supply of Custom Token. `1e18` is 100%. It is possible to game the system by manipulating the total supply of Custom Token, so this is more of a soft limit.
     /// @param migrationManager_ The address of the Migration Manager on Primary Chain.
-    function __NativeConverter_init(
+    function __NativeConverter_init1(
         address owner_,
         address customToken_,
         address underlyingToken_,

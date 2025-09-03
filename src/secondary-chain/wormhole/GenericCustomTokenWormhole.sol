@@ -26,7 +26,7 @@ contract GenericCustomTokenWormhole is CustomTokenWormhole {
         address nttManager_
     ) external whenNotPaused reinitializer(_incrementGlobalInitializationCounter(1)) nonReentrant {
         // Initialize the base implementation.
-        __CustomToken_init(owner_, name_, symbol_, originalUnderlyingTokenDecimals_, nttManager_, address(0));
+        __CustomToken_init1(owner_, name_, symbol_, originalUnderlyingTokenDecimals_, nttManager_, address(0));
 
         __CustomToken_init2();
     }

@@ -34,7 +34,7 @@ contract GenericCustomTokenAgglayer is CustomTokenAgglayer {
         assert(ERC20Upgradeable.decimals() == originalUnderlyingTokenDecimals_);
 
         // Initialize the base implementation.
-        __CustomToken_init(owner_, name_, symbol_, originalUnderlyingTokenDecimals_, agglayerBridge_, nativeConverter_);
+        __CustomToken_init1(owner_, name_, symbol_, originalUnderlyingTokenDecimals_, agglayerBridge_, nativeConverter_);
     }
 
     // @remind Document (the entire function).

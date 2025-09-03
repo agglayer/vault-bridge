@@ -3,6 +3,8 @@
 
 pragma solidity 0.8.29;
 
+// @remind Document the entire file.
+
 import {NativeConverterAgglayer} from "../NativeConverterAgglayer.sol";
 import {NativeConverter, Math} from "../../NativeConverter.sol";
 import {WethAgglayer} from "./WethAgglayer.sol";
@@ -54,7 +56,7 @@ contract WethNativeConverterAgglayer is NativeConverterAgglayer {
         WETHNativeConverterStorage storage $ = _getWethNativeConverterAgglayerStorage();
 
         // Initialize the base implementation.
-        __NativeConverter_init(
+        __NativeConverter_init1(
             owner_,
             customToken_,
             underlyingToken_,

@@ -68,7 +68,7 @@ abstract contract CustomToken is
 
     /// @param originalUnderlyingTokenDecimals_ The number of decimals of the original underlying token on Layer X. Custom Token will have the same number of decimals as the original underlying token.
     /// @param nativeConverter_ The address of Native Converter for this Custom Token.
-    function __CustomToken_init(
+    function __CustomToken_init1(
         address owner_,
         string calldata name_,
         string calldata symbol_,
