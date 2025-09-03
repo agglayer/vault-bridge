@@ -198,7 +198,7 @@ abstract contract VaultBridgeToken is
 
     /// @param initializer_ The address of `VaultBridgeTokenInitializer`.
     /// @param initParams Please refer to `InitializationParameters` for more information.
-    function __VaultBridgeToken_init(address initializer_, InitializationParameters calldata initParams)
+    function __VaultBridgeToken_init1(address initializer_, InitializationParameters calldata initParams)
         internal
         onlyInitializing
     {
@@ -790,6 +790,7 @@ abstract contract VaultBridgeToken is
         require(redeemedShares == shares, IncorrectAmountOfSharesRedeemed(redeemedShares, shares));
     }
 
+    // @todo Deprecation warning?
     /// @notice Claim vbToken from Agglayer Bridge and redeem it.
     function claimAndRedeem(
         bytes32[32] calldata smtProofLocalExitRoot,

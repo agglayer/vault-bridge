@@ -27,7 +27,7 @@ contract GenericCustomTokenPolygonPortal is CustomTokenPolygonPortal {
         address childChainManager_
     ) external whenNotPaused reinitializer(_incrementGlobalInitializationCounter(1)) nonReentrant {
         // Initialize the base implementation.
-        __CustomToken_init(owner_, name_, symbol_, originalUnderlyingTokenDecimals_, childChainManager_, address(0));
+        __CustomToken_init1(owner_, name_, symbol_, originalUnderlyingTokenDecimals_, childChainManager_, address(0));
 
         __CustomToken_init2();
     }
