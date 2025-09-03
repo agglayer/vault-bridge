@@ -10,6 +10,7 @@ import {IFiatTokenV2_2} from "../../../../etc/IFiatTokenV2_2.sol";
 // Libraries.
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
+// @remind Improve documentation.
 /// @title vbUSDC Native Converter (Agglayer + Bridged USDC Standard)
 /// @author See https://github.com/agglayer/vault-bridge
 /// @dev @note CAUTION! `nonMigratableBackingPercentage` must be set to `1e18` (100%) because `migrateBackingToPrimaryChain` is not supported yet.

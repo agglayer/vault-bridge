@@ -14,7 +14,7 @@ import {PausableUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/Pau
 import {ReentrancyGuardUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import {Versioned} from "../etc/Versioned.sol";
 
-/// @title Custom Token (optional)
+/// @title Custom Token
 /// @author See https://github.com/agglayer/vault-bridge
 /// @notice A Custom Token is an optional ERC-20 token on Secondary Chains to represent the 'native' version of the original underlying token from Primary Chain on Secondary Chain, ideally (or, simply, the upgraded version of the bridged vbToken).
 /// @dev A base contract used to create Custom Tokens.
@@ -72,7 +72,7 @@ abstract contract CustomToken is
     /// @dev Preserves the `name` and `symbol` of the bridged vbToken.
     /// @param originalUnderlyingTokenDecimals_ The number of decimals of the original underlying token on Primary Chain. Custom Token will have the same number of decimals as the original underlying token.
     /// @param nativeConverter_ The address of Native Converter for this Custom Token.
-    function __CustomToken_init(
+    function __CustomToken_init1(
         address owner_,
         uint8 originalUnderlyingTokenDecimals_,
         address agglayerBridge_,

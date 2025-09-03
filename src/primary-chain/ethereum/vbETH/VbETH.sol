@@ -28,7 +28,7 @@ contract VbETH is VaultBridgeToken {
         nonReentrant
     {
         // Initialize the base implementation.
-        __VaultBridgeToken_init(initializer_, initParams);
+        __VaultBridgeToken_init1(initializer_, initParams);
 
         require(
             IAgglayerBridge(initParams.agglayerBridge).gasTokenAddress() == address(0)

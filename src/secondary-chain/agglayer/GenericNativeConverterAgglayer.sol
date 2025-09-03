@@ -28,7 +28,7 @@ contract GenericNativeConverterAgglayer is NativeConverterAgglayer {
         address migrationManager_
     ) external whenNotPaused reinitializer(1) nonReentrant {
         // Initialize the base implementation.
-        __NativeConverter_init(
+        __NativeConverter_init1(
             owner_,
             customToken_,
             underlyingToken_,
