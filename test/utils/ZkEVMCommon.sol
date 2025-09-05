@@ -15,7 +15,7 @@ abstract contract ZkEVMCommon is Test {
     function _getMerkleTreeRoot(string memory encodedLeaves) public returns (bytes32) {
         string[] memory operation = new string[](5);
         operation[0] = "node";
-        operation[1] = "test/etc/zkevm-commonjs-wrapper";
+        operation[1] = "test/utils/zkevm-commonjs-wrapper";
         operation[2] = "makeTreeAndGetRoot";
         operation[3] = MERKLE_TREE_HEIGHT;
         operation[4] = encodedLeaves;
@@ -27,7 +27,7 @@ abstract contract ZkEVMCommon is Test {
     function _getProofByIndex(string memory encodedLeaves, string memory index) public returns (bytes32[32] memory) {
         string[] memory operation = new string[](6);
         operation[0] = "node";
-        operation[1] = "test/etc/zkevm-commonjs-wrapper";
+        operation[1] = "test/utils/zkevm-commonjs-wrapper";
         operation[2] = "makeTreeAndGetProofByIndex";
         operation[3] = MERKLE_TREE_HEIGHT;
         operation[4] = encodedLeaves;

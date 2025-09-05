@@ -8,8 +8,12 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
  * @dev A mock implementation of the Agglayer Bridge for testing without fork dependency
  */
 contract MockAgglayerBridge {
-    uint32 public depositCount; // Make public for getter
-    uint32 private constant NETWORK_ID = 0; // Mock network ID for primary chain
+    uint32 public depositCount;
+    uint32 public networkID;
+
+    // Gas token properties for VbETH testing
+    address public gasTokenAddress;
+    uint32 public gasTokenNetwork;
 
     event BridgeEvent(
         uint8 leafType,
@@ -45,7 +49,7 @@ contract MockAgglayerBridge {
         // Emit BridgeEvent with the current depositCount (before incrementing)
         emit BridgeEvent(
             0, // leafType: LEAF_TYPE_ASSET
-            NETWORK_ID, // originNetwork
+            networkID, // originNetwork
             token, // originAddress
             destinationNetwork,
             destinationAddress,
@@ -57,11 +61,29 @@ contract MockAgglayerBridge {
         depositCount++;
     }
 
+    /// @dev Set network id for testing different networks
+    function setNetworkId(uint32 _networkID) external {
+        networkID = _networkID;
+    }
+
+    /// @dev Set deposit count for testing
     function setDepositCount(uint32 _depositCount) external {
         depositCount = _depositCount;
     }
 
-    function networkID() external pure returns (uint32) {
-        return NETWORK_ID;
+    /// @dev Set gas token address for VbETH testing
+    function setGasTokenAddress(address _gasTokenAddress) external {
+        gasTokenAddress = _gasTokenAddress;
+    }
+
+    /// @dev Set gas token network for VbETH testing
+    function setGasTokenNetwork(uint32 _gasTokenNetwork) external {
+        gasTokenNetwork = _gasTokenNetwork;
+    }
+
+    /// @dev For testing, assume all wrapped addresses are not mintable
+    function wrappedAddressIsNotMintable(address wrappedAddress) external pure returns (bool isNotMintable) {
+        (wrappedAddress);
+        return true;
     }
 }

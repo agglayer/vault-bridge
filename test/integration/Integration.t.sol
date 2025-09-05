@@ -12,8 +12,8 @@ import {
     TransparentUpgradeableProxy,
     ITransparentUpgradeableProxy
 } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
-import {TestVault} from "test/etc/TestVault.sol";
-import {ZkEVMCommon} from "test/etc/ZkEVMCommon.sol";
+import {MockVault} from "test/utils/mocks/MockVault.sol";
+import {ZkEVMCommon} from "test/utils/ZkEVMCommon.sol";
 import {VaultBridgeTokenInitializer} from "src/primary-chain/VaultBridgeTokenInitializer.sol";
 import {GenericVaultBridgeToken} from "src/primary-chain/ethereum/GenericVaultBridgeToken.sol";
 import {VaultBridgeTokenPart2} from "src/primary-chain/VaultBridgeTokenPart2.sol";
@@ -190,7 +190,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
     uint256 internal constant YIELD_VAULT_ALLOWED_SLIPPAGE = 1e16; // 1%
 
     // extra contracts
-    TestVault vbTokenVault;
+    MockVault vbTokenVault;
     GenericNativeConverter nativeConverter;
     MigrationManager migrationManager;
     MockERC20WithDeposit wrappedGasToken;
@@ -284,7 +284,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
         underlyingAsset = new UnderlyingAsset(UNDERLYING_ASSET_NAME, UNDERLYING_ASSET_SYMBOL);
 
         // deploy vault
-        vbTokenVault = new TestVault(address(underlyingAsset));
+        vbTokenVault = new MockVault(address(underlyingAsset));
         vbTokenVault.setMaxDeposit(MAX_DEPOSIT);
         vbTokenVault.setMaxWithdraw(MAX_WITHDRAW);
 

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.29;
 
 // Test base
-import "test/base/VaultBridgeTokenTestBase.sol";
+import "test/base/primary-chain/VaultBridgeTokenTestBase.sol";
 
 // OpenZeppelin
 import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
@@ -14,8 +14,8 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 
 // Mocks
 import {IAgglayerBridge as _IAgglayerBridge} from "test/interfaces/IAgglayerBridge.sol";
-import {MockAgglayerBridge} from "test/etc/MockAgglayerBridge.sol";
-import {TestVault} from "test/etc/TestVault.sol";
+import {MockAgglayerBridge} from "test/utils/mocks/MockAgglayerBridge.sol";
+import {MockVault} from "test/utils/mocks/MockVault.sol";
 
 /// @dev Tests for VaultBridgeToken and VaultBridgeTokenPart2
 contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
@@ -23,30 +23,7 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
     using SafeERC20 for TestHarnessVaultBridgeToken;
 
     function setUp() public virtual {
-        deployPrimaryChainInfrastructure(false);
-        deployVaultBridgeTokenHarness(false);
-        stateBeforeInitialize = vm.snapshotState();
-        vbTokenPart2 = VaultBridgeTokenPart2(payable(address(vbToken)));
-
-        vm.label(address(vbToken), "vbToken");
-        vm.label(address(vbTokenImplementation), "vbToken Implementation");
-        vm.label(address(this), "Test Contract");
-        vm.label(address(vbTokenPart2), "vbToken Part 2");
-    }
-
-    function test_setup() public view {
-        assert(vbToken.hasRole(vbToken.DEFAULT_ADMIN_ROLE(), owner));
-        assertEq(vbToken.name(), tokenName);
-        assertEq(vbToken.symbol(), tokenSymbol);
-        assertEq(vbToken.decimals(), tokenDecimals);
-        assertEq(vbToken.asset(), asset);
-        assertEq(vbToken.minimumReservePercentage(), minimumReservePercentage);
-        assertEq(address(vbToken.yieldVault()), address(yieldVault));
-        assertEq(vbToken.yieldRecipient(), yieldRecipient);
-        assertEq(address(vbToken.agglayerBridge()), agglayerBridge);
-        assertEq(vbToken.migrationManager(), migrationManagerAddr);
-        assertEq(vbToken.allowance(address(vbToken), agglayerBridge), type(uint256).max);
-        assertEq(IERC20(asset).allowance(address(vbToken), address(vbToken.yieldVault())), type(uint256).max);
+        deployVaultBridgeTokenInfrastructure();
     }
 
     function test_initialize_twice() public {
@@ -55,7 +32,7 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
             owner: owner,
             name: tokenName,
             symbol: tokenSymbol,
-            underlyingToken: asset,
+            underlyingToken: underlyingToken,
             minimumReservePercentage: minimumReservePercentage,
             yieldVault: address(yieldVault),
             yieldRecipient: yieldRecipient,
@@ -69,14 +46,14 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
     }
 
     function test_initialize() public virtual {
-        resetToPreInitialization();
+        vm.revertToState(stateBeforeInitialize);
 
         bytes memory initData;
         VaultBridgeToken.InitializationParameters memory initParams = VaultBridgeToken.InitializationParameters({
             owner: address(0),
             name: tokenName,
             symbol: tokenSymbol,
-            underlyingToken: asset,
+            underlyingToken: underlyingToken,
             minimumReservePercentage: minimumReservePercentage,
             yieldVault: address(yieldVault),
             yieldRecipient: yieldRecipient,
@@ -94,7 +71,7 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
         initData = abi.encodeCall(vbToken.reinitialize1, (address(initializer), initParams));
         vm.expectRevert(VaultBridgeToken.InvalidOwner.selector);
         vbToken = TestHarnessVaultBridgeToken(payable(_proxify(vbTokenImplementation, address(this), initData)));
-        resetToPreInitialization();
+        vm.revertToState(stateBeforeInitialize);
 
         initParams.owner = owner;
         initParams.name = "";
@@ -115,7 +92,7 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
         vm.expectRevert(VaultBridgeToken.InvalidUnderlyingToken.selector);
         vbToken = TestHarnessVaultBridgeToken(payable(_proxify(vbTokenImplementation, address(this), initData)));
 
-        initParams.underlyingToken = asset;
+        initParams.underlyingToken = underlyingToken;
         initParams.minimumReservePercentage = 1e19;
         initData = abi.encodeCall(vbToken.reinitialize1, (address(initializer), initParams));
         vm.expectRevert(VaultBridgeToken.InvalidMinimumReservePercentage.selector);
@@ -164,7 +141,7 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
         bytes memory callData = abi.encodeCall(vbToken.deposit, (amount, recipient));
         _testPauseUnpause(owner, address(vbToken), callData);
 
-        deal(asset, sender, amount);
+        deal(underlyingToken, sender, amount);
 
         vm.startPrank(sender);
 
@@ -185,7 +162,7 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
         uint256 amount = (vaultMaxDeposit * 10) / 9 + 1; // account for the minimum reserve percentage and add to make the amount greater than the max deposit limit
         assertGt(amount, MINIMUM_YIELD_VAULT_DEPOSIT, "Amount should be greater than the minimum deposit.");
 
-        _dealAndApprove(asset, sender, amount, address(vbToken));
+        _dealAndApprove(underlyingToken, sender, amount, address(vbToken));
 
         vm.startPrank(sender);
 
@@ -197,9 +174,9 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
         vm.stopPrank();
 
         // since max deposit is reached, the reserve amount should be calculated based on the max deposit limit
-        uint256 reserveAssetsAfterDeposit = _calculateReserveAssets(amount, vaultMaxDeposit);
+        uint256 reserveAssetsAfterDeposit = calculateReserveAssets(amount, vaultMaxDeposit);
 
-        assertEq(IERC20(asset).balanceOf(address(vbToken)), reserveAssetsAfterDeposit); // reserve assets increased
+        assertEq(IERC20(underlyingToken).balanceOf(address(vbToken)), reserveAssetsAfterDeposit); // reserve assets increased
         assertGt(yieldVault.balanceOf(address(vbToken)), 0); // shares locked in the vault
         assertEq(vbToken.balanceOf(recipient), sharesToBeMinted); // shares minted to the recipient
     }
@@ -208,7 +185,7 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
         uint256 amount = 100 ether; // use a large amount to ensure reserve exceeds the threshold
         assertGt(amount, MAX_DEPOSIT, "Amount should be greater than the max deposit.");
 
-        uint256 reserveAssetsAfterDeposit = _calculateReserveAssets(amount, MAX_DEPOSIT);
+        uint256 reserveAssetsAfterDeposit = calculateReserveAssets(amount, MAX_DEPOSIT);
         uint256 reserveThreshold = 3 * minimumReservePercentage; // the threshold is set to 3x the minimum reserve percentage according to the spec
         uint256 maxDepositPercentage = Math.mulDiv(reserveAssetsAfterDeposit, 1e18, amount);
 
@@ -218,7 +195,7 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
             "Max deposit percentage should be greater than the reserve threshold."
         );
 
-        _dealAndApprove(asset, sender, amount, address(vbToken));
+        _dealAndApprove(underlyingToken, sender, amount, address(vbToken));
 
         vm.startPrank(sender);
 
@@ -231,9 +208,9 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
 
         // since the reserve percentage is above the threshold, the reserve amount should be calculated based on the rebalanced amount
         uint256 newAmount = reserveAssetsAfterDeposit;
-        uint256 finalReserveAssets = _calculateReserveAssets(newAmount, MAX_DEPOSIT);
+        uint256 finalReserveAssets = calculateReserveAssets(newAmount, MAX_DEPOSIT);
 
-        assertEq(IERC20(asset).balanceOf(address(vbToken)), finalReserveAssets); // reserve assets increased
+        assertEq(IERC20(underlyingToken).balanceOf(address(vbToken)), finalReserveAssets); // reserve assets increased
         assertGt(yieldVault.balanceOf(address(vbToken)), 0); // shares locked in the vault
         assertEq(vbToken.balanceOf(recipient), sharesToBeMinted); // shares minted to the recipient
     }
@@ -243,7 +220,7 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
         uint256 amount = (vaultMaxDeposit * 10) / 9 - 1; // account for the minimum reserve percentage and subtract to make the amount less than the max deposit limit
         assertGt(amount, MINIMUM_YIELD_VAULT_DEPOSIT, "Amount should be greater than the minimum deposit.");
 
-        _dealAndApprove(asset, sender, amount, address(vbToken));
+        _dealAndApprove(underlyingToken, sender, amount, address(vbToken));
 
         vm.startPrank(sender);
 
@@ -257,7 +234,7 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
         // since max deposit is not reached, the reserve amount should be calculated based on the deposit amount
         uint256 reserveAssets = (amount * minimumReservePercentage) / MAX_RESERVE_PERCENTAGE;
 
-        assertEq(IERC20(asset).balanceOf(address(vbToken)), reserveAssets); // reserve assets increased
+        assertEq(IERC20(underlyingToken).balanceOf(address(vbToken)), reserveAssets); // reserve assets increased
         assertGt(yieldVault.balanceOf(address(vbToken)), 0); // shares locked in the vault
         assertEq(vbToken.balanceOf(recipient), sharesToBeMinted); // shares minted to the recipient
     }
@@ -265,7 +242,7 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
     function test_deposit_amount_lt_minimum_deposit() public {
         uint256 amount = MINIMUM_YIELD_VAULT_DEPOSIT - 1;
 
-        _dealAndApprove(asset, sender, amount, address(vbToken));
+        _dealAndApprove(underlyingToken, sender, amount, address(vbToken));
 
         vm.startPrank(sender);
 
@@ -276,7 +253,7 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
 
         vm.stopPrank();
 
-        assertEq(IERC20(asset).balanceOf(address(vbToken)), amount); // All assets are reserved and non are deposited in the vault
+        assertEq(IERC20(underlyingToken).balanceOf(address(vbToken)), amount); // All assets are reserved and non are deposited in the vault
         assertEq(yieldVault.balanceOf(address(vbToken)), 0); // No assets deposited in the vault
         assertEq(vbToken.balanceOf(recipient), sharesToBeMinted); // shares minted to the recipient
     }
@@ -284,7 +261,7 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
     function test_depositWithPermit_revert() public {
         uint256 amount = 100 ether;
 
-        deal(asset, sender, amount);
+        deal(underlyingToken, sender, amount);
         vm.startPrank(sender);
 
         vm.expectRevert(VaultBridgeToken.InvalidPermitData.selector);
@@ -297,9 +274,9 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
         uint256 amount = 1 ether;
         uint256 vaultMaxDeposit = yieldVault.maxDeposit(address(vbToken));
 
-        deal(asset, sender, amount);
+        deal(underlyingToken, sender, amount);
 
-        bytes32 domainSeparator = IERC20Permit(asset).DOMAIN_SEPARATOR();
+        bytes32 domainSeparator = IERC20Permit(underlyingToken).DOMAIN_SEPARATOR();
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(
             senderPrivateKey,
@@ -326,9 +303,9 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
         vbToken.depositWithPermit(amount, recipient, permitData);
         vm.stopPrank();
 
-        uint256 reserveAssetsAfterDeposit = _calculateReserveAssets(amount, vaultMaxDeposit);
+        uint256 reserveAssetsAfterDeposit = calculateReserveAssets(amount, vaultMaxDeposit);
 
-        assertEq(IERC20(asset).balanceOf(address(vbToken)), reserveAssetsAfterDeposit); // reserve assets increased
+        assertEq(IERC20(underlyingToken).balanceOf(address(vbToken)), reserveAssetsAfterDeposit); // reserve assets increased
         assertEq(vbToken.balanceOf(recipient), sharesToBeMinted); // shares minted to the recipient
     }
 
@@ -346,7 +323,7 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
         bytes memory callData = abi.encodeCall(vbToken.depositAndBridge, (amount, recipient, NETWORK_ID_L2, true));
         _testPauseUnpause(owner, address(vbToken), callData);
 
-        _dealAndApprove(asset, sender, amount, address(vbToken));
+        _dealAndApprove(underlyingToken, sender, amount, address(vbToken));
 
         vm.startPrank(sender);
         vm.expectEmit();
@@ -363,9 +340,9 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
         vbToken.depositAndBridge(amount, recipient, NETWORK_ID_L2, true);
         vm.stopPrank();
 
-        uint256 reserveAssetsAfterDeposit = _calculateReserveAssets(amount, vaultMaxDeposit);
+        uint256 reserveAssetsAfterDeposit = calculateReserveAssets(amount, vaultMaxDeposit);
 
-        assertEq(IERC20(asset).balanceOf(address(vbToken)), reserveAssetsAfterDeposit); // reserve assets increased
+        assertEq(IERC20(underlyingToken).balanceOf(address(vbToken)), reserveAssetsAfterDeposit); // reserve assets increased
         assertEq(vbToken.balanceOf(agglayerBridge), amount); // shares locked on bridge
     }
 
@@ -373,9 +350,9 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
         uint256 amount = 1 ether;
         uint256 vaultMaxDeposit = yieldVault.maxDeposit(address(vbToken));
 
-        deal(asset, sender, amount);
+        deal(underlyingToken, sender, amount);
 
-        bytes32 domainSeparator = IERC20Permit(asset).DOMAIN_SEPARATOR();
+        bytes32 domainSeparator = IERC20Permit(underlyingToken).DOMAIN_SEPARATOR();
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(
             senderPrivateKey,
@@ -409,9 +386,9 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
         vbToken.depositWithPermitAndBridge(amount, recipient, NETWORK_ID_L2, true, permitData);
         vm.stopPrank();
 
-        uint256 reserveAssetsAfterDeposit = _calculateReserveAssets(amount, vaultMaxDeposit);
+        uint256 reserveAssetsAfterDeposit = calculateReserveAssets(amount, vaultMaxDeposit);
 
-        assertEq(IERC20(asset).balanceOf(address(vbToken)), reserveAssetsAfterDeposit);
+        assertEq(IERC20(underlyingToken).balanceOf(address(vbToken)), reserveAssetsAfterDeposit);
         assertEq(vbToken.balanceOf(agglayerBridge), amount); // shares locked on bridge
     }
 
@@ -422,16 +399,16 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
         bytes memory callData = abi.encodeCall(vbToken.mint, (amount, recipient));
         _testPauseUnpause(owner, address(vbToken), callData);
 
-        _dealAndApprove(asset, sender, amount, address(vbToken));
+        _dealAndApprove(underlyingToken, sender, amount, address(vbToken));
         uint256 sharesToBeMinted = vbToken.previewMint(amount);
 
         vm.startPrank(sender);
         vbToken.mint(amount, sender);
         vm.stopPrank();
 
-        uint256 reserveAssetsAfterDeposit = _calculateReserveAssets(amount, vaultMaxDeposit);
+        uint256 reserveAssetsAfterDeposit = calculateReserveAssets(amount, vaultMaxDeposit);
 
-        assertEq(IERC20(asset).balanceOf(address(vbToken)), reserveAssetsAfterDeposit);
+        assertEq(IERC20(underlyingToken).balanceOf(address(vbToken)), reserveAssetsAfterDeposit);
         assertEq(vbToken.balanceOf(sender), sharesToBeMinted); // shares minted to the recipient
     }
 
@@ -452,13 +429,13 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
 
         uint256 stateBeforeDeposit = vm.snapshotState();
 
-        deal(asset, sender, amountGtMaxWithdraw);
+        deal(underlyingToken, sender, amountGtMaxWithdraw);
 
         vm.startPrank(sender);
 
-        IERC20(asset).forceApprove(address(vbToken), amountGtMaxWithdraw);
+        IERC20(underlyingToken).forceApprove(address(vbToken), amountGtMaxWithdraw);
         vbToken.deposit(amountGtMaxWithdraw, sender);
-        assertEq(IERC20(asset).balanceOf(sender), 0); // make sure sender has deposited all assets
+        assertEq(IERC20(underlyingToken).balanceOf(sender), 0); // make sure sender has deposited all assets
         assertEq(vbToken.balanceOf(sender), amountGtMaxWithdraw);
 
         uint256 withdrawableAmount = _calculateWithdrawableAmount(amountGtMaxWithdraw);
@@ -472,25 +449,25 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
 
         uint256 amountLtMaxWithdraw = MAX_WITHDRAW - 1;
 
-        deal(asset, sender, amountLtMaxWithdraw);
+        deal(underlyingToken, sender, amountLtMaxWithdraw);
 
-        IERC20(asset).forceApprove(address(vbToken), amountLtMaxWithdraw);
+        IERC20(underlyingToken).forceApprove(address(vbToken), amountLtMaxWithdraw);
         vbToken.deposit(amountLtMaxWithdraw, sender);
-        assertEq(IERC20(asset).balanceOf(sender), 0); // make sure sender has deposited all assets
+        assertEq(IERC20(underlyingToken).balanceOf(sender), 0); // make sure sender has deposited all assets
         assertEq(vbToken.balanceOf(sender), amountLtMaxWithdraw);
 
-        vm.expectRevert("TestVault: Insufficient balance");
+        vm.expectRevert("MockVault: Insufficient balance");
         vbToken.withdraw(amountLtMaxWithdraw + 1, sender, sender);
 
         vm.revertToState(stateBeforeDeposit);
 
         uint256 amount = 1 ether;
 
-        deal(asset, sender, amount);
+        deal(underlyingToken, sender, amount);
 
-        IERC20(asset).forceApprove(address(vbToken), amount);
+        IERC20(underlyingToken).forceApprove(address(vbToken), amount);
         vbToken.deposit(amount, sender);
-        assertEq(IERC20(asset).balanceOf(sender), 0); // make sure sender has deposited all assets
+        assertEq(IERC20(underlyingToken).balanceOf(sender), 0); // make sure sender has deposited all assets
         assertEq(vbToken.balanceOf(sender), amount);
 
         uint256 withdrawAmount = vbToken.stakedAssets();
@@ -515,22 +492,22 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
         uint256 amount = 1 ether;
         uint256 vaultMaxDeposit = yieldVault.maxDeposit(address(vbToken));
 
-        _dealAndApprove(asset, sender, amount, address(vbToken));
+        _dealAndApprove(underlyingToken, sender, amount, address(vbToken));
 
         vm.startPrank(sender);
         vbToken.deposit(amount, sender);
-        assertEq(IERC20(asset).balanceOf(sender), 0); // make sure sender has deposited all assets
+        assertEq(IERC20(underlyingToken).balanceOf(sender), 0); // make sure sender has deposited all assets
         assertEq(vbToken.balanceOf(sender), amount);
 
-        uint256 reserveAssetsAfterDeposit = _calculateReserveAssets(amount, vaultMaxDeposit);
+        uint256 reserveAssetsAfterDeposit = calculateReserveAssets(amount, vaultMaxDeposit);
         uint256 reserveWithdrawAmount = (reserveAssetsAfterDeposit * 90) / 100; // withdraw 90% of reserve assets
         uint256 reserveAfterWithdraw = reserveAssetsAfterDeposit - reserveWithdrawAmount;
 
         vm.expectEmit();
         emit IERC4626.Withdraw(sender, sender, sender, reserveWithdrawAmount, reserveWithdrawAmount);
         vbToken.withdraw(reserveWithdrawAmount, sender, sender);
-        assertEq(IERC20(asset).balanceOf(address(vbToken)), reserveAfterWithdraw); // reserve assets reduced
-        assertEq(IERC20(asset).balanceOf(sender), reserveWithdrawAmount); // assets returned to sender
+        assertEq(IERC20(underlyingToken).balanceOf(address(vbToken)), reserveAfterWithdraw); // reserve assets reduced
+        assertEq(IERC20(underlyingToken).balanceOf(sender), reserveWithdrawAmount); // assets returned to sender
         assertEq(vbToken.balanceOf(sender), amount - reserveWithdrawAmount); // shares reduced
 
         vm.stopPrank();
@@ -539,10 +516,10 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
     function test_withdraw_from_stake() public virtual {
         uint256 amount = 1 ether;
 
-        _dealAndApprove(asset, sender, amount, address(vbToken));
+        _dealAndApprove(underlyingToken, sender, amount, address(vbToken));
         vm.startPrank(sender);
         vbToken.deposit(amount, sender);
-        assertEq(IERC20(asset).balanceOf(sender), 0); // make sure sender has deposited all assets
+        assertEq(IERC20(underlyingToken).balanceOf(sender), 0); // make sure sender has deposited all assets
         assertEq(vbToken.balanceOf(sender), amount);
 
         uint256 amountToWithdraw = amount;
@@ -550,9 +527,9 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
         vm.expectEmit();
         emit IERC4626.Withdraw(sender, sender, sender, amountToWithdraw, amountToWithdraw);
         vbToken.withdraw(amountToWithdraw, sender, sender);
-        assertEq(IERC20(asset).balanceOf(sender), amountToWithdraw);
-        assertEq(IERC20(asset).balanceOf(address(vbToken)), 0); // reserve assets reduced
-        assertEq(IERC20(asset).balanceOf(sender), amountToWithdraw); // assets returned to sender
+        assertEq(IERC20(underlyingToken).balanceOf(sender), amountToWithdraw);
+        assertEq(IERC20(underlyingToken).balanceOf(address(vbToken)), 0); // reserve assets reduced
+        assertEq(IERC20(underlyingToken).balanceOf(sender), amountToWithdraw); // assets returned to sender
         assertEq(vbToken.balanceOf(sender), amount - amountToWithdraw); // shares reduced
         vm.stopPrank();
     }
@@ -571,9 +548,9 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
         assertGt(amount, MINIMUM_YIELD_VAULT_DEPOSIT, "Amount should be greater than the minimum deposit.");
 
         uint256 totalSupply;
-        _dealAndApprove(asset, sender, amount, address(vbToken)); // fund the sender
+        _dealAndApprove(underlyingToken, sender, amount, address(vbToken)); // fund the sender
 
-        uint256 reserveAmount = _calculateReserveAssets(amount, vaultMaxDeposit);
+        uint256 reserveAmount = calculateReserveAssets(amount, vaultMaxDeposit);
 
         // create reserve
         vm.startPrank(sender);
@@ -606,9 +583,9 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
         assertGt(amount, MINIMUM_YIELD_VAULT_DEPOSIT, "Amount should be greater than the minimum deposit.");
 
         uint256 totalSupply;
-        _dealAndApprove(asset, sender, amount, address(vbToken)); // fund the sender
+        _dealAndApprove(underlyingToken, sender, amount, address(vbToken)); // fund the sender
 
-        uint256 reserveAmount = _calculateReserveAssets(amount, vaultMaxDeposit);
+        uint256 reserveAmount = calculateReserveAssets(amount, vaultMaxDeposit);
 
         vm.startPrank(sender);
         vbToken.deposit(amount, recipient);
@@ -646,7 +623,7 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
         uint256 amount = 100 ether;
         uint256 yieldInAssets = 500 ether;
 
-        _dealAndApprove(asset, sender, amount, address(vbToken));
+        _dealAndApprove(underlyingToken, sender, amount, address(vbToken));
         vm.startPrank(sender);
         vbToken.mint(amount, sender);
         vm.stopPrank();
@@ -690,7 +667,7 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
         address newRecipient = makeAddr("newRecipient");
 
         // generate yield
-        _dealAndApprove(asset, sender, amount, address(vbToken));
+        _dealAndApprove(underlyingToken, sender, amount, address(vbToken));
         vm.startPrank(sender);
         vbToken.mint(amount, sender);
         vm.stopPrank();
@@ -743,17 +720,17 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
     function test_redeem() public virtual {
         uint256 amount = 1 ether;
 
-        _dealAndApprove(asset, sender, amount, address(vbToken));
+        _dealAndApprove(underlyingToken, sender, amount, address(vbToken));
 
         vm.startPrank(sender);
         vbToken.deposit(amount, sender);
-        assertEq(IERC20(asset).balanceOf(sender), 0);
+        assertEq(IERC20(underlyingToken).balanceOf(sender), 0);
         assertEq(vbToken.balanceOf(sender), amount);
 
         uint256 redeemAmount = vbToken.totalAssets();
 
         vbToken.redeem(redeemAmount, sender, sender); // redeem from both staked and reserved assets
-        assertEq(IERC20(asset).balanceOf(sender), redeemAmount);
+        assertEq(IERC20(underlyingToken).balanceOf(sender), redeemAmount);
         vm.stopPrank();
     }
 
@@ -782,7 +759,7 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
         uint256 amount = (vaultMaxDeposit * 10) / 9 - 1;
         uint256 shares = vbToken.convertToShares(amount);
 
-        deal(asset, address(vbToken), amount);
+        deal(underlyingToken, address(vbToken), amount);
 
         uint256 stakedAssetsBefore = vbToken.stakedAssets();
 
@@ -816,7 +793,7 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
         uint256 amount = (vaultMaxDeposit * 10) / 9 + 1;
         uint256 shares = vbToken.convertToShares(amount);
 
-        deal(asset, address(vbToken), amount);
+        deal(underlyingToken, address(vbToken), amount);
 
         uint256 stakedAssetsBefore = vbToken.stakedAssets();
 
@@ -839,7 +816,7 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
         vbTokenPart2.completeMigration(NETWORK_ID_L2, shares, amount);
 
         // since max deposit is reached, the reserve amount should be calculated based on the max deposit limit
-        uint256 reserveAssetsAfterDeposit = _calculateReserveAssets(amount, vaultMaxDeposit);
+        uint256 reserveAssetsAfterDeposit = calculateReserveAssets(amount, vaultMaxDeposit);
 
         assertEq(vbToken.reservedAssets(), reserveAssetsAfterDeposit);
         assertGt(vbToken.stakedAssets(), stakedAssetsBefore);
@@ -856,8 +833,8 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
         vbTokenPart2.completeMigration(NETWORK_ID_L2, shares, amount);
 
         // fund the migration fees
-        deal(asset, address(this), amount);
-        IERC20(asset).forceApprove(address(vbToken), amount);
+        deal(underlyingToken, address(this), amount);
+        IERC20(underlyingToken).forceApprove(address(vbToken), amount);
         vm.expectEmit();
         emit VaultBridgeToken.DonatedForCompletingMigration(address(this), amount);
         vbTokenPart2.donateForCompletingMigration(amount);
@@ -941,7 +918,7 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
 
         assertEq(vbToken.maxWithdraw(address(0)), 0); // 0 if no shares
 
-        _dealAndApprove(asset, sender, amount, address(vbToken));
+        _dealAndApprove(underlyingToken, sender, amount, address(vbToken));
         vm.startPrank(sender);
         vbToken.deposit(amount, sender);
         vm.stopPrank();
@@ -959,7 +936,7 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
         vm.expectRevert(VaultBridgeToken.InvalidAssets.selector);
         vbToken.previewWithdraw(0);
 
-        _dealAndApprove(asset, sender, amount, address(vbToken));
+        _dealAndApprove(underlyingToken, sender, amount, address(vbToken));
         vm.startPrank(sender);
         vbToken.deposit(amount, sender);
         vm.stopPrank();
@@ -972,7 +949,7 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
         vbToken.previewWithdraw(amount + 1 ether);
 
         uint256 stakedAmount = yieldVault.convertToAssets(yieldVault.balanceOf(address(vbToken)));
-        uint256 reserveAssetsAfterDeposit = _calculateReserveAssets(amount, vaultMaxDeposit);
+        uint256 reserveAssetsAfterDeposit = calculateReserveAssets(amount, vaultMaxDeposit);
 
         vm.assertEq(vbToken.previewWithdraw(reserveAssetsAfterDeposit), vbToken.reservedAssets()); // reserve assets
         vm.assertEq(vbToken.previewWithdraw(reserveAssetsAfterDeposit + stakedAmount), vbToken.totalAssets()); // reserve + staked assets
@@ -989,7 +966,7 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
 
         assertEq(vbToken.maxRedeem(sender), 0); // 0 if no shares
 
-        _dealAndApprove(asset, sender, amount, address(vbToken));
+        _dealAndApprove(underlyingToken, sender, amount, address(vbToken));
         vm.startPrank(sender);
         vbToken.deposit(amount, sender);
         vm.stopPrank();
@@ -1008,7 +985,7 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
         vm.expectRevert(VaultBridgeToken.InvalidShares.selector);
         vbToken.previewRedeem(0);
 
-        _dealAndApprove(asset, sender, amount, address(vbToken));
+        _dealAndApprove(underlyingToken, sender, amount, address(vbToken));
         vm.startPrank(sender);
         vbToken.deposit(amount, sender);
         vm.stopPrank();
@@ -1026,12 +1003,12 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
         uint256 amount = 1 ether;
         uint256 vaultMaxDeposit = yieldVault.maxDeposit(address(vbToken));
 
-        _dealAndApprove(asset, sender, amount, address(vbToken));
+        _dealAndApprove(underlyingToken, sender, amount, address(vbToken));
         vm.startPrank(sender);
         vbToken.deposit(amount, sender);
         vm.stopPrank();
 
-        uint256 reserveAssetsAfterDeposit = _calculateReserveAssets(amount, vaultMaxDeposit);
+        uint256 reserveAssetsAfterDeposit = calculateReserveAssets(amount, vaultMaxDeposit);
 
         uint256 expectedPercentage = (reserveAssetsAfterDeposit * MAX_RESERVE_PERCENTAGE) / vbToken.totalSupply();
 
@@ -1055,7 +1032,7 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
         uint256 amount = 1 ether;
 
         // First, set up yield to burn - need to deposit, collect yield, then burn
-        _dealAndApprove(asset, sender, amount, address(vbToken));
+        _dealAndApprove(underlyingToken, sender, amount, address(vbToken));
         vm.startPrank(sender);
         vbToken.deposit(amount, sender);
         vm.stopPrank();
@@ -1095,15 +1072,15 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
         // Get initial reserved assets
         uint256 initialReservedAssets = vbToken.reservedAssets();
 
-        deal(asset, address(this), amount);
-        IERC20(asset).forceApprove(address(vbToken), amount);
+        deal(underlyingToken, address(this), amount);
+        IERC20(underlyingToken).forceApprove(address(vbToken), amount);
 
         vm.expectEmit();
         emit VaultBridgeToken.DonatedAsYield(address(this), amount);
         vbTokenPart2.donateAsYield(amount);
 
         assertEq(vbToken.reservedAssets(), initialReservedAssets + amount);
-        assertEq(IERC20(asset).balanceOf(address(this)), 0);
+        assertEq(IERC20(underlyingToken).balanceOf(address(this)), 0);
     }
 
     function test_drainYieldVault_revert() public {
@@ -1126,7 +1103,7 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
         uint256 depositAmount = 10 ether;
 
         // First, deposit some assets to generate yield vault shares
-        _dealAndApprove(asset, sender, depositAmount, address(vbToken));
+        _dealAndApprove(underlyingToken, sender, depositAmount, address(vbToken));
         vm.startPrank(sender);
         vbToken.deposit(depositAmount, sender);
         vm.stopPrank();
@@ -1172,7 +1149,7 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
 
     function test_setYieldVault() public {
         // Create a new test vault
-        TestVault newVault = new TestVault(asset);
+        MockVault newVault = new MockVault(underlyingToken);
         newVault.setMaxDeposit(MAX_DEPOSIT);
         newVault.setMaxWithdraw(MAX_WITHDRAW);
 
@@ -1190,8 +1167,8 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
 
         assertEq(address(vbToken.yieldVault()), address(newVault));
         assertNotEq(address(vbToken.yieldVault()), oldVault);
-        assertEq(IERC20(asset).allowance(address(vbToken), address(newVault)), type(uint256).max);
-        assertEq(IERC20(asset).allowance(address(vbToken), oldVault), 0);
+        assertEq(IERC20(underlyingToken).allowance(address(vbToken), address(newVault)), type(uint256).max);
+        assertEq(IERC20(underlyingToken).allowance(address(vbToken), oldVault), 0);
     }
 
     function test_setMinimumYieldVaultDeposit_revert() public {
