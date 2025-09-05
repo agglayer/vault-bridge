@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: LicenseRef-PolygonLabs-Source-Available
-// Vault Bridge (last updated v1.0.0) (secondary-chain/polygon-portal/CustomTokenPolygonPortal.sol)
+// Vault Bridge (last updated v1.0.0) (secondary-chain/polygon/CustomTokenPolygon.sol)
 
 pragma solidity 0.8.29;
 
@@ -7,7 +7,7 @@ pragma solidity 0.8.29;
 import {CustomToken} from "../CustomToken.sol";
 
 // @remind Document.
-abstract contract CustomTokenPolygonPortal is CustomToken {
+abstract contract CustomTokenPolygon is CustomToken {
     // -----================= ::: MODIFIERS ::: =================-----
 
     /// @dev Checks if the sender is Child Chain Manager.
