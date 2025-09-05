@@ -5,7 +5,7 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract TestVault {
+contract MockVault {
     using SafeERC20 for IERC20;
 
     uint256 private _maxDeposit;
@@ -75,10 +75,10 @@ contract TestVault {
     }
 
     function redeem(uint256 shares, address receiver, address user) external returns (uint256) {
-        require(balanceOf[user] >= shares, "TestVault: Insufficient balance");
+        require(balanceOf[user] >= shares, "MockVault: Insufficient balance");
         _sendAssets(shares, receiver, user);
         if (slippage) {
-            require(shares > slippageAmount, "TestVault: Slippage amount is too high");
+            require(shares > slippageAmount, "MockVault: Slippage amount is too high");
             return shares + slippageAmount;
         } else {
             return shares;
@@ -87,7 +87,7 @@ contract TestVault {
 
     function deposit(uint256 amount, address user) external payable returns (uint256) {
         if (slippage) {
-            require(amount > slippageAmount, "TestVault: Slippage amount is too high");
+            require(amount > slippageAmount, "MockVault: Slippage amount is too high");
             _receiveAssets(amount - slippageAmount, user);
             return amount - slippageAmount;
         } else {
@@ -97,10 +97,10 @@ contract TestVault {
     }
 
     function withdraw(uint256 amount, address receiver, address user) external returns (uint256) {
-        require(balanceOf[user] >= amount, "TestVault: Insufficient balance");
+        require(balanceOf[user] >= amount, "MockVault: Insufficient balance");
         _sendAssets(amount, receiver, user);
         if (slippage) {
-            require(amount > slippageAmount, "TestVault: Slippage amount is too high");
+            require(amount > slippageAmount, "MockVault: Slippage amount is too high");
             return amount + slippageAmount;
         } else {
             return amount;
@@ -109,7 +109,7 @@ contract TestVault {
 
     function previewWithdraw(uint256 amount) external view returns (uint256) {
         if (slippage) {
-            require(amount > slippageAmount, "TestVault: Slippage amount is too high");
+            require(amount > slippageAmount, "MockVault: Slippage amount is too high");
             return amount + slippageAmount;
         } else {
             return amount;
