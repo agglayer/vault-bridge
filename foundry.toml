@@ -16,6 +16,7 @@ ffi = true
 dynamic_test_linking = true
 fs_permissions = [
   { access = "read", path = "script/input.json" },
+  { access = "read", path = "out" }
 ]
 
 [soldeer]

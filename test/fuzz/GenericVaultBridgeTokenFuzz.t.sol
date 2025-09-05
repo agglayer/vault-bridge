@@ -12,7 +12,7 @@ import {VaultBridgeTokenInitializer} from "src/primary-chain/VaultBridgeTokenIni
 
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {TestVault} from "test/etc/TestVault.sol";
+import {MockVault} from "test/utils/mocks/MockVault.sol";
 
 contract GenericVaultBridgeTokenHarness is GenericVaultBridgeToken {
     constructor() GenericVaultBridgeToken() {}
@@ -51,7 +51,7 @@ contract GenericVaultBridgeTokenFuzzTest is Test {
     address vbTokenImplementation;
     GenericVaultBridgeTokenHarness vbToken;
     VaultBridgeTokenPart2 vbTokenPart2;
-    TestVault vbTokenVault;
+    MockVault vbTokenVault;
     uint256 mainnetFork;
 
     address migrationManager = makeAddr("migrationManager");
@@ -63,7 +63,7 @@ contract GenericVaultBridgeTokenFuzzTest is Test {
         mainnetFork = vm.createSelectFork("mainnet");
 
         asset = TEST_TOKEN;
-        vbTokenVault = new TestVault(asset);
+        vbTokenVault = new MockVault(asset);
         vbTokenVault.setMaxDeposit(MAX_DEPOSIT);
         vbTokenVault.setMaxWithdraw(MAX_WITHDRAW);
 
