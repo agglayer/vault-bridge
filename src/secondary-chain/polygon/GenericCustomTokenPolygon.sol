@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: LicenseRef-PolygonLabs-Source-Available
-// Vault Bridge (last updated v1.0.0) (secondary-chain/polygon-portal/GenericCustomTokenPolygonPortal.sol)
+// Vault Bridge (last updated v1.0.0) (secondary-chain/polygon/GenericCustomTokenPolygon.sol)
 
 pragma solidity 0.8.29;
 
 // Main functionality.
-import {CustomTokenPolygonPortal} from "./CustomTokenPolygonPortal.sol";
+import {CustomTokenPolygon} from "./CustomTokenPolygon.sol";
 import {CustomToken} from "../CustomToken.sol";
 
 // @remind Update documentation.
-/// @title Generic Custom Token (Polygon Portal)
+/// @title Generic Custom Token (Polygon)
 /// @author See https://github.com/agglayer/vault-bridge
 /// @dev This contract can be used to deploy Custom Tokens that do not require any customization.
-contract GenericCustomTokenPolygonPortal is CustomTokenPolygonPortal {
+contract GenericCustomTokenPolygon is CustomTokenPolygon {
     // -----================= ::: SETUP ::: =================-----
 
     constructor() {

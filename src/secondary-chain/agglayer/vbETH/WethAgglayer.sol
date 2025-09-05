@@ -40,6 +40,12 @@ contract WethAgglayer is WethCustomToken, CustomTokenAgglayer {
     }
 
     function reinitialize3() external whenNotPaused reinitializer(3) nonReentrant {
+        // Clean up the old ERC-7201 namespace where `bool _gasTokenIsEth` used to be stored.
+        // Calculated as `keccak256(abi.encode(uint256(keccak256("agglayer.vault-bridge.WETH.storage")) - 1)) & ~bytes32(uint256(0xff))`.
+        assembly {
+            sstore(0xdf8caff5d0161908572492829df972cd19b1aabe3c3078d95299408cd561dc00, 0)
+        }
+
         _incrementGlobalInitializationCounter(1);
         _incrementGlobalInitializationCounter(2);
         _incrementGlobalInitializationCounter(3);

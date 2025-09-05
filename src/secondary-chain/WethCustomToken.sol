@@ -11,15 +11,15 @@ import {CustomToken} from "./CustomToken.sol";
 abstract contract WethCustomToken is CustomToken {
     /// @dev Storage of WETH contract.
     /// @dev It's implemented on a custom ERC-7201 namespace to reduce the risk of storage collisions when using with upgradeable contracts.
-    /// @custom:storage-location erc7201:agglayer.vault-bridge.WETH.storage
-    struct WETHStorage {
+    /// @custom:storage-location erc7201:agglayer.vault-bridge.WethCustomToken.storage
+    struct WethCustomTokenStorage {
         bool _gasTokenIsEth;
     }
 
     /// @dev The storage slot at which WETH storage starts, following the EIP-7201 standard.
-    /// @dev Calculated as `keccak256(abi.encode(uint256(keccak256("agglayer.vault-bridge.WETH.storage")) - 1)) & ~bytes32(uint256(0xff))`.
+    /// @dev Calculated as `keccak256(abi.encode(uint256(keccak256("agglayer.vault-bridge.WethCustomToken.storage")) - 1)) & ~bytes32(uint256(0xff))`.
     bytes32 private constant _WETH_CUSTOM_TOKEN_STORAGE =
-        hex"df8caff5d0161908572492829df972cd19b1aabe3c3078d95299408cd561dc00";
+        hex"007112427af862c56bcf033adec59ed9a00a8750e5616a837f485ca66c919000";
 
     error AssetsTooLarge(uint256 availableAssets, uint256 requestedAssets);
     error FunctionNotSupportedOnThisChain();
@@ -33,7 +33,7 @@ abstract contract WethCustomToken is CustomToken {
     }
 
     modifier onlyIfGasTokenIsEth() {
-        WETHStorage storage $ = _getWethCustomTokenStorage();
+        WethCustomTokenStorage storage $ = _getWethCustomTokenStorage();
         require($._gasTokenIsEth, FunctionNotSupportedOnThisChain());
         _;
     }
@@ -43,7 +43,7 @@ abstract contract WethCustomToken is CustomToken {
     }
 
     function __WethCustomToken_init1(bool gasTokenIsEth_) internal onlyInitializing {
-        WETHStorage storage $ = _getWethCustomTokenStorage();
+        WethCustomTokenStorage storage $ = _getWethCustomTokenStorage();
 
         $._gasTokenIsEth = gasTokenIsEth_;
     }
@@ -80,7 +80,7 @@ abstract contract WethCustomToken is CustomToken {
         require(success);
     }
 
-    function _getWethCustomTokenStorage() private pure returns (WETHStorage storage $) {
+    function _getWethCustomTokenStorage() private pure returns (WethCustomTokenStorage storage $) {
         assembly {
             $.slot := _WETH_CUSTOM_TOKEN_STORAGE
         }
