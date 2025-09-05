@@ -38,10 +38,6 @@ abstract contract WethCustomToken is CustomToken {
         _;
     }
 
-    receive() external payable whenNotPaused onlyIfGasTokenIsEth nonReentrant {
-        _deposit();
-    }
-
     function __WethCustomToken_init1(bool gasTokenIsEth_) internal onlyInitializing {
         WethCustomTokenStorage storage $ = _getWethCustomTokenStorage();
 
