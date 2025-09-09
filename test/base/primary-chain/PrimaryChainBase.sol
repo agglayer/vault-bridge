@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: LicenseRef-PolygonLabs-Source-Available
 pragma solidity ^0.8.29;
 
-import "forge-std/Test.sol";
 import {TestConstants} from "test/base/TestConstants.sol";
 
 // Core contracts
@@ -138,13 +137,6 @@ abstract contract PrimaryChainBase is TestConstants {
         require(_vbToken != address(0), "VB token address is zero");
         vm.prank(migrationManagerAddr);
         IERC20(underlyingToken).approve(_vbToken, _amount);
-    }
-
-    /// @notice Deploy underlying token for the target vault bridge token
-    /// @param _name The name of the underlying token
-    function deployContract(string memory _name, bytes memory _args) internal returns (address deployedAddr) {
-        string memory contractPath = string.concat("out/", _name, ".sol/", _name, ".json");
-        deployedAddr = deployCode(contractPath, _args);
     }
 
     /// @notice Setup debugging labels
