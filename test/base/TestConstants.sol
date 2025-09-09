@@ -30,10 +30,7 @@ contract TestConstants is Test {
     address constant ROLLUP_MANAGER = 0x32d33D5137a7cFFb54c5Bf8371172bcEc5f310ff;
 
     // ========= TOKEN ADDRESSES =========
-    address internal constant TEST_TOKEN = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48; // USDC
-    address internal constant USDT = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
     address constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-    address constant DUMMY_ADDRESS = 0xAd1490c248c5d3CbAE399Fd529b79B42984277DF;
 
     // ========= BRIDGE CONSTANTS =========
     uint8 constant LEAF_TYPE_ASSET = 0;
@@ -60,46 +57,12 @@ contract TestConstants is Test {
 
     // ========= INTEGRATION TEST CONSTANTS =========
     uint256 internal constant MINIMUM_RESERVE_PERCENTAGE = 1e17; // 10%
-    uint256 internal constant MINIMUM_YIELD_VAULT_DEPOSIT_INTEGRATION = 1e18;
-
-    // ========= TOKEN METADATA CONSTANTS =========
-    // Underlying Asset
-    string internal constant UNDERLYING_ASSET_NAME = "Underlying Asset";
-    string internal constant UNDERLYING_ASSET_SYMBOL = "UAT";
-    uint8 internal constant UNDERLYING_ASSET_DECIMALS = 18;
-
-    // Bridge Wrapped Underlying Asset
-    string internal constant BW_UNDERLYING_ASSET_NAME = "Bridge Wrapped Underlying Asset";
-    string internal constant BW_UNDERLYING_ASSET_SYMBOL = "BWUAT";
-    uint8 internal constant BW_UNDERLYING_ASSET_DECIMALS = 18;
-
-    // VbToken
-    string internal constant VBTOKEN_NAME = "Vault Bridge Token";
-    string internal constant VBTOKEN_SYMBOL = "VBTK";
-    uint8 internal constant VBTOKEN_DECIMALS = 18;
-
-    // Custom Token
-    string internal constant CUSTOM_TOKEN_NAME = "Custom Token";
-    string internal constant CUSTOM_TOKEN_SYMBOL = "CT";
-    uint8 internal constant CUSTOM_TOKEN_DECIMALS = 18;
-
-    // Bridge Wrapped VbToken
-    string internal constant BW_VBTOKEN_NAME = "Bridge Wrapped VbToken";
-    string internal constant BW_VBTOKEN_SYMBOL = "BWVBTK";
-    uint8 internal constant BW_VBTOKEN_DECIMALS = 18;
-
-    // ========= NATIVE CONVERTER VERSION =========
-    string internal constant NATIVE_CONVERTER_VERSION = "1.0.0";
-    string public constant VERSION = "1";
 
     // ========= PRIVATE KEYS =========
     uint256 senderPrivateKey = 0xBEEF;
 
     // ========= ADMIN SLOT =========
     bytes32 constant ADMIN_SLOT = 0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103;
-
-    // ========= ZK-EVM CONSTANTS =========
-    string constant MERKLE_TREE_HEIGHT = "32"; // As of now, the height of the Merkle tree is fixed to 32
 
     // ========= SOVEREIGN BRIDGE BYTECODE =========
     bytes internal constant SOVEREIGN_BRIDGE_BYTECODE =
@@ -128,5 +91,14 @@ contract TestConstants is Test {
     function _proxify(address _implementation, address _admin, bytes memory _data) internal returns (address) {
         TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(_implementation, _admin, _data);
         return address(proxy);
+    }
+
+    /// @notice Deploy a contract given its name and constructor arguments
+    /// @param _name The name of the contract to be deployed
+    /// @param _args The constructor arguments for the contract to be deployed
+    /// @return deployedAddr The deployed contract address
+    function deployContract(string memory _name, bytes memory _args) internal returns (address deployedAddr) {
+        string memory contractPath = string.concat("out/", _name, ".sol/", _name, ".json");
+        deployedAddr = deployCode(contractPath, _args);
     }
 }
