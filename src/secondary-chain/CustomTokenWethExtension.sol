@@ -1,0 +1,142 @@
+// SPDX-License-Identifier: LicenseRef-PolygonLabs-Source-Available
+// Vault Bridge (last updated v1.0.0) (secondary-chain/CustomTokenWethExtension.sol)
+
+pragma solidity 0.8.29;
+
+// Document the entire file.
+
+// Main functionality.
+import {CustomToken} from "./CustomToken.sol";
+
+// External contracts.
+import {IAgglayerBridge} from "../etc/IAgglayerBridge.sol";
+import {NativeConverter} from "./NativeConverter.sol";
+
+/// @title Custom Token WETH Extension
+/// @author See https://github.com/agglayer/vault-bridge
+abstract contract CustomTokenWethExtension is CustomToken {
+    /// @dev Storage of Custom Token WETH Extension.
+    /// @dev It's implemented on a custom ERC-7201 namespace to reduce the risk of storage collisions when using with upgradeable contracts.
+    /// @custom:storage-location erc7201:agglayer.vault-bridge.CustomTokenWethExtension.storage
+    struct CustomTokenWethExtensionStorage {
+        bool _gasTokenIsEth;
+        uint256 _depositedEth;
+        bool wethFunctionalityEnabled;
+    }
+
+    /// @dev The storage slot at which Custom Token WETH Extension storage starts, following the EIP-7201 standard.
+    /// @dev Calculated as `keccak256(abi.encode(uint256(keccak256("agglayer.vault-bridge.CustomTokenWethExtension.storage")) - 1)) & ~bytes32(uint256(0xff))`.
+    bytes32 private constant _CUSTOM_TOKEN_WETH_EXTENSION_STORAGE =
+        hex"79530e5f68ac2fe03ca888330cb59cd18fe7ab48bdc97271c9f69b4c84c28700";
+
+    error AssetsTooLarge(uint256 availableAssets, uint256 requestedAssets);
+    error FunctionNotSupportedOnThisChain();
+    error FunctionNotEnabledOnThisChain();
+
+    event Deposit(address indexed from, uint256 value);
+    event Withdrawal(address indexed to, uint256 value);
+
+    modifier onlyNativeConverter() {
+        require(msg.sender == nativeConverter(), Unauthorized());
+        _;
+    }
+
+    modifier onlyIfGasTokenIsEth() {
+        CustomTokenWethExtensionStorage storage $ = _getCustomTokenWethExtensionStorage();
+        require($._gasTokenIsEth, FunctionNotSupportedOnThisChain());
+        _;
+    }
+
+    modifier onlyIfWethFunctionalityEnabled() {
+        CustomTokenWethExtensionStorage storage $ = _getCustomTokenWethExtensionStorage();
+        require($.wethFunctionalityEnabled, FunctionNotEnabledOnThisChain());
+        _;
+    }
+
+    function __CustomTokenWethExtension_init2_ext1(bool gasTokenIsEth_, bool wethFunctionalityEnabled_)
+        internal
+        onlyInitializing
+        incrementsExtensionInitializationCounter(2, 1)
+    {
+        CustomTokenWethExtensionStorage storage $ = _getCustomTokenWethExtensionStorage();
+
+        $._gasTokenIsEth = gasTokenIsEth_;
+
+        // @note CAUTION! ALL WETH NATIVE CONVERTER MIGRATIONS THAT ARE IN PROGRESS MUST BE COMPLETED FIRST!
+        // @todo THIS LOGIC WILL BE REMOVED ONCE VBETH ON KATANA (CHAIN ID 747474) HAS BEEN UPGRADED TO VAULT BRIDGE V1.0.0 AND VAULT BRIDGE V0.5.0 HAS BEEN DEPRECATED.
+        if (block.chainid == 747474) {
+            uint256 wethBridgedSupply = IAgglayerBridge(bridge()).localBalanceTree(
+                hex"56c62e67b0be3f302f4835a408fa9ba657546fd11907c2c30306d84790975467"
+            );
+            uint256 wethTotalSupply = totalSupply();
+            uint256 wethBackingOnSecondaryChain = NativeConverter(payable(nativeConverter())).backingOnSecondaryChain();
+
+            $._depositedEth = wethTotalSupply - wethBridgedSupply - wethBackingOnSecondaryChain;
+
+            assert($._depositedEth <= address(this).balance);
+        }
+
+        $.wethFunctionalityEnabled = wethFunctionalityEnabled_;
+    }
+
+    function _CUSTOM_TOKEN_WETH_EXTENSION_INIT_2_EXT_1_COMPATIBLE() internal pure virtual;
+
+    function wethFunctionalityEnabled() public view returns (bool) {
+        CustomTokenWethExtensionStorage storage $ = _getCustomTokenWethExtensionStorage();
+        return $.wethFunctionalityEnabled;
+    }
+
+    /// @notice Same as WETH9 deposit function.
+    function deposit() external payable whenNotPaused onlyIfWethFunctionalityEnabled onlyIfGasTokenIsEth nonReentrant {
+        _deposit();
+    }
+
+    function _deposit() internal {
+        CustomTokenWethExtensionStorage storage $ = _getCustomTokenWethExtensionStorage();
+        $._depositedEth += msg.value;
+        _mint(msg.sender, msg.value);
+        emit Deposit(msg.sender, msg.value);
+    }
+
+    /// @notice Same as WETH9 withdraw function, but liqudity is guaranteed only up to a certain percentage.
+    function withdraw(uint256 value)
+        external
+        whenNotPaused
+        onlyIfWethFunctionalityEnabled
+        onlyIfGasTokenIsEth
+        nonReentrant
+    {
+        CustomTokenWethExtensionStorage storage $ = _getCustomTokenWethExtensionStorage();
+        require(value <= $._depositedEth, AssetsTooLarge($._depositedEth, value));
+        $._depositedEth -= value;
+        _burn(msg.sender, value);
+        payable(msg.sender).transfer(value);
+        emit Withdrawal(msg.sender, value);
+    }
+
+    function bridgeBackingToPrimaryChain(uint256 amount)
+        external
+        whenNotPaused
+        onlyIfWethFunctionalityEnabled
+        onlyIfGasTokenIsEth
+        onlyNativeConverter
+        nonReentrant
+    {
+        CustomTokenWethExtensionStorage storage $ = _getCustomTokenWethExtensionStorage();
+        require(amount <= $._depositedEth, AssetsTooLarge($._depositedEth, amount));
+        $._depositedEth -= amount;
+        (bool success,) = nativeConverter().call{value: amount}("");
+        require(success);
+    }
+
+    function setWethFunctionalityEnabled(bool wethFunctionalityEnabled_) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        CustomTokenWethExtensionStorage storage $ = _getCustomTokenWethExtensionStorage();
+        $.wethFunctionalityEnabled = wethFunctionalityEnabled_;
+    }
+
+    function _getCustomTokenWethExtensionStorage() private pure returns (CustomTokenWethExtensionStorage storage $) {
+        assembly {
+            $.slot := _CUSTOM_TOKEN_WETH_EXTENSION_STORAGE
+        }
+    }
+}
