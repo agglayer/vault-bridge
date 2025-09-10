@@ -2,7 +2,6 @@
 pragma solidity 0.8.29;
 
 import {VbETHTestBase} from "test/base/primary-chain/VbETHTestBase.sol";
-import {VbETH} from "src/primary-chain/ethereum/vbETH/VbETH.sol";
 import {VaultBridgeToken, PausableUpgradeable} from "src/primary-chain/VaultBridgeToken.sol";
 import {IAgglayerBridge} from "src/etc/IAgglayerBridge.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
@@ -12,8 +11,8 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {MockAgglayerBridge} from "test/utils/mocks/MockAgglayerBridge.sol";
 
 /**
- * @title VbETH Unit Tests
- * @notice Comprehensive unit tests for VbETH contract
+ * @title VbEth Unit Tests
+ * @notice Comprehensive unit tests for VbEth contract
  */
 contract VbETHTest is VbETHTestBase {
     using SafeERC20 for IERC20;
@@ -146,7 +145,7 @@ contract VbETHTest is VbETHTestBase {
         bytes memory callData = abi.encodeCall(vbETHPart2.completeMigration, (NETWORK_ID_L2, shares, assets));
         _testPauseUnpause(owner, address(vbETH), callData);
 
-        // For VbETH, deal WETH tokens instead of ETH
+        // For VbEth, deal WETH tokens instead of ETH
         _dealWETH(address(vbETH), assets);
 
         vm.expectRevert(VaultBridgeToken.Unauthorized.selector);
@@ -198,7 +197,7 @@ contract VbETHTest is VbETHTestBase {
             shares = (vaultMaxDeposit / 2) + 10;
         }
 
-        // For VbETH, deal WETH tokens instead of ETH
+        // For VbEth, deal WETH tokens instead of ETH
         _dealWETH(address(vbETH), assets);
 
         vm.expectRevert(abi.encodeWithSelector(VaultBridgeToken.CannotCompleteMigration.selector, shares, assets, 0));

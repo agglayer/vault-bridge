@@ -11,17 +11,17 @@ import {
 } from "test/base/primary-chain/PrimaryChainBase.sol";
 
 // Core contracts
-import {VbETH} from "src/primary-chain/ethereum/vbETH/VbETH.sol";
+import {VbEth} from "src/primary-chain/ethereum/vbETH/VbETH.sol";
 import {VaultBridgeToken} from "src/primary-chain/VaultBridgeToken.sol";
 
 // Mock contracts
 import {MockWETH} from "test/utils/mocks/MockWETH.sol";
 
-/// @title VbETH Test Base
-/// @notice Base contract for testing VbETH
+/// @title VbEth Test Base
+/// @notice Base contract for testing VbEth
 abstract contract VbETHTestBase is PrimaryChainBase {
     // ========= MAIN CONTRACTS =========
-    VbETH internal vbETH;
+    VbEth internal vbETH;
     VaultBridgeTokenPart2 internal vbETHPart2;
     address internal vbETHImplementation;
 
@@ -53,10 +53,10 @@ abstract contract VbETHTestBase is PrimaryChainBase {
         MockAgglayerBridge(agglayerBridge).setGasTokenNetwork(0);
     }
 
-    /// @notice Deploy VbETH implementation and proxy
+    /// @notice Deploy VbEth implementation and proxy
     function deployVaultBridgeToken() internal {
-        // Deploy VbETH implementation
-        vbETHImplementation = address(new VbETH());
+        // Deploy VbEth implementation
+        vbETHImplementation = address(new VbEth());
 
         // Take snapshot before initialization
         stateBeforeInitialize = vm.snapshotState();
@@ -79,17 +79,17 @@ abstract contract VbETHTestBase is PrimaryChainBase {
 
         // Prepare initialization data
         bytes memory initData =
-            abi.encodeCall(VbETH(vbETHImplementation).reinitialize1, (address(initializer), initParams));
+            abi.encodeCall(VbEth(vbETHImplementation).reinitialize1, (address(initializer), initParams));
 
         // Deploy proxy and initialize
         address vbETHProxy = _proxify(vbETHImplementation, address(this), initData);
-        vbETH = VbETH(payable(vbETHProxy));
+        vbETH = VbEth(payable(vbETHProxy));
 
         // Set vbETHPart2 to point to the proxy (delegation pattern)
         vbETHPart2 = VaultBridgeTokenPart2(payable(address(vbETH)));
     }
 
-    /// @notice Helper to verify basic VbETH setup
+    /// @notice Helper to verify basic VbEth setup
     function verifyVbETHSetup() internal view {
         assertEq(vbETH.allowance(address(vbETH), agglayerBridge), type(uint256).max);
         assertEq(vbETH.asset(), underlyingToken);
@@ -105,7 +105,7 @@ abstract contract VbETHTestBase is PrimaryChainBase {
         assertEq(address(vbETH.yieldVault()), address(yieldVault));
         assertEq(address(vbETH.agglayerBridge()), agglayerBridge);
         assertEq(IERC20(underlyingToken).allowance(address(vbETH), address(yieldVault)), type(uint256).max);
-        // Validate the gas token constraints for VbETH
+        // Validate the gas token constraints for VbEth
         assertEq(MockAgglayerBridge(agglayerBridge).gasTokenAddress(), address(0));
         assertEq(MockAgglayerBridge(agglayerBridge).gasTokenNetwork(), 0);
     }

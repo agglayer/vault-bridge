@@ -69,7 +69,7 @@ contract DeployLayerX is Script {
         GenericVaultBridgeToken vbTokenImpl = new GenericVaultBridgeToken();
         address initializer = address(new VaultBridgeTokenInitializer());
         address vb2 = address(new VaultBridgeTokenPart2());
-        VbETH vbETHImpl = new VbETH();
+        VbEth vbETHImpl = new VbEth();
 
         for (uint256 i = 0; i < vbTokens.length; i++) {
             string memory vbTokenSlug =

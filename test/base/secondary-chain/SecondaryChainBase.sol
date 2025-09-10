@@ -23,7 +23,7 @@ contract TestHarnessCustomToken is CustomToken {
         _disableInitializers();
     }
 
-    function reinitialize1(
+    function reinitialize2(
         address owner_,
         uint8 originalUnderlyingTokenDecimals_,
         address agglayerBridge_,
@@ -31,11 +31,7 @@ contract TestHarnessCustomToken is CustomToken {
     ) external whenNotPaused reinitializer(1) nonReentrant {
         string memory name_ = ERC20Upgradeable.name();
         string memory symbol_ = ERC20Upgradeable.symbol();
-        __CustomToken_init(owner_, name_, symbol_, originalUnderlyingTokenDecimals_, agglayerBridge_, nativeConverter_);
-    }
-
-    function reinitialize2() external whenNotPaused reinitializer(2) nonReentrant {
-        // Empty function body.
+        __CustomToken_init1(owner_, name_, symbol_, originalUnderlyingTokenDecimals_, agglayerBridge_, nativeConverter_);
     }
 
     function reinitialize3() external whenNotPaused reinitializer(3) nonReentrant {
@@ -69,7 +65,7 @@ contract TestHarnessNativeConverter is NativeConverter {
         uint256 nonMigratableBackingPercentage_,
         address migrationManager_
     ) external whenNotPaused reinitializer(1) nonReentrant {
-        __NativeConverter_init(
+        __NativeConverter_init1(
             owner_,
             customToken_,
             underlyingToken_,
@@ -130,6 +126,7 @@ abstract contract SecondaryChainBase is TestConstants {
     uint32 internal primaryChainAgglayerId;
     uint8 internal customTokenDecimals;
     uint8 internal underlyingTokenDecimals;
+    bool internal wethFunctionalityEnabled;
 
     // ========= MOCK CONTRACTS =========
     MockAgglayerBridge internal mockAgglayerBridge;
