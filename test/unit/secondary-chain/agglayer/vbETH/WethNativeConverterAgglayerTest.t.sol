@@ -3,6 +3,7 @@ pragma solidity ^0.8.29;
 
 // Test Base
 import {
+    WethAgglayer,
     WethNativeConverterAgglayerTestBase,
     WethNativeConverterAgglayer
 } from "test/base/secondary-chain/WethNativeConverterAgglayerTestBase.sol";
@@ -179,7 +180,10 @@ contract WethNativeConverterAgglayerTest is WethNativeConverterAgglayerTestBase 
         underlyingToken.approve(address(nativeConverter), amount);
         backingOnSecondaryChain = nativeConverter.convert(amount, recipient);
 
-        deal(address(customToken), amount);
+        // Properly deposit ETH into the WETH contract to update _depositedEth
+        deal(address(owner), amount);
+        WethAgglayer wethContract = WethAgglayer(payable(address(customToken)));
+        wethContract.deposit{value: amount}();
 
         vm.expectEmit();
         emit MockAgglayerBridge.BridgeEvent(
@@ -205,7 +209,8 @@ contract WethNativeConverterAgglayerTest is WethNativeConverterAgglayerTestBase 
         assertEq(address(customToken).balance, amountToMigrate);
 
         uint256 currentBacking = address(customToken).balance;
-        uint256 nonMigratableGasBacking = Math.mulDiv(amount, maxNonMigratableGasBackingPercentage, 1e18); // since the non-migratable gas backing is calculated as the percentage of the total supply of the custom token we take the original amount
+        uint256 nonMigratableGasBacking =
+            Math.mulDiv(customToken.totalSupply(), maxNonMigratableGasBackingPercentage, 1e18);
 
         vm.expectRevert(
             abi.encodeWithSelector(

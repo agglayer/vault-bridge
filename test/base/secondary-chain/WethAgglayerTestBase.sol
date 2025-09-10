@@ -26,6 +26,7 @@ abstract contract WethAgglayerTestBase is SecondaryChainBase {
         customTokenName = "WETH Custom Token";
         customTokenSymbol = "cWETH";
         customTokenDecimals = 18;
+        wethFunctionalityEnabled = true;
 
         deploySecondaryChainInfrastructure();
         deployWethAgglayer();
