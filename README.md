@@ -107,7 +107,7 @@ Full support for non-Agglayer chains, third-party bridges, as well as non-EVM ch
 
 ## Deployments
 
-See [`deployments.md`](https://github.com/agglayer/vault-bridge/blob/main/deployments.md).
+See [`broadcast/README.md`](https://github.com/agglayer/vault-bridge/blob/main/broadcast/README.md).
 
 ## Usage
 
