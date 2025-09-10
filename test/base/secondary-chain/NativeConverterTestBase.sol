@@ -67,7 +67,7 @@ abstract contract NativeConverterTestBase is SecondaryChainBase {
         calculatedNativeConverter = vm.computeCreateAddress(address(this), vm.getNonce(address(this)) + 1);
 
         bytes memory customTokenInitData = abi.encodeCall(
-            TestHarnessCustomToken.reinitialize1,
+            TestHarnessCustomToken.reinitialize2,
             (proxyAdmin, customTokenDecimals, address(mockAgglayerBridge), calculatedNativeConverter)
         );
         bytes memory customTokenUpgradeData = abi.encodeCall(

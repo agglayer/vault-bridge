@@ -74,7 +74,7 @@ contract DeployLayerY is Script {
 
             // update custom token
             bytes memory data = abi.encodeCall(
-                GenericCustomTokenAgglayer.reinitialize1,
+                GenericCustomTokenAgglayer.reinitialize2,
                 (polygonEngineeringMultisig, decimals, lxlyBridge, nativeConverter)
             );
 
