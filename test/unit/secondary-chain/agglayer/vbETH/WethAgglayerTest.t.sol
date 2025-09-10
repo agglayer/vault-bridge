@@ -9,7 +9,7 @@ import {
 } from "test/base/secondary-chain/WethAgglayerTestBase.sol";
 
 // Core contracts
-import {WethCustomToken} from "src/secondary-chain/WethCustomToken.sol";
+import {CustomTokenWethExtension} from "src/secondary-chain/CustomTokenWethExtension.sol";
 
 contract WethAgglayerTest is WethAgglayerTestBase {
     function setUp() public {
@@ -30,7 +30,7 @@ contract WethAgglayerTest is WethAgglayerTestBase {
         deal(address(this), amount);
 
         vm.expectEmit();
-        emit WethCustomToken.Deposit(address(this), amount);
+        emit CustomTokenWethExtension.Deposit(address(this), amount);
         wethAgglayer.deposit{value: amount}();
         assertEq(wethAgglayer.balanceOf(address(this)), amount);
     }
@@ -44,7 +44,7 @@ contract WethAgglayerTest is WethAgglayerTestBase {
         assertEq(address(this).balance, 0);
 
         vm.expectEmit();
-        emit WethCustomToken.Withdrawal(address(this), amount);
+        emit CustomTokenWethExtension.Withdrawal(address(this), amount);
         wethAgglayer.withdraw(amount);
         assertEq(wethAgglayer.balanceOf(address(this)), 0);
         assertEq(address(this).balance, amount);
@@ -57,20 +57,20 @@ contract WethAgglayerTest is WethAgglayerTestBase {
         mockAgglayerBridge.setGasTokenAddress(address(this));
         mockAgglayerBridge.setGasTokenNetwork(0);
         deployWethAgglayer();
-        vm.expectRevert(WethCustomToken.FunctionNotSupportedOnThisChain.selector);
+        vm.expectRevert(CustomTokenWethExtension.FunctionNotSupportedOnThisChain.selector);
         wethAgglayer.deposit{value: amount}();
 
         mockAgglayerBridge.setGasTokenAddress(address(0));
         mockAgglayerBridge.setGasTokenNetwork(1);
         deployWethAgglayer();
-        vm.expectRevert(WethCustomToken.FunctionNotSupportedOnThisChain.selector);
+        vm.expectRevert(CustomTokenWethExtension.FunctionNotSupportedOnThisChain.selector);
         wethAgglayer.deposit{value: amount}();
 
         mockAgglayerBridge.setGasTokenAddress(address(0));
         mockAgglayerBridge.setGasTokenNetwork(0);
         deployWethAgglayer();
         vm.expectEmit();
-        emit WethCustomToken.Deposit(address(this), amount);
+        emit CustomTokenWethExtension.Deposit(address(this), amount);
         wethAgglayer.deposit{value: amount}();
         assertEq(wethAgglayer.balanceOf(address(this)), amount);
     }

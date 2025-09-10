@@ -32,7 +32,7 @@ contract TestHarnessVaultBridgeToken is VaultBridgeToken {
         nonReentrant
     {
         // Initialize the base implementation.
-        __VaultBridgeToken_init(initializer_, initParams);
+        __VaultBridgeToken_init1(initializer_, initParams);
     }
 
     function reinitialize2() external whenNotPaused reinitializer(2) nonReentrant {

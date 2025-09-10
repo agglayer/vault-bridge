@@ -56,7 +56,7 @@ abstract contract WethAgglayerTestBase is SecondaryChainBase {
         );
         vm.prank(_getProxyAdmin(address(existingWethAgglayerProxy)));
         (address(existingWethAgglayerProxy).call(upgradeData));
-        WethAgglayer(payable(address(existingWethAgglayerProxy))).reinitialize3();
+        WethAgglayer(payable(address(existingWethAgglayerProxy))).reinitialize3(wethFunctionalityEnabled);
         wethAgglayer = WethAgglayer(payable(address(existingWethAgglayerProxy)));
     }
 

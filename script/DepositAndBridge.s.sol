@@ -22,7 +22,7 @@ contract DepositAndBridge is Script {
 
         console.log(receiver);
 
-        VbETH vbETH = VbETH(payable(0x2DC70fb75b88d2eB4715bc06E1595E6D97c34DFF));
+        VbEth vbETH = VbEth(payable(0x2DC70fb75b88d2eB4715bc06E1595E6D97c34DFF));
 
         uint256 shares = vbETH.depositGasTokenAndBridge{value: depositAmount}(receiver, NETWORK_ID_L2, true);
 

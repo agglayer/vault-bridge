@@ -360,7 +360,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
 
         GenericCustomToken genericCustomTokenImpl = new GenericCustomToken();
         bytes memory initData = abi.encodeCall(
-            GenericCustomToken.reinitialize1, (owner, CUSTOM_TOKEN_DECIMALS, LXLY_BRIDGE_Y, nativeConverterAddr)
+            GenericCustomToken.reinitialize2, (owner, CUSTOM_TOKEN_DECIMALS, LXLY_BRIDGE_Y, nativeConverterAddr)
         );
         bytes memory upgradeData =
             abi.encodeCall(ITransparentUpgradeableProxy.upgradeToAndCall, (address(genericCustomTokenImpl), initData));
