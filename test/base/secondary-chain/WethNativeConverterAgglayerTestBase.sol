@@ -75,7 +75,7 @@ abstract contract WethNativeConverterAgglayerTestBase is SecondaryChainBase {
         require(success, "Failed to upgrade to WethAgglayer");
 
         // Complete the initialization with reinitialize3
-        WethAgglayer(payable(address(existingCustomTokenProxy))).reinitialize3(wethFunctionalityEnabled);
+        WethAgglayer(payable(address(existingCustomTokenProxy))).reinitialize3(true);
 
         // assign variables for generic testing
         customToken = MockERC20Upgradeable(address(existingCustomTokenProxy));
