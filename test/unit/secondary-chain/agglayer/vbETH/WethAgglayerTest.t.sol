@@ -20,9 +20,8 @@ contract WethAgglayerTest is WethAgglayerTestBase {
         assertEq(wethAgglayer.balanceOf(address(this)), 0);
         deal(address(this), amount);
 
-        (bool success,) = address(wethAgglayer).call{value: amount}("");
-        require(success);
-        assertEq(wethAgglayer.balanceOf(address(this)), amount);
+        vm.expectRevert();
+        (address(wethAgglayer).call{value: amount}(""));
     }
 
     function test_deposit(uint256 amount) public {
@@ -69,6 +68,23 @@ contract WethAgglayerTest is WethAgglayerTestBase {
         mockAgglayerBridge.setGasTokenAddress(address(0));
         mockAgglayerBridge.setGasTokenNetwork(0);
         deployWethAgglayer();
+        vm.expectEmit();
+        emit CustomTokenWethExtension.Deposit(address(this), amount);
+        wethAgglayer.deposit{value: amount}();
+        assertEq(wethAgglayer.balanceOf(address(this)), amount);
+    }
+
+    function test_onlyWethFunctionalityEnabled() public {
+        uint256 amount = 1 ether;
+        deal(address(this), amount);
+
+        vm.prank(owner);
+        CustomTokenWethExtension(address(wethAgglayer)).setWethFunctionalityEnabled(false);
+        vm.expectRevert(CustomTokenWethExtension.FunctionNotEnabledOnThisChain.selector);
+        wethAgglayer.deposit{value: amount}();
+
+        vm.prank(owner);
+        CustomTokenWethExtension(address(wethAgglayer)).setWethFunctionalityEnabled(true);
         vm.expectEmit();
         emit CustomTokenWethExtension.Deposit(address(this), amount);
         wethAgglayer.deposit{value: amount}();
