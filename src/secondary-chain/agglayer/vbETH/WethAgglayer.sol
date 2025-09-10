@@ -5,8 +5,8 @@ pragma solidity 0.8.29;
 
 // @remind Document the entire file.
 
-import {WethCustomToken} from "../../WethCustomToken.sol";
 import {CustomTokenAgglayer} from "../CustomTokenAgglayer.sol";
+import {CustomTokenWethExtension} from "../../CustomTokenWethExtension.sol";
 import {CustomToken} from "../../CustomToken.sol";
 import {ERC20Upgradeable} from "@openzeppelin-contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
 import {IAgglayerBridge} from "../../../etc/IAgglayerBridge.sol";
@@ -14,7 +14,7 @@ import {IAgglayerBridge} from "../../../etc/IAgglayerBridge.sol";
 /// @title WETH (Agglayer)
 /// @author See https://github.com/agglayer/vault-bridge
 /// @dev based on https://github.com/gnosis/canonical-weth/blob/master/contracts/WETH9.sol
-contract WethAgglayer is WethCustomToken, CustomTokenAgglayer {
+contract WethAgglayer is CustomTokenAgglayer, CustomTokenWethExtension {
     constructor() {
         _disableInitializers();
     }
@@ -29,8 +29,8 @@ contract WethAgglayer is WethCustomToken, CustomTokenAgglayer {
         address nativeConverter_
     ) external whenNotPaused reinitializer(2) nonReentrant {
         // Preserve the `name` and `symbol` of the bridged vbToken.
-        string memory name_ = name();
-        string memory symbol_ = symbol();
+        string memory name_ = ERC20Upgradeable.name();
+        string memory symbol_ = ERC20Upgradeable.symbol();
 
         // Prevent a mistake while initializing.
         assert(ERC20Upgradeable.decimals() == originalUnderlyingTokenDecimals_);
@@ -39,7 +39,7 @@ contract WethAgglayer is WethCustomToken, CustomTokenAgglayer {
         __CustomToken_init1(owner_, name_, symbol_, originalUnderlyingTokenDecimals_, agglayerBridge_, nativeConverter_);
     }
 
-    function reinitialize3() external whenNotPaused reinitializer(3) nonReentrant {
+    function reinitialize3(bool wethFunctionalityEnabled_) external whenNotPaused reinitializer(3) nonReentrant {
         // Clean up the old ERC-7201 namespace where `bool _gasTokenIsEth` used to be stored.
         // Calculated as `keccak256(abi.encode(uint256(keccak256("agglayer.vault-bridge.WETH.storage")) - 1)) & ~bytes32(uint256(0xff))`.
         assembly {
@@ -55,7 +55,7 @@ contract WethAgglayer is WethCustomToken, CustomTokenAgglayer {
         bool gasTokenIsEth_ = IAgglayerBridge(bridge()).gasTokenAddress() == address(0)
             && IAgglayerBridge(bridge()).gasTokenNetwork() == 0;
 
-        __WethCustomToken_init1(gasTokenIsEth_);
+        __CustomTokenWethExtension_init2_ext1(gasTokenIsEth_, wethFunctionalityEnabled_);
     }
 
     /*
@@ -71,6 +71,6 @@ contract WethAgglayer is WethCustomToken, CustomTokenAgglayer {
     /// @inheritdoc CustomToken
     function _CUSTOM_TOKEN_INIT_2_COMPATIBLE() internal pure override {}
 
-    /// @inheritdoc WethCustomToken
-    function _WETH_CUSTOM_TOKEN_INIT_1_COMPATIBLE() internal pure override {}
+    /// @inheritdoc CustomTokenWethExtension
+    function _CUSTOM_TOKEN_WETH_EXTENSION_INIT_2_EXT_1_COMPATIBLE() internal pure override {}
 }

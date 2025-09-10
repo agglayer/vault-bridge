@@ -5,14 +5,14 @@ pragma solidity 0.8.29;
 
 // @remind Document the entire file.
 
-import {WethCustomToken} from "../../WethCustomToken.sol";
 import {CustomTokenWormhole} from "../CustomTokenWormhole.sol";
+import {CustomTokenWethExtension} from "../../CustomTokenWethExtension.sol";
 import {CustomToken} from "../../CustomToken.sol";
 import {ERC20Upgradeable} from "@openzeppelin-contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
 
 /// @title WETH (Wormhole)
 /// @author See https://github.com/agglayer/vault-bridge
-contract WethWormhole is WethCustomToken, CustomTokenWormhole {
+contract WethWormhole is CustomTokenWormhole, CustomTokenWethExtension {
     constructor() {
         _disableInitializers();
     }
@@ -23,13 +23,14 @@ contract WethWormhole is WethCustomToken, CustomTokenWormhole {
         string memory symbol_,
         uint8 originalUnderlyingTokenDecimals_,
         address agglayerBridge_,
-        bool gasTokenIsEth_
+        bool gasTokenIsEth_,
+        bool wethFunctionalityEnabled_
     ) external whenNotPaused reinitializer(_incrementGlobalInitializationCounter(1)) nonReentrant {
         __CustomToken_init1(owner_, name_, symbol_, originalUnderlyingTokenDecimals_, agglayerBridge_, address(0));
 
         __CustomToken_init2();
 
-        __WethCustomToken_init1(gasTokenIsEth_);
+        __CustomTokenWethExtension_init2_ext1(gasTokenIsEth_, wethFunctionalityEnabled_);
     }
 
     /*
@@ -45,6 +46,6 @@ contract WethWormhole is WethCustomToken, CustomTokenWormhole {
     /// @inheritdoc CustomToken
     function _CUSTOM_TOKEN_INIT_2_COMPATIBLE() internal pure override {}
 
-    /// @inheritdoc WethCustomToken
-    function _WETH_CUSTOM_TOKEN_INIT_1_COMPATIBLE() internal pure override {}
+    /// @inheritdoc CustomTokenWethExtension
+    function _CUSTOM_TOKEN_WETH_EXTENSION_INIT_2_EXT_1_COMPATIBLE() internal pure override {}
 }

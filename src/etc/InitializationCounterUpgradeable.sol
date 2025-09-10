@@ -12,6 +12,7 @@ abstract contract InitializationCounterUpgradeable {
     struct InitializationCounterUpgradeableStorage {
         uint64 _localInitializationCounter;
         uint64 globalInitializationCounter;
+        uint64 _extensionInitializationCounter;
     }
 
     /// @dev The storage slot at which Initialization Counter storage starts, following the EIP-7201 standard.
@@ -80,5 +81,30 @@ abstract contract InitializationCounterUpgradeable {
         $.globalInitializationCounter++;
 
         return expectedNewGlobalInitializationCounterValue;
+    }
+
+    modifier incrementsExtensionInitializationCounter(
+        uint64 requiredLocalInitializationCounterValue,
+        uint64 expectedNewExtensionInitializationCounterValue
+    ) {
+        _incrementExtensionInitializationCounter(
+            requiredLocalInitializationCounterValue, expectedNewExtensionInitializationCounterValue
+        );
+        _;
+    }
+
+    function _incrementExtensionInitializationCounter(
+        uint64 requiredLocalInitializationCounterValue,
+        uint64 expectedNewExtensionInitializationCounterValue
+    ) private {
+        InitializationCounterUpgradeableStorage storage $ = _getInitializationCounterUpgradeableStorage();
+
+        assert($._localInitializationCounter == requiredLocalInitializationCounterValue);
+
+        uint64 actualNewExtensionInitializationCounterValue = $._extensionInitializationCounter + 1;
+
+        assert(expectedNewExtensionInitializationCounterValue == actualNewExtensionInitializationCounterValue);
+
+        $._extensionInitializationCounter++;
     }
 }
