@@ -99,13 +99,7 @@ abstract contract CustomTokenWethExtension is CustomToken {
     }
 
     /// @notice Same as WETH9 withdraw function, but liqudity is guaranteed only up to a certain percentage.
-    function withdraw(uint256 value)
-        external
-        whenNotPaused
-        onlyIfWethFunctionalityEnabled
-        onlyIfGasTokenIsEth
-        nonReentrant
-    {
+    function withdraw(uint256 value) external whenNotPaused onlyIfGasTokenIsEth nonReentrant {
         CustomTokenWethExtensionStorage storage $ = _getCustomTokenWethExtensionStorage();
         require(value <= $._depositedEth, AssetsTooLarge($._depositedEth, value));
         $._depositedEth -= value;
@@ -117,7 +111,6 @@ abstract contract CustomTokenWethExtension is CustomToken {
     function bridgeBackingToPrimaryChain(uint256 amount)
         external
         whenNotPaused
-        onlyIfWethFunctionalityEnabled
         onlyIfGasTokenIsEth
         onlyNativeConverter
         nonReentrant
