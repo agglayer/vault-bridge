@@ -28,7 +28,7 @@ contract TestHarnessCustomToken is CustomToken {
         uint8 originalUnderlyingTokenDecimals_,
         address agglayerBridge_,
         address nativeConverter_
-    ) external whenNotPaused reinitializer(1) nonReentrant {
+    ) external whenNotPaused reinitializer(2) nonReentrant {
         string memory name_ = ERC20Upgradeable.name();
         string memory symbol_ = ERC20Upgradeable.symbol();
         __CustomToken_init1(owner_, name_, symbol_, originalUnderlyingTokenDecimals_, agglayerBridge_, nativeConverter_);
