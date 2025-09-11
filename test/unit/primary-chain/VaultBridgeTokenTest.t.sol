@@ -1245,11 +1245,11 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
         bytes4 invalidSelector = bytes4(keccak256("nonExistentFunction()"));
 
         vm.expectRevert(abi.encodeWithSelector(VaultBridgeToken.UnknownFunction.selector, invalidSelector));
-        (bool success,) = address(vbTokenPart2).call(abi.encodePacked(invalidSelector));
+        (address(vbTokenPart2).call(abi.encodePacked(invalidSelector)));
 
         // Test the fallback by directly calling the implementation contract
         vm.expectRevert(abi.encodeWithSelector(VaultBridgeToken.UnknownFunction.selector, invalidSelector));
-        (bool success2,) = address(vbTokenPart2Implementation).call(abi.encodePacked(invalidSelector));
+        (address(vbTokenPart2Implementation).call(abi.encodePacked(invalidSelector)));
     }
 
     function test_pause_unpause() public {
