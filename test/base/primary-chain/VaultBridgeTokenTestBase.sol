@@ -77,6 +77,7 @@ abstract contract VaultBridgeTokenTestBase is PrimaryChainBase {
         // Deploy proxy and initialize
         address vbTokenProxy = _proxify(vbTokenImplementation, address(this), initData);
         vbToken = TestHarnessVaultBridgeToken(payable(vbTokenProxy));
+        vbToken.reinitialize2();
 
         // Set vbTokenPart2 to point to the proxy (delegation pattern)
         vbTokenPart2 = VaultBridgeTokenPart2(payable(address(vbToken)));

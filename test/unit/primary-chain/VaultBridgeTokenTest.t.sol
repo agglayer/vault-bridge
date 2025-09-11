@@ -838,6 +838,7 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
         vm.expectEmit();
         emit VaultBridgeToken.DonatedForCompletingMigration(address(this), amount);
         vbTokenPart2.donateForCompletingMigration(amount);
+        assertEq(vbToken.migrationFeesFund(), amount);
 
         uint256 stakedAssetsBefore = vbToken.stakedAssets();
 
@@ -1245,7 +1246,10 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
 
         vm.expectRevert(abi.encodeWithSelector(VaultBridgeToken.UnknownFunction.selector, invalidSelector));
         (bool success,) = address(vbTokenPart2).call(abi.encodePacked(invalidSelector));
-        require(!success, "Call should have failed");
+
+        // Test the fallback by directly calling the implementation contract
+        vm.expectRevert(abi.encodeWithSelector(VaultBridgeToken.UnknownFunction.selector, invalidSelector));
+        (bool success2,) = address(vbTokenPart2Implementation).call(abi.encodePacked(invalidSelector));
     }
 
     function test_pause_unpause() public {
