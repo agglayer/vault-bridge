@@ -1,19 +1,16 @@
 // SPDX-License-Identifier: LicenseRef-PolygonLabs-Source-Available
 pragma solidity ^0.8.29;
 
+// Test base
 import "forge-std/Test.sol";
-import "src/primary-chain/VaultBridgeToken.sol";
+import {TestConstants} from "test/base/TestConstants.sol";
+import {ZkEVMCommon} from "test/utils/ZkEVMCommon.sol";
 
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+// Core contracts
+import "src/primary-chain/VaultBridgeToken.sol";
 import {CustomToken} from "src/secondary-chain/CustomToken.sol";
 import {MigrationManager} from "src/primary-chain/MigrationManager.sol";
 import {NativeConverter} from "src/secondary-chain/NativeConverter.sol";
-import {
-    TransparentUpgradeableProxy,
-    ITransparentUpgradeableProxy
-} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
-import {MockVault} from "test/utils/mocks/MockVault.sol";
-import {ZkEVMCommon} from "test/utils/ZkEVMCommon.sol";
 import {VaultBridgeTokenInitializer} from "src/primary-chain/VaultBridgeTokenInitializer.sol";
 import {GenericVaultBridgeToken} from "src/primary-chain/ethereum/GenericVaultBridgeToken.sol";
 import {VaultBridgeTokenPart2} from "src/primary-chain/VaultBridgeTokenPart2.sol";
@@ -22,130 +19,28 @@ import {GenericNativeConverterAgglayer as GenericNativeConverter} from
 import {GenericCustomTokenAgglayer as GenericCustomToken} from
     "src/secondary-chain/agglayer/GenericCustomTokenAgglayer.sol";
 
+// OpenZeppelin
+import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {
+    TransparentUpgradeableProxy,
+    ITransparentUpgradeableProxy
+} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+
+// Mocks
+import {MockAgglayerBridge} from "test/utils/mocks/MockAgglayerBridge.sol";
+import {MockVault} from "test/utils/mocks/MockVault.sol";
+import {MockWETH} from "test/utils/mocks/MockWETH.sol";
+import {MockERC20Upgradeable} from "test/utils/mocks/MockERC20Upgradeable.sol";
+import {MockERC20} from "test/utils/mocks/MockERC20.sol";
+import {MockLxlyBridgeWrappedToken} from "test/utils/mocks/MockLxlyBridgeWrappedToken.sol";
+
+// Interfaces
 import {IBridgeL2SovereignChain} from "test/interfaces/IBridgeL2SovereignChain.sol";
 import {IAgglayerBridge as _IAgglayerBridge} from "test/interfaces/IAgglayerBridge.sol";
 import {IPolygonZkEVMGlobalExitRoot} from "test/interfaces/IPolygonZkEVMGlobalExitRoot.sol";
 
-contract MockERC20WithDeposit is ERC20 {
-    bool public canDeposit;
-
-    constructor(string memory name, string memory symbol) ERC20(name, symbol) {}
-
-    function setCanDeposit(bool _canDeposit) external {
-        canDeposit = _canDeposit;
-    }
-
-    function deposit() external payable {
-        if (canDeposit) {
-            _mint(msg.sender, msg.value);
-        }
-    }
-}
-
-contract MockERC20MintableBurnable is ERC20PermitUpgradeable {
-    function initialize(string memory name_, string memory symbol_) external initializer {
-        __ERC20_init(name_, symbol_);
-        __ERC20Permit_init(name_);
-    }
-
-    function mint(address account, uint256 amount) external {
-        _mint(account, amount);
-    }
-
-    function burn(address account, uint256 amount) external {
-        _burn(account, amount);
-    }
-}
-
-contract UnderlyingAsset is ERC20 {
-    constructor(string memory name, string memory symbol) ERC20(name, symbol) {}
-}
-
-contract TokenWrapped is ERC20 {
-    // Domain typehash
-    bytes32 public constant DOMAIN_TYPEHASH =
-        keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
-    // Permit typehash
-    bytes32 public constant PERMIT_TYPEHASH =
-        keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
-
-    // Version
-    string public constant VERSION = "1";
-
-    // Chain id on deployment
-    uint256 public immutable deploymentChainId;
-
-    // Domain separator calculated on deployment
-    bytes32 private immutable _DEPLOYMENT_DOMAIN_SEPARATOR;
-
-    // PolygonZkEVM Bridge address
-    address public immutable bridgeAddress;
-
-    // Decimals
-    uint8 private immutable _decimals;
-
-    // Permit nonces
-    mapping(address => uint256) public nonces;
-
-    modifier onlyBridge() {
-        require(msg.sender == bridgeAddress, "TokenWrapped::onlyBridge: Not PolygonZkEVMBridge");
-        _;
-    }
-
-    constructor(string memory name, string memory symbol, uint8 __decimals) ERC20(name, symbol) {
-        bridgeAddress = msg.sender;
-        _decimals = __decimals;
-        deploymentChainId = block.chainid;
-        _DEPLOYMENT_DOMAIN_SEPARATOR = _calculateDomainSeparator(block.chainid);
-    }
-
-    function mint(address to, uint256 value) external onlyBridge {
-        _mint(to, value);
-    }
-
-    // Notice that is not require to approve wrapped tokens to use the bridge
-    function burn(address account, uint256 value) external onlyBridge {
-        _burn(account, value);
-    }
-
-    function decimals() public view virtual override returns (uint8) {
-        return _decimals;
-    }
-
-    // Permit relative functions
-    function permit(address owner, address spender, uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s)
-        external
-    {
-        require(block.timestamp <= deadline, "TokenWrapped::permit: Expired permit");
-
-        bytes32 hashStruct = keccak256(abi.encode(PERMIT_TYPEHASH, owner, spender, value, nonces[owner]++, deadline));
-
-        bytes32 digest = keccak256(abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR(), hashStruct));
-
-        address signer = ecrecover(digest, v, r, s);
-        require(signer != address(0) && signer == owner, "TokenWrapped::permit: Invalid signature");
-
-        _approve(owner, spender, value);
-    }
-
-    /**
-     * @notice Calculate domain separator, given a chainID.
-     * @param chainId Current chainID
-     */
-    function _calculateDomainSeparator(uint256 chainId) private view returns (bytes32) {
-        return keccak256(
-            abi.encode(DOMAIN_TYPEHASH, keccak256(bytes(name())), keccak256(bytes(VERSION)), chainId, address(this))
-        );
-    }
-
-    /// @dev Return the DOMAIN_SEPARATOR.
-    function DOMAIN_SEPARATOR() public view returns (bytes32) {
-        return
-            block.chainid == deploymentChainId ? _DEPLOYMENT_DOMAIN_SEPARATOR : _calculateDomainSeparator(block.chainid);
-    }
-}
-
-contract IntegrationTest is Test, ZkEVMCommon {
+contract AgglayerIntegrationTest is TestConstants, ZkEVMCommon {
+    // ===== STRUCTS =====
     struct ClaimPayload {
         bytes32[32] proofPrimaryChain;
         bytes32[32] proofSecondaryChain;
@@ -170,109 +65,35 @@ contract IntegrationTest is Test, ZkEVMCommon {
         bytes metadata;
     }
 
-    address internal constant BRIDGE_MANAGER = 0xAb3506507449bF1880f3337825efd19ac89E235E;
-    address constant LXLY_BRIDGE_X = 0x528e26b25a34a4A5d0dbDa1d57D318153d2ED582;
-    address constant LXLY_BRIDGE_Y = 0x528e26b25a34a4A5d0dbDa1d57D318153d2ED582;
-    address constant GER_X = 0xAd1490c248c5d3CbAE399Fd529b79B42984277DF;
-    address constant GER_Y = 0xa40D5f56745a118D0906a34E69aeC8C0Db1cB8fA;
-    address constant GER_Y_UPDATER = 0x2caeD842621FF58AaaeC1A06e487d9975F9bFe8A;
-    address constant ROLLUP_MANAGER = 0x32d33D5137a7cFFb54c5Bf8371172bcEc5f310ff;
-    uint8 constant LEAF_TYPE_ASSET = 0;
-    uint8 constant LEAF_TYPE_MESSAGE = 1;
-    uint32 constant NETWORK_ID_X = 0; // mainnet/sepolia
-    uint32 constant NETWORK_ID_Y = 37; // katana-apex
-    bytes32 constant PERMIT_TYPEHASH =
-        keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
-    bytes4 constant PERMIT_SIGNATURE = 0xd505accf;
-    uint256 constant MAX_NON_MIGRATABLE_BACKING_PERCENTAGE = 1e17;
-    uint256 internal constant MAX_DEPOSIT = 10e18;
-    uint256 internal constant MAX_WITHDRAW = 10e18;
-    uint256 internal constant YIELD_VAULT_ALLOWED_SLIPPAGE = 1e16; // 1%
-
-    // extra contracts
-    MockVault vbTokenVault;
-    GenericNativeConverter nativeConverter;
-    MigrationManager migrationManager;
-    MockERC20WithDeposit wrappedGasToken;
-
-    // dummy addresses
-    address recipient = makeAddr("recipient");
-    address owner = makeAddr("owner");
-    address yieldRecipient = makeAddr("yieldRecipient");
-    uint256 senderPrivateKey = 0xBEEF;
-    address sender = vm.addr(senderPrivateKey);
-
-    // underlying asset
-    UnderlyingAsset underlyingAsset;
-    string internal constant UNDERLYING_ASSET_NAME = "Underlying Asset";
-    string internal constant UNDERLYING_ASSET_SYMBOL = "UAT";
-    uint8 internal constant UNDERLYING_ASSET_DECIMALS = 18;
-    bytes underlyingAssetMetaData =
-        abi.encode(UNDERLYING_ASSET_NAME, UNDERLYING_ASSET_SYMBOL, UNDERLYING_ASSET_DECIMALS);
-
-    // bridge wrapped underlying asset
-    UnderlyingAsset bwUnderlyingAsset;
-    string internal constant BW_UNDERLYING_ASSET_NAME = "Bridge Wrapped Underlying Asset";
-    string internal constant BW_UNDERLYING_ASSET_SYMBOL = "BWUAT";
-    uint8 internal constant BW_UNDERLYING_ASSET_DECIMALS = 18;
-    bytes bwUnderlyingAssetMetaData = abi.encode("", "", 18);
-
-    // vbToken
-    GenericVaultBridgeToken vbToken;
-    VaultBridgeTokenPart2 vbTokenPart2;
-    uint256 internal constant MINIMUM_RESERVE_PERCENTAGE = 1e17;
-    string internal constant VBTOKEN_NAME = "Vault Bridge Token";
-    string internal constant VBTOKEN_SYMBOL = "VBTK";
-    uint8 internal constant VBTOKEN_DECIMALS = 18;
-    uint256 internal constant MINIMUM_YIELD_VAULT_DEPOSIT = 1e18;
-    bytes vbTokenMetaData = abi.encode(VBTOKEN_NAME, VBTOKEN_SYMBOL, VBTOKEN_DECIMALS);
-
-    // custom token
-    GenericCustomToken customToken;
-    string internal constant CUSTOM_TOKEN_NAME = "Custom Token";
-    string internal constant CUSTOM_TOKEN_SYMBOL = "CT";
-    uint8 internal constant CUSTOM_TOKEN_DECIMALS = 18;
-    bytes customTokenMetaData = abi.encode(CUSTOM_TOKEN_NAME, CUSTOM_TOKEN_SYMBOL, CUSTOM_TOKEN_DECIMALS);
-
-    // bridge wrapped vbToken
-    TokenWrapped bwVbToken;
-    string internal constant BW_VBTOKEN_NAME = "Bridge Wrapped VbToken";
-    string internal constant BW_VBTOKEN_SYMBOL = "BWVBTK";
-    uint8 internal constant BW_VBTOKEN_DECIMALS = 18;
-    bytes bwVbTokenMetaData = abi.encode("", "", 18);
-
+    // ===== FORK IDs =====
     uint256 forkIdPrimaryChain;
     uint256 forkIdSecondaryChain;
 
-    // error messages
-    error EnforcedPause();
+    // ===== TEST ADDRESSES =====
+    address recipient = makeAddr("recipient");
+    address owner = makeAddr("owner");
+    address yieldRecipient = makeAddr("yieldRecipient");
+    address sender = vm.addr(senderPrivateKey);
 
-    // events
-    event BridgeEvent(
-        uint8 leafType,
-        uint32 originNetwork,
-        address originAddress,
-        uint32 destinationNetwork,
-        address destinationAddress,
-        uint256 amount,
-        bytes metadata,
-        uint32 depositCount
-    );
-    event ClaimEvent(
-        uint256 globalIndex, uint32 originNetwork, address originAddress, address destinationAddress, uint256 amount
-    );
-    event Deposit(address indexed sender, address indexed owner, uint256 assets, uint256 shares);
-    event ReserveRebalanced(uint256 reservedAssets);
-    event YieldCollected(address indexed yieldRecipient, uint256 vbTokenAmount);
-    event YieldRecipientChanged(address indexed yieldRecipient);
-    event MinimumReservePercentageChanged(uint8 minimumReservePercentage);
-    event MigrationCompleted(
-        uint32 indexed destinationNetworkId,
-        uint256 indexed shares,
-        uint256 assetsBeforeTransferFee,
-        uint256 assets,
-        uint256 usedYield
-    );
+    // ===== CORE CONTRACTS =====
+    GenericVaultBridgeToken vbToken;
+    VaultBridgeTokenPart2 vbTokenPart2;
+    GenericCustomToken customToken;
+    GenericNativeConverter nativeConverter;
+    MigrationManager migrationManager;
+
+    // ===== EXTERNAL CONTRACTS =====
+    MockVault vbTokenVault;
+    MockWETH wrappedGasToken;
+
+    // ===== TOKEN CONTRACTS =====
+    MockERC20 underlyingAsset;
+    MockERC20 bwUnderlyingAsset;
+    MockLxlyBridgeWrappedToken bwVbToken;
+
+    // ===== METADATA =====
+    bytes vbTokenMetaData = abi.encode(VBTOKEN_NAME, VBTOKEN_SYMBOL, VBTOKEN_DECIMALS);
+    bytes bwVbTokenMetaData = abi.encode("", "", 18);
 
     function setUp() public virtual {
         //////////////////////////////////////////////////////////////
@@ -281,7 +102,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
         forkIdPrimaryChain = vm.createSelectFork("sepolia");
 
         // deploy underlying asset
-        underlyingAsset = new UnderlyingAsset(UNDERLYING_ASSET_NAME, UNDERLYING_ASSET_SYMBOL);
+        underlyingAsset = new MockERC20(UNDERLYING_ASSET_NAME, UNDERLYING_ASSET_SYMBOL, UNDERLYING_ASSET_DECIMALS);
 
         // deploy vault
         vbTokenVault = new MockVault(address(underlyingAsset));
@@ -312,7 +133,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
             yieldVault: address(vbTokenVault),
             yieldRecipient: yieldRecipient,
             agglayerBridge: LXLY_BRIDGE_X,
-            minimumYieldVaultDeposit: MINIMUM_YIELD_VAULT_DEPOSIT,
+            minimumYieldVaultDeposit: MINIMUM_YIELD_VAULT_DEPOSIT_INTEGRATION,
             migrationManager: migrationManagerAddr,
             yieldVaultMaximumSlippagePercentage: YIELD_VAULT_ALLOWED_SLIPPAGE,
             vaultBridgeTokenPart2: address(vbTokenPart2)
@@ -327,7 +148,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
         nativeConverters[0] = nativeConverterAddr;
 
         // deploy migration manager
-        wrappedGasToken = new MockERC20WithDeposit("Wrapped Gas Token", "WGT");
+        wrappedGasToken = new MockWETH();
 
         MigrationManager migrationManagerImpl = new MigrationManager();
         bytes memory migrationManagerInitData = abi.encodeCall(MigrationManager.reinitialize1, (owner, LXLY_BRIDGE_X));
@@ -347,13 +168,13 @@ contract IntegrationTest is Test, ZkEVMCommon {
         forkIdSecondaryChain = vm.createSelectFork("bokuto");
 
         // deploy custom token
-        MockERC20MintableBurnable customTokenBridgeImpl = new MockERC20MintableBurnable();
+        MockERC20Upgradeable customTokenBridgeImpl = new MockERC20Upgradeable();
         TransparentUpgradeableProxy customTokenProxy = TransparentUpgradeableProxy(
             payable(
                 _proxify(
                     address(customTokenBridgeImpl),
                     address(this),
-                    abi.encodeCall(MockERC20MintableBurnable.initialize, (CUSTOM_TOKEN_NAME, CUSTOM_TOKEN_SYMBOL))
+                    abi.encodeCall(MockERC20Upgradeable.initialize, (CUSTOM_TOKEN_NAME, CUSTOM_TOKEN_SYMBOL))
                 )
             )
         );
@@ -369,23 +190,24 @@ contract IntegrationTest is Test, ZkEVMCommon {
         customToken = GenericCustomToken(address(customTokenProxy));
 
         // calculate bridge wrapped vbToken address
-        bwVbToken =
-            TokenWrapped(_IAgglayerBridge(LXLY_BRIDGE_Y).computeTokenProxyAddress(NETWORK_ID_X, address(vbToken)));
+        bwVbToken = MockLxlyBridgeWrappedToken(
+            _IAgglayerBridge(LXLY_BRIDGE_Y).computeTokenProxyAddress(NETWORK_ID_X, address(vbToken))
+        );
 
         // deploy underlying token (note: normally we don't have to do this manually and this should be done automatically by bridging vbToken on Primary Chain)
         vm.prank(LXLY_BRIDGE_Y);
-        ERC20 tempBwVbToken = new TokenWrapped(BW_VBTOKEN_NAME, BW_VBTOKEN_SYMBOL, BW_VBTOKEN_DECIMALS);
+        ERC20 tempBwVbToken = new MockLxlyBridgeWrappedToken(BW_VBTOKEN_NAME, BW_VBTOKEN_SYMBOL, BW_VBTOKEN_DECIMALS);
         vm.etch(address(bwVbToken), address(tempBwVbToken).code);
 
         // calculate bridge wrapped underlying asset address
-        bwUnderlyingAsset = UnderlyingAsset(
-            _IAgglayerBridge(LXLY_BRIDGE_Y).computeTokenProxyAddress(NETWORK_ID_X, address(underlyingAsset))
-        );
+        bwUnderlyingAsset =
+            MockERC20(_IAgglayerBridge(LXLY_BRIDGE_Y).computeTokenProxyAddress(NETWORK_ID_X, address(underlyingAsset)));
 
         // deploy the bridge wrapped underlying asset (note: normally we don't have to do this manually and this should be done automatically by bridging underlying asset on Primary Chain)
         vm.prank(LXLY_BRIDGE_Y);
-        ERC20 tempBwUnderlyingAsset =
-            new TokenWrapped(BW_UNDERLYING_ASSET_NAME, BW_UNDERLYING_ASSET_SYMBOL, BW_UNDERLYING_ASSET_DECIMALS);
+        ERC20 tempBwUnderlyingAsset = new MockLxlyBridgeWrappedToken(
+            BW_UNDERLYING_ASSET_NAME, BW_UNDERLYING_ASSET_SYMBOL, BW_UNDERLYING_ASSET_DECIMALS
+        );
         vm.etch(address(bwUnderlyingAsset), address(tempBwUnderlyingAsset).code);
 
         // deploy native converter
@@ -532,7 +354,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
 
         // bridge the custom token
         vm.expectEmit();
-        emit BridgeEvent(
+        emit MockAgglayerBridge.BridgeEvent(
             withdrawLeaf.leafType,
             withdrawLeaf.originNetwork,
             withdrawLeaf.originAddress,
@@ -681,7 +503,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
 
         // migrate backing to Primary Chain
         vm.expectEmit();
-        emit BridgeEvent(
+        emit MockAgglayerBridge.BridgeEvent(
             assetLeaf.leafType,
             assetLeaf.originNetwork,
             assetLeaf.originAddress,
@@ -692,7 +514,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
             _IAgglayerBridge(LXLY_BRIDGE_Y).depositCount()
         );
         vm.expectEmit();
-        emit BridgeEvent(
+        emit MockAgglayerBridge.BridgeEvent(
             messageLeaf.leafType,
             messageLeaf.originNetwork,
             messageLeaf.originAddress,
@@ -737,7 +559,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
 
         // deposit and bridge
         vm.expectEmit();
-        emit BridgeEvent(
+        emit MockAgglayerBridge.BridgeEvent(
             _leaf.leafType,
             _leaf.originNetwork,
             _leaf.originAddress,
@@ -914,7 +736,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
 
         // claim asset on Primary Chain
         vm.expectEmit();
-        emit ClaimEvent(
+        emit MockAgglayerBridge.ClaimEvent(
             _claimPayload.globalIndex,
             _claimPayload.originNetwork,
             _claimPayload.originAddress,
@@ -949,7 +771,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
 
         // claim asset on Primary Chain
         vm.expectEmit();
-        emit ClaimEvent(
+        emit MockAgglayerBridge.ClaimEvent(
             _claimPayload.globalIndex,
             _claimPayload.originNetwork,
             _claimPayload.originAddress,
@@ -987,7 +809,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
 
         // claim asset on Secondary Chain
         vm.expectEmit();
-        emit ClaimEvent(
+        emit MockAgglayerBridge.ClaimEvent(
             _claimPayload.globalIndex,
             _claimPayload.originNetwork,
             _claimPayload.originAddress,
@@ -1051,7 +873,7 @@ contract IntegrationTest is Test, ZkEVMCommon {
 
         // deconvert and bridge
         vm.expectEmit();
-        emit BridgeEvent(
+        emit MockAgglayerBridge.BridgeEvent(
             _leaf.leafType,
             _leaf.originNetwork,
             _leaf.originAddress,
@@ -1069,10 +891,6 @@ contract IntegrationTest is Test, ZkEVMCommon {
         // assert balances
         vm.assertEq(nativeConverter.customToken().balanceOf(_sender), 0);
         vm.assertEq(nativeConverter.underlyingToken().balanceOf(LXLY_BRIDGE_Y), 0);
-    }
-
-    function _proxify(address logic, address admin, bytes memory initData) internal returns (address proxy) {
-        proxy = address(new TransparentUpgradeableProxy(logic, admin, initData));
     }
 
     function _computeGlobalIndex(uint256 indexPrimaryChain, uint256 indexSecondaryChain, bool isPrimaryChain)

@@ -13,7 +13,7 @@ import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transpa
 contract TestConstants is Test {
     // ========= NETWORK IDs =========
     uint32 constant NETWORK_ID_X = 0; // mainnet/sepolia (Primary Chain)
-    uint32 constant NETWORK_ID_Y = 29; // katana-apex (Secondary Chain)
+    uint32 constant NETWORK_ID_Y = 37; // katana-apex (Secondary Chain)
     uint32 constant NETWORK_ID_L1 = 0; // Primary Chain
     uint32 constant NETWORK_ID_L2 = 1; // Secondary Chain
 
@@ -57,6 +57,28 @@ contract TestConstants is Test {
 
     // ========= INTEGRATION TEST CONSTANTS =========
     uint256 internal constant MINIMUM_RESERVE_PERCENTAGE = 1e17; // 10%
+
+    // ========= TOKEN NAME AND SYMBOL CONSTANTS =========
+    string internal constant UNDERLYING_ASSET_NAME = "Underlying Asset";
+    string internal constant UNDERLYING_ASSET_SYMBOL = "UAT";
+    uint8 internal constant UNDERLYING_ASSET_DECIMALS = 18;
+
+    string internal constant BW_UNDERLYING_ASSET_NAME = "Bridge Wrapped Underlying Asset";
+    string internal constant BW_UNDERLYING_ASSET_SYMBOL = "BWUAT";
+    uint8 internal constant BW_UNDERLYING_ASSET_DECIMALS = 18;
+
+    string internal constant VBTOKEN_NAME = "Vault Bridge Token";
+    string internal constant VBTOKEN_SYMBOL = "VBTK";
+    uint8 internal constant VBTOKEN_DECIMALS = 18;
+    uint256 internal constant MINIMUM_YIELD_VAULT_DEPOSIT_INTEGRATION = 1e18;
+
+    string internal constant CUSTOM_TOKEN_NAME = "Custom Token";
+    string internal constant CUSTOM_TOKEN_SYMBOL = "CT";
+    uint8 internal constant CUSTOM_TOKEN_DECIMALS = 18;
+
+    string internal constant BW_VBTOKEN_NAME = "Bridge Wrapped VbToken";
+    string internal constant BW_VBTOKEN_SYMBOL = "BWVBTK";
+    uint8 internal constant BW_VBTOKEN_DECIMALS = 18;
 
     // ========= PRIVATE KEYS =========
     uint256 senderPrivateKey = 0xBEEF;
