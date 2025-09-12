@@ -28,6 +28,10 @@ contract MockAgglayerBridge {
         uint32 depositCount
     );
 
+    event ClaimEvent(
+        uint256 globalIndex, uint32 originNetwork, address originAddress, address destinationAddress, uint256 amount
+    );
+
     function bridgeAsset(
         uint32 destinationNetwork,
         address destinationAddress,
