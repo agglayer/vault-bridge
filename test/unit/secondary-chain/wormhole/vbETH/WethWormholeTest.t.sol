@@ -142,7 +142,7 @@ contract WethWormholeTest is WethWormholeTestBase {
 
     function test_init_gasTokenIsEth_false() public {
         address testWethWormholeProxy = _testInitializationRevert(
-            bytes4(0),
+            CustomTokenWethExtension.WethFunctionalityCannotBeEnabledIfGasTokenIsNotEth.selector,
             owner,
             "Test WETH",
             "tWETH",
@@ -151,14 +151,6 @@ contract WethWormholeTest is WethWormholeTestBase {
             false, // gasTokenIsEth = false
             true
         );
-        WethWormhole testWeth = WethWormhole(payable(testWethWormholeProxy));
-
-        // Test that deposit reverts when gasTokenIsEth=false
-        uint256 depositAmount = 1 ether;
-        deal(address(this), depositAmount);
-
-        vm.expectRevert(CustomTokenWethExtension.FunctionNotSupportedOnThisChain.selector);
-        testWeth.deposit{value: depositAmount}();
     }
 
     function test_init_wethFunctionalityEnabled_true() public {
