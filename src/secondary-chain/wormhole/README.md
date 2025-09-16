@@ -9,7 +9,7 @@
 
 ### Native Token Transfers
 
-- Custom Token: NTT Token
+- Custom Token: Availalbe (NTT Token)
 - Native Converter: TBD
 - Bridged USDC Standard: TBD
 - Wrapped Token: N/A
@@ -19,7 +19,19 @@
 - Custom Token: N/A
 - Native Converter: N/A
 - Bridged USDC Standard: N/A
-- Wrapped Token: WTT Token
+- Wrapped Token: Avaialble (WTT Token)
+
+## Process
+
+### Native Token Transfers
+
+1. Deploy Custom Token implementation and proxy to Secondary Chain, and initialize it.
+2. Deploy NTT Manager and Wormhole Transceiver implementation and proxy on Secondary Chain using NTT CLI or NTT Launcher.
+3. Update peers of NTT Manager on Primary Chain and all Wormhole Secondary Chains using NTT CLI or NTT Launcher.
+
+### Wrapped Token Transfers
+
+No action required.
 
 ## Reference
 
