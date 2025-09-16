@@ -6,10 +6,15 @@
 
 ## Compatibility
 
-- Custom Token: Custom Mapping
-- Native Converter: Not needed
-- Bridged USDC Standard: Not needed
+- Custom Token: Available (Custom Mapping)
+- ~~Native Converter~~
+- ~~Bridged USDC Standard~~
 - Wrapped Token: N/A
+
+## Process
+
+1. Deploy Custom Token implementation and proxy on Secondary Chain, and initialize it.
+2. Custom map vbToken to Custom Token on PoS Portal.
 
 ## Reference
 
