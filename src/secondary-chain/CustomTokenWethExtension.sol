@@ -20,7 +20,7 @@ abstract contract CustomTokenWethExtension is CustomToken {
     /// @custom:storage-location erc7201:agglayer.vault-bridge.CustomTokenWethExtension.storage
     struct CustomTokenWethExtensionStorage {
         bool _gasTokenIsEth;
-        uint256 _depositedEth;
+        uint256 _gasBackingOnSecondaryChain;
         bool wethFunctionalityEnabled;
     }
 
@@ -29,9 +29,11 @@ abstract contract CustomTokenWethExtension is CustomToken {
     bytes32 private constant _CUSTOM_TOKEN_WETH_EXTENSION_STORAGE =
         hex"79530e5f68ac2fe03ca888330cb59cd18fe7ab48bdc97271c9f69b4c84c28700";
 
-    error AssetsTooLarge(uint256 availableAssets, uint256 requestedAssets);
+    error WethFunctionalityCannotBeEnabledIfGasTokenIsNotEth();
     error FunctionNotSupportedOnThisChain();
     error FunctionNotEnabledOnThisChain();
+    error AssetsTooLarge(uint256 availableAssets, uint256 requestedAssets);
+    error WithdrawalFailed();
 
     event Deposit(address indexed from, uint256 value);
     event Withdrawal(address indexed to, uint256 value);
@@ -63,17 +65,19 @@ abstract contract CustomTokenWethExtension is CustomToken {
         $._gasTokenIsEth = gasTokenIsEth_;
 
         // @note CAUTION! ALL WETH NATIVE CONVERTER MIGRATIONS THAT ARE IN PROGRESS MUST BE COMPLETED FIRST!
-        // @todo THIS LOGIC WILL BE REMOVED ONCE VBETH ON KATANA (CHAIN ID 747474) HAS BEEN UPGRADED TO VAULT BRIDGE V1.0.0 AND VAULT BRIDGE V0.5.0 HAS BEEN DEPRECATED.
-        if (block.chainid == 747474) {
+        // @todo THIS LOGIC WILL BE REMOVED ONCE VBETH ON KATANA/BOKUTO HAS BEEN UPGRADED TO VAULT BRIDGE V1.0.0 AND VAULT BRIDGE V0.5.0 HAS BEEN DEPRECATED.
+        if (block.chainid == 747474 || block.chainid == 737373) {
             uint256 wethBridgedSupply = IAgglayerBridge(bridge()).localBalanceTree(
-                hex"56c62e67b0be3f302f4835a408fa9ba657546fd11907c2c30306d84790975467"
+                block.chainid == 747474
+                    ? bytes32(0x56c62e67b0be3f302f4835a408fa9ba657546fd11907c2c30306d84790975467)
+                    : bytes32(0x0b13348aaf539fc7929ee5a1b19220fdcf7c38ae12b877539fe54abaf7a6d0dd)
             );
             uint256 wethTotalSupply = totalSupply();
             uint256 wethBackingOnSecondaryChain = NativeConverter(payable(nativeConverter())).backingOnSecondaryChain();
 
-            $._depositedEth = wethTotalSupply - wethBridgedSupply - wethBackingOnSecondaryChain;
+            $._gasBackingOnSecondaryChain = wethTotalSupply - wethBridgedSupply - wethBackingOnSecondaryChain;
 
-            assert($._depositedEth <= address(this).balance);
+            assert($._gasBackingOnSecondaryChain <= address(this).balance);
         }
 
         $.wethFunctionalityEnabled = wethFunctionalityEnabled_;
@@ -93,7 +97,7 @@ abstract contract CustomTokenWethExtension is CustomToken {
 
     function _deposit() internal {
         CustomTokenWethExtensionStorage storage $ = _getCustomTokenWethExtensionStorage();
-        $._depositedEth += msg.value;
+        $._gasBackingOnSecondaryChain += msg.value;
         _mint(msg.sender, msg.value);
         emit Deposit(msg.sender, msg.value);
     }
@@ -101,10 +105,11 @@ abstract contract CustomTokenWethExtension is CustomToken {
     /// @notice Same as WETH9 withdraw function, but liqudity is guaranteed only up to a certain percentage.
     function withdraw(uint256 value) external whenNotPaused onlyIfGasTokenIsEth nonReentrant {
         CustomTokenWethExtensionStorage storage $ = _getCustomTokenWethExtensionStorage();
-        require(value <= $._depositedEth, AssetsTooLarge($._depositedEth, value));
-        $._depositedEth -= value;
+        require(value <= $._gasBackingOnSecondaryChain, AssetsTooLarge($._gasBackingOnSecondaryChain, value));
+        $._gasBackingOnSecondaryChain -= value;
         _burn(msg.sender, value);
-        payable(msg.sender).transfer(value);
+        (bool ok,) = msg.sender.call{value: value}("");
+        require(ok, WithdrawalFailed());
         emit Withdrawal(msg.sender, value);
     }
 
@@ -116,14 +121,15 @@ abstract contract CustomTokenWethExtension is CustomToken {
         nonReentrant
     {
         CustomTokenWethExtensionStorage storage $ = _getCustomTokenWethExtensionStorage();
-        require(amount <= $._depositedEth, AssetsTooLarge($._depositedEth, amount));
-        $._depositedEth -= amount;
+        require(amount <= $._gasBackingOnSecondaryChain, AssetsTooLarge($._gasBackingOnSecondaryChain, amount));
+        $._gasBackingOnSecondaryChain -= amount;
         (bool success,) = nativeConverter().call{value: amount}("");
         require(success);
     }
 
     function setWethFunctionalityEnabled(bool wethFunctionalityEnabled_) external onlyRole(DEFAULT_ADMIN_ROLE) {
         CustomTokenWethExtensionStorage storage $ = _getCustomTokenWethExtensionStorage();
+        if (wethFunctionalityEnabled_) require($._gasTokenIsEth, WethFunctionalityCannotBeEnabledIfGasTokenIsNotEth());
         $.wethFunctionalityEnabled = wethFunctionalityEnabled_;
     }
 

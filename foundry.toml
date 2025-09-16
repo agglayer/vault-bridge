@@ -34,6 +34,7 @@ mainnet = "wss://mainnet.gateway.tenderly.co"
 katana = "https://rpc.katanarpc.com"
 sepolia = "https://sepolia.gateway.tenderly.co"
 bokuto = "https://rpc-bokuto.katanarpc.com"
+amoy = "https://polygon-amoy.drpc.org"
 
 [doc]
 title = "Technical Reference"
