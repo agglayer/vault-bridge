@@ -141,15 +141,17 @@ contract WethWormholeTest is WethWormholeTestBase {
     }
 
     function test_init_gasTokenIsEth_false() public {
-        address testWethWormholeProxy = _testInitializationRevert(
-            CustomTokenWethExtension.WethFunctionalityCannotBeEnabledIfGasTokenIsNotEth.selector,
-            owner,
-            "Test WETH",
-            "tWETH",
-            18,
-            nttManager,
-            false, // gasTokenIsEth = false
-            true
+        (
+            _testInitializationRevert(
+                CustomTokenWethExtension.WethFunctionalityCannotBeEnabledIfGasTokenIsNotEth.selector,
+                owner,
+                "Test WETH",
+                "tWETH",
+                18,
+                nttManager,
+                false, // gasTokenIsEth = false
+                true
+            )
         );
     }
 
