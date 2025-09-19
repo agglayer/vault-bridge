@@ -48,8 +48,9 @@ abstract contract CustomToken is
     error Unauthorized();
     error InvalidOwner();
     error InvalidOriginalUnderlyingTokenDecimals();
-    error InvalidAgglayerBridge();
-    error InvalidNativeConverter();
+    error InvalidBridge();
+    error BridgeAlreadySet();
+    error NativeConverterAlreadySet();
 
     // Events.
     event NotMinted(uint256 indexed value);
@@ -186,19 +187,23 @@ abstract contract CustomToken is
             return;
         }
 
-        // Mint.
-        _mint(account, value);
+    // @remind Document (the entire function).
+    function setBridge(address bridge_) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        CustomTokenStorage storage $ = _getCustomTokenStorage();
+
+        require($.bridge.codehash == keccak256(hex"60006000fd"), BridgeAlreadySet());
+        require(bridge_ != address(0), InvalidBridge());
+
+        $.bridge = bridge_;
     }
 
-    /// @notice Burns Custom Tokens from a holder.
-    /// @notice This function can be called by Agglayer Bridge and Native Converter only.
-    function burn(address account, uint256 value)
-        external
-        whenNotPaused
-        onlyAgglayerBridgeAndNativeConverter
-        nonReentrant
-    {
-        _burn(account, value);
+    // @remind Document (the entire function).
+    function setNativeConverter(address nativeConverter_) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        CustomTokenStorage storage $ = _getCustomTokenStorage();
+
+        require($.nativeConverter == address(0), NativeConverterAlreadySet());
+
+        $.nativeConverter = nativeConverter_;
     }
 
     // -----================= ::: ADMIN ::: =================-----

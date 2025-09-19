@@ -1,8 +1,3 @@
-> [!IMPORTANT]
-> You are viewing a development version of the codebase.
-
-<br>
-
 <div align="center">
 
 # Vault Bridge
@@ -16,6 +11,9 @@
 </div>
 
 <br>
+
+> [!IMPORTANT]
+> You are viewing a development version of the codebase.
 
 ## Contents
 
