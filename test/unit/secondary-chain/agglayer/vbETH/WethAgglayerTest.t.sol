@@ -35,6 +35,16 @@ contract WethAgglayerTest is WethAgglayerTestBase {
     }
 
     function test_withdraw(uint256 amount) public {
+        // test withdrawal failure on onlyIfGasTokenIsEth
+        mockAgglayerBridge.setGasTokenAddress(address(this));
+        mockAgglayerBridge.setGasTokenNetwork(0);
+        deployWethAgglayer();
+        vm.expectRevert(CustomTokenWethExtension.FunctionNotSupportedOnThisChain.selector);
+        wethAgglayer.withdraw(amount);
+
+        mockAgglayerBridge.setGasTokenAddress(address(0));
+        mockAgglayerBridge.setGasTokenNetwork(0);
+        deployWethAgglayer();
         assertEq(wethAgglayer.balanceOf(address(this)), 0);
         deal(address(this), amount);
 
@@ -56,13 +66,13 @@ contract WethAgglayerTest is WethAgglayerTestBase {
         mockAgglayerBridge.setGasTokenAddress(address(this));
         mockAgglayerBridge.setGasTokenNetwork(0);
         deployWethAgglayer();
-        vm.expectRevert(CustomTokenWethExtension.FunctionNotSupportedOnThisChain.selector);
+        vm.expectRevert(CustomTokenWethExtension.FunctionNotEnabledOnThisChain.selector);
         wethAgglayer.deposit{value: amount}();
 
         mockAgglayerBridge.setGasTokenAddress(address(0));
         mockAgglayerBridge.setGasTokenNetwork(1);
         deployWethAgglayer();
-        vm.expectRevert(CustomTokenWethExtension.FunctionNotSupportedOnThisChain.selector);
+        vm.expectRevert(CustomTokenWethExtension.FunctionNotEnabledOnThisChain.selector);
         wethAgglayer.deposit{value: amount}();
 
         mockAgglayerBridge.setGasTokenAddress(address(0));

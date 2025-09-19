@@ -26,7 +26,6 @@ abstract contract WethAgglayerTestBase is SecondaryChainBase {
         customTokenName = "WETH Custom Token";
         customTokenSymbol = "cWETH";
         customTokenDecimals = 18;
-        wethFunctionalityEnabled = true;
 
         deploySecondaryChainInfrastructure();
         deployWethAgglayer();
@@ -57,7 +56,7 @@ abstract contract WethAgglayerTestBase is SecondaryChainBase {
         );
         vm.prank(_getProxyAdmin(address(existingWethAgglayerProxy)));
         (address(existingWethAgglayerProxy).call(upgradeData));
-        WethAgglayer(payable(address(existingWethAgglayerProxy))).reinitialize3(wethFunctionalityEnabled);
+        WethAgglayer(payable(address(existingWethAgglayerProxy))).reinitialize3();
         wethAgglayer = WethAgglayer(payable(address(existingWethAgglayerProxy)));
     }
 
