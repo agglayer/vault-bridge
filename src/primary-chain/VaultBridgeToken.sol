@@ -1349,9 +1349,9 @@ abstract contract VaultBridgeToken is
 
         assembly {
             calldatacopy(0, 0, calldatasize())
-            let success := delegatecall(gas(), vaultBridgeTokenPart2, 0, calldatasize(), 0, 0)
+            let ok := delegatecall(gas(), vaultBridgeTokenPart2, 0, calldatasize(), 0, 0)
             returndatacopy(0, 0, returndatasize())
-            switch success
+            switch ok
             case 0 { revert(0, returndatasize()) }
             default { return(0, returndatasize()) }
         }

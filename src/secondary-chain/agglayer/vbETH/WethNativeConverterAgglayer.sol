@@ -110,9 +110,9 @@ contract WethNativeConverterAgglayer is NativeConverterAgglayer {
         uint256 nonMigratableGasBacking =
             _convertToAssets(Math.mulDiv(customToken().totalSupply(), $.nonMigratableGasBackingPercentage, 1e18));
 
-        uint256 gasBalance = address(customToken()).balance;
+        uint256 gasBacking = WethAgglayer(address(customToken())).gasBackingOnSecondaryChain();
 
-        return gasBalance > nonMigratableGasBacking ? gasBalance - nonMigratableGasBacking : 0;
+        return gasBacking > nonMigratableGasBacking ? gasBacking - nonMigratableGasBacking : 0;
     }
 
     /// @dev This special function allows the NativeConverter owner to migrate the gas backing of the WETH Custom Token
@@ -129,7 +129,7 @@ contract WethNativeConverterAgglayer is NativeConverterAgglayer {
         onlyRole(MIGRATOR_ROLE)
         nonReentrant
     {
-        WethAgglayer weth = WethAgglayer(payable(address(customToken())));
+        WethAgglayer weth = WethAgglayer(address(customToken()));
 
         uint256 migratableGasBacking_ = migratableGasBacking();
 
