@@ -20,7 +20,7 @@ abstract contract CustomTokenWethExtension is CustomToken {
     /// @custom:storage-location erc7201:agglayer.vault-bridge.CustomTokenWethExtension.storage
     struct CustomTokenWethExtensionStorage {
         bool _gasTokenIsEth;
-        uint256 _gasBackingOnSecondaryChain;
+        uint256 gasBackingOnSecondaryChain;
         bool wethFunctionalityEnabled;
     }
 
@@ -33,7 +33,6 @@ abstract contract CustomTokenWethExtension is CustomToken {
     error FunctionNotSupportedOnThisChain();
     error FunctionNotEnabledOnThisChain();
     error AssetsTooLarge(uint256 availableAssets, uint256 requestedAssets);
-    error WithdrawalFailed();
 
     event Deposit(address indexed from, uint256 value);
     event Withdrawal(address indexed to, uint256 value);
@@ -55,7 +54,7 @@ abstract contract CustomTokenWethExtension is CustomToken {
         _;
     }
 
-    function __CustomTokenWethExtension_init2_ext1(bool gasTokenIsEth_, bool wethFunctionalityEnabled_)
+    function __CustomTokenWethExtension_init2_ext1(bool gasTokenIsEth_)
         internal
         onlyInitializing
         incrementsExtensionInitializationCounter(2, 1)
@@ -75,15 +74,20 @@ abstract contract CustomTokenWethExtension is CustomToken {
             uint256 wethTotalSupply = totalSupply();
             uint256 wethBackingOnSecondaryChain = NativeConverter(payable(nativeConverter())).backingOnSecondaryChain();
 
-            $._gasBackingOnSecondaryChain = wethTotalSupply - wethBridgedSupply - wethBackingOnSecondaryChain;
+            $.gasBackingOnSecondaryChain = wethTotalSupply - wethBridgedSupply - wethBackingOnSecondaryChain;
 
-            assert($._gasBackingOnSecondaryChain <= address(this).balance);
+            assert($.gasBackingOnSecondaryChain <= address(this).balance);
         }
 
-        $.wethFunctionalityEnabled = wethFunctionalityEnabled_;
+        $.wethFunctionalityEnabled = gasTokenIsEth_;
     }
 
     function _CUSTOM_TOKEN_WETH_EXTENSION_INIT_2_EXT_1_COMPATIBLE() internal pure virtual;
+
+    function gasBackingOnSecondaryChain() public view returns (uint256) {
+        CustomTokenWethExtensionStorage storage $ = _getCustomTokenWethExtensionStorage();
+        return $.gasBackingOnSecondaryChain;
+    }
 
     function wethFunctionalityEnabled() public view returns (bool) {
         CustomTokenWethExtensionStorage storage $ = _getCustomTokenWethExtensionStorage();
@@ -97,7 +101,7 @@ abstract contract CustomTokenWethExtension is CustomToken {
 
     function _deposit() internal {
         CustomTokenWethExtensionStorage storage $ = _getCustomTokenWethExtensionStorage();
-        $._gasBackingOnSecondaryChain += msg.value;
+        $.gasBackingOnSecondaryChain += msg.value;
         _mint(msg.sender, msg.value);
         emit Deposit(msg.sender, msg.value);
     }
@@ -105,11 +109,11 @@ abstract contract CustomTokenWethExtension is CustomToken {
     /// @notice Same as WETH9 withdraw function, but liqudity is guaranteed only up to a certain percentage.
     function withdraw(uint256 value) external whenNotPaused onlyIfGasTokenIsEth nonReentrant {
         CustomTokenWethExtensionStorage storage $ = _getCustomTokenWethExtensionStorage();
-        require(value <= $._gasBackingOnSecondaryChain, AssetsTooLarge($._gasBackingOnSecondaryChain, value));
-        $._gasBackingOnSecondaryChain -= value;
+        require(value <= $.gasBackingOnSecondaryChain, AssetsTooLarge($.gasBackingOnSecondaryChain, value));
+        $.gasBackingOnSecondaryChain -= value;
         _burn(msg.sender, value);
         (bool ok,) = msg.sender.call{value: value}("");
-        require(ok, WithdrawalFailed());
+        require(ok);
         emit Withdrawal(msg.sender, value);
     }
 
@@ -121,10 +125,10 @@ abstract contract CustomTokenWethExtension is CustomToken {
         nonReentrant
     {
         CustomTokenWethExtensionStorage storage $ = _getCustomTokenWethExtensionStorage();
-        require(amount <= $._gasBackingOnSecondaryChain, AssetsTooLarge($._gasBackingOnSecondaryChain, amount));
-        $._gasBackingOnSecondaryChain -= amount;
-        (bool success,) = nativeConverter().call{value: amount}("");
-        require(success);
+        require(amount <= $.gasBackingOnSecondaryChain, AssetsTooLarge($.gasBackingOnSecondaryChain, amount));
+        $.gasBackingOnSecondaryChain -= amount;
+        (bool ok,) = nativeConverter().call{value: amount}("");
+        require(ok);
     }
 
     function setWethFunctionalityEnabled(bool wethFunctionalityEnabled_) external onlyRole(DEFAULT_ADMIN_ROLE) {

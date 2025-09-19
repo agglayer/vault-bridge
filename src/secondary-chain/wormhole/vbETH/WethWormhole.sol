@@ -17,23 +17,19 @@ contract WethWormhole is CustomTokenWormhole, CustomTokenWethExtension {
         _disableInitializers();
     }
 
-    // @todo nttManager_ needs to be provided in a different way (deployment order).
     function reinitialize1(
         address owner_,
         string memory name_,
         string memory symbol_,
         uint8 originalUnderlyingTokenDecimals_,
         address nttManager_,
-        bool gasTokenIsEth_,
-        bool wethFunctionalityEnabled_
+        bool gasTokenIsEth_
     ) external whenNotPaused reinitializer(_incrementGlobalInitializationCounter(1)) nonReentrant {
-        if (wethFunctionalityEnabled_) require(gasTokenIsEth_, WethFunctionalityCannotBeEnabledIfGasTokenIsNotEth());
-
         __CustomToken_init1(owner_, name_, symbol_, originalUnderlyingTokenDecimals_, nttManager_, address(0));
 
         __CustomToken_init2();
 
-        __CustomTokenWethExtension_init2_ext1(gasTokenIsEth_, wethFunctionalityEnabled_);
+        __CustomTokenWethExtension_init2_ext1(gasTokenIsEth_);
     }
 
     /*

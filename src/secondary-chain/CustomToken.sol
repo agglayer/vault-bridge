@@ -54,6 +54,8 @@ abstract contract CustomToken is
     error InvalidSymbol();
     error InvalidOriginalUnderlyingTokenDecimals();
     error InvalidBridge();
+    error BridgeAlreadySet();
+    error NativeConverterAlreadySet();
 
     // Events.
     event NotMinted(uint256 indexed value);
@@ -177,6 +179,25 @@ abstract contract CustomToken is
 
     // @remind Document.
     function _CUSTOM_TOKEN_IS_MINTABLE_BURNABLE() internal virtual;
+
+    // @remind Document (the entire function).
+    function setBridge(address bridge_) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        CustomTokenStorage storage $ = _getCustomTokenStorage();
+
+        require($.bridge.codehash == keccak256(hex"60006000fd"), BridgeAlreadySet());
+        require(bridge_ != address(0), InvalidBridge());
+
+        $.bridge = bridge_;
+    }
+
+    // @remind Document (the entire function).
+    function setNativeConverter(address nativeConverter_) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        CustomTokenStorage storage $ = _getCustomTokenStorage();
+
+        require($.nativeConverter == address(0), NativeConverterAlreadySet());
+
+        $.nativeConverter = nativeConverter_;
+    }
 
     // -----================= ::: ADMIN ::: =================-----
 
