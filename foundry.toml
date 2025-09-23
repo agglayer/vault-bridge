@@ -31,9 +31,10 @@ forge-std = { version = "1.9.4" }
 
 [rpc_endpoints]
 mainnet = "wss://mainnet.gateway.tenderly.co"
-katana = "https://rpc.katanarpc.com"
 sepolia = "https://sepolia.gateway.tenderly.co"
+katana = "https://rpc.katanarpc.com"
 bokuto = "https://rpc-bokuto.katanarpc.com"
+polygon = "https://polygon-bor-rpc.publicnode.com"
 amoy = "https://polygon-amoy.drpc.org"
 
 [doc]
