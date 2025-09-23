@@ -20,7 +20,6 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 
 /// @dev External contracts.
 import {VaultBridgeToken} from "./VaultBridgeToken.sol";
-import {VaultBridgeTokenPart2} from "./VaultBridgeTokenPart2.sol";
 import {IAgglayerBridge} from "../etc/IAgglayerBridge.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IWETH9} from "../etc/IWETH9.sol";
@@ -316,7 +315,7 @@ contract MigrationManager is
             }
 
             // Complete the migration.
-            VaultBridgeTokenPart2(payable(address(vbToken))).completeMigration(originNetwork, shares, assets);
+            vbToken.completeMigration(originNetwork, shares, assets);
         }
     }
 
