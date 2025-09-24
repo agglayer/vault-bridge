@@ -26,7 +26,7 @@ contract GenericNativeConverterAgglayer is NativeConverterAgglayer {
         uint32 primaryChainAgglayerId_,
         uint256 nonMigratableBackingPercentage_,
         address migrationManager_
-    ) external whenNotPaused reinitializer(1) nonReentrant {
+    ) external reinitializer(1) nonReentrant {
         // Initialize the base implementation.
         __NativeConverter_init1(
             owner_,
@@ -40,7 +40,7 @@ contract GenericNativeConverterAgglayer is NativeConverterAgglayer {
     }
 
     // @remind Document (the entire function).
-    function reinitialize2() external whenNotPaused reinitializer(2) nonReentrant {
+    function reinitialize2() external reinitializer(2) nonReentrant {
         _incrementGlobalInitializationCounter(1);
         _incrementGlobalInitializationCounter(2);
 
@@ -51,11 +51,20 @@ contract GenericNativeConverterAgglayer is NativeConverterAgglayer {
     /// @dev How to add a new reinitializer:
     function reinitialize3()
         external
-        whenNotPaused
         reinitializer(_incrementGlobalInitializationCounter(3))
         nonReentrant
     {}
     */
+
+    // @remind Document (the entire function).
+    function reinitialize(bytes[] calldata reinitializeData) external {
+        bytes4[] memory reinitializeSelectors = new bytes4[](2);
+
+        reinitializeSelectors[0] = this.reinitialize1.selector;
+        reinitializeSelectors[1] = this.reinitialize2.selector;
+
+        _reinitialize(reinitializeSelectors, reinitializeData);
+    }
 
     /// @inheritdoc NativeConverter
     function _NATIVE_CONVERTER_INIT_2_COMPATIBLE() internal pure override {}
