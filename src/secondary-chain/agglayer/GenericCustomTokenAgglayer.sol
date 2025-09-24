@@ -18,6 +18,8 @@ contract GenericCustomTokenAgglayer is CustomTokenAgglayer {
         _disableInitializers();
     }
 
+    function reinitialize1() external {}
+
     /// @notice The reinitializers start from `2` because Agglayer Bridge has already initialized the token.
     /// @dev @note (ATTENTION) There is no `reinitializer1`.
     function reinitialize2(
@@ -25,7 +27,7 @@ contract GenericCustomTokenAgglayer is CustomTokenAgglayer {
         uint8 originalUnderlyingTokenDecimals_,
         address agglayerBridge_,
         address nativeConverter_
-    ) external whenNotPaused reinitializer(2) nonReentrant {
+    ) external reinitializer(2) nonReentrant {
         // Preserve the `name` and `symbol` of the bridged vbToken.
         string memory name_ = ERC20Upgradeable.name();
         string memory symbol_ = ERC20Upgradeable.symbol();
@@ -38,7 +40,7 @@ contract GenericCustomTokenAgglayer is CustomTokenAgglayer {
     }
 
     // @remind Document (the entire function).
-    function reinitialize3() external whenNotPaused reinitializer(3) nonReentrant {
+    function reinitialize3() external reinitializer(3) nonReentrant {
         _incrementGlobalInitializationCounter(1);
         _incrementGlobalInitializationCounter(2);
         _incrementGlobalInitializationCounter(3);
@@ -50,11 +52,21 @@ contract GenericCustomTokenAgglayer is CustomTokenAgglayer {
     /// @dev How to add a new reinitializer:
     function reinitialize4()
         external
-        whenNotPaused
         reinitializer(_incrementGlobalInitializationCounter(4))
         nonReentrant
     {}
     */
+
+    // @remind Document (the entire function).
+    function reinitialize(bytes[] calldata reinitializeData) external {
+        bytes4[] memory reinitializeSelectors = new bytes4[](3);
+
+        reinitializeSelectors[0] = this.reinitialize1.selector;
+        reinitializeSelectors[1] = this.reinitialize2.selector;
+        reinitializeSelectors[2] = this.reinitialize3.selector;
+
+        _reinitialize(reinitializeSelectors, reinitializeData);
+    }
 
     /// @inheritdoc CustomToken
     function _CUSTOM_TOKEN_INIT_2_COMPATIBLE() internal pure override {}

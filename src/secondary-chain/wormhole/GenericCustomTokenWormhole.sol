@@ -24,7 +24,7 @@ contract GenericCustomTokenWormhole is CustomTokenWormhole {
         string memory symbol_,
         uint8 originalUnderlyingTokenDecimals_,
         address nttManager_
-    ) external whenNotPaused reinitializer(_incrementGlobalInitializationCounter(1)) nonReentrant {
+    ) external reinitializer(_incrementGlobalInitializationCounter(1)) nonReentrant {
         // Initialize the base implementation.
         __CustomToken_init1(owner_, name_, symbol_, originalUnderlyingTokenDecimals_, nttManager_, address(0));
 
@@ -35,11 +35,19 @@ contract GenericCustomTokenWormhole is CustomTokenWormhole {
     /// @dev How to add a new reinitializer:
     function reinitialize2()
         external
-        whenNotPaused
         reinitializer(_incrementGlobalInitializationCounter(2))
         nonReentrant
     {}
     */
+
+    // @remind Document (the entire function).
+    function reinitialize(bytes[] calldata reinitializeData) external {
+        bytes4[] memory reinitializeSelectors = new bytes4[](1);
+
+        reinitializeSelectors[0] = this.reinitialize1.selector;
+
+        _reinitialize(reinitializeSelectors, reinitializeData);
+    }
 
     /// @inheritdoc CustomToken
     function _CUSTOM_TOKEN_INIT_2_COMPATIBLE() internal pure override {}

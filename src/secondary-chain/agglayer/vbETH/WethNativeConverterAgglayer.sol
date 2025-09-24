@@ -73,7 +73,7 @@ contract WethNativeConverterAgglayer is NativeConverterAgglayer {
         $.nonMigratableGasBackingPercentage = nonMigratableGasBackingPercentage_;
     }
 
-    function reinitialize2() external whenNotPaused nonReentrant reinitializer(2) {
+    function reinitialize2() external nonReentrant reinitializer(2) {
         _incrementGlobalInitializationCounter(1);
         _incrementGlobalInitializationCounter(2);
 
@@ -84,11 +84,20 @@ contract WethNativeConverterAgglayer is NativeConverterAgglayer {
     /// @dev How to add a new reinitializer:
     function reinitialize3()
         external
-        whenNotPaused
         reinitializer(_incrementGlobalInitializationCounter(3))
         nonReentrant
     {}
     */
+
+    // @remind Document (the entire function).
+    function reinitialize(bytes[] calldata reinitializeData) external {
+        bytes4[] memory reinitializeSelectors = new bytes4[](2);
+
+        reinitializeSelectors[0] = this.reinitialize1.selector;
+        reinitializeSelectors[1] = this.reinitialize2.selector;
+
+        _reinitialize(reinitializeSelectors, reinitializeData);
+    }
 
     /// @inheritdoc NativeConverter
     function _NATIVE_CONVERTER_INIT_2_COMPATIBLE() internal pure override {}

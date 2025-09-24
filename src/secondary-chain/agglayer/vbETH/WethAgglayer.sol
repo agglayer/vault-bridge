@@ -19,6 +19,9 @@ contract WethAgglayer is CustomTokenAgglayer, CustomTokenWethExtension {
         _disableInitializers();
     }
 
+    // @remind Document.
+    function reinitialize1() external {}
+
     /// @notice The reinitializers start from `2` because Agglayer Bridge has already initialized the token.
     /// @dev @note (ATTENTION) There is no `reinitializer1`.
     /// @dev @note (ATTENTION) This reinitializer used to set `_gasTokenIsEth`, but that has been moved to `reinitialize3`.
@@ -27,7 +30,7 @@ contract WethAgglayer is CustomTokenAgglayer, CustomTokenWethExtension {
         uint8 originalUnderlyingTokenDecimals_,
         address agglayerBridge_,
         address nativeConverter_
-    ) external whenNotPaused reinitializer(2) nonReentrant {
+    ) external reinitializer(2) nonReentrant {
         // Preserve the `name` and `symbol` of the bridged vbToken.
         string memory name_ = ERC20Upgradeable.name();
         string memory symbol_ = ERC20Upgradeable.symbol();
@@ -39,7 +42,7 @@ contract WethAgglayer is CustomTokenAgglayer, CustomTokenWethExtension {
         __CustomToken_init1(owner_, name_, symbol_, originalUnderlyingTokenDecimals_, agglayerBridge_, nativeConverter_);
     }
 
-    function reinitialize3() external whenNotPaused reinitializer(3) nonReentrant {
+    function reinitialize3() external reinitializer(3) nonReentrant {
         // Clean up the old ERC-7201 namespace where `bool _gasTokenIsEth` used to be stored.
         // Calculated as `keccak256(abi.encode(uint256(keccak256("agglayer.vault-bridge.WETH.storage")) - 1)) & ~bytes32(uint256(0xff))`.
         assembly {
@@ -62,11 +65,21 @@ contract WethAgglayer is CustomTokenAgglayer, CustomTokenWethExtension {
     /// @dev How to add a new reinitializer:
     function reinitialize4()
         external
-        whenNotPaused
         reinitializer(_incrementGlobalInitializationCounter(4))
         nonReentrant
     {}
     */
+
+    // @remind Document (the entire function).
+    function reinitialize(bytes[] calldata reinitializeData) external {
+        bytes4[] memory reinitializeSelectors = new bytes4[](3);
+
+        reinitializeSelectors[0] = this.reinitialize1.selector;
+        reinitializeSelectors[1] = this.reinitialize2.selector;
+        reinitializeSelectors[2] = this.reinitialize3.selector;
+
+        _reinitialize(reinitializeSelectors, reinitializeData);
+    }
 
     /// @inheritdoc CustomToken
     function _CUSTOM_TOKEN_INIT_2_COMPATIBLE() internal pure override {}

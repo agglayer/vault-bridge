@@ -23,7 +23,6 @@ contract VbEth is VaultBridgeToken {
 
     function reinitialize1(address initializer_, VaultBridgeToken.InitializationParameters calldata initParams)
         external
-        whenNotPaused
         reinitializer(1)
         nonReentrant
     {
@@ -37,7 +36,7 @@ contract VbEth is VaultBridgeToken {
         );
     }
 
-    function reinitialize2() external whenNotPaused reinitializer(2) nonReentrant {
+    function reinitialize2() external reinitializer(2) nonReentrant {
         _incrementGlobalInitializationCounter(1);
         _incrementGlobalInitializationCounter(2);
 
@@ -48,11 +47,20 @@ contract VbEth is VaultBridgeToken {
     /// @dev How to add a new reinitializer:
     function reinitialize3()
         external
-        whenNotPaused
         reinitializer(_incrementGlobalInitializationCounter(3))
         nonReentrant
     {}
     */
+
+    // @remind Document (the entire function).
+    function reinitialize(bytes[] calldata reinitializeData) external {
+        bytes4[] memory reinitializeSelectors = new bytes4[](2);
+
+        reinitializeSelectors[0] = this.reinitialize1.selector;
+        reinitializeSelectors[1] = this.reinitialize2.selector;
+
+        _reinitialize(reinitializeSelectors, reinitializeData);
+    }
 
     /// @inheritdoc VaultBridgeToken
     function _VAULT_BRIDGE_TOKEN_INIT_2_COMPATIBLE() internal pure override {}

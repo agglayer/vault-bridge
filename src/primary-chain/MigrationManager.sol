@@ -111,12 +111,7 @@ contract MigrationManager is
 
     /// @notice Initializes the Migration Manager contract.
     /// @param owner_ (ATTENTION) This address will be granted the `DEFAULT_ADMIN_ROLE`, as well as all basic roles. Roles can be modified at any time.
-    function reinitialize1(address owner_, address agglayerBridge_)
-        external
-        whenNotPaused
-        reinitializer(1)
-        nonReentrant
-    {
+    function reinitialize1(address owner_, address agglayerBridge_) external reinitializer(1) nonReentrant {
         MigrationManagerStorage storage $ = _getMigrationManagerStorage();
 
         // Check the inputs.
@@ -141,7 +136,7 @@ contract MigrationManager is
 
     // @remind Document (the entire function).
     /// @param wrappedGasToken_ The address of the wrapped gas token (e.g., WETH, if the gas token is ETH). Must be the same as the underlying token of the corresponding vbToken (e.g., of vbETH, if the gas token is ETH).
-    function reinitialize2(address wrappedGasToken_) external whenNotPaused reinitializer(2) nonReentrant {
+    function reinitialize2(address wrappedGasToken_) external reinitializer(2) nonReentrant {
         MigrationManagerStorage storage $ = _getMigrationManagerStorage();
 
         _incrementGlobalInitializationCounter(1);
@@ -156,11 +151,20 @@ contract MigrationManager is
     /// @dev How to add a new reinitializer:
     function reinitialize3()
         external
-        whenNotPaused
         reinitializer(_incrementGlobalInitializationCounter(3))
         nonReentrant
     {}
     */
+
+    // @remind Document (the entire function).
+    function reinitialize(bytes[] calldata reinitializeData) external {
+        bytes4[] memory reinitializeSelectors = new bytes4[](2);
+
+        reinitializeSelectors[0] = this.reinitialize1.selector;
+        reinitializeSelectors[1] = this.reinitialize2.selector;
+
+        _reinitialize(reinitializeSelectors, reinitializeData);
+    }
 
     // -----================= ::: STORAGE ::: =================-----
 
