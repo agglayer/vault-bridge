@@ -14,6 +14,7 @@ import {PausableUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/Pau
 import {ReentrancyGuardUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import {InitializationCounterUpgradeable} from "../etc/InitializationCounterUpgradeable.sol";
 import {Versioned} from "../etc/Versioned.sol";
+import {MulticallUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/MulticallUpgradeable.sol";
 
 /// @title Custom Token
 /// @author See https://github.com/agglayer/vault-bridge
@@ -27,7 +28,8 @@ abstract contract CustomToken is
     ReentrancyGuardUpgradeable,
     ERC20PermitUpgradeable,
     InitializationCounterUpgradeable,
-    Versioned
+    Versioned,
+    MulticallUpgradeable
 {
     /// @dev Storage of Custom Token contract.
     /// @dev It's implemented on a custom ERC-7201 namespace to reduce the risk of storage collisions when using with upgradeable contracts.
@@ -91,6 +93,8 @@ abstract contract CustomToken is
         __Context_init();
         __ERC165_init();
         __Nonces_init();
+        // Multicall is not initialized to indicate it can be used to call this function as well.
+        // __Multicall_init();
 
         // Grant the basic roles.
         _grantRole(DEFAULT_ADMIN_ROLE, owner_);

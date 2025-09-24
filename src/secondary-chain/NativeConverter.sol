@@ -11,6 +11,7 @@ import {ReentrancyGuardUpgradeable} from "@openzeppelin-contracts-upgradeable/ut
 import {ERC20PermitUser} from "../etc/ERC20PermitUser.sol";
 import {InitializationCounterUpgradeable} from "../etc/InitializationCounterUpgradeable.sol";
 import {Versioned} from "../etc/Versioned.sol";
+import {MulticallUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/MulticallUpgradeable.sol";
 
 // Libraries.
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -36,7 +37,8 @@ abstract contract NativeConverter is
     ReentrancyGuardUpgradeable,
     ERC20PermitUser,
     InitializationCounterUpgradeable,
-    Versioned
+    Versioned,
+    MulticallUpgradeable
 {
     // Libraries.
     using SafeERC20 for IERC20;
@@ -146,6 +148,8 @@ abstract contract NativeConverter is
         __ReentrancyGuard_init();
         __Context_init();
         __ERC165_init();
+        // Multicall is not initialized to indicate it can be used to call this function as well.
+        // __Multicall_init();
 
         // Grant the basic roles.
         _grantRole(DEFAULT_ADMIN_ROLE, owner_);
