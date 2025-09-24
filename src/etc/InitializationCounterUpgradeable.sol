@@ -24,6 +24,8 @@ abstract contract InitializationCounterUpgradeable {
     error IncorrectInitializationOrder(
         uint64 expectedGlobalInitializationCounterValue, uint64 actualGlobalInitializationCounterValue
     );
+    error InvalidReinitializeDataLength(uint256 expectedLength, uint256 actualLength);
+    error UnknownReinitializeSelector(bytes4 selector);
 
     // -----================= ::: STORAGE ::: =================-----
 
@@ -106,5 +108,41 @@ abstract contract InitializationCounterUpgradeable {
         assert(expectedNewExtensionInitializationCounterValue == actualNewExtensionInitializationCounterValue);
 
         $._extensionInitializationCounter++;
+    }
+
+    // @remind Document (the entire function).
+    function _reinitialize(bytes4[] memory reinitializeSelectors, bytes[] calldata reinitializeData) internal {
+        InitializationCounterUpgradeableStorage storage $ = _getInitializationCounterUpgradeableStorage();
+
+        uint64 globalInitializationCounter_ = $.globalInitializationCounter;
+
+        assert(reinitializeSelectors.length > 0);
+
+        uint256 expectedReinitializeDataLength = reinitializeSelectors.length - globalInitializationCounter_;
+        uint256 actualReinitializeDataLength = reinitializeData.length;
+
+        require(
+            actualReinitializeDataLength == expectedReinitializeDataLength,
+            InvalidReinitializeDataLength(expectedReinitializeDataLength, actualReinitializeDataLength)
+        );
+
+        for (uint256 i; i < reinitializeData.length; ++i) {
+            bytes4 selector = bytes4(reinitializeData[i]);
+
+            require(
+                selector == reinitializeSelectors[i + globalInitializationCounter_],
+                UnknownReinitializeSelector(selector)
+            );
+
+            assert(selector != bytes4(0));
+
+            (bool ok, bytes memory data) = address(this).delegatecall(reinitializeData[i]);
+
+            if (!ok) {
+                assembly {
+                    revert(add(32, data), mload(data))
+                }
+            }
+        }
     }
 }

@@ -3,7 +3,7 @@
 
 pragma solidity 0.8.29;
 
-// Document the entire file.
+// @remind Document the entire file.
 
 // Main functionality.
 import {CustomToken} from "./CustomToken.sol";
@@ -81,6 +81,15 @@ abstract contract CustomTokenWethExtension is CustomToken {
 
         $.wethFunctionalityEnabled = gasTokenIsEth_;
     }
+
+    /*
+    /// @dev How to add a new ext step:
+    function __CustomTokenWethExtension_initX_extY()
+        internal
+        onlyInitializing
+        incrementsExtensionInitializationCounter(X, Y)
+    {}
+    */
 
     function _CUSTOM_TOKEN_WETH_EXTENSION_INIT_2_EXT_1_COMPATIBLE() internal pure virtual;
 
