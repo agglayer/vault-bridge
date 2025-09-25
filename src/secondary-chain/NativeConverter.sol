@@ -55,9 +55,9 @@ abstract contract NativeConverter is
         uint256 nonMigratableBackingPercentage;
         address migrationManager;
         bool _underlyingTokenIsNotMintable;
-        mapping(uint256 migratedAmount => uint256 times) _migrationsInProgress;
-        uint256 _totalMigrationsInProgress;
-        uint256 _totalMigratedAmountInProgress;
+        mapping(uint256 migratedBacking => uint256 times) _migrationsInProgress;
+        uint256 _migrationsInProgressCount;
+        uint256 _totalMigratedBackingInProgress;
     }
 
     /// @dev The storage slot at which Native Converter storage starts, following the EIP-7201 standard.
@@ -550,8 +550,8 @@ abstract contract NativeConverter is
         NativeConverterStorage storage $ = _getNativeConverterStorage();
 
         $._migrationsInProgress[migratedBacking]++;
-        $._totalMigrationsInProgress++;
-        $._totalMigratedAmountInProgress += migratedBacking;
+        $._migrationsInProgressCount++;
+        $._totalMigratedBackingInProgress += migratedBacking;
 
         emit MigrationInProgressAdded(migratedBacking);
     }
@@ -561,8 +561,8 @@ abstract contract NativeConverter is
         NativeConverterStorage storage $ = _getNativeConverterStorage();
 
         $._migrationsInProgress[mintedCustomToken]--;
-        $._totalMigrationsInProgress--;
-        $._totalMigratedAmountInProgress -= mintedCustomToken;
+        $._migrationsInProgressCount--;
+        $._totalMigratedBackingInProgress -= mintedCustomToken;
 
         emit MigrationInProgressRemoved(mintedCustomToken);
     }
