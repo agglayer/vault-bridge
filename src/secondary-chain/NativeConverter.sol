@@ -557,14 +557,14 @@ abstract contract NativeConverter is
     }
 
     // @remind Document (the entire function).
-    function _removeMigrationInProgress(uint256 migratedBacking) private {
+    function _removeMigrationInProgress(uint256 mintedCustomToken) private {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
 
-        $._migrationsInProgress[migratedBacking]--;
+        $._migrationsInProgress[mintedCustomToken]--;
         $._totalMigrationsInProgress--;
-        $._totalMigratedAmountInProgress -= migratedBacking;
+        $._totalMigratedAmountInProgress -= mintedCustomToken;
 
-        emit MigrationInProgressRemoved(migratedBacking);
+        emit MigrationInProgressRemoved(mintedCustomToken);
     }
 
     // -----================= ::: UNDERLYING TOKEN ::: =================-----
