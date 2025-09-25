@@ -50,11 +50,14 @@ abstract contract NativeConverter is
         IERC20 underlyingToken;
         uint256 backingOnSecondaryChain;
         uint32 agglayerId;
-        IAgglayerBridge agglayerBridge;
+        IAgglayerBridge bridge;
         uint32 primaryChainAgglayerId;
         uint256 nonMigratableBackingPercentage;
         address migrationManager;
         bool _underlyingTokenIsNotMintable;
+        mapping(uint256 migratedAmount => uint256 times) _migrationsInProgress;
+        uint256 _totalMigrationsInProgress;
+        uint256 _totalMigratedAmountInProgress;
     }
 
     /// @dev The storage slot at which Native Converter storage starts, following the EIP-7201 standard.
@@ -68,6 +71,7 @@ abstract contract NativeConverter is
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
 
     // Errors.
+    error Unauthorized();
     error InvalidOwner();
     error InvalidCustomToken();
     error InvalidUnderlyingToken();
@@ -87,6 +91,17 @@ abstract contract NativeConverter is
     // Events.
     event MigrationStarted(uint256 indexed mintedCustomToken, uint256 indexed migratedBacking);
     event NonMigratableBackingPercentageSet(uint256 nonMigratableBackingPercentage);
+    event MigrationInProgressAdded(uint256 indexed migratedBacking);
+    event MigrationInProgressRemoved(uint256 indexed mintedCustomToken);
+
+    // -----================= ::: MODIFIERS ::: =================-----
+
+    /// @dev Checks if the sender is the yield recipient.
+    modifier onlyCustomToken() {
+        NativeConverterStorage storage $ = _getNativeConverterStorage();
+        require(msg.sender == address($.customToken), Unauthorized());
+        _;
+    }
 
     // -----================= ::: SETUP ::: =================-----
 
@@ -156,7 +171,7 @@ abstract contract NativeConverter is
         $.customToken = CustomToken(customToken_);
         $.underlyingToken = IERC20(underlyingToken_);
         $.agglayerId = IAgglayerBridge(agglayerBridge_).networkID();
-        $.agglayerBridge = IAgglayerBridge(agglayerBridge_);
+        $.bridge = IAgglayerBridge(agglayerBridge_);
         $.primaryChainAgglayerId = primaryChainAgglayerId_;
         $.migrationManager = migrationManager_;
         $.nonMigratableBackingPercentage = nonMigratableBackingPercentage_;
@@ -171,7 +186,7 @@ abstract contract NativeConverter is
     {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
 
-        $._underlyingTokenIsNotMintable = $.agglayerBridge.wrappedAddressIsNotMintable(address($.underlyingToken));
+        $._underlyingTokenIsNotMintable = $.bridge.wrappedAddressIsNotMintable(address($.underlyingToken));
     }
 
     /*
@@ -210,9 +225,9 @@ abstract contract NativeConverter is
     }
 
     /// @notice Agglayer Bridge, which connects AggLayer networks.
-    function agglayerBridge() public view returns (IAgglayerBridge) {
+    function bridge() public view returns (IAgglayerBridge) {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
-        return $.agglayerBridge;
+        return $.bridge;
     }
 
     /// @notice The Agglayer ID of Primary Chain.
@@ -399,7 +414,7 @@ abstract contract NativeConverter is
             _sendUnderlyingToken(receiver, assets);
         } else {
             // Bridge to the receiver.
-            $.agglayerBridge.bridgeAsset(
+            $.bridge.bridgeAsset(
                 destinationNetworkId, receiver, assets, address($.underlyingToken), forceUpdateGlobalExitRoot, ""
             );
         }
@@ -457,6 +472,9 @@ abstract contract NativeConverter is
         // Update the backing data.
         $.backingOnSecondaryChain -= assets;
 
+        // @remind Document.
+        _addMigrationInProgress(assets);
+
         // Calculate the amount of Custom Token for which backing is being migrated.
         uint256 shares = _convertToShares(assets);
 
@@ -464,31 +482,31 @@ abstract contract NativeConverter is
         /* If the underlying token is not mintable by Agglayer Bridge, we need to check for a transfer fee. */
         if ($._underlyingTokenIsNotMintable) {
             // Cache the balance.
-            uint256 balanceBefore = $.underlyingToken.balanceOf(address($.agglayerBridge));
+            uint256 balanceBefore = $.underlyingToken.balanceOf(address($.bridge));
 
             // Bridge.
             // @note IMPORTANT: Make sure the underlying token you are integrating does not enable reentrancy on `transferFrom`.
-            $.agglayerBridge.bridgeAsset(
+            $.bridge.bridgeAsset(
                 $.primaryChainAgglayerId, $.migrationManager, assets, address($.underlyingToken), true, ""
             );
 
             uint256 originalAssets = assets;
 
             // Calculate the bridged amount.
-            assets = $.underlyingToken.balanceOf(address($.agglayerBridge)) - balanceBefore;
+            assets = $.underlyingToken.balanceOf(address($.bridge)) - balanceBefore;
 
             // Try to prevent a mistake in case Agglayer Bridge code changes.
             assert(assets > 0 && originalAssets >= assets);
         }
         /* If the underlying token is mintable by Agglayer Bridge, it will be burned (not transferred). */
         else {
-            $.agglayerBridge.bridgeAsset(
+            $.bridge.bridgeAsset(
                 $.primaryChainAgglayerId, $.migrationManager, assets, address($.underlyingToken), true, ""
             );
         }
 
         // Bridge a message to Migration Manager on Primary Chain to complete the migration.
-        $.agglayerBridge.bridgeMessage(
+        $.bridge.bridgeMessage(
             $.primaryChainAgglayerId,
             $.migrationManager,
             true,
@@ -518,6 +536,35 @@ abstract contract NativeConverter is
 
         // Emit the event.
         emit NonMigratableBackingPercentageSet(nonMigratableBackingPercentage_);
+    }
+
+    // @remind Document (the entire function).
+    function removeMigrationInProgress(uint256 mintedCustomToken) external whenNotPaused onlyCustomToken nonReentrant {
+        _removeMigrationInProgress(mintedCustomToken);
+
+        emit MigrationInProgressRemoved(mintedCustomToken);
+    }
+
+    // @remind Document (the entire function).
+    function _addMigrationInProgress(uint256 migratedBacking) internal {
+        NativeConverterStorage storage $ = _getNativeConverterStorage();
+
+        $._migrationsInProgress[migratedBacking]++;
+        $._totalMigrationsInProgress++;
+        $._totalMigratedAmountInProgress += migratedBacking;
+
+        emit MigrationInProgressAdded(migratedBacking);
+    }
+
+    // @remind Document (the entire function).
+    function _removeMigrationInProgress(uint256 migratedBacking) private {
+        NativeConverterStorage storage $ = _getNativeConverterStorage();
+
+        $._migrationsInProgress[migratedBacking]--;
+        $._totalMigrationsInProgress--;
+        $._totalMigratedAmountInProgress -= migratedBacking;
+
+        emit MigrationInProgressRemoved(migratedBacking);
     }
 
     // -----================= ::: UNDERLYING TOKEN ::: =================-----

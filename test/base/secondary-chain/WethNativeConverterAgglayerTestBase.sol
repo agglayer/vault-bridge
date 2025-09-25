@@ -113,7 +113,7 @@ abstract contract WethNativeConverterAgglayerTestBase is SecondaryChainBase {
 
     /// @notice Helper to verify basic NativeConverter setup
     function verifyWethNativeConverterAgglayerSetup() internal view {
-        assertEq(address(nativeConverter.agglayerBridge()), address(mockAgglayerBridge));
+        assertEq(address(nativeConverter.bridge()), address(mockAgglayerBridge));
         assertEq(address(nativeConverter.customToken()), address(customToken));
         assertEq(address(nativeConverter.migrationManager()), migrationManager);
         assertEq(address(nativeConverter.underlyingToken()), address(underlyingToken));
