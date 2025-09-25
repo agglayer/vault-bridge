@@ -28,7 +28,7 @@
 1. Deploy Custom Token implementation and proxy to Secondary Chain, and initialize it.
 2. Deploy NTT Manager and Wormhole Transceiver implementation and proxy on Secondary Chain using NTT CLI.
 3. Update peers of NTT Manager on Primary Chain and all Wormhole Secondary Chains using NTT CLI.
-4. <ins>BEFORE ANY TRANSFERS:</ins> Enable NTT Global Accountant for Wormhole Transceiver.
+4. <ins>BEFORE ANY TRANSFERS:</ins> Enable NTT Global Accountant for Wormhole Transceiver on Secondary Chain. @remind: Document the process.
 
 ### Wrapped Token Transfers
 
