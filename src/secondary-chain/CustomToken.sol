@@ -57,9 +57,6 @@ abstract contract CustomToken is
     error BridgeAlreadySet();
     error NativeConverterAlreadySet();
 
-    // Events.
-    event NotMinted(uint256 indexed value);
-
     // -----================= ::: SETUP ::: =================-----
 
     /// @dev Preserves the `name` and `symbol` of the bridged vbToken.

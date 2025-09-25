@@ -146,17 +146,19 @@ contract WethNativeConverterAgglayer is NativeConverterAgglayer {
         require(amount > 0, InvalidAssets());
         require(amount <= migratableGasBacking_, AssetsTooLarge(migratableGasBacking_, amount));
 
+        _addMigrationInProgress(amount);
+
         // Precalculate the amount of Custom Token for which backing is being migrated.
         uint256 amountOfCustomToken = _convertToShares(amount);
 
         // Taking agglayerBridge's gas balance here
         weth.bridgeBackingToPrimaryChain(amount);
-        agglayerBridge().bridgeAsset{value: amount}(
+        bridge().bridgeAsset{value: amount}(
             primaryChainAgglayerId(), address(migrationManager()), amount, address(0), true, ""
         );
 
         // Bridge a message to Migration Manager on Primary Chain to complete the migration.
-        agglayerBridge().bridgeMessage(
+        bridge().bridgeMessage(
             primaryChainAgglayerId(),
             address(migrationManager()),
             true,

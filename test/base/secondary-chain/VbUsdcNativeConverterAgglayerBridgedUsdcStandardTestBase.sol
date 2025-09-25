@@ -114,7 +114,7 @@ abstract contract VbUsdcNativeConverterAgglayerBridgedUsdcStandardTestBase is Se
 
     /// @notice Helper to verify basic vbUSDC NativeConverter setup
     function verifyVbUsdcNativeConverterAgglayerBridgedUsdcStandardSetup() internal view {
-        assertEq(address(nativeConverter.agglayerBridge()), address(mockAgglayerBridge));
+        assertEq(address(nativeConverter.bridge()), address(mockAgglayerBridge));
         assertEq(address(nativeConverter.customToken()), address(customToken));
         assertEq(address(nativeConverter.migrationManager()), migrationManager);
         assertEq(address(nativeConverter.underlyingToken()), address(underlyingToken));
