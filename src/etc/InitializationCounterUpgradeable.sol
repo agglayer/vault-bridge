@@ -24,7 +24,9 @@ abstract contract InitializationCounterUpgradeable {
     error IncorrectInitializationOrder(
         uint64 expectedGlobalInitializationCounterValue, uint64 actualGlobalInitializationCounterValue
     );
+    error AlreadyReinitialized();
     error InvalidReinitializeDataLength(uint256 expectedLength, uint256 actualLength);
+    error Eip1967NotDetected();
     error UnknownReinitializeSelector(bytes4 selector);
 
     // -----================= ::: STORAGE ::: =================-----
@@ -114,17 +116,27 @@ abstract contract InitializationCounterUpgradeable {
     function _reinitialize(bytes4[] memory reinitializeSelectors, bytes[] calldata reinitializeData) internal {
         InitializationCounterUpgradeableStorage storage $ = _getInitializationCounterUpgradeableStorage();
 
-        uint64 globalInitializationCounter_ = $.globalInitializationCounter;
-
         assert(reinitializeSelectors.length > 0);
+
+        uint64 globalInitializationCounter_ = $.globalInitializationCounter;
 
         uint256 expectedReinitializeDataLength = reinitializeSelectors.length - globalInitializationCounter_;
         uint256 actualReinitializeDataLength = reinitializeData.length;
+
+        require(expectedReinitializeDataLength > 0, AlreadyReinitialized());
 
         require(
             actualReinitializeDataLength == expectedReinitializeDataLength,
             InvalidReinitializeDataLength(expectedReinitializeDataLength, actualReinitializeDataLength)
         );
+
+        address implementation;
+
+        assembly {
+            implementation := sload(0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc)
+        }
+
+        require(implementation != address(0), Eip1967NotDetected());
 
         for (uint256 i; i < reinitializeData.length; ++i) {
             bytes4 selector = bytes4(reinitializeData[i]);
@@ -136,7 +148,7 @@ abstract contract InitializationCounterUpgradeable {
 
             assert(selector != bytes4(0));
 
-            (bool ok, bytes memory data) = address(this).delegatecall(reinitializeData[i]);
+            (bool ok, bytes memory data) = implementation.delegatecall(reinitializeData[i]);
 
             if (!ok) {
                 assembly {
