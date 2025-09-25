@@ -6,6 +6,9 @@ pragma solidity 0.8.29;
 // Main functionality.
 import {CustomToken} from "../CustomToken.sol";
 
+// External contracts.
+import {NativeConverter} from "../NativeConverter.sol";
+
 // @remind Document.
 abstract contract CustomTokenAgglayer is CustomToken {
     // -----================= ::: MODIFIERS ::: =================-----
@@ -20,6 +23,7 @@ abstract contract CustomTokenAgglayer is CustomToken {
 
     // -----================= ::: CUSTOM TOKEN ::: =================-----
 
+    // @remind Redocument (the entire function).
     /// @notice Mints Custom Tokens to the recipient.
     /// @notice This function can be called by Agglayer Bridge and Native Converter only.
     /// @param account @note CAUTION! Minting to `address(0)` will result in no tokens minted! This is to enable vbToken on Primary Chain to bridge tokens to address zero on Secondary Chain at the end of the process of migrating backing from Native Converter to Primary Chain. Please refer to `NativeConverter.sol` for more information.
@@ -29,9 +33,11 @@ abstract contract CustomTokenAgglayer is CustomToken {
         onlyAgglayerBridgeAndNativeConverter
         nonReentrant
     {
-        // Do not mint if `account` is `address(0)`.
         if (account == address(0)) {
-            emit NotMinted(value);
+            NativeConverter(nativeConverter()).removeMigrationInProgress(value);
+
+            emit Transfer(address(0), address(0), value);
+
             return;
         }
 

@@ -13,6 +13,8 @@ import {
 import {GenericCustomTokenAgglayer} from "src/secondary-chain/agglayer/GenericCustomTokenAgglayer.sol";
 import {CustomToken} from "src/secondary-chain/CustomToken.sol";
 
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
 /// @dev GenericCustomTokenAgglayer tests
 contract GenericCustomTokenAgglayerTest is GenericCustomTokenAgglayerTestBase {
     function setUp() public virtual {
@@ -39,11 +41,11 @@ contract GenericCustomTokenAgglayerTest is GenericCustomTokenAgglayerTestBase {
         assertEq(genericCustomTokenAgglayer.totalSupply(), amount);
     }
 
-    function test_mint_success_toAddressZero_emitsNotMinted() public {
+    function test_mint_success_toAddressZero_emitsTransfer() public {
         uint256 amount = 1000e18;
 
         vm.expectEmit(true, true, true, true);
-        emit CustomToken.NotMinted(amount);
+        emit IERC20.Transfer(address(0), address(0), amount);
 
         vm.prank(address(mockAgglayerBridge));
         genericCustomTokenAgglayer.mint(address(0), amount);
