@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: LicenseRef-PolygonLabs-Source-Available
+// Vault Bridge (last updated v1.0.0) (script/polygon/DeployRevertingContract.sol)
+
 pragma solidity ^0.8.29;
 
 // @remind Document (the entire file).
