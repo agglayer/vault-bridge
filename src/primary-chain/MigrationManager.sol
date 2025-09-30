@@ -82,7 +82,6 @@ contract MigrationManager is
     error InvalidNativeConverter();
     error InvalidUnderlyingToken();
     error Unauthorized();
-    error CannotWrapGasToken();
     error InsufficientUnderlyingTokenBalanceAfterWrapping(uint256 newBalance, uint256 expectedBalance);
 
     // Events.
