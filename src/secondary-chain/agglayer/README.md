@@ -24,7 +24,7 @@
 
 ### Agglayer Sovereign with Pessimistic Proof
 
-1. Determine whether Custom Token, Native Converter, and/or Bridged USDC Standard* are needed. If none is needed, no action is required. *For Bridged USDC Standard, please refer to [`./vbUSDC/bridged-usdc-standard/README.md`](./vbUSDC/bridged-usdc-standard/README.md).
+1. Determine whether Custom Token, Native Converter, and/or Bridged USDC Standard* are needed. If none is needed, no action is required. *For Bridged USDC Standard, please refer to [`README.md`](./vbUSDC/bridged-usdc-standard/README.md).
 2. Bridge underlying token from Primary Chain and claim it on Secondary Chain.
 3. Bridge vbToken from Primary Chain and claim it on Secondary Chain, so that Agglayer creates Upgradeable Wrapped Token.
 4. Transfer ownership over Upgradeable Wrapped Token from Agglayer Bridge Manager to account you control.
