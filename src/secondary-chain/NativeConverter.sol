@@ -86,7 +86,6 @@ abstract contract NativeConverter is
     error InvalidNonMigratableBackingPercentage();
     error AssetsTooLarge(uint256 availableAssets, uint256 requestedAssets);
     error InvalidDestinationNetworkId();
-    error OnlyMigrator();
 
     // Events.
     event MigrationStarted(uint256 indexed mintedCustomToken, uint256 indexed migratedBacking);

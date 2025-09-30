@@ -29,10 +29,11 @@ abstract contract CustomTokenWethExtension is CustomToken {
     bytes32 private constant _CUSTOM_TOKEN_WETH_EXTENSION_STORAGE =
         hex"79530e5f68ac2fe03ca888330cb59cd18fe7ab48bdc97271c9f69b4c84c28700";
 
-    error WethFunctionalityCannotBeEnabledIfGasTokenIsNotEth();
     error FunctionNotSupportedOnThisChain();
     error FunctionNotEnabledOnThisChain();
     error AssetsTooLarge(uint256 availableAssets, uint256 requestedAssets);
+    error WithdrawalFailed();
+    error WethFunctionalityCannotBeEnabledIfGasTokenIsNotEth();
 
     event Deposit(address indexed from, uint256 value);
     event Withdrawal(address indexed to, uint256 value);
@@ -122,7 +123,7 @@ abstract contract CustomTokenWethExtension is CustomToken {
         $.gasBackingOnSecondaryChain -= value;
         _burn(msg.sender, value);
         (bool ok,) = msg.sender.call{value: value}("");
-        require(ok);
+        require(ok, WithdrawalFailed());
         emit Withdrawal(msg.sender, value);
     }
 
