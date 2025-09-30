@@ -50,7 +50,7 @@ contract TestHarnessVaultBridgeToken is VaultBridgeToken {
 /// @notice Base contract for setting up Primary Chain infrastructure in tests
 abstract contract PrimaryChainBase is TestConstants {
     // ========= VAULT BRIDGE VERSION =========
-    string internal constant VAULT_BRIDGE_VERSION = "1.0.0";
+    string internal constant VAULT_BRIDGE_PROTOCOL = "1.0.0";
 
     // ========= STATE VARIABLES =========
     address internal underlyingToken;
@@ -87,7 +87,7 @@ abstract contract PrimaryChainBase is TestConstants {
     /// @notice Configure Primary Chain infrastructure
     function deployPrimaryChainInfrastructure() internal virtual {
         // Setup vault bridge version
-        version = VAULT_BRIDGE_VERSION;
+        version = VAULT_BRIDGE_PROTOCOL;
 
         // Set standard test addresses
         setupStandardTestAddresses();

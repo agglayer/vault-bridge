@@ -99,7 +99,7 @@ contract TestHarnessNativeConverter is NativeConverter {
 /// @notice Base contract for setting up Secondary Chain infrastructure in tests
 abstract contract SecondaryChainBase is TestConstants {
     // ========= VAULT BRIDGE VERSION =========
-    string internal constant NATIVE_CONVERTER_VERSION = "1.0.0";
+    string internal constant NATIVE_CONVERTER_PROTOCOL = "1.0.0";
 
     // ========= STATE VARIABLES =========
     uint256 internal stateBeforeInitialize;
@@ -137,7 +137,7 @@ abstract contract SecondaryChainBase is TestConstants {
     /// @dev This function sets up the basic infrastructure but doesn't deploy implementations
     function deploySecondaryChainInfrastructure() internal virtual {
         // Setup vault bridge version
-        version = NATIVE_CONVERTER_VERSION;
+        version = NATIVE_CONVERTER_PROTOCOL;
 
         // Set standard test addresses
         setupStandardTestAddresses();

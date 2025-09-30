@@ -168,13 +168,6 @@ abstract contract VaultBridgeToken is
         _;
     }
 
-    /// @dev Checks if the sender is Agglayer Bridge.
-    modifier onlyAgglayerBridge() {
-        VaultBridgeTokenStorage storage $ = _getVaultBridgeTokenStorage();
-        require(msg.sender == address($.agglayerBridge), Unauthorized());
-        _;
-    }
-
     /// @dev Checks if the sender is Migration Manager.
     modifier onlyMigrationManager() {
         VaultBridgeTokenStorage storage $ = _getVaultBridgeTokenStorage();
@@ -208,8 +201,8 @@ abstract contract VaultBridgeToken is
         // Verify the version of the initializer.
         // The version string must be the same as that of this contract.
         require(
-            keccak256(bytes(VaultBridgeToken(initializer_).VAULT_BRIDGE_VERSION()))
-                == keccak256(bytes(VAULT_BRIDGE_VERSION())),
+            keccak256(bytes(VaultBridgeToken(initializer_).VAULT_BRIDGE_PROTOCOL()))
+                == keccak256(bytes(VAULT_BRIDGE_PROTOCOL())),
             InvalidInitializer()
         );
 
