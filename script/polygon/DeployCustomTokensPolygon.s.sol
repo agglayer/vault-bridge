@@ -145,9 +145,8 @@ contract DeployCustomTokensPolygon is Script {
         _startBroadcast();
 
         // Create a `TransparentUpgradeableProxy` and point it to the `GenericCustomTokenPolygon` implementation.
-        TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(
-            genericCustomTokenPolygonImplementation_, deployerAddress, initializationData_
-        );
+        TransparentUpgradeableProxy proxy =
+            new TransparentUpgradeableProxy(genericCustomTokenPolygonImplementation_, ownerAddress, initializationData_);
 
         _stopBroadcast();
 
