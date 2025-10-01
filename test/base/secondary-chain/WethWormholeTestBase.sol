@@ -56,6 +56,7 @@ abstract contract WethWormholeTestBase is SecondaryChainBase {
                             customTokenSymbol,
                             originalUnderlyingTokenDecimals,
                             nttManager,
+                            gasTokenIsEth,
                             gasTokenIsEth
                         )
                     )

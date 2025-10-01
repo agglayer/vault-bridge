@@ -28,14 +28,14 @@ abstract contract WethAgglayerTestBase is SecondaryChainBase {
         customTokenDecimals = 18;
 
         deploySecondaryChainInfrastructure();
-        deployWethAgglayer();
+        deployWethAgglayer(true);
         verifyWethAgglayerSetup();
         setupLabels();
     }
     /// @notice Deploy WETH Agglayer and related contracts
     /// @dev This includes deploying the Custom Token and initializing both contracts
 
-    function deployWethAgglayer() internal {
+    function deployWethAgglayer(bool wethFunctionalityEnabled_) internal {
         MockERC20Upgradeable existingWethAgglayerImpl = new MockERC20Upgradeable();
         TransparentUpgradeableProxy existingWethAgglayerProxy = TransparentUpgradeableProxy(
             payable(
@@ -56,7 +56,7 @@ abstract contract WethAgglayerTestBase is SecondaryChainBase {
         );
         vm.prank(_getProxyAdmin(address(existingWethAgglayerProxy)));
         (address(existingWethAgglayerProxy).call(upgradeData));
-        WethAgglayer(payable(address(existingWethAgglayerProxy))).reinitialize3();
+        WethAgglayer(payable(address(existingWethAgglayerProxy))).reinitialize3(wethFunctionalityEnabled_);
         wethAgglayer = WethAgglayer(payable(address(existingWethAgglayerProxy)));
     }
 

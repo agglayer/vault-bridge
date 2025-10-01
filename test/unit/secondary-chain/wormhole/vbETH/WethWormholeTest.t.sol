@@ -37,7 +37,15 @@ contract WethWormholeTest is WethWormholeTestBase {
                     proxyAdmin,
                     abi.encodeCall(
                         WethWormhole.reinitialize1,
-                        (owner_, name_, symbol_, originalUnderlyingTokenDecimals_, nttManager_, gasTokenIsEth_)
+                        (
+                            owner_,
+                            name_,
+                            symbol_,
+                            originalUnderlyingTokenDecimals_,
+                            nttManager_,
+                            gasTokenIsEth_,
+                            gasTokenIsEth_
+                        )
                     )
                 )
             )
