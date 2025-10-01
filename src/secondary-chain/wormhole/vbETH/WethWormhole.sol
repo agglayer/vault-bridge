@@ -23,13 +23,14 @@ contract WethWormhole is CustomTokenWormhole, CustomTokenWethExtension {
         string memory symbol_,
         uint8 originalUnderlyingTokenDecimals_,
         address nttManager_,
-        bool gasTokenIsEth_
+        bool gasTokenIsEth_,
+        bool wethFunctionalityEnabled_
     ) external reinitializer(_incrementGlobalInitializationCounter(1)) nonReentrant {
         __CustomToken_init1(owner_, name_, symbol_, originalUnderlyingTokenDecimals_, nttManager_, address(0));
 
         __CustomToken_init2();
 
-        __CustomTokenWethExtension_init2_ext1(gasTokenIsEth_);
+        __CustomTokenWethExtension_init2_ext1(gasTokenIsEth_, wethFunctionalityEnabled_);
     }
 
     /*

@@ -42,7 +42,7 @@ contract WethAgglayer is CustomTokenAgglayer, CustomTokenWethExtension {
         __CustomToken_init1(owner_, name_, symbol_, originalUnderlyingTokenDecimals_, agglayerBridge_, nativeConverter_);
     }
 
-    function reinitialize3() external reinitializer(3) nonReentrant {
+    function reinitialize3(bool wethFunctionalityEnabled_) external reinitializer(3) nonReentrant {
         // Clean up the old ERC-7201 namespace where `bool _gasTokenIsEth` used to be stored.
         // Calculated as `keccak256(abi.encode(uint256(keccak256("agglayer.vault-bridge.WETH.storage")) - 1)) & ~bytes32(uint256(0xff))`.
         assembly {
@@ -58,7 +58,7 @@ contract WethAgglayer is CustomTokenAgglayer, CustomTokenWethExtension {
         bool gasTokenIsEth_ = IAgglayerBridge(bridge()).gasTokenAddress() == address(0)
             && IAgglayerBridge(bridge()).gasTokenNetwork() == 0;
 
-        __CustomTokenWethExtension_init2_ext1(gasTokenIsEth_);
+        __CustomTokenWethExtension_init2_ext1(gasTokenIsEth_, wethFunctionalityEnabled_);
     }
 
     /*
