@@ -55,7 +55,7 @@ abstract contract CustomTokenWethExtension is CustomToken {
         _;
     }
 
-    function __CustomTokenWethExtension_init2_ext1(bool gasTokenIsEth_)
+    function __CustomTokenWethExtension_init2_ext1(bool gasTokenIsEth_, bool wethFunctionalityEnabled_)
         internal
         onlyInitializing
         incrementsExtensionInitializationCounter(2, 1)
@@ -80,7 +80,7 @@ abstract contract CustomTokenWethExtension is CustomToken {
             assert($.gasBackingOnSecondaryChain <= address(this).balance);
         }
 
-        $.wethFunctionalityEnabled = gasTokenIsEth_;
+        $.wethFunctionalityEnabled = wethFunctionalityEnabled_;
     }
 
     /*
