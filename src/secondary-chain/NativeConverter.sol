@@ -18,6 +18,7 @@ import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
 // External contracts.
 import {CustomToken} from "./CustomToken.sol";
+import {CustomTokenWethExtension} from "./CustomTokenWethExtension.sol";
 import {IAgglayerBridge} from "../etc/IAgglayerBridge.sol";
 import {MigrationManager} from "../primary-chain/MigrationManager.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -86,6 +87,8 @@ abstract contract NativeConverter is
     error InvalidNonMigratableBackingPercentage();
     error AssetsTooLarge(uint256 availableAssets, uint256 requestedAssets);
     error InvalidDestinationNetworkId();
+    error CannotSetCustomTokenIfBackingOnSecondaryChainIsNotZero();
+    error CannotSetCustomTokenIfGasBackingOnSecondaryChainIsNotZero();
 
     // Events.
     event MigrationStarted(uint256 indexed mintedCustomToken, uint256 indexed migratedBacking);
@@ -141,8 +144,8 @@ abstract contract NativeConverter is
 
         // Get the underlying token's decimals.
         uint8 underlyingTokenDecimals;
-        try IERC20Metadata(underlyingToken_).decimals() returns (uint8 decimals_) {
-            underlyingTokenDecimals = decimals_;
+        try IERC20Metadata(underlyingToken_).decimals() returns (uint8 decimals) {
+            underlyingTokenDecimals = decimals;
         } catch {
             // Default to 18 decimals if the underlying token reverted.
             underlyingTokenDecimals = 18;
@@ -256,7 +259,7 @@ abstract contract NativeConverter is
         }
     }
 
-    // -----================= ::: PSEUDO-VAULT ::: =================-----
+    // -----================= ::: NATIVE CONVERTER ::: =================-----
 
     /// @notice Deposit a specific amount of the underlying token and get Custom Token.
     /// @param assets The amount of the underlying token to convert to Custom Token.
@@ -564,6 +567,47 @@ abstract contract NativeConverter is
         $._totalMigratedBackingInProgress -= mintedCustomToken;
 
         emit MigrationInProgressRemoved(mintedCustomToken);
+    }
+
+    // @remind Document (the entire function).
+    function setCustomToken(address customToken_) external onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant {
+        NativeConverterStorage storage $ = _getNativeConverterStorage();
+
+        require(customToken_ != address(0), InvalidCustomToken());
+
+        require($.backingOnSecondaryChain == 0, CannotSetCustomTokenIfBackingOnSecondaryChainIsNotZero());
+
+        try CustomTokenWethExtension(address($.customToken)).gasBackingOnSecondaryChain() returns (
+            uint256 gasBackingOnSecondaryChain
+        ) {
+            require(gasBackingOnSecondaryChain == 0, CannotSetCustomTokenIfGasBackingOnSecondaryChainIsNotZero());
+        } catch {}
+
+        // Get Custom Token's decimals.
+        uint8 customTokenDecimals;
+        try IERC20Metadata(customToken_).decimals() returns (uint8 decimals) {
+            customTokenDecimals = decimals;
+        } catch {
+            // Default to 18 decimals if Custom Token reverted.
+            customTokenDecimals = 18;
+        }
+
+        // Get the underlying token's decimals.
+        uint8 underlyingTokenDecimals;
+        try IERC20Metadata(address($.underlyingToken)).decimals() returns (uint8 decimals) {
+            underlyingTokenDecimals = decimals;
+        } catch {
+            // Default to 18 decimals if the underlying token reverted.
+            underlyingTokenDecimals = 18;
+        }
+
+        // Check the tokens' decimals.
+        require(
+            customTokenDecimals == underlyingTokenDecimals,
+            NonMatchingTokenDecimals(customTokenDecimals, underlyingTokenDecimals)
+        );
+
+        $.customToken = CustomToken(customToken_);
     }
 
     // -----================= ::: UNDERLYING TOKEN ::: =================-----
