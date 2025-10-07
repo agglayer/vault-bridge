@@ -9,7 +9,7 @@
 
 ### Native Token Transfers
 
-- Custom Token: Availalbe (NTT Token)
+- Custom Token: Available (NTT Token)
 - Native Converter: TBD
 - Bridged USDC Standard: TBD
 - Wrapped Token: N/A
