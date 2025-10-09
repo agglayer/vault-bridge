@@ -25,7 +25,7 @@
 
 ### Native Token Transfers
 
-1. Deploy Custom Token implementation and proxy to Secondary Chain, and initialize it. You will need to set `nttManager` to Reverting Contract. Please refer to [`DeployRevertingContract.sol`](../../../script/etc/DeployRevertingContract.sol) for more information.
+1. Deploy Custom Token implementation and proxy to Secondary Chain, and initialize it. You will need to set `nttManager` to Reverting Contract. Please refer to [`DeployRevertingContract.s.sol`](../../../script/etc/DeployRevertingContract.s.sol) for more information.
 2. Deploy NTT Manager and Wormhole Transceiver implementation and proxy on Secondary Chain using NTT CLI.
 3. Execute `setBridge(address)` on Custom Token with address of NTT Manager.
 4. Update peers of NTT Manager on Primary Chain and all Wormhole Secondary Chains using NTT CLI.
