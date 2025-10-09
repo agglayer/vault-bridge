@@ -35,6 +35,17 @@
 
 No action required.
 
+
+## Protection
+
+### Native Token Transfers
+
+- NTT Global Accountant prevents bridging out more tokens from a chain that have been bridged in to the chain by blocking the transfer offchain later. This can result in irreversible loss of tokens.
+
+### Wrapped Token Transfers
+
+- Tokens are upgreadeable; controlled by Guardians.
+
 ## Reference
 
 - Wormhole Docs: [Native Token Transfers](https://wormhole.com/docs/products/token-transfers/native-token-transfers/overview/)
