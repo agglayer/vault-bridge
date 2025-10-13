@@ -22,7 +22,7 @@ contract MockInitializationCounterUpgradeable is InitializationCounterUpgradeabl
         assembly {
             $.slot := 0x8d679e361eeeac0b879fa197c8b3bda76a3db4f57c9f89335c04a065390bbb00
         }
-        return $._extensionInitializationCounter;
+        return $._extensionInitializationCounter[Extension.WETH];
     }
 
     /// @notice Public wrapper for _incrementGlobalInitializationCounter
@@ -42,7 +42,10 @@ contract MockInitializationCounterUpgradeable is InitializationCounterUpgradeabl
     function incrementExtensionInitializationCounterWithModifier(
         uint64 requiredLocalValue,
         uint64 expectedNewExtensionValue
-    ) external incrementsExtensionInitializationCounter(requiredLocalValue, expectedNewExtensionValue) {
+    )
+        external
+        incrementsExtensionInitializationCounter(requiredLocalValue, Extension.WETH, expectedNewExtensionValue)
+    {
         // Function body can be empty, the modifier does the work
     }
 

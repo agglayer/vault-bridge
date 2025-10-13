@@ -6,13 +6,17 @@ pragma solidity 0.8.29;
 // @remind Document (the entire contract).
 /// @author See https://github.com/agglayer/vault-bridge
 abstract contract InitializationCounterUpgradeable {
+    enum Extension {
+        WETH
+    }
+
     /// @dev Storage of Initialization Counter contract.
     /// @dev It's implemented on a custom ERC-7201 namespace to reduce the risk of storage collisions when using with upgradeable contracts.
     /// @custom:storage-location erc7201:agglayer.vault-bridge.InitializationCounterUpgradeable.storage
     struct InitializationCounterUpgradeableStorage {
         uint64 _localInitializationCounter;
+        mapping(Extension => uint64) _extensionInitializationCounter;
         uint64 globalInitializationCounter;
-        uint64 _extensionInitializationCounter;
     }
 
     /// @dev The storage slot at which Initialization Counter storage starts, following the EIP-7201 standard.
@@ -89,28 +93,33 @@ abstract contract InitializationCounterUpgradeable {
 
     modifier incrementsExtensionInitializationCounter(
         uint64 requiredLocalInitializationCounterValue,
+        Extension extension,
         uint64 expectedNewExtensionInitializationCounterValue
     ) {
         _incrementExtensionInitializationCounter(
-            requiredLocalInitializationCounterValue, expectedNewExtensionInitializationCounterValue
+            requiredLocalInitializationCounterValue, extension, expectedNewExtensionInitializationCounterValue
         );
         _;
     }
 
     function _incrementExtensionInitializationCounter(
         uint64 requiredLocalInitializationCounterValue,
+        Extension extension,
         uint64 expectedNewExtensionInitializationCounterValue
     ) private {
         InitializationCounterUpgradeableStorage storage $ = _getInitializationCounterUpgradeableStorage();
 
         assert($._localInitializationCounter == requiredLocalInitializationCounterValue);
 
-        uint64 actualNewExtensionInitializationCounterValue = $._extensionInitializationCounter + 1;
+        uint64 actualNewExtensionInitializationCounterValue = $._extensionInitializationCounter[extension] + 1;
 
         assert(expectedNewExtensionInitializationCounterValue == actualNewExtensionInitializationCounterValue);
 
-        $._extensionInitializationCounter++;
+        $._extensionInitializationCounter[extension]++;
     }
+
+    // @remind Uncomment later (requires modifications of contracts and tests).
+    // function reinitialize(bytes[] calldata reinitializeData) external virtual;
 
     // @remind Document (the entire function).
     function _reinitialize(bytes4[] memory reinitializeSelectors, bytes[] calldata reinitializeData) internal {
