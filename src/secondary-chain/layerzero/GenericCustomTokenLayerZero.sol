@@ -4,35 +4,55 @@
 pragma solidity 0.8.29;
 
 // @remind Document (the entire file).
-// @todo overrides, constructor, initialization, disableInitializers
 
 // Main functionality.
 import {CustomTokenLayerZero} from "./CustomTokenLayerZero.sol";
-import {OFTCoreUpgradeable} from "@layerzerolabs-oft-evm-upgradeable/contracts/oft/OFTCoreUpgradeable.sol";
+import {CustomTokenOftExtension} from "./CustomTokenOftExtension.sol";
+import {CustomToken} from "../CustomToken.sol";
 
-abstract contract GenericCustomTokenLayerZero is CustomTokenLayerZero {
-    /**
-     * @dev Constructor for the OFT contract.
-     * @param _lzEndpoint The LayerZero endpoint address.
-     */
-    constructor(address _lzEndpoint, uint8 _decimals) OFTCoreUpgradeable(_decimals, _lzEndpoint) {
+contract GenericCustomTokenLayerZero is CustomTokenLayerZero {
+    // -----================= ::: SETUP ::: =================-----
+
+    constructor(address lzEndpoint_) CustomTokenOftExtension(lzEndpoint_) {
         _disableInitializers();
     }
 
-    /**
-     * @dev Initializes the OFT with the provided delegate.
-     * @param _delegate The delegate capable of making OApp configurations inside of the endpoint.
-     *
-     * @dev The delegate typically should be set as the owner of the contract.
-     * @dev Ownable is not initialized here on purpose. It should be initialized in the child contract to
-     * accommodate the different version of Ownable.
-     */
-    function reinitialize1(address _delegate) internal reinitializer(_incrementGlobalInitializationCounter(1)) {
-        __OFTCore_init(_delegate);
-        __Ownable_init();
+    function reinitialize1(
+        address owner_,
+        string memory name_,
+        string memory symbol_,
+        uint8 originalUnderlyingTokenDecimals_,
+        address oftDelegate_,
+        address oftOwner_
+    ) external reinitializer(_incrementGlobalInitializationCounter(1)) nonReentrant {
+        __CustomToken_init1(owner_, name_, symbol_, originalUnderlyingTokenDecimals_, address(endpoint), address(0));
+
+        __CustomToken_init2();
+
+        __CustomTokenOftExtension_init2_ext1(oftDelegate_, oftOwner_);
     }
 
-    // -----================= ::: DEV ::: =================-----
+    /*
+    /// @dev How to add a new reinitializer:
+    function reinitialize2()
+        external
+        reinitializer(_incrementGlobalInitializationCounter(2))
+        nonReentrant
+    {}
+    */
 
-    function _CUSTOM_TOKEN_LAYERZERO_OFT_CORE_UPGRADEABLE_INITIALIZED() internal override {}
+    // @remind Document (the entire function).
+    function reinitialize(bytes[] calldata reinitializeData) external {
+        bytes4[] memory reinitializeSelectors = new bytes4[](1);
+
+        reinitializeSelectors[0] = this.reinitialize1.selector;
+
+        _reinitialize(reinitializeSelectors, reinitializeData);
+    }
+
+    /// @inheritdoc CustomToken
+    function _CUSTOM_TOKEN_INIT_2_COMPATIBLE() internal pure override {}
+
+    /// @inheritdoc CustomTokenOftExtension
+    function _CUSTOM_TOKEN_OFT_EXTENSION_INIT_2_EXT_1_COMPATIBLE() internal pure override {}
 }

@@ -3,7 +3,7 @@
 
 pragma solidity 0.8.29;
 
-// @remind Document the entire file.
+// @remind Document (the entire file).
 
 import {CustomTokenAgglayer} from "../CustomTokenAgglayer.sol";
 import {CustomTokenWethExtension} from "../../CustomTokenWethExtension.sol";
