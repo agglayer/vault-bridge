@@ -16,11 +16,6 @@ import {
 abstract contract CustomTokenLayerZero is CustomTokenOftExtension {
     // -----================= ::: CUSTOM TOKEN ::: =================-----
 
-    /// @inheritdoc CustomToken
-    function _CUSTOM_TOKEN_IS_MINTABLE_BURNABLE() internal override {}
-
-    // -----================= ::: DEV ::: =================-----
-
     function send(SendParam calldata _sendParam, MessagingFee calldata _fee, address _refundAddress)
         external
         payable
@@ -40,4 +35,7 @@ abstract contract CustomTokenLayerZero is CustomTokenOftExtension {
     ) public payable override whenNotPaused {
         super.lzReceive(_origin, _guid, _message, _executor, _extraData);
     }
+
+    /// @inheritdoc CustomToken
+    function _CUSTOM_TOKEN_IS_MINTABLE_BURNABLE() internal override {}
 }
