@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: LicenseRef-PolygonLabs-Source-Available
-// Vault Bridge (last updated v1.0.0) (primary-chain/VaultBridgeToken.sol)
+// Vault Bridge (last updated v1.1.0) (primary-chain/VaultBridgeToken.sol)
 
 pragma solidity 0.8.29;
 
@@ -208,7 +208,7 @@ abstract contract VaultBridgeToken is
 
         // Initialize the contract using the external initializer.
         (bool ok, bytes memory data) =
-            initializer_.delegatecall(abi.encodeCall(IVaultBridgeTokenInitializer.initialize, (initParams)));
+            initializer_.delegatecall(abi.encodeCall(IVaultBridgeTokenInitializer.init1, (initParams)));
 
         // Check the result.
         if (!ok) {

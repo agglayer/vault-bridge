@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: LicenseRef-PolygonLabs-Source-Available
-// Vault Bridge (last updated v1.0.0) (secondary-chain/CustomTokenWethExtension.sol)
+// Vault Bridge (last updated v1.1.0) (secondary-chain/CustomTokenWethExtension.sol)
 
 pragma solidity 0.8.29;
 
@@ -58,7 +58,7 @@ abstract contract CustomTokenWethExtension is CustomToken {
     function __CustomTokenWethExtension_init2_ext1(bool gasTokenIsEth_, bool wethFunctionalityEnabled_)
         internal
         onlyInitializing
-        incrementsExtensionInitializationCounter(2, 1)
+        incrementsExtensionInitializationCounter(2, Extension.WETH, 1)
     {
         CustomTokenWethExtensionStorage storage $ = _getCustomTokenWethExtensionStorage();
 
@@ -88,7 +88,7 @@ abstract contract CustomTokenWethExtension is CustomToken {
     function __CustomTokenWethExtension_initX_extY()
         internal
         onlyInitializing
-        incrementsExtensionInitializationCounter(X, Y)
+        incrementsExtensionInitializationCounter(X, Extension.WETH, Y)
     {}
     */
 
