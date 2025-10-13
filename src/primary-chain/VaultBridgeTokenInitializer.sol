@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: LicenseRef-PolygonLabs-Source-Available
-// Vault Bridge (last updated v1.0.0) (primary-chain/VaultBridgeTokenInitializer.sol)
+// Vault Bridge (last updated v1.1.0) (primary-chain/VaultBridgeTokenInitializer.sol)
 
 pragma solidity 0.8.29;
 
@@ -47,11 +47,7 @@ contract VaultBridgeTokenInitializer is IVaultBridgeTokenInitializer, VaultBridg
     // -----================= ::: VAULT BRIDGE TOKEN ::: =================-----
 
     /// @inheritdoc IVaultBridgeTokenInitializer
-    function initialize(VaultBridgeToken.InitializationParameters calldata initParams)
-        external
-        override
-        onlyInitializing
-    {
+    function init1(VaultBridgeToken.InitializationParameters calldata initParams) external override onlyInitializing {
         VaultBridgeTokenStorage storage $ = __getVaultBridgeTokenStorage();
 
         // Check the inputs.
@@ -113,7 +109,7 @@ contract VaultBridgeTokenInitializer is IVaultBridgeTokenInitializer, VaultBridg
 
     /*
     /// @dev How to add a new init step:
-    function reinitialize3() external onlyInitializing {}
+    function init3() external onlyInitializing {}
     */
 
     /// @inheritdoc VaultBridgeToken
