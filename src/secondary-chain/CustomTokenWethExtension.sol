@@ -85,10 +85,10 @@ abstract contract CustomTokenWethExtension is CustomToken {
 
     /*
     /// @dev How to add a new ext step:
-    function __CustomTokenWethExtension_initX_extY()
+    function __CustomTokenWethExtension_initX_ext2()
         internal
         onlyInitializing
-        incrementsExtensionInitializationCounter(X, Extension.WETH, Y)
+        incrementsExtensionInitializationCounter(X, Extension.WETH, 2)
     {}
     */
 

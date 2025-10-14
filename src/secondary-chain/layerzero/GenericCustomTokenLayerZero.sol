@@ -22,14 +22,14 @@ contract GenericCustomTokenLayerZero is CustomTokenLayerZero {
         string memory name_,
         string memory symbol_,
         uint8 originalUnderlyingTokenDecimals_,
-        address oftDelegate_,
-        address oftOwner_
+        address oftOwner_,
+        address oftDelegate_
     ) external reinitializer(_incrementGlobalInitializationCounter(1)) nonReentrant {
         __CustomToken_init1(owner_, name_, symbol_, originalUnderlyingTokenDecimals_, address(endpoint), address(0));
 
         __CustomToken_init2();
 
-        __CustomTokenOftExtension_init2_ext1(oftDelegate_, oftOwner_);
+        __CustomTokenOftExtension_init2_ext1(oftOwner_, oftDelegate_);
     }
 
     /*
