@@ -7,8 +7,7 @@ pragma solidity 0.8.29;
 /// @author See https://github.com/agglayer/vault-bridge
 abstract contract InitializationCounterUpgradeable {
     enum Extension {
-        WETH,
-        OFT
+        WETH
     }
 
     /// @dev Storage of Initialization Counter contract.

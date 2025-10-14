@@ -7,13 +7,12 @@ pragma solidity 0.8.29;
 
 // Main functionality.
 import {CustomTokenLayerZero} from "./CustomTokenLayerZero.sol";
-import {CustomTokenOftExtension} from "./CustomTokenOftExtension.sol";
 import {CustomToken} from "../CustomToken.sol";
 
 contract GenericCustomTokenLayerZero is CustomTokenLayerZero {
     // -----================= ::: SETUP ::: =================-----
 
-    constructor(address lzEndpoint_) CustomTokenOftExtension(lzEndpoint_) {
+    constructor() {
         _disableInitializers();
     }
 
@@ -22,14 +21,11 @@ contract GenericCustomTokenLayerZero is CustomTokenLayerZero {
         string memory name_,
         string memory symbol_,
         uint8 originalUnderlyingTokenDecimals_,
-        address oftOwner_,
-        address oftDelegate_
+        address oftAdapter_
     ) external reinitializer(_incrementGlobalInitializationCounter(1)) nonReentrant {
-        __CustomToken_init1(owner_, name_, symbol_, originalUnderlyingTokenDecimals_, address(endpoint), address(0));
+        __CustomToken_init1(owner_, name_, symbol_, originalUnderlyingTokenDecimals_, oftAdapter_, address(0));
 
         __CustomToken_init2();
-
-        __CustomTokenOftExtension_init2_ext1(oftOwner_, oftDelegate_);
     }
 
     /*
@@ -52,7 +48,4 @@ contract GenericCustomTokenLayerZero is CustomTokenLayerZero {
 
     /// @inheritdoc CustomToken
     function _CUSTOM_TOKEN_INIT_2_COMPATIBLE() internal pure override {}
-
-    /// @inheritdoc CustomTokenOftExtension
-    function _CUSTOM_TOKEN_OFT_EXTENSION_INIT_2_EXT_1_COMPATIBLE() internal pure override {}
 }
