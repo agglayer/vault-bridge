@@ -20,6 +20,9 @@ contract GenericOftAdapter is
     ReentrancyGuardTransientUpgradeable,
     InitializationCounterUpgradeable
 {
+    // Error.
+    error InvalidOwner();
+
     // -----================= ::: SETUP ::: =================-----
 
     constructor(address _token, address _lzEndpoint) OFTAdapterUpgradeable(_token, _lzEndpoint) {
@@ -31,6 +34,10 @@ contract GenericOftAdapter is
         reinitializer(_incrementGlobalInitializationCounter(1))
         nonReentrant
     {
+        // Check the inputs.
+        require(_owner != address(0), InvalidOwner());
+        require(_delegate != address(0), InvalidDelegate());
+
         __Ownable_init(_owner);
         __OFTAdapter_init(_delegate);
         __ReentrancyGuardTransient_init();

@@ -7,33 +7,44 @@ pragma solidity 0.8.29;
 
 // Main functionality.
 import {CustomToken} from "../CustomToken.sol";
-import {CustomTokenOftExtension} from "./CustomTokenOftExtension.sol";
-import {Origin} from "@layerzerolabs/oapp-evm-upgradeable/contracts/oapp/OAppUpgradeable.sol";
-import {
-    SendParam, OFTReceipt, MessagingReceipt, MessagingFee
-} from "@layerzerolabs/oft-evm/contracts/interfaces/IOFT.sol";
 
-abstract contract CustomTokenLayerZero is CustomTokenOftExtension {
-    // -----================= ::: CUSTOM TOKEN ::: =================-----
+abstract contract CustomTokenLayerZero is CustomToken {
+    // -----================= ::: MODIFIERS ::: =================-----
 
-    function send(SendParam calldata _sendParam, MessagingFee calldata _fee, address _refundAddress)
-        external
-        payable
-        override
-        whenNotPaused
-        returns (MessagingReceipt memory msgReceipt, OFTReceipt memory oftReceipt)
-    {
-        return _send(_sendParam, _fee, _refundAddress);
+    /// @dev Checks if the sender is OFT Adapter.
+    /// @dev This modifier is used to restrict minting and burning of Custom Token.
+    modifier onlyOftAdapter() {
+        // Only OFT Adapter can mint and burn Custom Token.
+        require(msg.sender == bridge(), Unauthorized());
+        _;
     }
 
-    function lzReceive(
-        Origin calldata _origin,
-        bytes32 _guid,
-        bytes calldata _message,
-        address _executor,
-        bytes calldata _extraData
-    ) public payable override whenNotPaused {
-        super.lzReceive(_origin, _guid, _message, _executor, _extraData);
+    // -----================= ::: CUSTOM TOKEN ::: =================-----
+
+    /// @notice Mints Custom Tokens to the recipient.
+    /// @notice This function can be called by Mint Burn OFT Adapter only.
+    function mint(address _to, uint256 amount)
+        external
+        whenNotPaused
+        onlyOftAdapter
+        nonReentrant
+        returns (bool success)
+    {
+        _mint(_to, amount);
+        return true;
+    }
+
+    /// @notice Burns Custom Tokens from a holder.
+    /// @notice This function can be called by Mint Burn OFT Adapter only.
+    function burn(address _from, uint256 _amount)
+        external
+        whenNotPaused
+        onlyOftAdapter
+        nonReentrant
+        returns (bool success)
+    {
+        _burn(_from, _amount);
+        return true;
     }
 
     /// @inheritdoc CustomToken
