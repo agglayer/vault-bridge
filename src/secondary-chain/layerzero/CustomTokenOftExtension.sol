@@ -10,6 +10,12 @@ import {CustomToken} from "../CustomToken.sol";
 import {OFTCoreUpgradeable} from "@layerzerolabs-oft-evm-upgradeable/contracts/oft/OFTCoreUpgradeable.sol";
 
 abstract contract CustomTokenOftExtension is CustomToken, OFTCoreUpgradeable {
+    // Custom role.
+    bytes32 public constant OFT_OWNER_ROLE = keccak256("OFT_OWNER_ROLE");
+
+    // Error.
+    error OwnableDisabled();
+
     // -----================= ::: SETUP ::: =================-----
 
     /**
@@ -24,13 +30,12 @@ abstract contract CustomTokenOftExtension is CustomToken, OFTCoreUpgradeable {
      *
      * @dev The delegate typically should be set as the owner of the contract.
      */
-    function __CustomTokenOftExtension_init2_ext1(address _delegate, address _oftOwner)
+    function __CustomTokenOftExtension_init2_ext1(address _delegate)
         internal
         onlyInitializing
         incrementsExtensionInitializationCounter(2, Extension.OFT, 1)
     {
         __OFTCore_init(_delegate);
-        __Ownable_init(_oftOwner);
     }
 
     /*
@@ -108,5 +113,27 @@ abstract contract CustomTokenOftExtension is CustomToken, OFTCoreUpgradeable {
         _mint(_to, _amountLD);
         // @dev In the case of NON-default OFT, the _amountLD MIGHT not be == amountReceivedLD.
         return _amountLD;
+    }
+
+    // -----================= ::: OWNABLE ::: =================-----
+
+    function owner() public pure override returns (address) {
+        revert OwnableDisabled();
+    }
+
+    function _checkOwner() internal view override {
+        _checkRole(OFT_OWNER_ROLE);
+    }
+
+    function renounceOwnership() public pure override {
+        revert OwnableDisabled();
+    }
+
+    function transferOwnership(address) public pure override {
+        revert OwnableDisabled();
+    }
+
+    function _transferOwnership(address) internal pure override {
+        revert OwnableDisabled();
     }
 }
