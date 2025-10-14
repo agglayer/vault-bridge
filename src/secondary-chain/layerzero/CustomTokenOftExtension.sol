@@ -30,20 +30,22 @@ abstract contract CustomTokenOftExtension is CustomToken, OFTCoreUpgradeable {
      *
      * @dev The delegate typically should be set as the owner of the contract.
      */
-    function __CustomTokenOftExtension_init2_ext1(address _delegate)
+    function __CustomTokenOftExtension_init2_ext1(address _owner, address _delegate)
         internal
         onlyInitializing
         incrementsExtensionInitializationCounter(2, Extension.OFT, 1)
     {
         __OFTCore_init(_delegate);
+
+        _grantRole(OFT_OWNER_ROLE, _owner);
     }
 
     /*
     /// @dev How to add a new ext step:
-    function __CustomTokenOftExtension_initX_extY()
+    function __CustomTokenOftExtension_initX_ext2()
         internal
         onlyInitializing
-        incrementsExtensionInitializationCounter(X, Extension.OFT, Y)
+        incrementsExtensionInitializationCounter(X, Extension.OFT, 2)
     {}
     */
 
@@ -118,7 +120,7 @@ abstract contract CustomTokenOftExtension is CustomToken, OFTCoreUpgradeable {
     // -----================= ::: OWNABLE ::: =================-----
 
     function owner() public pure override returns (address) {
-        revert OwnableDisabled();
+        return address(0);
     }
 
     function _checkOwner() internal view override {
