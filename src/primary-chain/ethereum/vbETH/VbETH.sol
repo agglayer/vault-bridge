@@ -78,6 +78,7 @@ contract VbEth is VaultBridgeToken {
         uint32 destinationNetworkId,
         bool forceUpdateGlobalExitRoot
     ) external payable whenNotPaused nonReentrant returns (uint256 shares) {
+        require(destinationNetworkId != agglayerId(), InvalidDestinationNetworkId());
         (shares,) = _depositUsingCustomReceivingFunction(
             _receiveUnderlyingTokenViaMsgValue,
             msg.value,
