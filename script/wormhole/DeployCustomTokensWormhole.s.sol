@@ -212,10 +212,10 @@ contract DeployCustomTokensWormhole is Script {
 
         _stopBroadcast();
 
-        console.log(WethWormhole(address(proxy)).name(), "proxified and initialized:", address(proxy));
+        console.log(WethWormhole(payable(address(proxy))).name(), "proxified and initialized:", address(proxy));
 
         // Return a `WethWormhole`.
-        return WethWormhole(address(proxy));
+        return WethWormhole(payable(address(proxy)));
     }
 
     /// @notice Creates a `TransparentUpgradeableProxy` for a generic Custom Token, points it to the `GenericCustomTokenWormhole` implementation, and initializes it.
