@@ -116,8 +116,9 @@ contract WethNativeConverterAgglayer is NativeConverterAgglayer {
     function migratableGasBacking() public view returns (uint256) {
         WETHNativeConverterStorage storage $ = _getWethNativeConverterAgglayerStorage();
 
-        uint256 nonMigratableGasBacking =
-            _convertToAssets(Math.mulDiv(customToken().totalSupply(), $.nonMigratableGasBackingPercentage, 1e18));
+        uint256 nonMigratableGasBacking = _convertToAssets(
+            Math.mulDiv(customToken().totalSupply(), $.nonMigratableGasBackingPercentage, 1e18, Math.Rounding.Ceil)
+        );
 
         uint256 gasBacking = WethAgglayer(address(customToken())).gasBackingOnSecondaryChain();
 
