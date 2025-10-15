@@ -343,10 +343,12 @@ contract NativeConverterTest is NativeConverterTestBase {
 
         vm.startPrank(owner);
 
+        /* outdated
         nativeConverter.pause();
         vm.expectRevert(PausableUpgradeable.EnforcedPause.selector);
         nativeConverter.migrateBackingToPrimaryChain(amount);
         nativeConverter.unpause();
+        */
 
         vm.expectRevert(NativeConverter.InvalidAssets.selector);
         nativeConverter.migrateBackingToPrimaryChain(0); // try with 0 backing

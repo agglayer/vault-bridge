@@ -461,7 +461,7 @@ abstract contract NativeConverter is
     /// @notice This function can be called by a migrator only.
     /// @notice The migration can be completed by anyone on Primary Chain.
     /// @dev Consider calling this function periodically; anyone can complete a migration on Primary Chain.
-    function migrateBackingToPrimaryChain(uint256 assets) external whenNotPaused onlyRole(MIGRATOR_ROLE) nonReentrant {
+    function migrateBackingToPrimaryChain(uint256 assets) external onlyRole(MIGRATOR_ROLE) nonReentrant {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
 
         // Cache the migratable backing.
@@ -541,7 +541,7 @@ abstract contract NativeConverter is
     }
 
     // @remind Document (the entire function).
-    function removeMigrationInProgress(uint256 mintedCustomToken) external whenNotPaused onlyCustomToken nonReentrant {
+    function removeMigrationInProgress(uint256 mintedCustomToken) external onlyCustomToken nonReentrant {
         _removeMigrationInProgress(mintedCustomToken);
 
         emit MigrationInProgressRemoved(mintedCustomToken);
