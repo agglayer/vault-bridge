@@ -133,7 +133,6 @@ contract WethNativeConverterAgglayer is NativeConverterAgglayer {
     /// @notice Users can still bridge WETH back to Primary Chain to receive wETH or ETH.
     function migrateGasBackingToPrimaryChain(uint256 amount)
         external
-        whenNotPaused
         onlyIfGasTokenIsEth
         onlyRole(MIGRATOR_ROLE)
         nonReentrant

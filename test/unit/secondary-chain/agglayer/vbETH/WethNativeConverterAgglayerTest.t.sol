@@ -166,10 +166,12 @@ contract WethNativeConverterAgglayerTest is WethNativeConverterAgglayerTestBase 
 
         vm.startPrank(owner);
 
+        /* outdated
         nativeConverter.pause();
         vm.expectRevert(PausableUpgradeable.EnforcedPause.selector);
         nativeConverter.migrateGasBackingToPrimaryChain(amountToMigrate);
         nativeConverter.unpause();
+        */
 
         vm.expectRevert(NativeConverter.InvalidAssets.selector);
         nativeConverter.migrateGasBackingToPrimaryChain(0); // try with 0 backing
