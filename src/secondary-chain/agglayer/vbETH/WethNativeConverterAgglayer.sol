@@ -120,7 +120,7 @@ contract WethNativeConverterAgglayer is NativeConverterAgglayer {
             Math.mulDiv(customToken().totalSupply(), $.nonMigratableGasBackingPercentage, 1e18, Math.Rounding.Ceil)
         );
 
-        uint256 gasBacking = WethAgglayer(address(customToken())).gasBackingOnSecondaryChain();
+        uint256 gasBacking = WethAgglayer(payable(address(customToken()))).gasBackingOnSecondaryChain();
 
         return gasBacking > nonMigratableGasBacking ? gasBacking - nonMigratableGasBacking : 0;
     }
@@ -138,7 +138,7 @@ contract WethNativeConverterAgglayer is NativeConverterAgglayer {
         onlyRole(MIGRATOR_ROLE)
         nonReentrant
     {
-        WethAgglayer weth = WethAgglayer(address(customToken()));
+        WethAgglayer weth = WethAgglayer(payable(address(customToken())));
 
         uint256 migratableGasBacking_ = migratableGasBacking();
 

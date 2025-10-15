@@ -89,12 +89,12 @@ contract WethAgglayerTest is WethAgglayerTestBase {
         deal(address(this), amount);
 
         vm.prank(owner);
-        CustomTokenWethExtension(address(wethAgglayer)).setWethFunctionalityEnabled(false);
+        CustomTokenWethExtension(payable(address(wethAgglayer))).setWethFunctionalityEnabled(false);
         vm.expectRevert(CustomTokenWethExtension.FunctionNotEnabledOnThisChain.selector);
         wethAgglayer.deposit{value: amount}();
 
         vm.prank(owner);
-        CustomTokenWethExtension(address(wethAgglayer)).setWethFunctionalityEnabled(true);
+        CustomTokenWethExtension(payable(address(wethAgglayer))).setWethFunctionalityEnabled(true);
         vm.expectEmit();
         emit CustomTokenWethExtension.Deposit(address(this), amount);
         wethAgglayer.deposit{value: amount}();
