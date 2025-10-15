@@ -104,12 +104,12 @@ abstract contract CustomTokenWethExtension is CustomToken {
         return $.wethFunctionalityEnabled;
     }
 
-    receive() external payable whenNotPaused onlyIfGasTokenIsEth nonReentrant {
+    receive() external payable whenNotPaused onlyIfGasTokenIsEth onlyIfWethFunctionalityEnabled nonReentrant {
         _deposit();
     }
 
     /// @notice Same as WETH9 deposit function.
-    function deposit() external payable whenNotPaused onlyIfWethFunctionalityEnabled onlyIfGasTokenIsEth nonReentrant {
+    function deposit() external payable whenNotPaused onlyIfGasTokenIsEth onlyIfWethFunctionalityEnabled nonReentrant {
         _deposit();
     }
 
