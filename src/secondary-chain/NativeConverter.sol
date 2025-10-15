@@ -577,7 +577,7 @@ abstract contract NativeConverter is
 
         require($.backingOnSecondaryChain == 0, CannotSetCustomTokenIfBackingOnSecondaryChainIsNotZero());
 
-        try CustomTokenWethExtension(address($.customToken)).gasBackingOnSecondaryChain() returns (
+        try CustomTokenWethExtension(payable(address($.customToken))).gasBackingOnSecondaryChain() returns (
             uint256 gasBackingOnSecondaryChain
         ) {
             require(gasBackingOnSecondaryChain == 0, CannotSetCustomTokenIfGasBackingOnSecondaryChainIsNotZero());
