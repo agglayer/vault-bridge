@@ -51,10 +51,15 @@ abstract contract CustomTokenTestBase is SecondaryChainBase {
         customTokenImpl = address(new TestHarnessCustomToken());
         stateBeforeInitialize = vm.snapshotState();
 
-        bytes memory customTokenInitData = abi.encodeCall(
+        bytes[] memory reinitializeCallData = new bytes[](3);
+        reinitializeCallData[0] = abi.encodeCall(TestHarnessCustomToken.reinitialize1, ());
+        reinitializeCallData[1] = abi.encodeCall(
             TestHarnessCustomToken.reinitialize2,
             (owner, customTokenDecimals, address(mockAgglayerBridge), dummyNativeConverter)
         );
+        reinitializeCallData[2] = abi.encodeCall(TestHarnessCustomToken.reinitialize3, ());
+
+        bytes memory customTokenInitData = abi.encodeCall(TestHarnessCustomToken.reinitialize, (reinitializeCallData));
 
         bytes memory customTokenUpgradeData =
             abi.encodeCall(ITransparentUpgradeableProxy.upgradeToAndCall, (customTokenImpl, customTokenInitData));
@@ -63,7 +68,6 @@ abstract contract CustomTokenTestBase is SecondaryChainBase {
         (address(existingCustomTokenProxy).call(customTokenUpgradeData));
 
         customTokenHarness = TestHarnessCustomToken(address(existingCustomTokenProxy));
-        customTokenHarness.reinitialize3();
     }
 
     /// @notice Setup debugging labels

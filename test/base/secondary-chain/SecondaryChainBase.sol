@@ -23,6 +23,8 @@ contract TestHarnessCustomToken is CustomToken {
         _disableInitializers();
     }
 
+    function reinitialize1() external {}
+
     function reinitialize2(
         address owner_,
         uint8 originalUnderlyingTokenDecimals_,
@@ -40,6 +42,16 @@ contract TestHarnessCustomToken is CustomToken {
         _incrementGlobalInitializationCounter(3);
 
         __CustomToken_init2();
+    }
+
+    function reinitialize(bytes[] calldata reinitializeData) external {
+        bytes4[] memory reinitializeSelectors = new bytes4[](3);
+
+        reinitializeSelectors[0] = this.reinitialize1.selector;
+        reinitializeSelectors[1] = this.reinitialize2.selector;
+        reinitializeSelectors[2] = this.reinitialize3.selector;
+
+        _reinitialize(reinitializeSelectors, reinitializeData);
     }
 
     /// @inheritdoc CustomToken
@@ -81,6 +93,16 @@ contract TestHarnessNativeConverter is NativeConverter {
         _incrementGlobalInitializationCounter(2);
 
         __NativeConverter_init2();
+    }
+
+    // @remind Document (the entire function).
+    function reinitialize(bytes[] calldata reinitializeData) external {
+        bytes4[] memory reinitializeSelectors = new bytes4[](2);
+
+        reinitializeSelectors[0] = this.reinitialize1.selector;
+        reinitializeSelectors[1] = this.reinitialize2.selector;
+
+        _reinitialize(reinitializeSelectors, reinitializeData);
     }
 
     /// @inheritdoc NativeConverter

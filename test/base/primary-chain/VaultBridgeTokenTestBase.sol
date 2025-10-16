@@ -70,14 +70,17 @@ abstract contract VaultBridgeTokenTestBase is PrimaryChainBase {
 
         // Prepare initialization data
         // Initialize the proxy through the reinitialize1 function
-        bytes memory initData = abi.encodeCall(
-            TestHarnessVaultBridgeToken(vbTokenImplementation).reinitialize1, (address(initializer), initParams)
-        );
+        bytes[] memory reinitializeCallData = new bytes[](2);
+        reinitializeCallData[0] =
+            abi.encodeCall(TestHarnessVaultBridgeToken.reinitialize1, (address(initializer), initParams));
+        reinitializeCallData[1] = abi.encodeCall(TestHarnessVaultBridgeToken.reinitialize2, ());
+
+        bytes memory vaultBridgeInitData =
+            abi.encodeCall(TestHarnessVaultBridgeToken.reinitialize, (reinitializeCallData));
 
         // Deploy proxy and initialize
-        address vbTokenProxy = _proxify(vbTokenImplementation, address(this), initData);
+        address vbTokenProxy = _proxify(vbTokenImplementation, address(this), vaultBridgeInitData);
         vbToken = TestHarnessVaultBridgeToken(payable(vbTokenProxy));
-        vbToken.reinitialize2();
 
         // Set vbTokenPart2 to point to the proxy (delegation pattern)
         vbTokenPart2 = VaultBridgeTokenPart2(payable(address(vbToken)));

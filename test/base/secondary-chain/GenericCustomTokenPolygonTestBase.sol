@@ -39,17 +39,17 @@ abstract contract GenericCustomTokenPolygonTestBase is SecondaryChainBase {
     function deployGenericCustomTokenPolygon() internal {
         genericCustomTokenPolygonImpl = address(new GenericCustomTokenPolygon());
 
+        bytes[] memory reinitializeCallData = new bytes[](1);
+        reinitializeCallData[0] = abi.encodeCall(
+            GenericCustomTokenPolygon.reinitialize1,
+            (owner, customTokenName, customTokenSymbol, originalUnderlyingTokenDecimals, childChainManager)
+        );
+
+        bytes memory genericCustomTokenPolygonInitData =
+            abi.encodeCall(GenericCustomTokenPolygon.reinitialize, (reinitializeCallData));
+
         existingGenericCustomTokenPolygonProxy = TransparentUpgradeableProxy(
-            payable(
-                _proxify(
-                    genericCustomTokenPolygonImpl,
-                    proxyAdmin,
-                    abi.encodeCall(
-                        GenericCustomTokenPolygon.reinitialize1,
-                        (owner, customTokenName, customTokenSymbol, originalUnderlyingTokenDecimals, childChainManager)
-                    )
-                )
-            )
+            payable(_proxify(genericCustomTokenPolygonImpl, proxyAdmin, genericCustomTokenPolygonInitData))
         );
 
         genericCustomTokenPolygon = GenericCustomTokenPolygon(address(existingGenericCustomTokenPolygonProxy));

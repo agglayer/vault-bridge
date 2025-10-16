@@ -82,7 +82,8 @@ abstract contract VbUsdcNativeConverterAgglayerBridgedUsdcStandardTestBase is Se
 
         stateBeforeInitialize = vm.snapshotState();
 
-        bytes memory initData = abi.encodeCall(
+        bytes[] memory reinitializeCallData = new bytes[](2);
+        reinitializeCallData[0] = abi.encodeCall(
             VbUsdcNativeConverterAgglayerBridgedUsdcStandard(payable(address(0))).reinitialize1,
             (
                 owner,
@@ -94,12 +95,16 @@ abstract contract VbUsdcNativeConverterAgglayerBridgedUsdcStandardTestBase is Se
                 migrationManager
             )
         );
-        nativeConverter =
-            VbUsdcNativeConverterAgglayerBridgedUsdcStandard(_proxify(nativeConverterImpl, proxyAdmin, initData));
-        assertEq(address(nativeConverter), calculatedNativeConverter);
+        reinitializeCallData[1] =
+            abi.encodeCall(VbUsdcNativeConverterAgglayerBridgedUsdcStandard(payable(address(0))).reinitialize2, ());
 
-        // Complete initialization
-        nativeConverter.reinitialize2();
+        bytes memory vbUsdcNativeConverterAgglayerBridgedInitData = abi.encodeCall(
+            VbUsdcNativeConverterAgglayerBridgedUsdcStandard(payable(address(0))).reinitialize, (reinitializeCallData)
+        );
+        nativeConverter = VbUsdcNativeConverterAgglayerBridgedUsdcStandard(
+            _proxify(nativeConverterImpl, proxyAdmin, vbUsdcNativeConverterAgglayerBridgedInitData)
+        );
+        assertEq(address(nativeConverter), calculatedNativeConverter);
 
         vm.prank(address(nativeConverter));
         underlyingToken.approve(address(mockAgglayerBridge), type(uint256).max);
