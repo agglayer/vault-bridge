@@ -63,19 +63,21 @@ abstract contract WethNativeConverterAgglayerTestBase is SecondaryChainBase {
 
         calculatedNativeConverter = vm.computeCreateAddress(address(this), vm.getNonce(address(this)) + 1);
 
-        bytes memory customTokenInitData = abi.encodeCall(
+        bytes[] memory reinitializeCallData = new bytes[](3);
+        reinitializeCallData[0] = abi.encodeCall(WethAgglayer.reinitialize1, ());
+        reinitializeCallData[1] = abi.encodeCall(
             WethAgglayer.reinitialize2,
             (proxyAdmin, customTokenDecimals, address(mockAgglayerBridge), calculatedNativeConverter)
         );
+        reinitializeCallData[2] = abi.encodeCall(WethAgglayer.reinitialize3, (true));
+
+        bytes memory customTokenInitData = abi.encodeCall(WethAgglayer.reinitialize, (reinitializeCallData));
         bytes memory customTokenUpgradeData = abi.encodeCall(
             ITransparentUpgradeableProxy.upgradeToAndCall, (address(genericCustomTokenImpl), customTokenInitData)
         );
         vm.prank(_getProxyAdmin(address(existingCustomTokenProxy)));
         (bool success,) = address(existingCustomTokenProxy).call(customTokenUpgradeData);
         require(success, "Failed to upgrade to WethAgglayer");
-
-        // Complete the initialization with reinitialize3
-        WethAgglayer(payable(address(existingCustomTokenProxy))).reinitialize3(true);
 
         // assign variables for generic testing
         customToken = MockERC20Upgradeable(address(existingCustomTokenProxy));
@@ -84,8 +86,9 @@ abstract contract WethNativeConverterAgglayerTestBase is SecondaryChainBase {
 
         stateBeforeInitialize = vm.snapshotState();
 
-        bytes memory initData = abi.encodeCall(
-            nativeConverter.reinitialize1,
+        reinitializeCallData = new bytes[](2);
+        reinitializeCallData[0] = abi.encodeCall(
+            WethNativeConverterAgglayer.reinitialize1,
             (
                 owner,
                 address(customToken),
@@ -97,7 +100,13 @@ abstract contract WethNativeConverterAgglayerTestBase is SecondaryChainBase {
                 maxNonMigratableGasBackingPercentage
             )
         );
-        nativeConverter = WethNativeConverterAgglayer(payable(_proxify(nativeConverterImpl, proxyAdmin, initData)));
+        reinitializeCallData[1] = abi.encodeCall(WethNativeConverterAgglayer.reinitialize2, ());
+
+        bytes memory wethNativeConverterAgglayerInitData =
+            abi.encodeCall(WethNativeConverterAgglayer.reinitialize, (reinitializeCallData));
+        nativeConverter = WethNativeConverterAgglayer(
+            payable(_proxify(nativeConverterImpl, proxyAdmin, wethNativeConverterAgglayerInitData))
+        );
         assertEq(address(nativeConverter), calculatedNativeConverter);
 
         vm.prank(address(nativeConverter));

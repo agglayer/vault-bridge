@@ -66,10 +66,15 @@ abstract contract NativeConverterTestBase is SecondaryChainBase {
 
         calculatedNativeConverter = vm.computeCreateAddress(address(this), vm.getNonce(address(this)) + 1);
 
-        bytes memory customTokenInitData = abi.encodeCall(
+        bytes[] memory reinitializeCallData = new bytes[](3);
+        reinitializeCallData[0] = abi.encodeCall(TestHarnessCustomToken.reinitialize1, ());
+        reinitializeCallData[1] = abi.encodeCall(
             TestHarnessCustomToken.reinitialize2,
             (proxyAdmin, customTokenDecimals, address(mockAgglayerBridge), calculatedNativeConverter)
         );
+        reinitializeCallData[2] = abi.encodeCall(TestHarnessCustomToken.reinitialize3, ());
+
+        bytes memory customTokenInitData = abi.encodeCall(TestHarnessCustomToken.reinitialize, (reinitializeCallData));
         bytes memory customTokenUpgradeData = abi.encodeCall(
             ITransparentUpgradeableProxy.upgradeToAndCall, (address(genericCustomTokenImpl), customTokenInitData)
         );
@@ -83,8 +88,9 @@ abstract contract NativeConverterTestBase is SecondaryChainBase {
 
         stateBeforeInitialize = vm.snapshotState();
 
-        bytes memory initData = abi.encodeCall(
-            nativeConverter.reinitialize1,
+        reinitializeCallData = new bytes[](2);
+        reinitializeCallData[0] = abi.encodeCall(
+            TestHarnessNativeConverter.reinitialize1,
             (
                 owner,
                 address(customToken),
@@ -95,9 +101,12 @@ abstract contract NativeConverterTestBase is SecondaryChainBase {
                 migrationManager
             )
         );
-        nativeConverter = TestHarnessNativeConverter(_proxify(nativeConverterImpl, proxyAdmin, initData));
-        assertEq(address(nativeConverter), calculatedNativeConverter);
+        reinitializeCallData[1] = abi.encodeCall(TestHarnessNativeConverter.reinitialize2, ());
 
+        bytes memory nativeConverterInitData =
+            abi.encodeCall(TestHarnessNativeConverter.reinitialize, (reinitializeCallData));
+        nativeConverter = TestHarnessNativeConverter(_proxify(nativeConverterImpl, proxyAdmin, nativeConverterInitData));
+        assertEq(address(nativeConverter), calculatedNativeConverter);
         vm.prank(address(nativeConverter));
         underlyingToken.approve(address(mockAgglayerBridge), type(uint256).max);
     }

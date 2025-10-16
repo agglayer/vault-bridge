@@ -78,13 +78,10 @@ contract PolygonIntegrationTest is TestConstants {
 
         // Deploy migration manager
         MigrationManager migrationManagerImpl = new MigrationManager();
-        bytes memory migrationManagerInitData = abi.encodeCall(
-            MigrationManager.reinitialize1,
-            (
-                owner, // owner
-                address(mockAgglayerBridge) // agglayerBridge
-            )
-        );
+        bytes[] memory reinitializeCallData = new bytes[](2);
+        reinitializeCallData[0] = abi.encodeCall(MigrationManager.reinitialize1, (owner, address(mockAgglayerBridge)));
+        reinitializeCallData[1] = abi.encodeCall(MigrationManager.reinitialize2, (makeAddr("WrappedGasToken")));
+        bytes memory migrationManagerInitData = abi.encodeCall(MigrationManager.reinitialize, (reinitializeCallData));
         migrationManager =
             MigrationManager(payable(_proxify(address(migrationManagerImpl), address(this), migrationManagerInitData)));
     }

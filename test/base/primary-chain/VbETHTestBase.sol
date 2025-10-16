@@ -78,11 +78,14 @@ abstract contract VbETHTestBase is PrimaryChainBase {
         });
 
         // Prepare initialization data
-        bytes memory initData =
-            abi.encodeCall(VbEth(vbETHImplementation).reinitialize1, (address(initializer), initParams));
+        bytes[] memory reinitializeCallData = new bytes[](2);
+        reinitializeCallData[0] = abi.encodeCall(VbEth.reinitialize1, (address(initializer), initParams));
+        reinitializeCallData[1] = abi.encodeCall(VbEth.reinitialize2, ());
+
+        bytes memory vbEthInitData = abi.encodeCall(VbEth.reinitialize, (reinitializeCallData));
 
         // Deploy proxy and initialize
-        address vbETHProxy = _proxify(vbETHImplementation, address(this), initData);
+        address vbETHProxy = _proxify(vbETHImplementation, address(this), vbEthInitData);
         vbETH = VbEth(payable(vbETHProxy));
 
         // Set vbETHPart2 to point to the proxy (delegation pattern)
