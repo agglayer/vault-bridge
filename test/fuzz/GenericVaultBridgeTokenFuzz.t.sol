@@ -58,13 +58,17 @@ contract GenericVaultBridgeTokenFuzzTest is VaultBridgeTokenTestBase {
             vaultBridgeTokenPart2: address(vbTokenPart2Implementation)
         });
 
-        bytes memory initData = abi.encodeCall(
+        bytes[] memory reinitializeCallData = new bytes[](2);
+        reinitializeCallData[0] = abi.encodeCall(
             VaultBridgeTokenHarness(harnessImplementation).reinitialize1, (address(initializer), initParams)
         );
+        reinitializeCallData[1] = abi.encodeCall(VaultBridgeTokenHarness(harnessImplementation).reinitialize2, ());
 
-        address harnessProxy = _proxify(harnessImplementation, address(this), initData);
+        bytes memory vaultBridgeTokenInitData =
+            abi.encodeCall(VaultBridgeTokenHarness(harnessImplementation).reinitialize, (reinitializeCallData));
+
+        address harnessProxy = _proxify(harnessImplementation, address(this), vaultBridgeTokenInitData);
         vbTokenHarness = VaultBridgeTokenHarness(payable(harnessProxy));
-        vbTokenHarness.reinitialize2();
 
         vm.label(address(vbTokenHarness), "VaultBridgeToken Harness");
     }

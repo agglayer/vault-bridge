@@ -53,11 +53,14 @@ abstract contract MigrationManagerTestBase is PrimaryChainBase {
         stateBeforeInitialize = vm.snapshotState();
 
         // Initialize migration manager
-        bytes memory migrationManagerInitData =
-            abi.encodeCall(MigrationManager.reinitialize1, (owner, address(agglayerBridge)));
+        bytes[] memory reinitializeCallData = new bytes[](2);
+        reinitializeCallData[0] = abi.encodeCall(MigrationManager.reinitialize1, (owner, address(agglayerBridge)));
+        reinitializeCallData[1] = abi.encodeCall(MigrationManager.reinitialize2, (address(wrappedGasToken)));
+
+        bytes memory migrationManagerInitData = abi.encodeCall(MigrationManager.reinitialize, (reinitializeCallData));
+
         address migrationManagerProxy = _proxify(migrationManagerImpl, address(this), migrationManagerInitData);
         migrationManager = MigrationManager(payable(migrationManagerProxy));
-        migrationManager.reinitialize2(address(wrappedGasToken));
     }
 
     /// @notice verify MigrationManager setup

@@ -138,7 +138,11 @@ contract AgglayerIntegrationTest is TestConstants, ZkEVMCommon {
             yieldVaultMaximumSlippagePercentage: YIELD_VAULT_ALLOWED_SLIPPAGE,
             vaultBridgeTokenPart2: address(vbTokenPart2)
         });
-        bytes memory vbTokenInitData = abi.encodeCall(vbToken.reinitialize1, (initializer, initParams));
+        bytes[] memory reinitializeCallData = new bytes[](2);
+        reinitializeCallData[0] =
+            abi.encodeCall(GenericVaultBridgeToken.reinitialize1, (address(initializer), initParams));
+        reinitializeCallData[1] = abi.encodeCall(GenericVaultBridgeToken.reinitialize2, ());
+        bytes memory vbTokenInitData = abi.encodeCall(vbToken.reinitialize, (reinitializeCallData));
         vbToken = GenericVaultBridgeToken(payable(_proxify(address(vbToken), address(this), vbTokenInitData)));
         vbTokenPart2 = VaultBridgeTokenPart2(payable(address(vbToken)));
 
@@ -151,10 +155,14 @@ contract AgglayerIntegrationTest is TestConstants, ZkEVMCommon {
         wrappedGasToken = new MockWETH();
 
         MigrationManager migrationManagerImpl = new MigrationManager();
-        bytes memory migrationManagerInitData = abi.encodeCall(MigrationManager.reinitialize1, (owner, LXLY_BRIDGE_X));
+
+        reinitializeCallData = new bytes[](2);
+        reinitializeCallData[0] = abi.encodeCall(MigrationManager.reinitialize1, (owner, LXLY_BRIDGE_X));
+        reinitializeCallData[1] = abi.encodeCall(MigrationManager.reinitialize2, (address(wrappedGasToken)));
+
+        bytes memory migrationManagerInitData = abi.encodeCall(MigrationManager.reinitialize, (reinitializeCallData));
         migrationManager =
             MigrationManager(payable(_proxify(address(migrationManagerImpl), address(this), migrationManagerInitData)));
-        migrationManager.reinitialize2(address(wrappedGasToken));
 
         vm.prank(owner);
         migrationManager.configureNativeConverters(

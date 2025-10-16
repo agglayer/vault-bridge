@@ -42,17 +42,17 @@ abstract contract GenericCustomTokenWormholeTestBase is SecondaryChainBase {
     function deployGenericCustomTokenWormhole() internal {
         genericCustomTokenWormholeImpl = address(new GenericCustomTokenWormhole());
 
+        bytes[] memory reinitializeCallData = new bytes[](1);
+        reinitializeCallData[0] = abi.encodeCall(
+            GenericCustomTokenWormhole.reinitialize1,
+            (owner, customTokenName, customTokenSymbol, originalUnderlyingTokenDecimals, nttManager)
+        );
+
+        bytes memory genericCustomTokenWormholeInitData =
+            abi.encodeCall(GenericCustomTokenWormhole.reinitialize, (reinitializeCallData));
+
         existingGenericCustomTokenWormholeProxy = TransparentUpgradeableProxy(
-            payable(
-                _proxify(
-                    genericCustomTokenWormholeImpl,
-                    proxyAdmin,
-                    abi.encodeCall(
-                        GenericCustomTokenWormhole.reinitialize1,
-                        (owner, customTokenName, customTokenSymbol, originalUnderlyingTokenDecimals, nttManager)
-                    )
-                )
-            )
+            payable(_proxify(genericCustomTokenWormholeImpl, proxyAdmin, genericCustomTokenWormholeInitData))
         );
 
         genericCustomTokenWormhole = GenericCustomTokenWormhole(address(existingGenericCustomTokenWormholeProxy));
