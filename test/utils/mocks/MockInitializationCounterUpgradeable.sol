@@ -53,4 +53,14 @@ contract MockInitializationCounterUpgradeable is InitializationCounterUpgradeabl
     function getStorageSlot() external pure returns (bytes32) {
         return 0x8d679e361eeeac0b879fa197c8b3bda76a3db4f57c9f89335c04a065390bbb00;
     }
+
+    /// @notice Public wrapper for _reinitialize to test reinitialization logic
+    function reinitialize(bytes4[] memory reinitializeSelectors, bytes[] calldata reinitializeData) external {
+        _reinitialize(reinitializeSelectors, reinitializeData);
+    }
+
+    /// @notice Mock reinitialize function that reverts
+    function reinitializeRevert() external pure {
+        revert("Mock revert");
+    }
 }
