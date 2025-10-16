@@ -7,6 +7,12 @@ import "test/base/InitializationCounterTestBase.sol";
 // Core contract
 import {InitializationCounterUpgradeable} from "src/etc/InitializationCounterUpgradeable.sol";
 
+// Proxy contract
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+
+// Mock contract
+import {MockInitializationCounterUpgradeable} from "test/utils/mocks/MockInitializationCounterUpgradeable.sol";
+
 /// @dev Tests for InitializationCounterUpgradeable
 contract InitializationCounterUpgradeableTest is InitializationCounterTestBase {
     function setUp() public virtual {
@@ -213,5 +219,253 @@ contract InitializationCounterUpgradeableTest is InitializationCounterTestBase {
         // but for testing purposes we'll just verify the function handles large values
         vm.expectRevert();
         initCounter.incrementLocalInitializationCounterWithModifier(nearMaxValue);
+    }
+
+    // ========= REINITIALIZE TESTS =========
+
+    function test_reinitialize_success_singleFunction() public {
+        // Deploy proxy with implementation
+        MockInitializationCounterUpgradeable implementation = new MockInitializationCounterUpgradeable();
+        bytes memory initData = "";
+        ERC1967Proxy proxy = new ERC1967Proxy(address(implementation), initData);
+        MockInitializationCounterUpgradeable proxied = MockInitializationCounterUpgradeable(address(proxy));
+
+        // Setup reinitialize data
+        bytes4[] memory selectors = new bytes4[](1);
+        selectors[0] = MockInitializationCounterUpgradeable.incrementGlobalInitializationCounter.selector;
+
+        bytes[] memory reinitData = new bytes[](1);
+        reinitData[0] = abi.encodeWithSelector(
+            MockInitializationCounterUpgradeable.incrementGlobalInitializationCounter.selector, 1
+        );
+
+        // Execute reinitialize
+        proxied.reinitialize(selectors, reinitData);
+
+        // Verify global counter was incremented
+        assertEq(proxied.globalInitializationCounter(), 1);
+    }
+
+    function test_reinitialize_success_multipleFunctions() public {
+        // Deploy proxy with implementation
+        MockInitializationCounterUpgradeable implementation = new MockInitializationCounterUpgradeable();
+        bytes memory initData = "";
+        ERC1967Proxy proxy = new ERC1967Proxy(address(implementation), initData);
+        MockInitializationCounterUpgradeable proxied = MockInitializationCounterUpgradeable(address(proxy));
+
+        // Setup reinitialize data for 3 functions
+        bytes4[] memory selectors = new bytes4[](3);
+        selectors[0] = MockInitializationCounterUpgradeable.incrementGlobalInitializationCounter.selector;
+        selectors[1] = MockInitializationCounterUpgradeable.incrementGlobalInitializationCounter.selector;
+        selectors[2] = MockInitializationCounterUpgradeable.incrementGlobalInitializationCounter.selector;
+
+        bytes[] memory reinitData = new bytes[](3);
+        reinitData[0] = abi.encodeWithSelector(
+            MockInitializationCounterUpgradeable.incrementGlobalInitializationCounter.selector, 1
+        );
+        reinitData[1] = abi.encodeWithSelector(
+            MockInitializationCounterUpgradeable.incrementGlobalInitializationCounter.selector, 2
+        );
+        reinitData[2] = abi.encodeWithSelector(
+            MockInitializationCounterUpgradeable.incrementGlobalInitializationCounter.selector, 3
+        );
+
+        // Execute reinitialize
+        proxied.reinitialize(selectors, reinitData);
+
+        // Verify global counter was incremented to 3
+        assertEq(proxied.globalInitializationCounter(), 3);
+    }
+
+    function test_reinitialize_success_partialReinitialize() public {
+        // Deploy proxy with implementation
+        MockInitializationCounterUpgradeable implementation = new MockInitializationCounterUpgradeable();
+        bytes memory initData = "";
+        ERC1967Proxy proxy = new ERC1967Proxy(address(implementation), initData);
+        MockInitializationCounterUpgradeable proxied = MockInitializationCounterUpgradeable(address(proxy));
+
+        // First reinitialize: execute only first function with 1 selector
+        bytes4[] memory selectors1 = new bytes4[](1);
+        selectors1[0] = MockInitializationCounterUpgradeable.incrementGlobalInitializationCounter.selector;
+
+        bytes[] memory reinitData1 = new bytes[](1);
+        reinitData1[0] = abi.encodeWithSelector(
+            MockInitializationCounterUpgradeable.incrementGlobalInitializationCounter.selector, 1
+        );
+
+        proxied.reinitialize(selectors1, reinitData1);
+        assertEq(proxied.globalInitializationCounter(), 1);
+
+        // Second reinitialize: extend selectors array and execute second function
+        // Now we need to include both selectors (including the already executed one)
+        bytes4[] memory selectors2 = new bytes4[](2);
+        selectors2[0] = MockInitializationCounterUpgradeable.incrementGlobalInitializationCounter.selector;
+        selectors2[1] = MockInitializationCounterUpgradeable.incrementGlobalInitializationCounter.selector;
+
+        // Only provide data for the second selector (globalCounter=1, so expectedLen = 2-1 = 1)
+        bytes[] memory reinitData2 = new bytes[](1);
+        reinitData2[0] = abi.encodeWithSelector(
+            MockInitializationCounterUpgradeable.incrementGlobalInitializationCounter.selector, 2
+        );
+
+        proxied.reinitialize(selectors2, reinitData2);
+        assertEq(proxied.globalInitializationCounter(), 2);
+    }
+
+    function test_reinitialize_alreadyReinitialized_reverts() public {
+        // Deploy proxy with implementation
+        MockInitializationCounterUpgradeable implementation = new MockInitializationCounterUpgradeable();
+        bytes memory initData = "";
+        ERC1967Proxy proxy = new ERC1967Proxy(address(implementation), initData);
+        MockInitializationCounterUpgradeable proxied = MockInitializationCounterUpgradeable(address(proxy));
+
+        // Setup reinitialize data
+        bytes4[] memory selectors = new bytes4[](1);
+        selectors[0] = MockInitializationCounterUpgradeable.incrementGlobalInitializationCounter.selector;
+
+        bytes[] memory reinitData = new bytes[](1);
+        reinitData[0] = abi.encodeWithSelector(
+            MockInitializationCounterUpgradeable.incrementGlobalInitializationCounter.selector, 1
+        );
+
+        // Execute reinitialize
+        proxied.reinitialize(selectors, reinitData);
+
+        // Try to reinitialize again with same selectors - should revert
+        vm.expectRevert(InitializationCounterUpgradeable.AlreadyReinitialized.selector);
+        proxied.reinitialize(selectors, reinitData);
+    }
+
+    function test_reinitialize_invalidDataLength_tooMany_reverts() public {
+        // Deploy proxy with implementation
+        MockInitializationCounterUpgradeable implementation = new MockInitializationCounterUpgradeable();
+        bytes memory initData = "";
+        ERC1967Proxy proxy = new ERC1967Proxy(address(implementation), initData);
+        MockInitializationCounterUpgradeable proxied = MockInitializationCounterUpgradeable(address(proxy));
+
+        // Setup selectors for 1 function but provide 2 data items
+        bytes4[] memory selectors = new bytes4[](1);
+        selectors[0] = MockInitializationCounterUpgradeable.incrementGlobalInitializationCounter.selector;
+
+        bytes[] memory reinitData = new bytes[](2);
+        reinitData[0] = abi.encodeWithSelector(
+            MockInitializationCounterUpgradeable.incrementGlobalInitializationCounter.selector, 1
+        );
+        reinitData[1] = abi.encodeWithSelector(
+            MockInitializationCounterUpgradeable.incrementGlobalInitializationCounter.selector, 2
+        );
+
+        // Should revert with InvalidReinitializeDataLength
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                InitializationCounterUpgradeable.InvalidReinitializeDataLength.selector,
+                1, // expected
+                2 // actual
+            )
+        );
+        proxied.reinitialize(selectors, reinitData);
+    }
+
+    function test_reinitialize_invalidDataLength_tooFew_reverts() public {
+        // Deploy proxy with implementation
+        MockInitializationCounterUpgradeable implementation = new MockInitializationCounterUpgradeable();
+        bytes memory initData = "";
+        ERC1967Proxy proxy = new ERC1967Proxy(address(implementation), initData);
+        MockInitializationCounterUpgradeable proxied = MockInitializationCounterUpgradeable(address(proxy));
+
+        // Setup selectors for 2 functions but provide 1 data item
+        bytes4[] memory selectors = new bytes4[](2);
+        selectors[0] = MockInitializationCounterUpgradeable.incrementGlobalInitializationCounter.selector;
+        selectors[1] = MockInitializationCounterUpgradeable.incrementGlobalInitializationCounter.selector;
+
+        bytes[] memory reinitData = new bytes[](1);
+        reinitData[0] = abi.encodeWithSelector(
+            MockInitializationCounterUpgradeable.incrementGlobalInitializationCounter.selector, 1
+        );
+
+        // Should revert with InvalidReinitializeDataLength
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                InitializationCounterUpgradeable.InvalidReinitializeDataLength.selector,
+                2, // expected
+                1 // actual
+            )
+        );
+        proxied.reinitialize(selectors, reinitData);
+    }
+
+    function test_reinitialize_eip1967NotDetected_reverts() public {
+        // Call reinitialize on non-proxy contract (no EIP-1967 implementation slot)
+        bytes4[] memory selectors = new bytes4[](1);
+        selectors[0] = MockInitializationCounterUpgradeable.incrementGlobalInitializationCounter.selector;
+
+        bytes[] memory reinitData = new bytes[](1);
+        reinitData[0] = abi.encodeWithSelector(
+            MockInitializationCounterUpgradeable.incrementGlobalInitializationCounter.selector, 1
+        );
+
+        // Should revert because initCounter is not behind a proxy
+        vm.expectRevert(InitializationCounterUpgradeable.Eip1967NotDetected.selector);
+        initCounter.reinitialize(selectors, reinitData);
+    }
+
+    function test_reinitialize_unknownSelector_reverts() public {
+        // Deploy proxy with implementation
+        MockInitializationCounterUpgradeable implementation = new MockInitializationCounterUpgradeable();
+        bytes memory initData = "";
+        ERC1967Proxy proxy = new ERC1967Proxy(address(implementation), initData);
+        MockInitializationCounterUpgradeable proxied = MockInitializationCounterUpgradeable(address(proxy));
+
+        // Setup selectors array but provide data with different selector
+        bytes4[] memory selectors = new bytes4[](1);
+        selectors[0] = MockInitializationCounterUpgradeable.incrementGlobalInitializationCounter.selector;
+
+        bytes[] memory reinitData = new bytes[](1);
+        // Provide data with wrong selector (reinitializeRevert instead of incrementGlobalInitializationCounter)
+        reinitData[0] = abi.encodeWithSelector(MockInitializationCounterUpgradeable.reinitializeRevert.selector);
+
+        // Should revert with UnknownReinitializeSelector
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                InitializationCounterUpgradeable.UnknownReinitializeSelector.selector,
+                MockInitializationCounterUpgradeable.reinitializeRevert.selector
+            )
+        );
+        proxied.reinitialize(selectors, reinitData);
+    }
+
+    function test_reinitialize_delegatecallReverts_bubblesUpError() public {
+        // Deploy proxy with implementation
+        MockInitializationCounterUpgradeable implementation = new MockInitializationCounterUpgradeable();
+        bytes memory initData = "";
+        ERC1967Proxy proxy = new ERC1967Proxy(address(implementation), initData);
+        MockInitializationCounterUpgradeable proxied = MockInitializationCounterUpgradeable(address(proxy));
+
+        // Setup reinitialize data with function that reverts
+        bytes4[] memory selectors = new bytes4[](1);
+        selectors[0] = MockInitializationCounterUpgradeable.reinitializeRevert.selector;
+
+        bytes[] memory reinitData = new bytes[](1);
+        reinitData[0] = abi.encodeWithSelector(MockInitializationCounterUpgradeable.reinitializeRevert.selector);
+
+        // Should revert with the error from reinitializeRevert
+        vm.expectRevert("Mock revert");
+        proxied.reinitialize(selectors, reinitData);
+    }
+
+    function test_reinitialize_emptySelectors_assertFails() public {
+        // Deploy proxy with implementation
+        MockInitializationCounterUpgradeable implementation = new MockInitializationCounterUpgradeable();
+        bytes memory initData = "";
+        ERC1967Proxy proxy = new ERC1967Proxy(address(implementation), initData);
+        MockInitializationCounterUpgradeable proxied = MockInitializationCounterUpgradeable(address(proxy));
+
+        // Setup empty selectors array
+        bytes4[] memory selectors = new bytes4[](0);
+        bytes[] memory reinitData = new bytes[](0);
+
+        // Should revert due to assert(reinitializeSelectors.length > 0)
+        vm.expectRevert();
+        proxied.reinitialize(selectors, reinitData);
     }
 }
