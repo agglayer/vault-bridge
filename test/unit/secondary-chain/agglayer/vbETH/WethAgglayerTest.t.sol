@@ -65,14 +65,14 @@ contract WethAgglayerTest is WethAgglayerTestBase {
 
         mockAgglayerBridge.setGasTokenAddress(address(this));
         mockAgglayerBridge.setGasTokenNetwork(0);
-        deployWethAgglayer(false);
-        vm.expectRevert(CustomTokenWethExtension.FunctionNotEnabledOnThisChain.selector);
+        deployWethAgglayer(true);
+        vm.expectRevert(CustomTokenWethExtension.FunctionNotSupportedOnThisChain.selector);
         wethAgglayer.deposit{value: amount}();
 
         mockAgglayerBridge.setGasTokenAddress(address(0));
         mockAgglayerBridge.setGasTokenNetwork(1);
-        deployWethAgglayer(false);
-        vm.expectRevert(CustomTokenWethExtension.FunctionNotEnabledOnThisChain.selector);
+        deployWethAgglayer(true);
+        vm.expectRevert(CustomTokenWethExtension.FunctionNotSupportedOnThisChain.selector);
         wethAgglayer.deposit{value: amount}();
 
         mockAgglayerBridge.setGasTokenAddress(address(0));
