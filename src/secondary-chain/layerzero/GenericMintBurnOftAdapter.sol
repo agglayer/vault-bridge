@@ -13,19 +13,30 @@ import {ReentrancyGuardTransientUpgradeable} from
     "@openzeppelin-contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
 import {InitializationCounterUpgradeable} from "../../etc/InitializationCounterUpgradeable.sol";
 
+// Libraries.
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+
 // External contracts.
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {CustomTokenLayerZero} from "./CustomTokenLayerZero.sol";
+import {IFiatTokenV2_2} from "../../etc/IFiatTokenV2_2.sol";
 
 contract GenericMintBurnOftAdapter is
     OFTCoreUpgradeable,
     ReentrancyGuardTransientUpgradeable,
     InitializationCounterUpgradeable
 {
+    // Libraries.
+    using SafeERC20 for IERC20;
+
     /// @dev Storage of Generic Mint Burn OFT Adapter contract.
     /// @dev It's implemented on a custom ERC-7201 namespace to reduce the risk of storage collisions when using with upgradeable contracts.
     /// @custom:storage-location erc7201:agglayer.vault-bridge.GenericMintBurnOftAdapter.storage
     struct GenericMintBurnOftAdapterStorage {
-        CustomTokenLayerZero _innerToken;
+        IERC20 token;
+        bool approvalRequired;
+        uint256 secondaryChainBalance;
     }
 
     /// @dev The storage slot at which Generic Mint Burn OFT Adapter storage starts, following the EIP-7201 standard.
@@ -36,6 +47,7 @@ contract GenericMintBurnOftAdapter is
     // Errors.
     error InvalidToken();
     error InvalidOwner();
+    error InsufficientTokenReceived(uint256 receivedValue, uint256 requestedValue);
 
     // -----================= ::: SETUP ::: =================-----
 
@@ -45,12 +57,12 @@ contract GenericMintBurnOftAdapter is
      * @param _lzEndpoint The LayerZero endpoint address.
      */
     constructor(address _token, address _lzEndpoint)
-        OFTCoreUpgradeable(CustomTokenLayerZero(_token).decimals(), _lzEndpoint)
+        OFTCoreUpgradeable(IERC20Metadata(_token).decimals(), _lzEndpoint)
     {
         _disableInitializers();
     }
 
-    function reinitialize1(address _token, address _owner, address _delegate)
+    function reinitialize1(address _token, bool _approvalRequired, address _owner, address _delegate)
         external
         reinitializer(_incrementGlobalInitializationCounter(1))
         nonReentrant
@@ -66,7 +78,8 @@ contract GenericMintBurnOftAdapter is
         __OFTCore_init(_delegate);
         __ReentrancyGuardTransient_init();
 
-        $._innerToken = CustomTokenLayerZero(_token);
+        $.token = IERC20(_token);
+        $.approvalRequired = _approvalRequired;
     }
 
     /*
@@ -107,7 +120,7 @@ contract GenericMintBurnOftAdapter is
      */
     function token() public view returns (address) {
         GenericMintBurnOftAdapterStorage storage $ = _getGenericMintBurnOftAdapterStorage();
-        return address($._innerToken);
+        return address($.token);
     }
 
     /**
@@ -117,8 +130,14 @@ contract GenericMintBurnOftAdapter is
      *
      * @dev In this MintBurnOFTAdapter, approval is NOT required because it uses mint and burn privileges.
      */
-    function approvalRequired() external pure virtual returns (bool) {
-        return false;
+    function approvalRequired() external view virtual returns (bool) {
+        GenericMintBurnOftAdapterStorage storage $ = _getGenericMintBurnOftAdapterStorage();
+        return $.approvalRequired;
+    }
+
+    function secondaryChainBalance() external view returns (uint256) {
+        GenericMintBurnOftAdapterStorage storage $ = _getGenericMintBurnOftAdapterStorage();
+        return $.secondaryChainBalance;
     }
 
     /**
@@ -144,8 +163,14 @@ contract GenericMintBurnOftAdapter is
     {
         GenericMintBurnOftAdapterStorage storage $ = _getGenericMintBurnOftAdapterStorage();
         (amountSentLD, amountReceivedLD) = _debitView(_amountLD, _minAmountLD, _dstEid);
+        $.secondaryChainBalance -= amountSentLD;
         // Burns tokens from the caller.
-        $._innerToken.burn(_from, amountSentLD);
+        if ($.approvalRequired) {
+            _receiveToken(_from, amountSentLD);
+            IFiatTokenV2_2(address($.token)).burn(amountSentLD);
+        } else {
+            CustomTokenLayerZero(address($.token)).burn(_from, amountSentLD);
+        }
     }
 
     /**
@@ -169,8 +194,41 @@ contract GenericMintBurnOftAdapter is
         GenericMintBurnOftAdapterStorage storage $ = _getGenericMintBurnOftAdapterStorage();
         if (_to == address(0x0)) _to = address(0xdead); // _mint(...) does not support address(0x0)
         // Mints the tokens and transfers to the recipient.
-        $._innerToken.mint(_to, _amountLD);
+        CustomTokenLayerZero(address($.token)).mint(_to, _amountLD);
+        $.secondaryChainBalance += _amountLD;
         // In the case of NON-default OFTAdapter, the amountLD MIGHT not be equal to amountReceivedLD.
         return _amountLD;
+    }
+
+    function setTokenAndApprovalRequired(address _token, bool _approvalRequired) external onlyOwner {
+        GenericMintBurnOftAdapterStorage storage $ = _getGenericMintBurnOftAdapterStorage();
+
+        // Check the input.
+        require(_token != address(0), InvalidToken());
+        require(IERC20Metadata(_token).decimals() == IERC20Metadata(address($.token)).decimals(), InvalidToken());
+
+        $.token = IERC20(_token);
+        $.approvalRequired = _approvalRequired;
+    }
+
+    // -----================= ::: TOKEN ::: =================-----
+
+    /// @notice Transfers the token from an external account to self.
+    /// @dev @note CAUTION! This function MUST NOT introduce reentrancy/crossentrancy vulnerabilities.
+    function _receiveToken(address from, uint256 value) internal {
+        GenericMintBurnOftAdapterStorage storage $ = _getGenericMintBurnOftAdapterStorage();
+
+        // Cache the balance.
+        uint256 balanceBefore = $.token.balanceOf(address(this));
+
+        // Transfer.
+        // @note IMPORTANT: Make sure the token you are integrating does not enable reentrancy on `transferFrom`.
+        $.token.safeTransferFrom(from, address(this), value);
+
+        // Calculate the received amount.
+        uint256 receivedValue = $.token.balanceOf(address(this)) - balanceBefore;
+
+        // Check the output.
+        require(receivedValue == value, InsufficientTokenReceived(receivedValue, value));
     }
 }
