@@ -38,6 +38,16 @@ contract VbETHTest is VbETHTestBase {
         assertEq(vbETH.balanceOf(receiver), initialReceiverBalance + shares, "Receiver should get correct shares");
     }
 
+    function test_Revert_depositGasTokenAndBridge_invalidNetworkID() public {
+        uint256 depositAmount = 1 ether;
+
+        // Deposit ETH
+        vm.deal(address(this), depositAmount);
+
+        vm.expectRevert(VaultBridgeToken.InvalidDestinationNetworkId.selector);
+        vbETH.depositGasTokenAndBridge{value: depositAmount}(address(this), 0, true);
+    }
+
     function test_depositGasTokenAndBridge(address receiver, uint256 depositAmount) public {
         vm.assume(receiver != address(0));
         vm.assume(receiver != address(vbETH));
