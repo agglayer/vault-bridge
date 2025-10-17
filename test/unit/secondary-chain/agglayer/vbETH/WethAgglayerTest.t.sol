@@ -11,6 +11,11 @@ import {
 // Core contracts
 import {CustomTokenWethExtension} from "src/secondary-chain/CustomTokenWethExtension.sol";
 
+// Helper contract that rejects ETH transfers to test WithdrawalFailed
+contract RejectingReceiver {
+// No receive() or fallback() function, so it will reject ETH transfers
+}
+
 contract WethAgglayerTest is WethAgglayerTestBase {
     function setUp() public {
         deployWethAgglayerInfrastructure();
@@ -57,6 +62,42 @@ contract WethAgglayerTest is WethAgglayerTestBase {
         wethAgglayer.withdraw(amount);
         assertEq(wethAgglayer.balanceOf(address(this)), 0);
         assertEq(address(this).balance, amount);
+    }
+
+    function test_Revert_withdraw_AssetsTooLarge() public {
+        uint256 depositAmount = 1 ether;
+        uint256 excessiveWithdrawal = 2 ether;
+
+        assertEq(wethAgglayer.balanceOf(address(this)), 0);
+        deal(address(this), depositAmount);
+
+        // Deposit 1 ether
+        wethAgglayer.deposit{value: depositAmount}();
+        assertEq(wethAgglayer.balanceOf(address(this)), depositAmount);
+
+        // Try to withdraw 2 ether (more than gasBackingOnSecondaryChain)
+        vm.expectRevert(
+            abi.encodeWithSelector(CustomTokenWethExtension.AssetsTooLarge.selector, depositAmount, excessiveWithdrawal)
+        );
+        wethAgglayer.withdraw(excessiveWithdrawal);
+    }
+
+    function test_Revert_withdraw_WithdrawalFailed() public {
+        uint256 depositAmount = 1 ether;
+
+        // Deploy a contract that rejects ETH transfers
+        RejectingReceiver rejecter = new RejectingReceiver();
+
+        // Give the rejecter some ETH and deposit it
+        vm.deal(address(rejecter), depositAmount);
+        vm.prank(address(rejecter));
+        wethAgglayer.deposit{value: depositAmount}();
+        assertEq(wethAgglayer.balanceOf(address(rejecter)), depositAmount);
+
+        // Try to withdraw - should fail because rejecter won't accept ETH
+        vm.prank(address(rejecter));
+        vm.expectRevert(CustomTokenWethExtension.WithdrawalFailed.selector);
+        wethAgglayer.withdraw(depositAmount);
     }
 
     function test_onlyIfGasTokenIsEth() public {
