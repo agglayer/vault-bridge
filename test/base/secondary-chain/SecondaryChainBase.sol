@@ -115,6 +115,36 @@ contract TestHarnessNativeConverter is NativeConverter {
     function _burnCustomToken(address from, uint256 amount) internal override {
         MockERC20Upgradeable(address(customToken())).burn(from, amount);
     }
+
+    // Test helper functions to expose internal state
+    function getMigrationsInProgress(uint256 migratedBacking) external view returns (uint256 value) {
+        bytes32 storageSlot = hex"a14770e0debfe4b8406a01c33ee3a7bbe0acc66b3bde7c71854bf7d080a9c600";
+        // _migrationsInProgress is at offset 8 in the struct
+        bytes32 baseSlot;
+        assembly {
+            baseSlot := add(storageSlot, 8)
+        }
+        bytes32 mappingSlot = keccak256(abi.encode(migratedBacking, baseSlot));
+        assembly {
+            value := sload(mappingSlot)
+        }
+    }
+
+    function getMigrationsInProgressCount() external view returns (uint256 value) {
+        bytes32 storageSlot = hex"a14770e0debfe4b8406a01c33ee3a7bbe0acc66b3bde7c71854bf7d080a9c600";
+        // _migrationsInProgressCount is at offset 9 in the struct
+        assembly {
+            value := sload(add(storageSlot, 9))
+        }
+    }
+
+    function getTotalMigratedBackingInProgress() external view returns (uint256 value) {
+        bytes32 storageSlot = hex"a14770e0debfe4b8406a01c33ee3a7bbe0acc66b3bde7c71854bf7d080a9c600";
+        // _totalMigratedBackingInProgress is at offset 10 in the struct
+        assembly {
+            value := sload(add(storageSlot, 10))
+        }
+    }
 }
 
 /// @title Secondary Chain Base

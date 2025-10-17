@@ -3,8 +3,9 @@ pragma solidity ^0.8.29;
 
 // Test Base
 import {
-    NativeConverterTestBase,
+    MockERC20Upgradeable,
     NativeConverter,
+    NativeConverterTestBase,
     TestHarnessNativeConverter
 } from "test/base/secondary-chain/NativeConverterTestBase.sol";
 import {MigrationManager} from "src/primary-chain/MigrationManager.sol";
@@ -13,6 +14,7 @@ import {MigrationManager} from "src/primary-chain/MigrationManager.sol";
 import {IAccessControl} from "@openzeppelin-contracts/access/IAccessControl.sol";
 import {IBridgeL2SovereignChain} from "test/interfaces/IBridgeL2SovereignChain.sol";
 import {IERC20Errors} from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {PausableUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/PausableUpgradeable.sol";
 
 // Mocks
@@ -396,5 +398,325 @@ contract NativeConverterTest is NativeConverterTestBase {
         assertEq(underlyingToken.balanceOf(address(nativeConverter)), backingOnSecondaryChain - amountToMigrate);
 
         vm.stopPrank();
+    }
+
+    function test_Revert_setNonMigratableBackingPercentage_Unauthorized() public {
+        uint256 newPercentage = 5e17; // 50%
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessControl.AccessControlUnauthorizedAccount.selector,
+                address(this),
+                nativeConverter.DEFAULT_ADMIN_ROLE()
+            )
+        );
+        nativeConverter.setNonMigratableBackingPercentage(newPercentage);
+    }
+
+    function test_Revert_setNonMigratableBackingPercentage_InvalidPercentage() public {
+        uint256 invalidPercentage = 1e19; // 1000% (greater than 100%)
+
+        vm.prank(owner);
+        vm.expectRevert(NativeConverter.InvalidNonMigratableBackingPercentage.selector);
+        nativeConverter.setNonMigratableBackingPercentage(invalidPercentage);
+
+        // Test with value just above the maximum
+        invalidPercentage = 1e18 + 1;
+        vm.prank(owner);
+        vm.expectRevert(NativeConverter.InvalidNonMigratableBackingPercentage.selector);
+        nativeConverter.setNonMigratableBackingPercentage(invalidPercentage);
+    }
+
+    function test_setNonMigratableBackingPercentage() public {
+        uint256 newPercentage = 5e17; // 50%
+
+        // Verify initial value
+        assertEq(nativeConverter.nonMigratableBackingPercentage(), maxNonMigratableBackingPercentage);
+
+        vm.prank(owner);
+        vm.expectEmit();
+        emit NativeConverter.NonMigratableBackingPercentageSet(newPercentage);
+        nativeConverter.setNonMigratableBackingPercentage(newPercentage);
+
+        assertEq(nativeConverter.nonMigratableBackingPercentage(), newPercentage);
+
+        // Test setting to 0% (minimum valid value)
+        vm.prank(owner);
+        vm.expectEmit();
+        emit NativeConverter.NonMigratableBackingPercentageSet(0);
+        nativeConverter.setNonMigratableBackingPercentage(0);
+        assertEq(nativeConverter.nonMigratableBackingPercentage(), 0);
+
+        // Test setting to 100% (maximum valid value)
+        vm.prank(owner);
+        vm.expectEmit();
+        emit NativeConverter.NonMigratableBackingPercentageSet(1e18);
+        nativeConverter.setNonMigratableBackingPercentage(1e18);
+        assertEq(nativeConverter.nonMigratableBackingPercentage(), 1e18);
+    }
+
+    function test_Revert_removeMigrationInProgress_Unauthorized() public {
+        // Try to call from unauthorized addresses
+        uint256 mintedCustomToken = 100;
+
+        vm.prank(sender);
+        vm.expectRevert(NativeConverter.Unauthorized.selector);
+        nativeConverter.removeMigrationInProgress(mintedCustomToken);
+
+        vm.prank(owner);
+        vm.expectRevert(NativeConverter.Unauthorized.selector);
+        nativeConverter.removeMigrationInProgress(mintedCustomToken);
+
+        vm.expectRevert(NativeConverter.Unauthorized.selector);
+        nativeConverter.removeMigrationInProgress(mintedCustomToken);
+    }
+
+    function test_Revert_removeMigrationInProgress_Underflow() public {
+        uint256 mintedCustomToken = 100;
+
+        // Try to remove a migration that was never added (should underflow)
+        vm.prank(address(customToken));
+        vm.expectRevert();
+        nativeConverter.removeMigrationInProgress(mintedCustomToken);
+    }
+
+    function test_removeMigrationInProgress() public {
+        uint256 migratedBacking = 100;
+
+        // Create backing on Secondary Chain
+        deal(address(underlyingToken), owner, migratedBacking);
+        vm.startPrank(owner);
+
+        // Set non-migratable backing percentage to 0 to allow full migration
+        nativeConverter.setNonMigratableBackingPercentage(0);
+
+        underlyingToken.approve(address(nativeConverter), migratedBacking);
+        nativeConverter.convert(migratedBacking, recipient);
+        vm.stopPrank();
+
+        // Add a migration in progress - should emit MigrationInProgressAdded event
+        vm.prank(owner);
+        vm.expectEmit(true, true, false, false);
+        emit NativeConverter.MigrationInProgressAdded(migratedBacking);
+        nativeConverter.migrateBackingToPrimaryChain(migratedBacking);
+
+        // Now remove the migration in progress (simulating what CustomToken does)
+        vm.prank(address(customToken));
+        vm.expectEmit(true, false, false, false);
+        emit NativeConverter.MigrationInProgressRemoved(migratedBacking);
+        nativeConverter.removeMigrationInProgress(migratedBacking);
+    }
+
+    function test_removeMigrationInProgress_MultipleMigrations() public {
+        uint256 migratedBacking1 = 100;
+        uint256 migratedBacking2 = 200;
+        uint256 migratedBacking3 = 150;
+
+        // Setup: Create enough backing for all migrations
+        uint256 totalBacking = migratedBacking1 + migratedBacking2 + migratedBacking3;
+        deal(address(underlyingToken), owner, totalBacking);
+        vm.startPrank(owner);
+
+        // Set non-migratable backing percentage to 0 to allow full migration
+        nativeConverter.setNonMigratableBackingPercentage(0);
+
+        underlyingToken.approve(address(nativeConverter), totalBacking);
+        nativeConverter.convert(totalBacking, recipient);
+
+        // Add multiple migrations in progress - each should emit MigrationInProgressAdded
+        vm.expectEmit(true, true, false, false);
+        emit NativeConverter.MigrationInProgressAdded(migratedBacking1);
+        nativeConverter.migrateBackingToPrimaryChain(migratedBacking1);
+
+        vm.expectEmit(true, true, false, false);
+        emit NativeConverter.MigrationInProgressAdded(migratedBacking2);
+        nativeConverter.migrateBackingToPrimaryChain(migratedBacking2);
+
+        vm.expectEmit(true, true, false, false);
+        emit NativeConverter.MigrationInProgressAdded(migratedBacking3);
+        nativeConverter.migrateBackingToPrimaryChain(migratedBacking3);
+        vm.stopPrank();
+
+        // Remove migrations and verify events are emitted
+        vm.prank(address(customToken));
+        vm.expectEmit(true, false, false, false);
+        emit NativeConverter.MigrationInProgressRemoved(migratedBacking1);
+        nativeConverter.removeMigrationInProgress(migratedBacking1);
+
+        vm.prank(address(customToken));
+        vm.expectEmit(true, false, false, false);
+        emit NativeConverter.MigrationInProgressRemoved(migratedBacking2);
+        nativeConverter.removeMigrationInProgress(migratedBacking2);
+
+        vm.prank(address(customToken));
+        vm.expectEmit(true, false, false, false);
+        emit NativeConverter.MigrationInProgressRemoved(migratedBacking3);
+        nativeConverter.removeMigrationInProgress(migratedBacking3);
+    }
+
+    function test_removeMigrationInProgress_SameAmountMultipleTimes() public {
+        uint256 migratedBacking = 100;
+        uint256 numMigrations = 3;
+
+        // Setup: Create enough backing for multiple migrations of the same amount
+        uint256 totalBacking = migratedBacking * numMigrations;
+        deal(address(underlyingToken), owner, totalBacking);
+        vm.startPrank(owner);
+
+        // Set non-migratable backing percentage to 0 to allow full migration
+        nativeConverter.setNonMigratableBackingPercentage(0);
+
+        underlyingToken.approve(address(nativeConverter), totalBacking);
+        nativeConverter.convert(totalBacking, recipient);
+
+        // Add the same migration amount multiple times - each should emit event
+        for (uint256 i = 0; i < numMigrations; i++) {
+            vm.expectEmit(true, true, false, false);
+            emit NativeConverter.MigrationInProgressAdded(migratedBacking);
+            nativeConverter.migrateBackingToPrimaryChain(migratedBacking);
+        }
+        vm.stopPrank();
+
+        // Remove migrations one by one - each should emit event
+        for (uint256 i = 0; i < numMigrations; i++) {
+            vm.prank(address(customToken));
+            vm.expectEmit(true, false, false, false);
+            emit NativeConverter.MigrationInProgressRemoved(migratedBacking);
+            nativeConverter.removeMigrationInProgress(migratedBacking);
+        }
+
+        // Try to remove one more time - should revert due to underflow
+        vm.prank(address(customToken));
+        vm.expectRevert();
+        nativeConverter.removeMigrationInProgress(migratedBacking);
+    }
+
+    function test_Revert_setCustomToken_Unauthorized() public {
+        address newCustomToken = makeAddr("newCustomToken");
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessControl.AccessControlUnauthorizedAccount.selector,
+                address(this),
+                nativeConverter.DEFAULT_ADMIN_ROLE()
+            )
+        );
+        nativeConverter.setCustomToken(newCustomToken);
+    }
+
+    function test_Revert_setCustomToken_InvalidCustomToken() public {
+        vm.prank(owner);
+        vm.expectRevert(NativeConverter.InvalidCustomToken.selector);
+        nativeConverter.setCustomToken(address(0));
+    }
+
+    function test_Revert_setCustomToken_BackingOnSecondaryChainNotZero() public {
+        uint256 amount = 100;
+
+        // Create backing on Secondary Chain
+        deal(address(underlyingToken), owner, amount);
+        vm.startPrank(owner);
+        underlyingToken.approve(address(nativeConverter), amount);
+        nativeConverter.convert(amount, recipient);
+        vm.stopPrank();
+
+        assertGt(nativeConverter.backingOnSecondaryChain(), 0);
+
+        // Try to set custom token when backing is not zero
+        address newCustomToken = address(new MockERC20Upgradeable());
+        vm.prank(owner);
+        vm.expectRevert(NativeConverter.CannotSetCustomTokenIfBackingOnSecondaryChainIsNotZero.selector);
+        nativeConverter.setCustomToken(newCustomToken);
+    }
+
+    function test_Revert_setCustomToken_GasBackingNotZero() public {
+        // This test verifies that if the current custom token has non-zero gas backing,
+        // we cannot change it. We need to mock this since our test setup doesn't use
+        // CustomTokenWethExtension
+        vm.mockCall(
+            address(customToken), abi.encodeWithSignature("gasBackingOnSecondaryChain()"), abi.encode(uint256(100))
+        );
+
+        // Try to set custom token when gas backing is not zero
+        MockERC20Upgradeable newCustomToken = new MockERC20Upgradeable();
+        newCustomToken.initialize("New Custom Token", "NCT");
+
+        vm.prank(owner);
+        vm.expectRevert(NativeConverter.CannotSetCustomTokenIfGasBackingOnSecondaryChainIsNotZero.selector);
+        nativeConverter.setCustomToken(address(newCustomToken));
+
+        vm.clearMockedCalls();
+    }
+
+    function test_Revert_setCustomToken_NonMatchingDecimals() public {
+        MockERC20Upgradeable newCustomToken = new MockERC20Upgradeable();
+
+        // Mock the decimals call to return 6 instead of 18
+        vm.mockCall(
+            address(newCustomToken), abi.encodeWithSelector(IERC20Metadata.decimals.selector), abi.encode(uint8(6))
+        );
+
+        vm.prank(owner);
+        vm.expectRevert(abi.encodeWithSelector(NativeConverter.NonMatchingTokenDecimals.selector, 6, 18));
+        nativeConverter.setCustomToken(address(newCustomToken));
+
+        vm.clearMockedCalls();
+    }
+
+    function test_setCustomToken() public {
+        // Deploy a new custom token with matching decimals
+        MockERC20Upgradeable newCustomToken = new MockERC20Upgradeable();
+
+        // Verify backing is zero
+        assertEq(nativeConverter.backingOnSecondaryChain(), 0);
+
+        // Set new custom token as owner
+        vm.prank(owner);
+        nativeConverter.setCustomToken(address(newCustomToken));
+
+        // Verify the custom token was updated
+        assertEq(address(nativeConverter.customToken()), address(newCustomToken));
+    }
+
+    function test_setCustomToken_DecimalsDefaultTo18OnRevert() public {
+        // Deploy a custom token that reverts on decimals() call
+        MockERC20Upgradeable newCustomToken = new MockERC20Upgradeable();
+        newCustomToken.initialize("New Custom Token", "NCT");
+
+        // Mock the decimals call to revert
+        vm.mockCallRevert(
+            address(newCustomToken), abi.encodeWithSelector(IERC20Metadata.decimals.selector), "decimals reverted"
+        );
+
+        // Should succeed because both default to 18
+        vm.prank(owner);
+        nativeConverter.setCustomToken(address(newCustomToken));
+
+        assertEq(address(nativeConverter.customToken()), address(newCustomToken));
+
+        vm.clearMockedCalls();
+    }
+
+    function test_setCustomToken_MultipleTimes() public {
+        // First change
+        MockERC20Upgradeable newCustomToken1 = new MockERC20Upgradeable();
+        newCustomToken1.initialize("New Custom Token 1", "NCT1");
+
+        vm.prank(owner);
+        nativeConverter.setCustomToken(address(newCustomToken1));
+        assertEq(address(nativeConverter.customToken()), address(newCustomToken1));
+
+        // Second change
+        MockERC20Upgradeable newCustomToken2 = new MockERC20Upgradeable();
+        newCustomToken2.initialize("New Custom Token 2", "NCT2");
+
+        vm.prank(owner);
+        nativeConverter.setCustomToken(address(newCustomToken2));
+        assertEq(address(nativeConverter.customToken()), address(newCustomToken2));
+
+        // Third change - back to original
+        vm.prank(owner);
+        nativeConverter.setCustomToken(address(customToken));
+        assertEq(address(nativeConverter.customToken()), address(customToken));
     }
 }
