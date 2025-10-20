@@ -8,6 +8,7 @@ import {NativeConverter} from "../NativeConverter.sol";
 import {GenericCustomTokenAgglayer} from "./GenericCustomTokenAgglayer.sol";
 
 // @remind Document.
+/// @author See https://github.com/agglayer/vault-bridge
 abstract contract NativeConverterAgglayer is NativeConverter {
     // -----================= ::: DEVELOPER ::: =================-----
 
