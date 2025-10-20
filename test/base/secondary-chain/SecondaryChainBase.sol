@@ -172,7 +172,6 @@ abstract contract SecondaryChainBase is TestConstants {
     string internal customTokenSymbol;
     string internal underlyingTokenName;
     string internal underlyingTokenSymbol;
-    string internal version;
     uint256 internal maxNonMigratableBackingPercentage;
     uint256 internal maxNonMigratableGasBackingPercentage;
     uint32 internal primaryChainAgglayerId;
@@ -188,9 +187,6 @@ abstract contract SecondaryChainBase is TestConstants {
     /// @notice Configure Secondary Chain infrastructure
     /// @dev This function sets up the basic infrastructure but doesn't deploy implementations
     function deploySecondaryChainInfrastructure() internal virtual {
-        // Setup vault bridge version
-        version = NATIVE_CONVERTER_PROTOCOL;
-
         // Set standard test addresses
         setupStandardTestAddresses();
 
