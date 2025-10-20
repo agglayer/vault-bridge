@@ -543,8 +543,6 @@ abstract contract NativeConverter is
     // @remind Document (the entire function).
     function removeMigrationInProgress(uint256 mintedCustomToken) external onlyCustomToken nonReentrant {
         _removeMigrationInProgress(mintedCustomToken);
-
-        emit MigrationInProgressRemoved(mintedCustomToken);
     }
 
     // @remind Document (the entire function).
