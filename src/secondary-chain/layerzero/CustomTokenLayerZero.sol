@@ -8,6 +8,7 @@ pragma solidity 0.8.29;
 // Main functionality.
 import {CustomToken} from "../CustomToken.sol";
 
+/// @author See https://github.com/agglayer/vault-bridge
 abstract contract CustomTokenLayerZero is CustomToken {
     // -----================= ::: MODIFIERS ::: =================-----
 
