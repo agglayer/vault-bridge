@@ -10,6 +10,7 @@ import {CustomToken} from "../CustomToken.sol";
 import {NativeConverter} from "../NativeConverter.sol";
 
 // @remind Document.
+/// @author See https://github.com/agglayer/vault-bridge
 abstract contract CustomTokenAgglayer is CustomToken {
     // -----================= ::: MODIFIERS ::: =================-----
 

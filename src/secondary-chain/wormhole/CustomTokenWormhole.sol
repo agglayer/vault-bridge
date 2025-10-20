@@ -7,6 +7,7 @@ pragma solidity 0.8.29;
 import {CustomToken} from "../CustomToken.sol";
 
 // @remind Document.
+/// @author See https://github.com/agglayer/vault-bridge
 abstract contract CustomTokenWormhole is CustomToken {
     // -----================= ::: MODIFIERS ::: =================-----
 
