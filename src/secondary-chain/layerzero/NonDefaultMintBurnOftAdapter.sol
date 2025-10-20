@@ -22,7 +22,8 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 import {CustomTokenLayerZero} from "./CustomTokenLayerZero.sol";
 import {IFiatTokenV2_2} from "../../etc/IFiatTokenV2_2.sol";
 
-contract GenericMintBurnOftAdapter is
+/// @author See https://github.com/agglayer/vault-bridge
+contract NonDefaultMintBurnOftAdapter is
     OFTCoreUpgradeable,
     ReentrancyGuardTransientUpgradeable,
     InitializationCounterUpgradeable
@@ -30,36 +31,45 @@ contract GenericMintBurnOftAdapter is
     // Libraries.
     using SafeERC20 for IERC20;
 
-    /// @dev Storage of Generic Mint Burn OFT Adapter contract.
+    /// @dev Storage of Non-Default Mint-Burn OFT Adapter contract.
     /// @dev It's implemented on a custom ERC-7201 namespace to reduce the risk of storage collisions when using with upgradeable contracts.
-    /// @custom:storage-location erc7201:agglayer.vault-bridge.GenericMintBurnOftAdapter.storage
-    struct GenericMintBurnOftAdapterStorage {
+    /// @custom:storage-location erc7201:agglayer.vault-bridge.NonDefaultMintBurnOftAdapter.storage
+    struct NonDefaultMintBurnOftAdapterStorage {
         IERC20 token;
         bool approvalRequired;
         uint256 secondaryChainBalance;
     }
 
-    /// @dev The storage slot at which Generic Mint Burn OFT Adapter storage starts, following the EIP-7201 standard.
-    /// @dev Calculated as `keccak256(abi.encode(uint256(keccak256("agglayer.vault-bridge.GenericMintBurnOftAdapter.storage")) - 1)) & ~bytes32(uint256(0xff))`.
-    bytes32 private constant _GENERIC_MINT_BURN_OFT_ADAPTER_STORAGE =
-        hex"6196a3c13e9cb943998087d4ad7ad8150a77d470cfbcc24d7e9aaef9ed589e00";
+    /// @dev The storage slot at which Non-Default Mint-Burn OFT Adapter storage starts, following the EIP-7201 standard.
+    /// @dev Calculated as `keccak256(abi.encode(uint256(keccak256("agglayer.vault-bridge.NonDefaultMintBurnOftAdapter.storage")) - 1)) & ~bytes32(uint256(0xff))`.
+    bytes32 private constant _NON_DEFAULT_MINT_BURN_OFT_ADAPTER_STORAGE =
+        hex"9a6d185a7513716cb084495e8826e193b97e9aa66dc42826208b30227953df00";
+
+    uint8 private immutable _originalUnderlyingTokenDecimals;
 
     // Errors.
+    error InvalidOriginalUnderlyingTokenDecimals();
+    error CannotSetTokenIfSecondaryChainBalanceIsNotZero();
     error InvalidToken();
-    error InvalidOwner();
+    error InvalidTokenDecimals();
+    error CannotSetTokenIfItsTotalSupplyIsNotZero();
     error InsufficientTokenReceived(uint256 receivedValue, uint256 requestedValue);
 
     // -----================= ::: SETUP ::: =================-----
 
     /**
      * @dev Constructor for the OFT contract.
-     * @param _token The address of the underlying ERC20 token.
+     * @param __originalUnderlyingTokenDecimals The number of decimals of the original underlying token on Primary Chain. Custom Token must have the same number of decimals as the original underlying token.
      * @param _lzEndpoint The LayerZero endpoint address.
      */
-    constructor(address _token, address _lzEndpoint)
-        OFTCoreUpgradeable(IERC20Metadata(_token).decimals(), _lzEndpoint)
+    constructor(uint8 __originalUnderlyingTokenDecimals, address _lzEndpoint)
+        OFTCoreUpgradeable(__originalUnderlyingTokenDecimals, _lzEndpoint)
     {
         _disableInitializers();
+
+        require(__originalUnderlyingTokenDecimals > 0, InvalidOriginalUnderlyingTokenDecimals());
+
+        _originalUnderlyingTokenDecimals = __originalUnderlyingTokenDecimals;
     }
 
     function reinitialize1(address _token, bool _approvalRequired, address _owner, address _delegate)
@@ -67,12 +77,11 @@ contract GenericMintBurnOftAdapter is
         reinitializer(_incrementGlobalInitializationCounter(1))
         nonReentrant
     {
-        GenericMintBurnOftAdapterStorage storage $ = _getGenericMintBurnOftAdapterStorage();
+        NonDefaultMintBurnOftAdapterStorage storage $ = _getNonDefaultMintBurnOftAdapterStorage();
 
         // Check the inputs.
         require(_token != address(0), InvalidToken());
-        require(_owner != address(0), InvalidOwner());
-        require(_delegate != address(0), InvalidDelegate());
+        require(IERC20Metadata(_token).decimals() == _originalUnderlyingTokenDecimals, InvalidTokenDecimals());
 
         __Ownable_init(_owner);
         __OFTCore_init(_delegate);
@@ -103,9 +112,13 @@ contract GenericMintBurnOftAdapter is
     // -----================= ::: STORAGE ::: =================-----
 
     /// @dev Returns a pointer to the ERC-7201 storage namespace.
-    function _getGenericMintBurnOftAdapterStorage() private pure returns (GenericMintBurnOftAdapterStorage storage $) {
+    function _getNonDefaultMintBurnOftAdapterStorage()
+        private
+        pure
+        returns (NonDefaultMintBurnOftAdapterStorage storage $)
+    {
         assembly {
-            $.slot := _GENERIC_MINT_BURN_OFT_ADAPTER_STORAGE
+            $.slot := _NON_DEFAULT_MINT_BURN_OFT_ADAPTER_STORAGE
         }
     }
 
@@ -119,7 +132,7 @@ contract GenericMintBurnOftAdapter is
      * @dev In the case of MintBurnOFTAdapter, address(this) and erc20 are NOT the same contract.
      */
     function token() public view returns (address) {
-        GenericMintBurnOftAdapterStorage storage $ = _getGenericMintBurnOftAdapterStorage();
+        NonDefaultMintBurnOftAdapterStorage storage $ = _getNonDefaultMintBurnOftAdapterStorage();
         return address($.token);
     }
 
@@ -131,12 +144,12 @@ contract GenericMintBurnOftAdapter is
      * @dev In this MintBurnOFTAdapter, approval is NOT required because it uses mint and burn privileges.
      */
     function approvalRequired() external view virtual returns (bool) {
-        GenericMintBurnOftAdapterStorage storage $ = _getGenericMintBurnOftAdapterStorage();
+        NonDefaultMintBurnOftAdapterStorage storage $ = _getNonDefaultMintBurnOftAdapterStorage();
         return $.approvalRequired;
     }
 
     function secondaryChainBalance() external view returns (uint256) {
-        GenericMintBurnOftAdapterStorage storage $ = _getGenericMintBurnOftAdapterStorage();
+        NonDefaultMintBurnOftAdapterStorage storage $ = _getNonDefaultMintBurnOftAdapterStorage();
         return $.secondaryChainBalance;
     }
 
@@ -161,7 +174,7 @@ contract GenericMintBurnOftAdapter is
         override
         returns (uint256 amountSentLD, uint256 amountReceivedLD)
     {
-        GenericMintBurnOftAdapterStorage storage $ = _getGenericMintBurnOftAdapterStorage();
+        NonDefaultMintBurnOftAdapterStorage storage $ = _getNonDefaultMintBurnOftAdapterStorage();
         (amountSentLD, amountReceivedLD) = _debitView(_amountLD, _minAmountLD, _dstEid);
         $.secondaryChainBalance -= amountSentLD;
         // Burns tokens from the caller.
@@ -191,7 +204,7 @@ contract GenericMintBurnOftAdapter is
         override
         returns (uint256 amountReceivedLD)
     {
-        GenericMintBurnOftAdapterStorage storage $ = _getGenericMintBurnOftAdapterStorage();
+        NonDefaultMintBurnOftAdapterStorage storage $ = _getNonDefaultMintBurnOftAdapterStorage();
         if (_to == address(0x0)) _to = address(0xdead); // _mint(...) does not support address(0x0)
         // Mints the tokens and transfers to the recipient.
         CustomTokenLayerZero(address($.token)).mint(_to, _amountLD);
@@ -201,11 +214,13 @@ contract GenericMintBurnOftAdapter is
     }
 
     function setTokenAndApprovalRequired(address _token, bool _approvalRequired) external onlyOwner {
-        GenericMintBurnOftAdapterStorage storage $ = _getGenericMintBurnOftAdapterStorage();
+        NonDefaultMintBurnOftAdapterStorage storage $ = _getNonDefaultMintBurnOftAdapterStorage();
 
         // Check the input.
+        require($.secondaryChainBalance == 0, CannotSetTokenIfSecondaryChainBalanceIsNotZero());
         require(_token != address(0), InvalidToken());
-        require(IERC20Metadata(_token).decimals() == IERC20Metadata(address($.token)).decimals(), InvalidToken());
+        require(IERC20Metadata(_token).decimals() == _originalUnderlyingTokenDecimals, InvalidTokenDecimals());
+        require(IERC20(_token).totalSupply() == 0, CannotSetTokenIfItsTotalSupplyIsNotZero());
 
         $.token = IERC20(_token);
         $.approvalRequired = _approvalRequired;
@@ -216,7 +231,7 @@ contract GenericMintBurnOftAdapter is
     /// @notice Transfers the token from an external account to self.
     /// @dev @note CAUTION! This function MUST NOT introduce reentrancy/crossentrancy vulnerabilities.
     function _receiveToken(address from, uint256 value) internal {
-        GenericMintBurnOftAdapterStorage storage $ = _getGenericMintBurnOftAdapterStorage();
+        NonDefaultMintBurnOftAdapterStorage storage $ = _getNonDefaultMintBurnOftAdapterStorage();
 
         // Cache the balance.
         uint256 balanceBefore = $.token.balanceOf(address(this));
