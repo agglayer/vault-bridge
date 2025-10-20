@@ -91,13 +91,9 @@ abstract contract PrimaryChainBase is TestConstants {
     uint256 internal tokenDecimals;
     uint256 internal minimumReservePercentage;
     bytes internal tokenMetadata;
-    string internal version;
 
     /// @notice Configure Primary Chain infrastructure
     function deployPrimaryChainInfrastructure() internal virtual {
-        // Setup vault bridge version
-        version = VAULT_BRIDGE_PROTOCOL;
-
         // Set standard test addresses
         setupStandardTestAddresses();
 
