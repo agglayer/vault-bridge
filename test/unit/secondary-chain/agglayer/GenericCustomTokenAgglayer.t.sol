@@ -12,6 +12,7 @@ import {
 // Core contracts
 import {GenericCustomTokenAgglayer} from "src/secondary-chain/agglayer/GenericCustomTokenAgglayer.sol";
 import {CustomToken} from "src/secondary-chain/CustomToken.sol";
+import {NativeConverter} from "src/secondary-chain/NativeConverter.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -34,7 +35,7 @@ contract GenericCustomTokenAgglayerTest is GenericCustomTokenAgglayerTestBase {
     function test_mint_success_fromNativeConverter() public {
         uint256 amount = 1000e18;
 
-        vm.prank(dummyNativeConverter);
+        vm.prank(address(mockNativeConverter));
         genericCustomTokenAgglayer.mint(recipient, amount);
 
         assertEq(genericCustomTokenAgglayer.balanceOf(recipient), amount);
@@ -42,7 +43,6 @@ contract GenericCustomTokenAgglayerTest is GenericCustomTokenAgglayerTestBase {
     }
 
     // @todo Update.
-    /*
     function test_mint_success_toAddressZero_emitsTransfer() public {
         uint256 amount = 1000e18;
 
@@ -53,8 +53,8 @@ contract GenericCustomTokenAgglayerTest is GenericCustomTokenAgglayerTestBase {
         genericCustomTokenAgglayer.mint(address(0), amount);
 
         assertEq(genericCustomTokenAgglayer.totalSupply(), 0);
+        assertEq(mockNativeConverter.removeMigrationInProgressAmount(), amount);
     }
-    */
 
     function test_mint_revertsWithUnauthorized() public {
         uint256 amount = 1000e18;
@@ -96,13 +96,13 @@ contract GenericCustomTokenAgglayerTest is GenericCustomTokenAgglayerTestBase {
         uint256 amount = 1000e18;
 
         // First mint tokens
-        vm.prank(dummyNativeConverter);
+        vm.prank(address(mockNativeConverter));
         genericCustomTokenAgglayer.mint(sender, amount);
 
         assertEq(genericCustomTokenAgglayer.balanceOf(sender), amount);
 
         // Then burn them
-        vm.prank(dummyNativeConverter);
+        vm.prank(address(mockNativeConverter));
         genericCustomTokenAgglayer.burn(sender, amount);
 
         assertEq(genericCustomTokenAgglayer.balanceOf(sender), 0);
@@ -159,7 +159,7 @@ contract GenericCustomTokenAgglayerTest is GenericCustomTokenAgglayerTestBase {
         vm.prank(address(mockAgglayerBridge));
         genericCustomTokenAgglayer.mint(user1, amount1);
 
-        vm.prank(dummyNativeConverter);
+        vm.prank(address(mockNativeConverter));
         genericCustomTokenAgglayer.mint(user2, amount2);
 
         assertEq(genericCustomTokenAgglayer.balanceOf(user1), amount1);
