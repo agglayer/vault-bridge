@@ -7,6 +7,9 @@ import {MockERC20Upgradeable, SecondaryChainBase} from "test/base/secondary-chai
 // Core contracts
 import {GenericCustomTokenAgglayer} from "src/secondary-chain/agglayer/GenericCustomTokenAgglayer.sol";
 
+// Mocks
+import {MockNativeConverter} from "test/utils/mocks/MockNativeConverter.sol";
+
 // OpenZeppelin
 import {
     ITransparentUpgradeableProxy,
@@ -20,6 +23,9 @@ abstract contract GenericCustomTokenAgglayerTestBase is SecondaryChainBase {
     GenericCustomTokenAgglayer internal genericCustomTokenAgglayer;
     address internal genericCustomTokenAgglayerImpl;
     TransparentUpgradeableProxy existingGenericCustomTokenAgglayerProxy;
+
+    // ========= MOCK CONTRACTS =========
+    MockNativeConverter internal mockNativeConverter;
 
     /// @notice Deploy GenericCustomTokenAgglayer-specific infrastructure
     /// @dev Sets up tokens, bridge, and related contracts for GenericCustomTokenAgglayer testing
@@ -36,6 +42,8 @@ abstract contract GenericCustomTokenAgglayerTestBase is SecondaryChainBase {
 
     /// @notice Deploy Generic Custom Token Agglayer and related contracts
     function deployGenericCustomTokenAgglayer() internal {
+        mockNativeConverter = new MockNativeConverter();
+
         MockERC20Upgradeable existingGenericCustomTokenAgglayerImpl = new MockERC20Upgradeable();
         existingGenericCustomTokenAgglayerProxy = TransparentUpgradeableProxy(
             payable(
@@ -54,7 +62,7 @@ abstract contract GenericCustomTokenAgglayerTestBase is SecondaryChainBase {
         reinitializeCallData[0] = abi.encodeCall(GenericCustomTokenAgglayer.reinitialize1, ());
         reinitializeCallData[1] = abi.encodeCall(
             GenericCustomTokenAgglayer.reinitialize2,
-            (owner, customTokenDecimals, address(mockAgglayerBridge), dummyNativeConverter)
+            (owner, customTokenDecimals, address(mockAgglayerBridge), address(mockNativeConverter))
         );
         reinitializeCallData[2] = abi.encodeCall(GenericCustomTokenAgglayer.reinitialize3, ());
 
@@ -84,7 +92,7 @@ abstract contract GenericCustomTokenAgglayerTestBase is SecondaryChainBase {
         assertEq(genericCustomTokenAgglayer.symbol(), customTokenSymbol);
         assertEq(genericCustomTokenAgglayer.decimals(), customTokenDecimals);
         assertEq(genericCustomTokenAgglayer.bridge(), address(mockAgglayerBridge));
-        assertEq(genericCustomTokenAgglayer.nativeConverter(), dummyNativeConverter);
+        assertEq(genericCustomTokenAgglayer.nativeConverter(), address(mockNativeConverter));
         assertTrue(genericCustomTokenAgglayer.hasRole(genericCustomTokenAgglayer.DEFAULT_ADMIN_ROLE(), owner));
         assertTrue(genericCustomTokenAgglayer.hasRole(genericCustomTokenAgglayer.PAUSER_ROLE(), owner));
         assertEq(genericCustomTokenAgglayer.totalSupply(), 0);
