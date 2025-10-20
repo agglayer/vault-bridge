@@ -13,17 +13,14 @@ import {ReentrancyGuardTransientUpgradeable} from
     "@openzeppelin-contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
 import {InitializationCounterUpgradeable} from "../../etc/InitializationCounterUpgradeable.sol";
 
-/// @title Generic OFT Adapter
+/// @title Non-Default OFT Adapter
 /// @author See https://github.com/agglayer/vault-bridge
-contract GenericOftAdapter is
+contract NonDefaultOftAdapter is
     OFTAdapterUpgradeable,
     ReentrancyGuardTransientUpgradeable,
     InitializationCounterUpgradeable
 {
-    // Error.
-    error InvalidOwner();
-
-    // -----================= ::: SETUP ::: =================-----
+    // -----================= ::: SETUP ::: =================-----44
 
     constructor(address _token, address _lzEndpoint) OFTAdapterUpgradeable(_token, _lzEndpoint) {
         _disableInitializers();
@@ -34,10 +31,6 @@ contract GenericOftAdapter is
         reinitializer(_incrementGlobalInitializationCounter(1))
         nonReentrant
     {
-        // Check the inputs.
-        require(_owner != address(0), InvalidOwner());
-        require(_delegate != address(0), InvalidDelegate());
-
         __Ownable_init(_owner);
         __OFTAdapter_init(_delegate);
         __ReentrancyGuardTransient_init();
