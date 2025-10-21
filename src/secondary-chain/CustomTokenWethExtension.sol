@@ -131,9 +131,8 @@ abstract contract CustomTokenWethExtension is CustomToken {
         emit Withdrawal(msg.sender, value);
     }
 
-    function bridgeBackingToPrimaryChain(uint256 amount)
+    function moveGasBackingToNativeConverter(uint256 amount)
         external
-        whenNotPaused
         onlyIfGasTokenIsEth
         onlyNativeConverter
         nonReentrant
