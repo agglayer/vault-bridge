@@ -152,7 +152,7 @@ contract WethNativeConverterAgglayer is NativeConverterAgglayer {
         uint256 amountOfCustomToken = _convertToShares(amount);
 
         // Taking agglayerBridge's gas balance here
-        weth.bridgeBackingToPrimaryChain(amount);
+        weth.moveGasBackingToNativeConverter(amount);
         bridge().bridgeAsset{value: amount}(
             primaryChainAgglayerId(), address(migrationManager()), amount, address(0), true, ""
         );
