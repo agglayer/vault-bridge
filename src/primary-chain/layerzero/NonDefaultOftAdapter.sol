@@ -20,7 +20,7 @@ contract NonDefaultOftAdapter is
     ReentrancyGuardTransientUpgradeable,
     InitializationCounterUpgradeable
 {
-    // -----================= ::: SETUP ::: =================-----44
+    // -----================= ::: SETUP ::: =================-----
 
     constructor(address _token, address _lzEndpoint) OFTAdapterUpgradeable(_token, _lzEndpoint) {
         _disableInitializers();
