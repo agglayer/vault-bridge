@@ -332,12 +332,37 @@ contract NonDefaultMintBurnOftAdapterTest is NonDefaultMintBurnOftAdapterTestBas
 
     // ===== _receiveToken tests =====
 
-    // @ todo add test for this later
     function test_receiveToken_revert_insufficientReceived() public {
-        // This test would require a token with transfer fees or hooks
-        // For now, we'll skip it as GenericCustomTokenLayerZero doesn't have such features
-        // In a real scenario, you'd use a mock token that returns less than requested
-        vm.skip(true);
+        uint256 transferAmount = 1000e18;
+
+        // Mint tokens to sender via the adapter
+        vm.prank(address(nonDefaultMintBurnOftAdapter));
+        customTokenLayerZero.mint(sender, transferAmount);
+
+        // Sender approves adapter
+        vm.prank(sender);
+        customTokenLayerZero.approve(address(nonDefaultMintBurnOftAdapter), transferAmount);
+
+        // Mock transferFrom to return true WITHOUT actually transferring tokens
+        // This simulates a fee-on-transfer (100% fee) token where the call succeeds but less arrives
+        vm.mockCall(
+            address(customTokenLayerZero),
+            abi.encodeWithSignature(
+                "transferFrom(address,address,uint256)", sender, address(nonDefaultMintBurnOftAdapter), transferAmount
+            ),
+            abi.encode(true)
+        );
+
+        // The exact received amount doesn't matter for this test - we just need to verify
+        // that the function reverts when less than the requested amount is received
+        vm.expectRevert(
+            abi.encodeWithSelector(NonDefaultMintBurnOftAdapter.InsufficientTokenReceived.selector, 0, transferAmount)
+        );
+
+        nonDefaultMintBurnOftAdapter.exposed_receiveToken(sender, transferAmount);
+
+        // Clean up
+        vm.clearMockedCalls();
     }
 
     function test_receiveToken_success() public {
