@@ -24,7 +24,7 @@
 - Custom Token: N/A
 - Native Converter: N/A
 - Bridged USDC Standard: N/A
-- Wrapped Token: Available
+- Wrapped Token: Available (OFT Token)
 - Manual Converter: Coming soon (EVM chains), Possible (Non-EVM chains)
 
 ### Omnichain Vault
