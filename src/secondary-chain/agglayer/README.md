@@ -8,17 +8,23 @@
 
 ### Agglayer Sovereign with Pessimistic Proof
 
+- EVM chains: Supported
+- Non-EVM chains: Not supported
 - Custom Token: Available (Upgradeable Wrapped Token)
 - Native Converter: Available
 - Bridged USDC Standard: Available
 - Wrapped Token: Available (Upgradeable Wrapped Token)
+- Manual Converter: Coming soon
 
 ### Agglayer without Pessimistic Proof
 
+- EVM chains: Supported
+- Non-EVM chains: Not supported
 - Custom Token: N/A
 - Native Converter: N/A
 - Bridged USDC Standard: N/A
 - Wrapped Token: Available (Wrapped Token)
+- Manual Converter: Possible
 
 ## Process
 
