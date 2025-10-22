@@ -9,17 +9,23 @@
 
 ### Native Token Transfers
 
+- EVM chains: Supported
+- Non-EVM chains: Not supported currently
 - Custom Token: Available (NTT Token)
 - Native Converter: TBD
 - Bridged USDC Standard: TBD
 - Wrapped Token: N/A
+- Manual Converter: Coming soon
 
 ### Wrapped Token Transfers
 
+- EVM chains: Supported
+- Non-EVM chains: Supported
 - Custom Token: N/A
 - Native Converter: N/A
 - Bridged USDC Standard: N/A
-- Wrapped Token: Avaialble (WTT Token)
+- Wrapped Token: Available (WTT Token)
+- Manual Converter: Coming soon (EVM chains), Possible (Non-EVM chains)
 
 ## Process
 
@@ -36,7 +42,6 @@
 
 No action required.
 
-
 ## Protection
 
 ### Native Token Transfers
@@ -45,7 +50,7 @@ No action required.
 
 ### Wrapped Token Transfers
 
-- Tokens are upgreadeable; controlled by Guardians.
+- Tokens are upgreadeable, but controlled by Wormhole Guardians.
 
 ## Reference
 
