@@ -10,6 +10,7 @@ import {GenericCustomTokenLayerZero} from "src/secondary-chain/layerzero/Generic
 
 // Mock contracts
 import {MockLzEndpoint} from "test/utils/mocks/MockLzEndpoint.sol";
+import {MockFiatTokenLayerZero} from "test/utils/mocks/MockFiatTokenLayerZero.sol";
 
 // OpenZeppelin
 import {
@@ -167,5 +168,35 @@ abstract contract NonDefaultMintBurnOftAdapterTestBase is SecondaryChainBase {
         assertEq(nonDefaultMintBurnOftAdapter.secondaryChainBalance(), 0);
         assertEq(nonDefaultMintBurnOftAdapter.decimalConversionRate(), 10 ** 12); // 18 - 6 = 12
         assertEq(nonDefaultMintBurnOftAdapter.sharedDecimals(), 6);
+    }
+
+    /// @notice Helper to deploy MockFiatTokenLayerZero with a specified bridge address
+    /// @param name_ Token name
+    /// @param symbol_ Token symbol
+    /// @param decimals_ Token decimals
+    /// @param bridgeAddr_ Bridge address (typically the OFT adapter)
+    /// @return Deployed MockFiatTokenLayerZero instance
+    function deployMockFiatTokenLayerZero(
+        string memory name_,
+        string memory symbol_,
+        uint8 decimals_,
+        address bridgeAddr_
+    ) internal returns (MockFiatTokenLayerZero) {
+        // Deploy token with the specified bridge address
+        bytes[] memory reinitializeCallData = new bytes[](1);
+        reinitializeCallData[0] =
+            abi.encodeCall(GenericCustomTokenLayerZero.reinitialize1, (owner, name_, symbol_, decimals_, bridgeAddr_));
+
+        MockFiatTokenLayerZero token = MockFiatTokenLayerZero(
+            address(
+                new TransparentUpgradeableProxy(
+                    address(new MockFiatTokenLayerZero()),
+                    proxyAdmin,
+                    abi.encodeCall(GenericCustomTokenLayerZero.reinitialize, (reinitializeCallData))
+                )
+            )
+        );
+
+        return token;
     }
 }
