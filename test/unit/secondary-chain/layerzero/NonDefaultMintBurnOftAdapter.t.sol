@@ -13,6 +13,9 @@ import {NonDefaultMintBurnOftAdapter} from "src/secondary-chain/layerzero/NonDef
 import {GenericCustomTokenLayerZero} from "src/secondary-chain/layerzero/GenericCustomTokenLayerZero.sol";
 import {InitializationCounterUpgradeable} from "src/etc/InitializationCounterUpgradeable.sol";
 
+// Mock contracts
+import {MockFiatTokenLayerZero} from "test/utils/mocks/MockFiatTokenLayerZero.sol";
+
 // OpenZeppelin
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
@@ -189,12 +192,56 @@ contract NonDefaultMintBurnOftAdapterTest is NonDefaultMintBurnOftAdapterTestBas
 
     // ===== _debit tests =====
 
-    // @todo implement this test by making a mock IFiatTokenV2_2 token
     function test_debit_success_withApprovalRequired() public {
-        // Skip this test because GenericCustomTokenLayerZero doesn't implement IFiatTokenV2_2 interface
-        // which is required for the approval-required path (it needs a burn(amount) function)
-        // This path is designed for tokens like USDC that have specific burn methods
-        vm.skip(true);
+        vm.revertToState(stateBeforeInitialize);
+
+        // Calculate the adapter address (after deploying the token's proxy and proxy admin)
+        address calculatedAdapterAddr = vm.computeCreateAddress(address(this), vm.getNonce(address(this)) + 2);
+
+        // Deploy MockFiatTokenLayerZero using the helper function
+        MockFiatTokenLayerZero fiatToken =
+            deployMockFiatTokenLayerZero("Fiat Token LayerZero", "FTLZ", 18, calculatedAdapterAddr);
+
+        // Initialize adapter with approvalRequired=true
+        bytes[] memory reinitializeCallData = new bytes[](1);
+        reinitializeCallData[0] =
+            abi.encodeCall(NonDefaultMintBurnOftAdapter.reinitialize1, (address(fiatToken), true, owner, delegate));
+
+        TestHarnessNonDefaultMintBurnOftAdapter newAdapter = TestHarnessNonDefaultMintBurnOftAdapter(
+            address(
+                new TransparentUpgradeableProxy(
+                    nonDefaultMintBurnOftAdapterImpl,
+                    proxyAdmin,
+                    abi.encodeCall(NonDefaultMintBurnOftAdapter.reinitialize, (reinitializeCallData))
+                )
+            )
+        );
+
+        // Verify approvalRequired is set correctly
+        assertTrue(newAdapter.approvalRequired());
+
+        // Setup: Credit tokens to sender first (simulates receiving from another chain)
+        uint256 mintAmount = 1000e18;
+        newAdapter.exposed_credit(sender, mintAmount, 1);
+
+        // Verify setup
+        assertEq(fiatToken.balanceOf(sender), mintAmount);
+        assertEq(newAdapter.secondaryChainBalance(), mintAmount);
+
+        uint256 debitAmount = 500e18;
+        uint32 dstEid = 1;
+
+        // Sender approves adapter to burn tokens
+        vm.prank(sender);
+        fiatToken.approve(address(newAdapter), debitAmount);
+
+        vm.prank(sender);
+        (uint256 amountSentLD, uint256 amountReceivedLD) =
+            newAdapter.exposed_debit(sender, debitAmount, debitAmount, dstEid);
+        assertEq(amountSentLD, debitAmount);
+        assertEq(amountReceivedLD, debitAmount);
+        assertEq(fiatToken.balanceOf(sender), mintAmount - debitAmount);
+        assertEq(newAdapter.secondaryChainBalance(), mintAmount - debitAmount);
     }
 
     function test_debit_success_withoutApprovalRequired() public {
