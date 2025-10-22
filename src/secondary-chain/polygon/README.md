@@ -6,10 +6,13 @@
 
 ## Compatibility
 
+- EVM chain: Supported
+- ~~Non-EVM chains~~
 - Custom Token: Available (Custom Mapping)
 - ~~Native Converter~~
 - ~~Bridged USDC Standard~~
 - Wrapped Token: N/A
+- Manual Converter: Coming soon
 
 ## Process
 
@@ -18,7 +21,7 @@
 
 ## Protection
 
-- Bidirectional bridge.
+- Bidirectional lock/mint bridge.
 
 ## Reference
 
