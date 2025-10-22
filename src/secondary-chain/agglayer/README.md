@@ -24,7 +24,7 @@
 - Native Converter: N/A
 - Bridged USDC Standard: N/A
 - Wrapped Token: Available (Wrapped Token)
-- Manual Converter: Possible
+- Manual Converter: Coming soon
 
 ## Process
 
