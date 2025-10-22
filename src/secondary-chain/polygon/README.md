@@ -7,10 +7,10 @@
 ## Compatibility
 
 - EVM chain: Supported
-- ~~Non-EVM chains~~
+- Non-EVM chain: Not supported
 - Custom Token: Available (Custom Mapping)
-- ~~Native Converter~~
-- ~~Bridged USDC Standard~~
+- Native Converter: Not required
+- Bridged USDC Standard: Not required
 - Wrapped Token: N/A
 - Manual Converter: Coming soon
 
