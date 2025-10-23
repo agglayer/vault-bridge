@@ -10,6 +10,7 @@
 ### Native Token Transfers
 
 - Supported VMs: EVM
+- Supported chains: [List ↗](https://wormhole.com/docs/products/reference/supported-networks/#ntt)
 - Custom Token: Available (NTT Token)
 - Native Converter: TBD
 - Bridged USDC Standard: TBD
@@ -19,6 +20,7 @@
 ### Wrapped Token Transfers
 
 - Supported VMs: EVM, AVM, Move VM, CosmWasm, NEAR VM, Sui Move VM
+- Supported chains: [List ↗](https://wormhole.com/docs/products/reference/supported-networks/#wtt)
 - Custom Token: N/A
 - Native Converter: N/A
 - Bridged USDC Standard: N/A
@@ -57,3 +59,4 @@ No action required.
 - GitHub: [wormhole-foundation/native-token-transfers](https://github.com/wormhole-foundation/native-token-transfers)
 - Wormhole Docs: [Wrapped Token Transfers](https://wormhole.com/docs/products/token-transfers/wrapped-token-transfers/overview/)
 - GitHub: [Native Token Transfer - Global Accountant # Caveats](https://github.com/wormhole-foundation/wormhole/blob/main/cosmwasm/contracts/ntt-global-accountant/README.md#caveats)
+- Explorer: [WormholeScan](https://wormholescan.io/)

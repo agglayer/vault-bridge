@@ -7,6 +7,7 @@
 ## Compatibility
 
 - Supported VMs: EVM
+- Supported chains: Polygon
 - Custom Token: Available (Custom Mapping)
 - Native Converter: Not required
 - Bridged USDC Standard: Not required
