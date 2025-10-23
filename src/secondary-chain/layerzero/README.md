@@ -9,8 +9,7 @@
 
 ### Non-default Upgradeable Omnichain Fungible Token
 
-- EVM chains: Supported
-- Non-EVM chains: Not supported currently
+- Supported VMs: EVM
 - Custom Token: Available
 - Native Converter: TBD
 - Bridged USDC Standard: TBD
@@ -19,13 +18,12 @@
 
 ### Default Immutable Omnichain Fungible Token
 
-- EVM chains: Supported
-- Non-EVM chains: Supported
+- Supported VMs: EVM, Move VM (experimental), HyperEVM (experimental), SVM (experimental)
 - Custom Token: N/A
 - Native Converter: N/A
 - Bridged USDC Standard: N/A
 - Wrapped Token: Available (OFT Token)
-- Manual Converter: Coming soon (EVM chains), Possible (Non-EVM chains)
+- Manual Converter: Coming soon (EVM chains), Possible (non-EVM chains)
 
 ### Omnichain Vault
 

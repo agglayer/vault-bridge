@@ -9,8 +9,7 @@
 
 ### Native Token Transfers
 
-- EVM chains: Supported
-- Non-EVM chains: Not supported currently
+- Supported VMs: EVM
 - Custom Token: Available (NTT Token)
 - Native Converter: TBD
 - Bridged USDC Standard: TBD
@@ -19,13 +18,12 @@
 
 ### Wrapped Token Transfers
 
-- EVM chains: Supported
-- Non-EVM chains: Supported
+- Supported VMs: EVM, AVM, Move VM, CosmWasm, NEAR VM, Sui Move VM
 - Custom Token: N/A
 - Native Converter: N/A
 - Bridged USDC Standard: N/A
 - Wrapped Token: Available (WTT Token)
-- Manual Converter: Coming soon (EVM chains), Possible (Non-EVM chains)
+- Manual Converter: Coming soon (EVM), Possible (non-EVM)
 
 ## Process
 
