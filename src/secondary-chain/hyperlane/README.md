@@ -7,10 +7,15 @@
 
 ## Compatibility
 
-- Custom Token: Available (HypERC20CollateralVaultDeposit on origin, HypERC20 on destination)
-- Native Converter: N/A
+### Default HypERC20
+
+- Supported VMs: EVM, Solana SVM and Cosmos VM
+- Supported chains: [List](https://www.hyperlane.xyz/expansion)
+- Custom Token: TBD
+- Native Converter: TBD
 - Bridged USDC Standard: TBD
-- Wrapped Token: N/A
+- Wrapped Token: Available (HypERC20 Token)
+- Manual Converter: TBD
 
 ## Process
 
