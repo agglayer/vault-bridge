@@ -6,8 +6,7 @@
 
 ## Compatibility
 
-- EVM chain: Supported
-- Non-EVM chain: Not supported
+- Supported VMs: EVM
 - Custom Token: Available (Custom Mapping)
 - Native Converter: Not required
 - Bridged USDC Standard: Not required
