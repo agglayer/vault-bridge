@@ -10,6 +10,7 @@
 ### Non-default Upgradeable Omnichain Fungible Token
 
 - Supported VMs: EVM
+- Supported chains: [List ↗](https://docs.layerzero.network/v2/deployments/deployed-contracts)
 - Custom Token: Available
 - Native Converter: TBD
 - Bridged USDC Standard: TBD
@@ -19,6 +20,7 @@
 ### Default Immutable Omnichain Fungible Token
 
 - Supported VMs: EVM, Move VM (experimental), HyperEVM (experimental), SVM (experimental)
+- Supported chains: [List ↗](https://docs.layerzero.network/v2/deployments/deployed-contracts)
 - Custom Token: N/A
 - Native Converter: N/A
 - Bridged USDC Standard: N/A
