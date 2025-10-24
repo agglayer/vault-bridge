@@ -20,10 +20,17 @@ contract NonDefaultOftAdapter is
     ReentrancyGuardTransientUpgradeable,
     InitializationCounterUpgradeable
 {
+    // Errors.
+    error InvalidToken();
+    error InvalidLzEndpoint();
+
     // -----================= ::: SETUP ::: =================-----
 
     constructor(address _token, address _lzEndpoint) OFTAdapterUpgradeable(_token, _lzEndpoint) {
         _disableInitializers();
+
+        require(_token != address(0), InvalidToken());
+        require(_lzEndpoint != address(0), InvalidLzEndpoint());
     }
 
     function reinitialize1(address _owner, address _delegate)

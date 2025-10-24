@@ -49,6 +49,7 @@ contract NonDefaultMintBurnOftAdapter is
 
     // Errors.
     error InvalidOriginalUnderlyingTokenDecimals();
+    error InvalidLzEndpoint();
     error CannotSetTokenIfSecondaryChainBalanceIsNotZero();
     error InvalidToken();
     error InvalidTokenDecimals();
@@ -68,6 +69,7 @@ contract NonDefaultMintBurnOftAdapter is
         _disableInitializers();
 
         require(__originalUnderlyingTokenDecimals > 0, InvalidOriginalUnderlyingTokenDecimals());
+        require(_lzEndpoint != address(0), InvalidLzEndpoint());
 
         _originalUnderlyingTokenDecimals = __originalUnderlyingTokenDecimals;
     }
