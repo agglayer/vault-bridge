@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: LicenseRef-PolygonLabs-Source-Available
-// Vault Bridge (last updated v1.1.0) (secondary-chain/layerzero/GenericMintBurnOftAdapter.sol)
+// Vault Bridge (last updated v1.0.0) (secondary-chain/layerzero/GenericMintBurnOftAdapter.sol)
 
 pragma solidity 0.8.29;
 

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: LicenseRef-PolygonLabs-Source-Available
-// Vault Bridge (last updated v1.1.0) (etc/InitializationCounterUpgradeable.sol)
+// Vault Bridge (last updated v1.0.0) (etc/InitializationCounterUpgradeable.sol)
 
 pragma solidity 0.8.29;
 
