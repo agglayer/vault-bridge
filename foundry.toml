@@ -52,9 +52,6 @@ bokuto = "https://rpc-bokuto.katanarpc.com"
 polygon = "https://polygon-bor-rpc.publicnode.com"
 amoy = "https://polygon-amoy.drpc.org"
 
-[doc]
-title = "Technical Reference"
-
 [lint]
 lint_on_build = false
 

@@ -5,8 +5,7 @@
 **[⛓️ Deployments](#deployments)**
 **&nbsp;&nbsp; [📙 Documentation](#documentation)**
 **&nbsp;&nbsp; [🧭 Website](https://www.agglayer.dev/agglayer-vaultbridge)**
-**&nbsp;&nbsp; [🐈‍⬛ GitHub](https://github.com/agglayer/vault-bridge/)**
-**&nbsp;&nbsp; [🦙 DefiLllama](https://defillama.com/protocol/vault-bridge)**
+**&nbsp;&nbsp; [🦙 DefiLlama](https://defillama.com/protocol/vault-bridge)**
 
 </div>
 
@@ -103,12 +102,12 @@ Full support for non-Agglayer chains, third-party bridges, as well as non-EVM ch
 
 - [General Documentation](https://docs.agglayer.dev/vault-bridge/get-started/overview/)
 - [Technical Reference](https://agglayer.github.io/vault-bridge/)
-- [Source Code](https://github.com/agglayer/vault-bridge/tree/main/src): In addition to General Documentation and Technical Reference, the Source Code is 100% documented and you are encouraged to take a look.
+- [Source Code](./src/): In addition to General Documentation and Technical Reference, the Source Code is 100% documented and you are encouraged to take a look.
   - Pay attention to the following bookmarks: `@note CAUTION!`, `@note IMPORTANT:`, `@note (ATTENTION)`.
 
 ## Deployments
 
-See [`broadcast/README.md`](https://github.com/agglayer/vault-bridge/blob/main/broadcast/README.md).
+See [`broadcast/README.md`](./broadcast/README.md).
 
 ## Usage
 
@@ -146,6 +145,6 @@ forge coverage --ir-minimum --report lcov && genhtml -o coverage lcov.info
 
 This codebase is licensed under Source Available License.
 
-See [`LICENSE-SOURCE-AVAILABLE`](https://github.com/agglayer/vault-bridge/blob/main/LICENSE-SOURCE-AVAILABLE).
+See [`LICENSE-SOURCE-AVAILABLE`](./LICENSE-SOURCE-AVAILABLE).
 
 Your use of this software constitutes acceptance of these license terms.
