@@ -37,6 +37,7 @@ abstract contract CustomTokenWethExtension is CustomToken {
 
     event Deposit(address indexed from, uint256 value);
     event Withdrawal(address indexed to, uint256 value);
+    event WethFunctionalityEnabledSet(bool enabled);
 
     modifier onlyNativeConverter() {
         require(msg.sender == nativeConverter(), Unauthorized());
@@ -148,6 +149,7 @@ abstract contract CustomTokenWethExtension is CustomToken {
         CustomTokenWethExtensionStorage storage $ = _getCustomTokenWethExtensionStorage();
         if (wethFunctionalityEnabled_) require($._gasTokenIsEth, WethFunctionalityCannotBeEnabledIfGasTokenIsNotEth());
         $.wethFunctionalityEnabled = wethFunctionalityEnabled_;
+        emit WethFunctionalityEnabledSet(wethFunctionalityEnabled_);
     }
 
     function _getCustomTokenWethExtensionStorage() private pure returns (CustomTokenWethExtensionStorage storage $) {
