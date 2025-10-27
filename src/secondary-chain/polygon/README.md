@@ -10,6 +10,7 @@
 - Supported chains: Polygon
 - Custom Token: Available (Custom Mapping)
 - Native Converter: Not required
+- WETH functionality: TBD
 - Bridged USDC Standard: Not required
 - Wrapped Token: N/A
 - Manual Converter: Coming soon
@@ -21,7 +22,7 @@
 
 ## Protection
 
-- Bidirectional lock/mint bridge.
+- Bidirectional, lock/mint bridge.
 
 ## Reference
 
