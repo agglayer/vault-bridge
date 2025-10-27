@@ -7,13 +7,14 @@
 
 ## Compatibility
 
-### Non-default Upgradeable Omnichain Fungible Token
+### Non-Default Upgradeable Omnichain Fungible Token
 
 - Supported VMs: EVM
 - Supported chains: [List ↗](https://docs.layerzero.network/v2/deployments/deployed-contracts)
 - Custom Token: Available
-- Native Converter: TBD
-- Bridged USDC Standard: TBD
+- Native Converter: Coming soon
+- WETH functionality: Coming soon
+- Bridged USDC Standard: Available
 - Wrapped Token: N/A
 - Manual Converter: Coming soon
 
@@ -23,6 +24,7 @@
 - Supported chains: [List ↗](https://docs.layerzero.network/v2/deployments/deployed-contracts)
 - Custom Token: N/A
 - Native Converter: N/A
+- WETH functionality: N/A
 - Bridged USDC Standard: N/A
 - Wrapped Token: Available (OFT Token)
 - Manual Converter: Coming soon (EVM chains), Possible (non-EVM chains)
@@ -33,7 +35,14 @@
 
 ## Protection
 
+### Non-Default Upgradeable Omnichain Fungible Token
+
+- "Local Chain Balance" in Non-Default Mint-Burn OFT Adapter contract prevents bridging out more tokens from a chain than have been bridged in to the chain by reverting onchain immediately.
+
+### Default Immutable Omnichain Fungible Token
+
 - Does not prevent bridging out more tokens from a chain that have been bridged in to the chain. OFT Adapter will unlock tokens as long as it has sufficient balance.
+- Tokens are not upgradeable.
 
 ## Reference
 
