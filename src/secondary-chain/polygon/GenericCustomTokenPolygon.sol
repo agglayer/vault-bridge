@@ -25,7 +25,7 @@ contract GenericCustomTokenPolygon is CustomTokenPolygon {
         string memory symbol_,
         uint8 originalUnderlyingTokenDecimals_,
         address childChainManager_
-    ) external reinitializer(_incrementGlobalInitializationCounter(1)) nonReentrant {
+    ) external onlySelf reinitializer(_incrementGlobalInitializationCounter(1)) nonReentrant {
         // Initialize the base implementation.
         __CustomToken_init1(owner_, name_, symbol_, originalUnderlyingTokenDecimals_, childChainManager_, address(0));
 
@@ -36,6 +36,7 @@ contract GenericCustomTokenPolygon is CustomTokenPolygon {
     /// @dev How to add a new reinitializer:
     function reinitialize2()
         external
+        onlySelf
         reinitializer(_incrementGlobalInitializationCounter(2))
         nonReentrant
     {}

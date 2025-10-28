@@ -20,7 +20,9 @@ contract WethAgglayer is CustomTokenAgglayer, CustomTokenWethExtension {
     }
 
     // @remind Document.
-    function reinitialize1() external {}
+    function reinitialize1() external onlySelf {
+        _incrementGlobalInitializationCounter(1);
+    }
 
     /// @notice The reinitializers start from `2` because Agglayer Bridge has already initialized the token.
     /// @dev @note (ATTENTION) There is no `reinitializer1`.
@@ -30,7 +32,7 @@ contract WethAgglayer is CustomTokenAgglayer, CustomTokenWethExtension {
         uint8 originalUnderlyingTokenDecimals_,
         address agglayerBridge_,
         address nativeConverter_
-    ) external reinitializer(2) nonReentrant {
+    ) external onlySelf reinitializer(_incrementGlobalInitializationCounter(2)) nonReentrant {
         // Preserve the `name` and `symbol` of the bridged vbToken.
         string memory name_ = ERC20Upgradeable.name();
         string memory symbol_ = ERC20Upgradeable.symbol();
@@ -42,16 +44,17 @@ contract WethAgglayer is CustomTokenAgglayer, CustomTokenWethExtension {
         __CustomToken_init1(owner_, name_, symbol_, originalUnderlyingTokenDecimals_, agglayerBridge_, nativeConverter_);
     }
 
-    function reinitialize3(bool wethFunctionalityEnabled_) external reinitializer(3) nonReentrant {
+    function reinitialize3(bool wethFunctionalityEnabled_)
+        external
+        onlySelf
+        reinitializer(_incrementGlobalInitializationCounter(3))
+        nonReentrant
+    {
         // Clean up the old ERC-7201 namespace where `bool _gasTokenIsEth` used to be stored.
         // Calculated as `keccak256(abi.encode(uint256(keccak256("agglayer.vault-bridge.WETH.storage")) - 1)) & ~bytes32(uint256(0xff))`.
         assembly {
             sstore(0xdf8caff5d0161908572492829df972cd19b1aabe3c3078d95299408cd561dc00, 0)
         }
-
-        _incrementGlobalInitializationCounter(1);
-        _incrementGlobalInitializationCounter(2);
-        _incrementGlobalInitializationCounter(3);
 
         __CustomToken_init2();
 
@@ -65,6 +68,7 @@ contract WethAgglayer is CustomTokenAgglayer, CustomTokenWethExtension {
     /// @dev How to add a new reinitializer:
     function reinitialize4()
         external
+        onlySelf
         reinitializer(_incrementGlobalInitializationCounter(4))
         nonReentrant
     {}
