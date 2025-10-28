@@ -240,8 +240,7 @@ contract AgglayerIntegrationTest is TestConstants, ZkEVMCommon {
             )
         );
         nativeConverterInitData[1] = abi.encodeCall(GenericNativeConverter(nativeConverter).reinitialize2, ());
-        nativeConverter =
-            GenericNativeConverter(_proxify(address(nativeConverter), address(this), bytes("")));
+        nativeConverter = GenericNativeConverter(_proxify(address(nativeConverter), address(this), bytes("")));
         assertEq(nativeConverterAddr, address(nativeConverter));
 
         vm.prank(address(nativeConverter));
