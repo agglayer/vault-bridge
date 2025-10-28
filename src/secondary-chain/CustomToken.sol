@@ -68,7 +68,7 @@ abstract contract CustomToken is
         uint8 originalUnderlyingTokenDecimals_,
         address bridge_,
         address nativeConverter_
-    ) internal onlyInitializing {
+    ) internal onlyInitializing incrementsLocalInitializationCounter(1) {
         CustomTokenStorage storage $ = _getCustomTokenStorage();
 
         // Check the inputs.
@@ -99,12 +99,7 @@ abstract contract CustomToken is
     }
 
     // @remind Document (the entire function).
-    function __CustomToken_init2()
-        internal
-        onlyInitializing
-        incrementsLocalInitializationCounter(1)
-        incrementsLocalInitializationCounter(2)
-    {
+    function __CustomToken_init2() internal onlyInitializing incrementsLocalInitializationCounter(1) {
         // Empty function body.
     }
 

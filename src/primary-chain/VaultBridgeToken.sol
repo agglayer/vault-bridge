@@ -187,6 +187,7 @@ abstract contract VaultBridgeToken is
     function __VaultBridgeToken_init1(address initializer_, InitializationParameters calldata initParams)
         internal
         onlyInitializing
+        incrementsLocalInitializationCounter(1)
     {
         // Check the input.
         require(initializer_ != address(0), InvalidInitializer());
@@ -213,12 +214,7 @@ abstract contract VaultBridgeToken is
     }
 
     // @remind Document.
-    function __VaultBridgeToken_init2()
-        internal
-        onlyInitializing
-        incrementsLocalInitializationCounter(1)
-        incrementsLocalInitializationCounter(2)
-    {
+    function __VaultBridgeToken_init2() internal onlyInitializing incrementsLocalInitializationCounter(1) {
         // Empty function body.
     }
 

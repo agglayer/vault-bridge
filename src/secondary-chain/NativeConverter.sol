@@ -120,7 +120,7 @@ abstract contract NativeConverter is
         uint32 primaryChainAgglayerId_,
         uint256 nonMigratableBackingPercentage_,
         address migrationManager_
-    ) internal onlyInitializing {
+    ) internal onlyInitializing incrementsLocalInitializationCounter(1) {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
 
         // Check the inputs.
@@ -179,12 +179,7 @@ abstract contract NativeConverter is
     }
 
     // @remind Document (the entire function).
-    function __NativeConverter_init2()
-        internal
-        onlyInitializing
-        incrementsLocalInitializationCounter(1)
-        incrementsLocalInitializationCounter(2)
-    {
+    function __NativeConverter_init2() internal onlyInitializing incrementsLocalInitializationCounter(2) {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
 
         $._underlyingTokenIsNotMintable = $.bridge.wrappedAddressIsNotMintable(address($.underlyingToken));
