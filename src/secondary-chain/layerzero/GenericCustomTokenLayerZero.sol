@@ -23,7 +23,7 @@ contract GenericCustomTokenLayerZero is CustomTokenLayerZero {
         string memory symbol_,
         uint8 originalUnderlyingTokenDecimals_,
         address oftAdapter_
-    ) external reinitializer(_incrementGlobalInitializationCounter(1)) nonReentrant {
+    ) external onlySelf reinitializer(_incrementGlobalInitializationCounter(1)) nonReentrant {
         __CustomToken_init1(owner_, name_, symbol_, originalUnderlyingTokenDecimals_, oftAdapter_, address(0));
 
         __CustomToken_init2();
@@ -33,6 +33,7 @@ contract GenericCustomTokenLayerZero is CustomTokenLayerZero {
     /// @dev How to add a new reinitializer:
     function reinitialize2()
         external
+        onlySelf
         reinitializer(_incrementGlobalInitializationCounter(2))
         nonReentrant
     {}

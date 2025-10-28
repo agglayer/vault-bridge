@@ -23,7 +23,8 @@ contract VbEth is VaultBridgeToken {
 
     function reinitialize1(address initializer_, VaultBridgeToken.InitializationParameters calldata initParams)
         external
-        reinitializer(1)
+        onlySelf
+        reinitializer(_incrementGlobalInitializationCounter(1))
         nonReentrant
     {
         // Initialize the base implementation.
@@ -36,10 +37,7 @@ contract VbEth is VaultBridgeToken {
         );
     }
 
-    function reinitialize2() external reinitializer(2) nonReentrant {
-        _incrementGlobalInitializationCounter(1);
-        _incrementGlobalInitializationCounter(2);
-
+    function reinitialize2() external onlySelf reinitializer(_incrementGlobalInitializationCounter(2)) nonReentrant {
         __VaultBridgeToken_init2();
     }
 
@@ -47,6 +45,7 @@ contract VbEth is VaultBridgeToken {
     /// @dev How to add a new reinitializer:
     function reinitialize3()
         external
+        onlySelf
         reinitializer(_incrementGlobalInitializationCounter(3))
         nonReentrant
     {}

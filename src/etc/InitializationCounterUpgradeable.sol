@@ -25,6 +25,7 @@ abstract contract InitializationCounterUpgradeable {
         hex"8d679e361eeeac0b879fa197c8b3bda76a3db4f57c9f89335c04a065390bbb00";
 
     // Errors.
+    error Unauthorized();
     error IncorrectInitializationOrder(
         uint64 expectedGlobalInitializationCounterValue, uint64 actualGlobalInitializationCounterValue
     );
@@ -91,6 +92,12 @@ abstract contract InitializationCounterUpgradeable {
         return expectedNewGlobalInitializationCounterValue;
     }
 
+    /// @dev Checks if the sender is the contract itself.
+    modifier onlySelf() {
+        require(msg.sender == address(this), Unauthorized());
+        _;
+    }
+
     modifier incrementsExtensionInitializationCounter(
         uint64 requiredLocalInitializationCounterValue,
         Extension extension,
@@ -117,9 +124,6 @@ abstract contract InitializationCounterUpgradeable {
 
         $._extensionInitializationCounter[extension]++;
     }
-
-    // @todo Uncomment later (requires modifications of contracts and tests).
-    // function reinitialize(bytes[] calldata reinitializeData) external virtual;
 
     // @remind Document (the entire function).
     function _reinitialize(bytes4[] memory reinitializeSelectors, bytes[] calldata reinitializeData) internal {

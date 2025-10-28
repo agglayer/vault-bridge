@@ -25,7 +25,7 @@ contract WethWormhole is CustomTokenWormhole, CustomTokenWethExtension {
         address nttManager_,
         bool gasTokenIsEth_,
         bool wethFunctionalityEnabled_
-    ) external reinitializer(_incrementGlobalInitializationCounter(1)) nonReentrant {
+    ) external onlySelf reinitializer(_incrementGlobalInitializationCounter(1)) nonReentrant {
         __CustomToken_init1(owner_, name_, symbol_, originalUnderlyingTokenDecimals_, nttManager_, address(0));
 
         __CustomToken_init2();
@@ -37,6 +37,7 @@ contract WethWormhole is CustomTokenWormhole, CustomTokenWethExtension {
     /// @dev How to add a new reinitializer:
     function reinitialize2()
         external
+        onlySelf
         reinitializer(_incrementGlobalInitializationCounter(2))
         nonReentrant
     {}

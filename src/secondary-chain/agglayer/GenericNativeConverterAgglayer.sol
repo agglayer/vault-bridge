@@ -26,7 +26,7 @@ contract GenericNativeConverterAgglayer is NativeConverterAgglayer {
         uint32 primaryChainAgglayerId_,
         uint256 nonMigratableBackingPercentage_,
         address migrationManager_
-    ) external reinitializer(1) nonReentrant {
+    ) external onlySelf reinitializer(_incrementGlobalInitializationCounter(1)) nonReentrant {
         // Initialize the base implementation.
         __NativeConverter_init1(
             owner_,
@@ -40,10 +40,7 @@ contract GenericNativeConverterAgglayer is NativeConverterAgglayer {
     }
 
     // @remind Document (the entire function).
-    function reinitialize2() external reinitializer(2) nonReentrant {
-        _incrementGlobalInitializationCounter(1);
-        _incrementGlobalInitializationCounter(2);
-
+    function reinitialize2() external onlySelf reinitializer(_incrementGlobalInitializationCounter(2)) nonReentrant {
         __NativeConverter_init2();
     }
 
@@ -51,6 +48,7 @@ contract GenericNativeConverterAgglayer is NativeConverterAgglayer {
     /// @dev How to add a new reinitializer:
     function reinitialize3()
         external
+        onlySelf
         reinitializer(_incrementGlobalInitializationCounter(3))
         nonReentrant
     {}

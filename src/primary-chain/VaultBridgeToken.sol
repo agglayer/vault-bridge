@@ -105,7 +105,6 @@ abstract contract VaultBridgeToken is
         hex"f082fbc4cfb4d172ba00d34227e208a31ceb0982bc189440d519185302e44700";
 
     // Errors.
-    error Unauthorized();
     error InvalidInitializer();
     error InvalidOwner();
     error InvalidName();
@@ -172,12 +171,6 @@ abstract contract VaultBridgeToken is
     modifier onlyMigrationManager() {
         VaultBridgeTokenStorage storage $ = _getVaultBridgeTokenStorage();
         require(msg.sender == $.migrationManager, Unauthorized());
-        _;
-    }
-
-    /// @dev Checks if the sender is the vbToken itself.
-    modifier onlySelf() {
-        require(msg.sender == address(this), Unauthorized());
         _;
     }
 
