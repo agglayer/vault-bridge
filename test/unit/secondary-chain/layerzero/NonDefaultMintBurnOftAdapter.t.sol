@@ -37,16 +37,15 @@ contract NonDefaultMintBurnOftAdapterTest is NonDefaultMintBurnOftAdapterTestBas
         reinitializeCallData[0] =
             abi.encodeCall(NonDefaultMintBurnOftAdapter.reinitialize1, (address(0), false, owner, delegate));
 
-        vm.expectRevert(abi.encodeWithSelector(NonDefaultMintBurnOftAdapter.InvalidToken.selector));
-        TransparentUpgradeableProxy(
-            payable(
-                _proxify(
-                    nonDefaultMintBurnOftAdapterImpl,
-                    proxyAdmin,
-                    abi.encodeCall(NonDefaultMintBurnOftAdapter.reinitialize, (reinitializeCallData))
-                )
+        nonDefaultMintBurnOftAdapter = TestHarnessNonDefaultMintBurnOftAdapter(
+            address(
+                TransparentUpgradeableProxy(payable(_proxify(nonDefaultMintBurnOftAdapterImpl, proxyAdmin, bytes(""))))
             )
         );
+
+        vm.expectRevert(abi.encodeWithSelector(NonDefaultMintBurnOftAdapter.InvalidToken.selector));
+        vm.prank(address(nonDefaultMintBurnOftAdapter));
+        nonDefaultMintBurnOftAdapter.reinitialize(reinitializeCallData);
     }
 
     function test_initialize_revert_invalidTokenDecimals() public {
@@ -65,16 +64,15 @@ contract NonDefaultMintBurnOftAdapterTest is NonDefaultMintBurnOftAdapterTestBas
             NonDefaultMintBurnOftAdapter.reinitialize1, (address(wrongDecimalToken), false, owner, delegate)
         );
 
+        nonDefaultMintBurnOftAdapterProxy =
+            TransparentUpgradeableProxy(payable(_proxify(nonDefaultMintBurnOftAdapterImpl, proxyAdmin, bytes(""))));
+
+        nonDefaultMintBurnOftAdapter =
+            TestHarnessNonDefaultMintBurnOftAdapter(address(nonDefaultMintBurnOftAdapterProxy));
+
         vm.expectRevert(abi.encodeWithSelector(NonDefaultMintBurnOftAdapter.InvalidTokenDecimals.selector));
-        TransparentUpgradeableProxy(
-            payable(
-                _proxify(
-                    nonDefaultMintBurnOftAdapterImpl,
-                    proxyAdmin,
-                    abi.encodeCall(NonDefaultMintBurnOftAdapter.reinitialize, (reinitializeCallData))
-                )
-            )
-        );
+        vm.prank(address(nonDefaultMintBurnOftAdapter));
+        nonDefaultMintBurnOftAdapter.reinitialize(reinitializeCallData);
     }
 
     function test_initialize_revert_alreadyInitialized() public {
@@ -96,14 +94,11 @@ contract NonDefaultMintBurnOftAdapterTest is NonDefaultMintBurnOftAdapterTestBas
         );
 
         NonDefaultMintBurnOftAdapter newAdapter = NonDefaultMintBurnOftAdapter(
-            address(
-                new TransparentUpgradeableProxy(
-                    nonDefaultMintBurnOftAdapterImpl,
-                    proxyAdmin,
-                    abi.encodeCall(NonDefaultMintBurnOftAdapter.reinitialize, (reinitializeCallData))
-                )
-            )
+            address(new TransparentUpgradeableProxy(nonDefaultMintBurnOftAdapterImpl, proxyAdmin, bytes("")))
         );
+
+        vm.prank(address(newAdapter));
+        newAdapter.reinitialize(reinitializeCallData);
 
         assertTrue(newAdapter.approvalRequired());
     }
@@ -208,14 +203,11 @@ contract NonDefaultMintBurnOftAdapterTest is NonDefaultMintBurnOftAdapterTestBas
             abi.encodeCall(NonDefaultMintBurnOftAdapter.reinitialize1, (address(fiatToken), true, owner, delegate));
 
         TestHarnessNonDefaultMintBurnOftAdapter newAdapter = TestHarnessNonDefaultMintBurnOftAdapter(
-            address(
-                new TransparentUpgradeableProxy(
-                    nonDefaultMintBurnOftAdapterImpl,
-                    proxyAdmin,
-                    abi.encodeCall(NonDefaultMintBurnOftAdapter.reinitialize, (reinitializeCallData))
-                )
-            )
+            address(new TransparentUpgradeableProxy(nonDefaultMintBurnOftAdapterImpl, proxyAdmin, bytes("")))
         );
+
+        vm.prank(address(newAdapter));
+        newAdapter.reinitialize(reinitializeCallData);
 
         // Verify approvalRequired is set correctly
         assertTrue(newAdapter.approvalRequired());
@@ -406,47 +398,5 @@ contract NonDefaultMintBurnOftAdapterTest is NonDefaultMintBurnOftAdapterTestBas
         assertEq(
             customTokenLayerZero.balanceOf(address(nonDefaultMintBurnOftAdapter)), adapterBalanceBefore + transferAmount
         );
-    }
-
-    // ========================================
-    // ====== HELPER FUNCTIONS ================
-    // ========================================
-
-    /// @notice Helper to deploy a GenericCustomTokenLayerZero with custom parameters
-    /// @param name_ Token name
-    /// @param symbol_ Token symbol
-    /// @param decimals_ Token decimals
-    /// @param bridge_ Bridge address
-    /// @return Deployed token instance
-    function deployCustomTokenLz(string memory name_, string memory symbol_, uint8 decimals_, address bridge_)
-        internal
-        returns (GenericCustomTokenLayerZero)
-    {
-        return GenericCustomTokenLayerZero(
-            address(
-                new TransparentUpgradeableProxy(
-                    customTokenLayerZeroImpl,
-                    proxyAdmin,
-                    abi.encodeCall(
-                        GenericCustomTokenLayerZero.reinitialize,
-                        (
-                            _buildReinitializeArray(
-                                abi.encodeCall(
-                                    GenericCustomTokenLayerZero.reinitialize1,
-                                    (owner, name_, symbol_, decimals_, bridge_)
-                                )
-                            )
-                        )
-                    )
-                )
-            )
-        );
-    }
-
-    /// @notice Helper to build reinitialize array
-    function _buildReinitializeArray(bytes memory callData) internal pure returns (bytes[] memory) {
-        bytes[] memory arr = new bytes[](1);
-        arr[0] = callData;
-        return arr;
     }
 }

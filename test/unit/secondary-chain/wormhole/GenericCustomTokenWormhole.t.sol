@@ -30,19 +30,21 @@ contract GenericCustomTokenWormholeTest is GenericCustomTokenWormholeTestBase {
         uint8 originalUnderlyingTokenDecimals_,
         address nttManager_
     ) internal {
-        vm.expectRevert(expectedError);
-        TransparentUpgradeableProxy(
-            payable(
-                _proxify(
-                    genericCustomTokenWormholeImpl,
-                    proxyAdmin,
-                    abi.encodeCall(
-                        GenericCustomTokenWormhole.reinitialize1,
-                        (owner_, name_, symbol_, originalUnderlyingTokenDecimals_, nttManager_)
-                    )
-                )
+        bytes[] memory reinitializeCallData = new bytes[](1);
+        reinitializeCallData[0] = abi.encodeCall(
+            GenericCustomTokenWormhole.reinitialize1,
+            (owner_, name_, symbol_, originalUnderlyingTokenDecimals_, nttManager_)
+        );
+
+        genericCustomTokenWormhole = GenericCustomTokenWormhole(
+            address(
+                TransparentUpgradeableProxy(payable(_proxify(genericCustomTokenWormholeImpl, proxyAdmin, bytes(""))))
             )
         );
+
+        vm.expectRevert(expectedError);
+        vm.prank(address(genericCustomTokenWormhole));
+        genericCustomTokenWormhole.reinitialize(reinitializeCallData);
     }
 
     function test_initialize_revert_zeroOwner() public {

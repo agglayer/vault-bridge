@@ -188,14 +188,20 @@ contract AgglayerIntegrationTest is TestConstants, ZkEVMCommon {
         );
 
         GenericCustomToken genericCustomTokenImpl = new GenericCustomToken();
-        bytes memory initData = abi.encodeCall(
+        bytes[] memory initData = new bytes[](3);
+        initData[0] = abi.encodeCall(GenericCustomToken.reinitialize1, ());
+        initData[1] = abi.encodeCall(
             GenericCustomToken.reinitialize2, (owner, CUSTOM_TOKEN_DECIMALS, LXLY_BRIDGE_Y, nativeConverterAddr)
         );
+        initData[2] = abi.encodeCall(GenericCustomToken.reinitialize3, ());
         bytes memory upgradeData =
-            abi.encodeCall(ITransparentUpgradeableProxy.upgradeToAndCall, (address(genericCustomTokenImpl), initData));
+            abi.encodeCall(ITransparentUpgradeableProxy.upgradeToAndCall, (address(genericCustomTokenImpl), bytes("")));
         vm.prank(_getAdmin(address(customTokenProxy)));
         (address(customTokenProxy).call(upgradeData));
         customToken = GenericCustomToken(address(customTokenProxy));
+
+        vm.prank(address(customToken));
+        customToken.reinitialize(initData);
 
         // calculate bridge wrapped vbToken address
         bwVbToken = MockLxlyBridgeWrappedToken(
@@ -220,7 +226,8 @@ contract AgglayerIntegrationTest is TestConstants, ZkEVMCommon {
 
         // deploy native converter
         nativeConverter = new GenericNativeConverter();
-        bytes memory nativeConverterInitData = abi.encodeCall(
+        bytes[] memory nativeConverterInitData = new bytes[](2);
+        nativeConverterInitData[0] = abi.encodeCall(
             GenericNativeConverter(nativeConverter).reinitialize1,
             (
                 owner,
@@ -232,9 +239,13 @@ contract AgglayerIntegrationTest is TestConstants, ZkEVMCommon {
                 address(migrationManager)
             )
         );
+        nativeConverterInitData[1] = abi.encodeCall(GenericNativeConverter(nativeConverter).reinitialize2, ());
         nativeConverter =
-            GenericNativeConverter(_proxify(address(nativeConverter), address(this), nativeConverterInitData));
+            GenericNativeConverter(_proxify(address(nativeConverter), address(this), bytes("")));
         assertEq(nativeConverterAddr, address(nativeConverter));
+
+        vm.prank(address(nativeConverter));
+        nativeConverter.reinitialize(nativeConverterInitData);
 
         //////////////////////////////////////////////////////////////
         // Primary Chain

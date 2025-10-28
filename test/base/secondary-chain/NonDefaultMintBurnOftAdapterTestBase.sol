@@ -106,23 +106,18 @@ abstract contract NonDefaultMintBurnOftAdapterTestBase is SecondaryChainBase {
             )
         );
 
-        customTokenLayerZeroProxy = TransparentUpgradeableProxy(
-            payable(
-                _proxify(
-                    customTokenLayerZeroImpl,
-                    proxyAdmin,
-                    abi.encodeCall(GenericCustomTokenLayerZero.reinitialize, (reinitializeCallData))
-                )
-            )
-        );
+        customTokenLayerZeroProxy =
+            TransparentUpgradeableProxy(payable(_proxify(customTokenLayerZeroImpl, proxyAdmin, bytes(""))));
 
         customTokenLayerZero = GenericCustomTokenLayerZero(address(customTokenLayerZeroProxy));
+
+        vm.prank(address(customTokenLayerZero));
+        customTokenLayerZero.reinitialize(reinitializeCallData);
 
         // Deploy adapter implementation (constructor params are immutable)
         nonDefaultMintBurnOftAdapterImpl =
             address(new TestHarnessNonDefaultMintBurnOftAdapter(originalUnderlyingTokenDecimals, address(lzEndpoint)));
 
-        // Take snapshot before any initialization (after implementations are deployed)
         stateBeforeInitialize = vm.snapshotState();
 
         // Now initialize the adapter with the token
@@ -133,20 +128,16 @@ abstract contract NonDefaultMintBurnOftAdapterTestBase is SecondaryChainBase {
         );
 
         // Initialize the adapter through the proxy
-        nonDefaultMintBurnOftAdapterProxy = TransparentUpgradeableProxy(
-            payable(
-                _proxify(
-                    nonDefaultMintBurnOftAdapterImpl,
-                    proxyAdmin,
-                    abi.encodeCall(NonDefaultMintBurnOftAdapter.reinitialize, (reinitializeCallData))
-                )
-            )
-        );
+        nonDefaultMintBurnOftAdapterProxy =
+            TransparentUpgradeableProxy(payable(_proxify(nonDefaultMintBurnOftAdapterImpl, proxyAdmin, bytes(""))));
 
         assertEq(calculatedNonDefaultMintBurnOftAdapterProxyAddr, address(nonDefaultMintBurnOftAdapterProxy));
 
         nonDefaultMintBurnOftAdapter =
             TestHarnessNonDefaultMintBurnOftAdapter(address(nonDefaultMintBurnOftAdapterProxy));
+
+        vm.prank(address(nonDefaultMintBurnOftAdapter));
+        nonDefaultMintBurnOftAdapter.reinitialize(reinitializeCallData);
     }
 
     /// @notice Setup debugging labels
@@ -188,14 +179,34 @@ abstract contract NonDefaultMintBurnOftAdapterTestBase is SecondaryChainBase {
             abi.encodeCall(GenericCustomTokenLayerZero.reinitialize1, (owner, name_, symbol_, decimals_, bridgeAddr_));
 
         MockFiatTokenLayerZero token = MockFiatTokenLayerZero(
-            address(
-                new TransparentUpgradeableProxy(
-                    address(new MockFiatTokenLayerZero()),
-                    proxyAdmin,
-                    abi.encodeCall(GenericCustomTokenLayerZero.reinitialize, (reinitializeCallData))
-                )
-            )
+            address(new TransparentUpgradeableProxy(address(new MockFiatTokenLayerZero()), proxyAdmin, bytes("")))
         );
+
+        vm.prank(address(token));
+        token.reinitialize(reinitializeCallData);
+
+        return token;
+    }
+
+    /// @notice Helper to deploy a GenericCustomTokenLayerZero with custom parameters
+    /// @param name_ Token name
+    /// @param symbol_ Token symbol
+    /// @param decimals_ Token decimals
+    /// @param bridge_ Bridge address
+    /// @return Deployed token instance
+    function deployCustomTokenLz(string memory name_, string memory symbol_, uint8 decimals_, address bridge_)
+        internal
+        returns (GenericCustomTokenLayerZero)
+    {
+        bytes[] memory reinitializeCallData = new bytes[](1);
+        reinitializeCallData[0] =
+            abi.encodeCall(GenericCustomTokenLayerZero.reinitialize1, (owner, name_, symbol_, decimals_, bridge_));
+
+        GenericCustomTokenLayerZero token =
+            GenericCustomTokenLayerZero(payable(_proxify(customTokenLayerZeroImpl, proxyAdmin, bytes(""))));
+
+        vm.prank(address(token));
+        token.reinitialize(reinitializeCallData);
 
         return token;
     }

@@ -27,31 +27,31 @@ contract WethWormholeTest is WethWormholeTestBase {
         bool gasTokenIsEth_,
         bool wethFunctionalityEnabled_
     ) internal returns (address) {
+        bytes[] memory reinitializeCallData = new bytes[](1);
+        reinitializeCallData[0] = abi.encodeCall(
+            WethWormhole.reinitialize1,
+            (
+                owner_,
+                name_,
+                symbol_,
+                originalUnderlyingTokenDecimals_,
+                nttManager_,
+                gasTokenIsEth_,
+                wethFunctionalityEnabled_
+            )
+        );
+
+        wethWormhole = WethWormhole(
+            payable(address(TransparentUpgradeableProxy(payable(_proxify(wethWormholeImpl, proxyAdmin, bytes(""))))))
+        );
+
         if (expectedError != bytes4(0)) {
             vm.expectRevert(expectedError);
         }
+        vm.prank(address(wethWormhole));
+        wethWormhole.reinitialize(reinitializeCallData);
 
-        TransparentUpgradeableProxy newProxy = TransparentUpgradeableProxy(
-            payable(
-                _proxify(
-                    wethWormholeImpl,
-                    proxyAdmin,
-                    abi.encodeCall(
-                        WethWormhole.reinitialize1,
-                        (
-                            owner_,
-                            name_,
-                            symbol_,
-                            originalUnderlyingTokenDecimals_,
-                            nttManager_,
-                            gasTokenIsEth_,
-                            wethFunctionalityEnabled_
-                        )
-                    )
-                )
-            )
-        );
-        return address(newProxy);
+        return address(wethWormhole);
     }
 
     function test_initialize_revert_zeroOwner() public {
