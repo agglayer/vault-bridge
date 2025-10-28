@@ -12,6 +12,8 @@ import {
 import {GenericCustomTokenWormhole} from "src/secondary-chain/wormhole/GenericCustomTokenWormhole.sol";
 import {CustomToken} from "src/secondary-chain/CustomToken.sol";
 
+import {InitializationCounterUpgradeable} from "src/etc/InitializationCounterUpgradeable.sol";
+
 /// @dev GenericCustomTokenWormhole tests
 /// @notice Comprehensive tests for GenericCustomTokenWormhole which also cover CustomTokenWormhole functionality
 contract GenericCustomTokenWormholeTest is GenericCustomTokenWormholeTestBase {
@@ -102,7 +104,7 @@ contract GenericCustomTokenWormholeTest is GenericCustomTokenWormholeTestBase {
         uint256 amount = 1000e18;
 
         vm.prank(sender);
-        vm.expectRevert(abi.encodeWithSelector(CustomToken.Unauthorized.selector));
+        vm.expectRevert(abi.encodeWithSelector(InitializationCounterUpgradeable.Unauthorized.selector));
         genericCustomTokenWormhole.mint(sender, amount);
     }
 
@@ -130,7 +132,7 @@ contract GenericCustomTokenWormholeTest is GenericCustomTokenWormholeTestBase {
 
         // Try to burn from sender (should fail)
         vm.prank(sender);
-        vm.expectRevert(abi.encodeWithSelector(CustomToken.Unauthorized.selector));
+        vm.expectRevert(abi.encodeWithSelector(InitializationCounterUpgradeable.Unauthorized.selector));
         genericCustomTokenWormhole.burn(amount);
     }
 

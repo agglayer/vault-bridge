@@ -11,6 +11,8 @@ import {MigrationManager, PausableUpgradeable} from "src/primary-chain/Migration
 import {IAccessControl} from "@openzeppelin-contracts/access/IAccessControl.sol";
 import {IERC20} from "@openzeppelin-contracts/token/ERC20/IERC20.sol";
 
+import {InitializationCounterUpgradeable} from "src/etc/InitializationCounterUpgradeable.sol";
+
 /// @dev Tests for MigrationManager
 contract MigrationManagerTest is MigrationManagerTestBase {
     function setUp() public virtual {
@@ -170,7 +172,7 @@ contract MigrationManagerTest is MigrationManagerTestBase {
         _testPauseUnpause(owner, address(migrationManager), callData);
 
         // test only callable by the agglayer bridge
-        vm.expectRevert(MigrationManager.Unauthorized.selector);
+        vm.expectRevert(InitializationCounterUpgradeable.Unauthorized.selector);
         migrationManager.onMessageReceived(nativeConverter, NETWORK_ID_L2, bytes(""));
 
         bytes memory data = abi.encode(
@@ -178,7 +180,7 @@ contract MigrationManagerTest is MigrationManagerTestBase {
         );
 
         // test unset vbToken
-        vm.expectRevert(MigrationManager.Unauthorized.selector);
+        vm.expectRevert(InitializationCounterUpgradeable.Unauthorized.selector);
         vm.prank(address(agglayerBridge));
         migrationManager.onMessageReceived(nativeConverter, NETWORK_ID_L2, data);
 
