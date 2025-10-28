@@ -20,6 +20,8 @@ import {PausableUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/Pau
 // Mocks
 import {MockAgglayerBridge} from "test/utils/mocks/MockAgglayerBridge.sol";
 
+import {InitializationCounterUpgradeable} from "src/etc/InitializationCounterUpgradeable.sol";
+
 /// @dev NativeConverter tests
 contract NativeConverterTest is NativeConverterTestBase {
     function setUp() public virtual {
@@ -460,14 +462,14 @@ contract NativeConverterTest is NativeConverterTestBase {
         uint256 mintedCustomToken = 100;
 
         vm.prank(sender);
-        vm.expectRevert(NativeConverter.Unauthorized.selector);
+        vm.expectRevert(InitializationCounterUpgradeable.Unauthorized.selector);
         nativeConverter.removeMigrationInProgress(mintedCustomToken);
 
         vm.prank(owner);
-        vm.expectRevert(NativeConverter.Unauthorized.selector);
+        vm.expectRevert(InitializationCounterUpgradeable.Unauthorized.selector);
         nativeConverter.removeMigrationInProgress(mintedCustomToken);
 
-        vm.expectRevert(NativeConverter.Unauthorized.selector);
+        vm.expectRevert(InitializationCounterUpgradeable.Unauthorized.selector);
         nativeConverter.removeMigrationInProgress(mintedCustomToken);
     }
 

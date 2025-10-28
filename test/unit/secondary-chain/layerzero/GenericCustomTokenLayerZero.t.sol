@@ -12,6 +12,8 @@ import {
 import {GenericCustomTokenLayerZero} from "src/secondary-chain/layerzero/GenericCustomTokenLayerZero.sol";
 import {CustomToken} from "src/secondary-chain/CustomToken.sol";
 
+import {InitializationCounterUpgradeable} from "src/etc/InitializationCounterUpgradeable.sol";
+
 /// @dev GenericCustomTokenLayerZero tests
 /// @notice Comprehensive tests for GenericCustomTokenLayerZero which also cover CustomTokenLayerZero functionality
 contract GenericCustomTokenLayerZeroTest is GenericCustomTokenLayerZeroTestBase {
@@ -103,7 +105,7 @@ contract GenericCustomTokenLayerZeroTest is GenericCustomTokenLayerZeroTestBase 
         uint256 amount = 1000e18;
 
         vm.prank(sender);
-        vm.expectRevert(abi.encodeWithSelector(CustomToken.Unauthorized.selector));
+        vm.expectRevert(abi.encodeWithSelector(InitializationCounterUpgradeable.Unauthorized.selector));
         genericCustomTokenLayerZero.mint(sender, amount);
     }
 
@@ -132,7 +134,7 @@ contract GenericCustomTokenLayerZeroTest is GenericCustomTokenLayerZeroTestBase 
 
         // Try to burn from sender (should fail)
         vm.prank(sender);
-        vm.expectRevert(abi.encodeWithSelector(CustomToken.Unauthorized.selector));
+        vm.expectRevert(abi.encodeWithSelector(InitializationCounterUpgradeable.Unauthorized.selector));
         genericCustomTokenLayerZero.burn(sender, amount);
     }
 

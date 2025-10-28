@@ -10,6 +10,8 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {MockAgglayerBridge} from "test/utils/mocks/MockAgglayerBridge.sol";
 
+import {InitializationCounterUpgradeable} from "src/etc/InitializationCounterUpgradeable.sol";
+
 /**
  * @title VbEth Unit Tests
  * @notice Comprehensive unit tests for VbEth contract
@@ -158,7 +160,7 @@ contract VbETHTest is VbETHTestBase {
         // For VbEth, deal WETH tokens instead of ETH
         _dealWETH(address(vbETH), assets);
 
-        vm.expectRevert(VaultBridgeToken.Unauthorized.selector);
+        vm.expectRevert(InitializationCounterUpgradeable.Unauthorized.selector);
         vbETHPart2.completeMigration(NETWORK_ID_L2, shares, assets);
 
         vm.startPrank(migrationManagerAddr);

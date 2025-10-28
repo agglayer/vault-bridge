@@ -11,6 +11,8 @@ import {
 import {GenericCustomTokenPolygon} from "src/secondary-chain/polygon/GenericCustomTokenPolygon.sol";
 import {CustomToken} from "src/secondary-chain/CustomToken.sol";
 
+import {InitializationCounterUpgradeable} from "src/etc/InitializationCounterUpgradeable.sol";
+
 /// @dev GenericCustomTokenPolygon tests
 /// @notice Comprehensive tests for GenericCustomTokenPolygon which also cover CustomTokenPolygon functionality
 contract GenericCustomTokenPolygonTest is GenericCustomTokenPolygonTestBase {
@@ -142,7 +144,7 @@ contract GenericCustomTokenPolygonTest is GenericCustomTokenPolygonTestBase {
         uint256 amount = 1000e18;
         bytes memory depositData = abi.encode(amount);
 
-        vm.expectRevert(CustomToken.Unauthorized.selector);
+        vm.expectRevert(InitializationCounterUpgradeable.Unauthorized.selector);
         vm.prank(makeAddr("unauthorized"));
         genericCustomTokenPolygon.deposit(sender, depositData);
     }
@@ -254,7 +256,7 @@ contract GenericCustomTokenPolygonTest is GenericCustomTokenPolygonTestBase {
         bytes memory depositData = abi.encode(amount);
 
         // Should revert when called by unauthorized address
-        vm.expectRevert(CustomToken.Unauthorized.selector);
+        vm.expectRevert(InitializationCounterUpgradeable.Unauthorized.selector);
         vm.prank(makeAddr("unauthorized"));
         genericCustomTokenPolygon.deposit(sender, depositData);
     }

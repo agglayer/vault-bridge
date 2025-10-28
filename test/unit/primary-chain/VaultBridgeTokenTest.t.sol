@@ -17,6 +17,8 @@ import {IAgglayerBridge as _IAgglayerBridge} from "test/interfaces/IAgglayerBrid
 import {MockAgglayerBridge} from "test/utils/mocks/MockAgglayerBridge.sol";
 import {MockVault} from "test/utils/mocks/MockVault.sol";
 
+import {InitializationCounterUpgradeable} from "src/etc/InitializationCounterUpgradeable.sol";
+
 /// @dev Tests for VaultBridgeToken and VaultBridgeTokenPart2
 contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
     using SafeERC20 for IERC20;
@@ -739,7 +741,7 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
         _testPauseUnpause(owner, address(vbToken), callData);
 
         // Not Migration manager
-        vm.expectRevert(VaultBridgeToken.Unauthorized.selector);
+        vm.expectRevert(InitializationCounterUpgradeable.Unauthorized.selector);
         vbTokenPart2.completeMigration(NETWORK_ID_L2, 100, 100);
 
         vm.startPrank(migrationManagerAddr);
@@ -1020,7 +1022,7 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
         uint256 amount = 1 ether;
 
         // Only yield recipient can burn
-        vm.expectRevert(VaultBridgeToken.Unauthorized.selector);
+        vm.expectRevert(InitializationCounterUpgradeable.Unauthorized.selector);
         vbTokenPart2.burn(amount);
 
         // Cannot burn 0 shares

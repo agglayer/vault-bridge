@@ -16,6 +16,8 @@ import {NativeConverter} from "src/secondary-chain/NativeConverter.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+import {InitializationCounterUpgradeable} from "src/etc/InitializationCounterUpgradeable.sol";
+
 /// @dev GenericCustomTokenAgglayer tests
 contract GenericCustomTokenAgglayerTest is GenericCustomTokenAgglayerTestBase {
     function setUp() public virtual {
@@ -59,7 +61,7 @@ contract GenericCustomTokenAgglayerTest is GenericCustomTokenAgglayerTestBase {
     function test_mint_revertsWithUnauthorized() public {
         uint256 amount = 1000e18;
 
-        vm.expectRevert(CustomToken.Unauthorized.selector);
+        vm.expectRevert(InitializationCounterUpgradeable.Unauthorized.selector);
         vm.prank(makeAddr("unauthorized"));
         genericCustomTokenAgglayer.mint(recipient, amount);
     }
@@ -116,7 +118,7 @@ contract GenericCustomTokenAgglayerTest is GenericCustomTokenAgglayerTestBase {
         vm.prank(address(mockAgglayerBridge));
         genericCustomTokenAgglayer.mint(sender, amount);
 
-        vm.expectRevert(CustomToken.Unauthorized.selector);
+        vm.expectRevert(InitializationCounterUpgradeable.Unauthorized.selector);
         vm.prank(makeAddr("unauthorized"));
         genericCustomTokenAgglayer.burn(sender, amount);
     }
