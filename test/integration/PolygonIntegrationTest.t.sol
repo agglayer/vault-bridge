@@ -125,7 +125,8 @@ contract PolygonIntegrationTest is TestConstants {
         GenericCustomTokenPolygon customTokenImpl = new GenericCustomTokenPolygon();
 
         // Prepare initialization data for the custom token
-        bytes memory customTokenInitData = abi.encodeCall(
+        bytes[] memory customTokenInitData = new bytes[](1);
+        customTokenInitData[0] = abi.encodeCall(
             GenericCustomTokenPolygon.reinitialize1,
             (
                 owner, // owner_
@@ -137,7 +138,10 @@ contract PolygonIntegrationTest is TestConstants {
         );
 
         // Deploy custom token proxy
-        customToken = GenericCustomTokenPolygon(_proxify(address(customTokenImpl), address(this), customTokenInitData));
+        customToken = GenericCustomTokenPolygon(_proxify(address(customTokenImpl), address(this), bytes("")));
+
+        vm.prank(address(customToken));
+        customToken.reinitialize(customTokenInitData);
     }
 
     /// @notice Configure token mappings between chains

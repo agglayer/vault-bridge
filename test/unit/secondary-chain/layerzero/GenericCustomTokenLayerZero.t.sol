@@ -30,19 +30,17 @@ contract GenericCustomTokenLayerZeroTest is GenericCustomTokenLayerZeroTestBase 
         uint8 originalUnderlyingTokenDecimals_,
         address oftAdapter_
     ) internal {
-        vm.expectRevert(expectedError);
-        TransparentUpgradeableProxy(
-            payable(
-                _proxify(
-                    genericCustomTokenLayerZeroImpl,
-                    proxyAdmin,
-                    abi.encodeCall(
-                        GenericCustomTokenLayerZero.reinitialize1,
-                        (owner_, name_, symbol_, originalUnderlyingTokenDecimals_, oftAdapter_)
-                    )
-                )
-            )
+        bytes[] memory reinitializeCallData = new bytes[](1);
+        reinitializeCallData[0] = abi.encodeCall(
+            GenericCustomTokenLayerZero.reinitialize1,
+            (owner_, name_, symbol_, originalUnderlyingTokenDecimals_, oftAdapter_)
         );
+
+        vm.revertToState(stateBeforeInitialize);
+
+        vm.expectRevert(expectedError);
+        vm.prank(address(genericCustomTokenLayerZero));
+        genericCustomTokenLayerZero.reinitialize(reinitializeCallData);
     }
 
     function test_initialize_revert_zeroOwner() public {

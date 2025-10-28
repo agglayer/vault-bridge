@@ -66,18 +66,16 @@ abstract contract GenericCustomTokenAgglayerTestBase is SecondaryChainBase {
         );
         reinitializeCallData[2] = abi.encodeCall(GenericCustomTokenAgglayer.reinitialize3, ());
 
-        bytes memory genericCustomTokenAgglayerInitData =
-            abi.encodeCall(GenericCustomTokenAgglayer.reinitialize, (reinitializeCallData));
-
-        bytes memory genericCustomTokenAgglayerUpgradeData = abi.encodeCall(
-            ITransparentUpgradeableProxy.upgradeToAndCall,
-            (genericCustomTokenAgglayerImpl, genericCustomTokenAgglayerInitData)
-        );
+        bytes memory genericCustomTokenAgglayerUpgradeData =
+            abi.encodeCall(ITransparentUpgradeableProxy.upgradeToAndCall, (genericCustomTokenAgglayerImpl, bytes("")));
 
         vm.prank(_getProxyAdmin(address(existingGenericCustomTokenAgglayerProxy)));
         (address(existingGenericCustomTokenAgglayerProxy).call(genericCustomTokenAgglayerUpgradeData));
 
         genericCustomTokenAgglayer = GenericCustomTokenAgglayer(address(existingGenericCustomTokenAgglayerProxy));
+
+        vm.prank(address(genericCustomTokenAgglayer));
+        genericCustomTokenAgglayer.reinitialize(reinitializeCallData);
     }
 
     /// @notice Setup debugging labels

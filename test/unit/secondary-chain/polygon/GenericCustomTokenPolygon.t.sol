@@ -29,18 +29,20 @@ contract GenericCustomTokenPolygonTest is GenericCustomTokenPolygonTestBase {
         uint8 decimals_,
         address childChainManager_
     ) internal {
-        vm.expectRevert(expectedError);
-        TransparentUpgradeableProxy(
-            payable(
-                _proxify(
-                    genericCustomTokenPolygonImpl,
-                    proxyAdmin,
-                    abi.encodeCall(
-                        GenericCustomTokenPolygon.reinitialize1, (owner_, name_, symbol_, decimals_, childChainManager_)
-                    )
-                )
+        bytes[] memory genericCustomTokenPolygonInitData = new bytes[](1);
+        genericCustomTokenPolygonInitData[0] = abi.encodeCall(
+            GenericCustomTokenPolygon.reinitialize1, (owner_, name_, symbol_, decimals_, childChainManager_)
+        );
+
+        genericCustomTokenPolygon = GenericCustomTokenPolygon(
+            address(
+                TransparentUpgradeableProxy(payable(_proxify(genericCustomTokenPolygonImpl, proxyAdmin, bytes(""))))
             )
         );
+
+        vm.expectRevert(expectedError);
+        vm.prank(address(genericCustomTokenPolygon));
+        genericCustomTokenPolygon.reinitialize(genericCustomTokenPolygonInitData);
     }
 
     function test_initialize_revertsWhenCalledTwice() public {
