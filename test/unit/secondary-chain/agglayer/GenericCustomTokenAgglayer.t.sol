@@ -61,7 +61,7 @@ contract GenericCustomTokenAgglayerTest is GenericCustomTokenAgglayerTestBase {
     function test_mint_revertsWithUnauthorized() public {
         uint256 amount = 1000e18;
 
-        vm.expectRevert(InitializationCounterUpgradeable.Unauthorized.selector);
+        vm.expectRevert(CustomToken.Unauthorized.selector);
         vm.prank(makeAddr("unauthorized"));
         genericCustomTokenAgglayer.mint(recipient, amount);
     }
@@ -118,7 +118,7 @@ contract GenericCustomTokenAgglayerTest is GenericCustomTokenAgglayerTestBase {
         vm.prank(address(mockAgglayerBridge));
         genericCustomTokenAgglayer.mint(sender, amount);
 
-        vm.expectRevert(InitializationCounterUpgradeable.Unauthorized.selector);
+        vm.expectRevert(CustomToken.Unauthorized.selector);
         vm.prank(makeAddr("unauthorized"));
         genericCustomTokenAgglayer.burn(sender, amount);
     }

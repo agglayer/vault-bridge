@@ -41,15 +41,24 @@ contract WethWormholeTest is WethWormholeTestBase {
             )
         );
 
-        wethWormhole = WethWormhole(
-            payable(address(TransparentUpgradeableProxy(payable(_proxify(wethWormholeImpl, proxyAdmin, bytes(""))))))
-        );
-
         if (expectedError != bytes4(0)) {
             vm.expectRevert(expectedError);
         }
-        vm.prank(address(wethWormhole));
-        wethWormhole.reinitialize(reinitializeCallData);
+        wethWormhole = WethWormhole(
+            payable(
+                address(
+                    TransparentUpgradeableProxy(
+                        payable(
+                            _proxify(
+                                wethWormholeImpl,
+                                proxyAdmin,
+                                abi.encodeCall(WethWormhole.reinitialize, (reinitializeCallData))
+                            )
+                        )
+                    )
+                )
+            )
+        );
 
         return address(wethWormhole);
     }

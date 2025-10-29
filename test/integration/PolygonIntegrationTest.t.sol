@@ -98,23 +98,31 @@ contract PolygonIntegrationTest is TestConstants {
         address initializer = address(new VaultBridgeTokenInitializer());
 
         // Prepare initialization parameters
-        VaultBridgeToken.InitializationParameters memory initParams = VaultBridgeToken.InitializationParameters({
-            owner: owner,
-            name: VBTOKEN_NAME,
-            symbol: VBTOKEN_SYMBOL,
-            underlyingToken: address(underlyingAsset),
-            minimumReservePercentage: MINIMUM_RESERVE_PERCENTAGE,
-            yieldVault: address(vbTokenVault),
-            yieldRecipient: owner,
-            agglayerBridge: address(mockAgglayerBridge),
-            minimumYieldVaultDeposit: MINIMUM_YIELD_VAULT_DEPOSIT_INTEGRATION,
-            migrationManager: address(migrationManager),
-            yieldVaultMaximumSlippagePercentage: 0.01e18, // 1% slippage
-            vaultBridgeTokenPart2: address(vbTokenPart2)
-        });
+        bytes[] memory initData = new bytes[](2);
+        initData[0] = abi.encodeCall(
+            vbTokenImpl.reinitialize1,
+            (
+                initializer,
+                VaultBridgeToken.InitializationParameters({
+                    owner: owner,
+                    name: VBTOKEN_NAME,
+                    symbol: VBTOKEN_SYMBOL,
+                    underlyingToken: address(underlyingAsset),
+                    minimumReservePercentage: MINIMUM_RESERVE_PERCENTAGE,
+                    yieldVault: address(vbTokenVault),
+                    yieldRecipient: owner,
+                    agglayerBridge: address(mockAgglayerBridge),
+                    minimumYieldVaultDeposit: MINIMUM_YIELD_VAULT_DEPOSIT_INTEGRATION,
+                    migrationManager: address(migrationManager),
+                    yieldVaultMaximumSlippagePercentage: 0.01e18, // 1% slippage
+                    vaultBridgeTokenPart2: address(vbTokenPart2)
+                })
+            )
+        );
+        initData[1] = abi.encodeCall(vbTokenImpl.reinitialize2, ());
 
         // Deploy vbToken proxy
-        bytes memory vbTokenInitData = abi.encodeCall(vbTokenImpl.reinitialize1, (initializer, initParams));
+        bytes memory vbTokenInitData = abi.encodeCall(vbTokenImpl.reinitialize, (initData));
         vbToken = GenericVaultBridgeToken(payable(_proxify(address(vbTokenImpl), address(this), vbTokenInitData)));
         vbTokenPart2 = VaultBridgeTokenPart2(payable(address(vbToken)));
     }
@@ -138,10 +146,13 @@ contract PolygonIntegrationTest is TestConstants {
         );
 
         // Deploy custom token proxy
-        customToken = GenericCustomTokenPolygon(_proxify(address(customTokenImpl), address(this), bytes("")));
-
-        vm.prank(address(customToken));
-        customToken.reinitialize(customTokenInitData);
+        customToken = GenericCustomTokenPolygon(
+            _proxify(
+                address(customTokenImpl),
+                address(this),
+                abi.encodeCall(GenericCustomTokenPolygon.reinitialize, (customTokenInitData))
+            )
+        );
     }
 
     /// @notice Configure token mappings between chains

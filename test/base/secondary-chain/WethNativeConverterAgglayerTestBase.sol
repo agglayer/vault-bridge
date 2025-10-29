@@ -71,17 +71,16 @@ abstract contract WethNativeConverterAgglayerTestBase is SecondaryChainBase {
         );
         reinitializeCallData[2] = abi.encodeCall(WethAgglayer.reinitialize3, (true));
 
-        bytes memory customTokenUpgradeData =
-            abi.encodeCall(ITransparentUpgradeableProxy.upgradeToAndCall, (address(genericCustomTokenImpl), bytes("")));
+        bytes memory customTokenInitData = abi.encodeCall(WethAgglayer.reinitialize, (reinitializeCallData));
+        bytes memory customTokenUpgradeData = abi.encodeCall(
+            ITransparentUpgradeableProxy.upgradeToAndCall, (address(genericCustomTokenImpl), customTokenInitData)
+        );
         vm.prank(_getProxyAdmin(address(existingCustomTokenProxy)));
         (bool success,) = address(existingCustomTokenProxy).call(customTokenUpgradeData);
         require(success, "Failed to upgrade to WethAgglayer");
 
         // assign variables for generic testing
         customToken = MockERC20Upgradeable(address(existingCustomTokenProxy));
-
-        vm.prank(address(customToken));
-        WethAgglayer(payable(address(customToken))).reinitialize(reinitializeCallData);
 
         nativeConverterImpl = address(new WethNativeConverterAgglayer());
 
@@ -101,13 +100,14 @@ abstract contract WethNativeConverterAgglayerTestBase is SecondaryChainBase {
         );
         reinitializeCallData[1] = abi.encodeCall(WethNativeConverterAgglayer.reinitialize2, ());
 
-        nativeConverter = WethNativeConverterAgglayer(payable(_proxify(nativeConverterImpl, proxyAdmin, bytes(""))));
-        assertEq(address(nativeConverter), calculatedNativeConverter);
-
         stateBeforeInitialize = vm.snapshotState();
 
-        vm.prank(address(nativeConverter));
-        nativeConverter.reinitialize(reinitializeCallData);
+        bytes memory wethNativeConverterAgglayerInitData =
+            abi.encodeCall(WethNativeConverterAgglayer.reinitialize, (reinitializeCallData));
+        nativeConverter = WethNativeConverterAgglayer(
+            payable(_proxify(nativeConverterImpl, proxyAdmin, wethNativeConverterAgglayerInitData))
+        );
+        assertEq(address(nativeConverter), calculatedNativeConverter);
 
         vm.prank(address(nativeConverter));
         underlyingToken.approve(address(mockAgglayerBridge), type(uint256).max);

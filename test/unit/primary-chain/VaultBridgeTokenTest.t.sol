@@ -741,7 +741,7 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
         _testPauseUnpause(owner, address(vbToken), callData);
 
         // Not Migration manager
-        vm.expectRevert(InitializationCounterUpgradeable.Unauthorized.selector);
+        vm.expectRevert(VaultBridgeToken.Unauthorized.selector);
         vbTokenPart2.completeMigration(NETWORK_ID_L2, 100, 100);
 
         vm.startPrank(migrationManagerAddr);
@@ -1022,7 +1022,7 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
         uint256 amount = 1 ether;
 
         // Only yield recipient can burn
-        vm.expectRevert(InitializationCounterUpgradeable.Unauthorized.selector);
+        vm.expectRevert(VaultBridgeToken.Unauthorized.selector);
         vbTokenPart2.burn(amount);
 
         // Cannot burn 0 shares

@@ -462,14 +462,14 @@ contract NativeConverterTest is NativeConverterTestBase {
         uint256 mintedCustomToken = 100;
 
         vm.prank(sender);
-        vm.expectRevert(InitializationCounterUpgradeable.Unauthorized.selector);
+        vm.expectRevert(NativeConverter.Unauthorized.selector);
         nativeConverter.removeMigrationInProgress(mintedCustomToken);
 
         vm.prank(owner);
-        vm.expectRevert(InitializationCounterUpgradeable.Unauthorized.selector);
+        vm.expectRevert(NativeConverter.Unauthorized.selector);
         nativeConverter.removeMigrationInProgress(mintedCustomToken);
 
-        vm.expectRevert(InitializationCounterUpgradeable.Unauthorized.selector);
+        vm.expectRevert(NativeConverter.Unauthorized.selector);
         nativeConverter.removeMigrationInProgress(mintedCustomToken);
     }
 

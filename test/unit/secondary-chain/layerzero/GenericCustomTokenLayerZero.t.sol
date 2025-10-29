@@ -30,17 +30,21 @@ contract GenericCustomTokenLayerZeroTest is GenericCustomTokenLayerZeroTestBase 
         uint8 originalUnderlyingTokenDecimals_,
         address oftAdapter_
     ) internal {
+        vm.revertToState(stateBeforeInitialize);
+
         bytes[] memory reinitializeCallData = new bytes[](1);
         reinitializeCallData[0] = abi.encodeCall(
             GenericCustomTokenLayerZero.reinitialize1,
             (owner_, name_, symbol_, originalUnderlyingTokenDecimals_, oftAdapter_)
         );
 
-        vm.revertToState(stateBeforeInitialize);
+        bytes memory genericCustomTokenLayerZeroInitData =
+            abi.encodeCall(GenericCustomTokenLayerZero.reinitialize, (reinitializeCallData));
 
         vm.expectRevert(expectedError);
-        vm.prank(address(genericCustomTokenLayerZero));
-        genericCustomTokenLayerZero.reinitialize(reinitializeCallData);
+        TransparentUpgradeableProxy(
+            payable(_proxify(genericCustomTokenLayerZeroImpl, proxyAdmin, genericCustomTokenLayerZeroInitData))
+        );
     }
 
     function test_initialize_revert_zeroOwner() public {
@@ -103,7 +107,7 @@ contract GenericCustomTokenLayerZeroTest is GenericCustomTokenLayerZeroTestBase 
         uint256 amount = 1000e18;
 
         vm.prank(sender);
-        vm.expectRevert(abi.encodeWithSelector(InitializationCounterUpgradeable.Unauthorized.selector));
+        vm.expectRevert(abi.encodeWithSelector(CustomToken.Unauthorized.selector));
         genericCustomTokenLayerZero.mint(sender, amount);
     }
 
@@ -132,7 +136,7 @@ contract GenericCustomTokenLayerZeroTest is GenericCustomTokenLayerZeroTestBase 
 
         // Try to burn from sender (should fail)
         vm.prank(sender);
-        vm.expectRevert(abi.encodeWithSelector(InitializationCounterUpgradeable.Unauthorized.selector));
+        vm.expectRevert(abi.encodeWithSelector(CustomToken.Unauthorized.selector));
         genericCustomTokenLayerZero.burn(sender, amount);
     }
 

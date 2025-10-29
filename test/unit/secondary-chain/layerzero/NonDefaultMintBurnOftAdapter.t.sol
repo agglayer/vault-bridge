@@ -37,15 +37,16 @@ contract NonDefaultMintBurnOftAdapterTest is NonDefaultMintBurnOftAdapterTestBas
         reinitializeCallData[0] =
             abi.encodeCall(NonDefaultMintBurnOftAdapter.reinitialize1, (address(0), false, owner, delegate));
 
-        nonDefaultMintBurnOftAdapter = TestHarnessNonDefaultMintBurnOftAdapter(
-            address(
-                TransparentUpgradeableProxy(payable(_proxify(nonDefaultMintBurnOftAdapterImpl, proxyAdmin, bytes(""))))
+        vm.expectRevert(abi.encodeWithSelector(NonDefaultMintBurnOftAdapter.InvalidToken.selector));
+        nonDefaultMintBurnOftAdapterProxy = TransparentUpgradeableProxy(
+            payable(
+                _proxify(
+                    nonDefaultMintBurnOftAdapterImpl,
+                    proxyAdmin,
+                    abi.encodeCall(NonDefaultMintBurnOftAdapter.reinitialize, (reinitializeCallData))
+                )
             )
         );
-
-        vm.expectRevert(abi.encodeWithSelector(NonDefaultMintBurnOftAdapter.InvalidToken.selector));
-        vm.prank(address(nonDefaultMintBurnOftAdapter));
-        nonDefaultMintBurnOftAdapter.reinitialize(reinitializeCallData);
     }
 
     function test_initialize_revert_invalidTokenDecimals() public {
@@ -64,15 +65,16 @@ contract NonDefaultMintBurnOftAdapterTest is NonDefaultMintBurnOftAdapterTestBas
             NonDefaultMintBurnOftAdapter.reinitialize1, (address(wrongDecimalToken), false, owner, delegate)
         );
 
-        nonDefaultMintBurnOftAdapterProxy =
-            TransparentUpgradeableProxy(payable(_proxify(nonDefaultMintBurnOftAdapterImpl, proxyAdmin, bytes(""))));
-
-        nonDefaultMintBurnOftAdapter =
-            TestHarnessNonDefaultMintBurnOftAdapter(address(nonDefaultMintBurnOftAdapterProxy));
-
         vm.expectRevert(abi.encodeWithSelector(NonDefaultMintBurnOftAdapter.InvalidTokenDecimals.selector));
-        vm.prank(address(nonDefaultMintBurnOftAdapter));
-        nonDefaultMintBurnOftAdapter.reinitialize(reinitializeCallData);
+        nonDefaultMintBurnOftAdapterProxy = TransparentUpgradeableProxy(
+            payable(
+                _proxify(
+                    nonDefaultMintBurnOftAdapterImpl,
+                    proxyAdmin,
+                    abi.encodeCall(NonDefaultMintBurnOftAdapter.reinitialize, (reinitializeCallData))
+                )
+            )
+        );
     }
 
     function test_initialize_revert_alreadyInitialized() public {
@@ -94,11 +96,14 @@ contract NonDefaultMintBurnOftAdapterTest is NonDefaultMintBurnOftAdapterTestBas
         );
 
         NonDefaultMintBurnOftAdapter newAdapter = NonDefaultMintBurnOftAdapter(
-            address(new TransparentUpgradeableProxy(nonDefaultMintBurnOftAdapterImpl, proxyAdmin, bytes("")))
+            address(
+                new TransparentUpgradeableProxy(
+                    nonDefaultMintBurnOftAdapterImpl,
+                    proxyAdmin,
+                    abi.encodeCall(NonDefaultMintBurnOftAdapter.reinitialize, (reinitializeCallData))
+                )
+            )
         );
-
-        vm.prank(address(newAdapter));
-        newAdapter.reinitialize(reinitializeCallData);
 
         assertTrue(newAdapter.approvalRequired());
     }
@@ -203,12 +208,14 @@ contract NonDefaultMintBurnOftAdapterTest is NonDefaultMintBurnOftAdapterTestBas
             abi.encodeCall(NonDefaultMintBurnOftAdapter.reinitialize1, (address(fiatToken), true, owner, delegate));
 
         TestHarnessNonDefaultMintBurnOftAdapter newAdapter = TestHarnessNonDefaultMintBurnOftAdapter(
-            address(new TransparentUpgradeableProxy(nonDefaultMintBurnOftAdapterImpl, proxyAdmin, bytes("")))
+            address(
+                new TransparentUpgradeableProxy(
+                    nonDefaultMintBurnOftAdapterImpl,
+                    proxyAdmin,
+                    abi.encodeCall(NonDefaultMintBurnOftAdapter.reinitialize, (reinitializeCallData))
+                )
+            )
         );
-
-        vm.prank(address(newAdapter));
-        newAdapter.reinitialize(reinitializeCallData);
-
         // Verify approvalRequired is set correctly
         assertTrue(newAdapter.approvalRequired());
 

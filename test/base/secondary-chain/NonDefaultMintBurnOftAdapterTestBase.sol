@@ -106,13 +106,17 @@ abstract contract NonDefaultMintBurnOftAdapterTestBase is SecondaryChainBase {
             )
         );
 
-        customTokenLayerZeroProxy =
-            TransparentUpgradeableProxy(payable(_proxify(customTokenLayerZeroImpl, proxyAdmin, bytes(""))));
+        customTokenLayerZeroProxy = TransparentUpgradeableProxy(
+            payable(
+                _proxify(
+                    customTokenLayerZeroImpl,
+                    proxyAdmin,
+                    abi.encodeCall(GenericCustomTokenLayerZero.reinitialize, (reinitializeCallData))
+                )
+            )
+        );
 
         customTokenLayerZero = GenericCustomTokenLayerZero(address(customTokenLayerZeroProxy));
-
-        vm.prank(address(customTokenLayerZero));
-        customTokenLayerZero.reinitialize(reinitializeCallData);
 
         // Deploy adapter implementation (constructor params are immutable)
         nonDefaultMintBurnOftAdapterImpl =
@@ -128,16 +132,19 @@ abstract contract NonDefaultMintBurnOftAdapterTestBase is SecondaryChainBase {
         );
 
         // Initialize the adapter through the proxy
-        nonDefaultMintBurnOftAdapterProxy =
-            TransparentUpgradeableProxy(payable(_proxify(nonDefaultMintBurnOftAdapterImpl, proxyAdmin, bytes(""))));
-
+        nonDefaultMintBurnOftAdapterProxy = TransparentUpgradeableProxy(
+            payable(
+                _proxify(
+                    nonDefaultMintBurnOftAdapterImpl,
+                    proxyAdmin,
+                    abi.encodeCall(NonDefaultMintBurnOftAdapter.reinitialize, (reinitializeCallData))
+                )
+            )
+        );
         assertEq(calculatedNonDefaultMintBurnOftAdapterProxyAddr, address(nonDefaultMintBurnOftAdapterProxy));
 
         nonDefaultMintBurnOftAdapter =
             TestHarnessNonDefaultMintBurnOftAdapter(address(nonDefaultMintBurnOftAdapterProxy));
-
-        vm.prank(address(nonDefaultMintBurnOftAdapter));
-        nonDefaultMintBurnOftAdapter.reinitialize(reinitializeCallData);
     }
 
     /// @notice Setup debugging labels

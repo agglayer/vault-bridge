@@ -56,15 +56,14 @@ abstract contract WethAgglayerTestBase is SecondaryChainBase {
         );
         reinitializeCallData[2] = abi.encodeCall(WethAgglayer.reinitialize3, (wethFunctionalityEnabled_));
 
+        bytes memory wethAgglayerInitData = abi.encodeCall(WethAgglayer.reinitialize, (reinitializeCallData));
+
         bytes memory upgradeData = abi.encodeWithSelector(
-            ITransparentUpgradeableProxy.upgradeToAndCall.selector, wethAgglayerImplAddr, bytes("")
+            ITransparentUpgradeableProxy.upgradeToAndCall.selector, wethAgglayerImplAddr, wethAgglayerInitData
         );
         vm.prank(_getProxyAdmin(address(existingWethAgglayerProxy)));
         (address(existingWethAgglayerProxy).call(upgradeData));
         wethAgglayer = WethAgglayer(payable(address(existingWethAgglayerProxy)));
-
-        vm.prank(address(wethAgglayer));
-        wethAgglayer.reinitialize(reinitializeCallData);
     }
 
     /// @notice Setup debugging labels

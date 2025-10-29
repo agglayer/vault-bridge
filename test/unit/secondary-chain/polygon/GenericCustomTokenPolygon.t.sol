@@ -29,20 +29,18 @@ contract GenericCustomTokenPolygonTest is GenericCustomTokenPolygonTestBase {
         uint8 decimals_,
         address childChainManager_
     ) internal {
-        bytes[] memory genericCustomTokenPolygonInitData = new bytes[](1);
-        genericCustomTokenPolygonInitData[0] = abi.encodeCall(
+        bytes[] memory reinitializeCallData = new bytes[](1);
+        reinitializeCallData[0] = abi.encodeCall(
             GenericCustomTokenPolygon.reinitialize1, (owner_, name_, symbol_, decimals_, childChainManager_)
         );
 
-        genericCustomTokenPolygon = GenericCustomTokenPolygon(
-            address(
-                TransparentUpgradeableProxy(payable(_proxify(genericCustomTokenPolygonImpl, proxyAdmin, bytes(""))))
-            )
-        );
+        bytes memory genericCustomTokenPolygonInitData =
+            abi.encodeCall(GenericCustomTokenPolygon.reinitialize, (reinitializeCallData));
 
         vm.expectRevert(expectedError);
-        vm.prank(address(genericCustomTokenPolygon));
-        genericCustomTokenPolygon.reinitialize(genericCustomTokenPolygonInitData);
+        existingGenericCustomTokenPolygonProxy = TransparentUpgradeableProxy(
+            payable(_proxify(genericCustomTokenPolygonImpl, proxyAdmin, genericCustomTokenPolygonInitData))
+        );
     }
 
     function test_initialize_revertsWhenCalledTwice() public {
@@ -146,7 +144,7 @@ contract GenericCustomTokenPolygonTest is GenericCustomTokenPolygonTestBase {
         uint256 amount = 1000e18;
         bytes memory depositData = abi.encode(amount);
 
-        vm.expectRevert(InitializationCounterUpgradeable.Unauthorized.selector);
+        vm.expectRevert(CustomToken.Unauthorized.selector);
         vm.prank(makeAddr("unauthorized"));
         genericCustomTokenPolygon.deposit(sender, depositData);
     }
@@ -258,7 +256,7 @@ contract GenericCustomTokenPolygonTest is GenericCustomTokenPolygonTestBase {
         bytes memory depositData = abi.encode(amount);
 
         // Should revert when called by unauthorized address
-        vm.expectRevert(InitializationCounterUpgradeable.Unauthorized.selector);
+        vm.expectRevert(CustomToken.Unauthorized.selector);
         vm.prank(makeAddr("unauthorized"));
         genericCustomTokenPolygon.deposit(sender, depositData);
     }
