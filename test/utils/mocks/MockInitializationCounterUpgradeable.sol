@@ -7,6 +7,11 @@ import {InitializationCounterUpgradeable} from "src/etc/InitializationCounterUpg
 /// @notice An implementation of InitializationCounterUpgradeable for testing purposes
 /// @dev This contract exposes internal functionality of InitializationCounterUpgradeable for testing
 contract MockInitializationCounterUpgradeable is InitializationCounterUpgradeable {
+    /// @notice Funciton to simulate reinitialize1
+    function reinitialize1() external locked {
+        _incrementGlobalInitializationCounter(1);
+    }
+
     /// @notice Expose the private _localInitializationCounter for testing
     function localInitializationCounter() external view returns (uint64) {
         InitializationCounterUpgradeableStorage storage $;
