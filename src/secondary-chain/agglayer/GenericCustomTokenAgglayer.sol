@@ -18,7 +18,7 @@ contract GenericCustomTokenAgglayer is CustomTokenAgglayer {
         _disableInitializers();
     }
 
-    function reinitialize1() external onlySelf {
+    function reinitialize1() external locked nonReentrant {
         _incrementGlobalInitializationCounter(1);
     }
 
@@ -29,7 +29,7 @@ contract GenericCustomTokenAgglayer is CustomTokenAgglayer {
         uint8 originalUnderlyingTokenDecimals_,
         address agglayerBridge_,
         address nativeConverter_
-    ) external onlySelf reinitializer(_incrementGlobalInitializationCounter(2)) nonReentrant {
+    ) external locked reinitializer(_incrementGlobalInitializationCounter(2)) nonReentrant {
         // Preserve the `name` and `symbol` of the bridged vbToken.
         string memory name_ = ERC20Upgradeable.name();
         string memory symbol_ = ERC20Upgradeable.symbol();
@@ -42,7 +42,7 @@ contract GenericCustomTokenAgglayer is CustomTokenAgglayer {
     }
 
     // @remind Document (the entire function).
-    function reinitialize3() external onlySelf reinitializer(_incrementGlobalInitializationCounter(3)) nonReentrant {
+    function reinitialize3() external locked reinitializer(_incrementGlobalInitializationCounter(3)) nonReentrant {
         __CustomToken_init2();
     }
 
@@ -50,7 +50,7 @@ contract GenericCustomTokenAgglayer is CustomTokenAgglayer {
     /// @dev How to add a new reinitializer:
     function reinitialize4()
         external
-        onlySelf
+        locked
         reinitializer(_incrementGlobalInitializationCounter(4))
         nonReentrant
     {}

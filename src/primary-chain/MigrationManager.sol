@@ -81,6 +81,7 @@ contract MigrationManager is
     error InvalidSecondaryChainAgglayerId();
     error InvalidNativeConverter();
     error InvalidUnderlyingToken();
+    error Unauthorized();
     error InsufficientUnderlyingTokenBalanceAfterWrapping(uint256 newBalance, uint256 expectedBalance);
 
     // Events.
@@ -109,7 +110,7 @@ contract MigrationManager is
 
     /// @notice Initializes the Migration Manager contract.
     /// @param owner_ (ATTENTION) This address will be granted the `DEFAULT_ADMIN_ROLE`, as well as all basic roles. Roles can be modified at any time.
-    function reinitialize1(address owner_, address agglayerBridge_) external reinitializer(1) nonReentrant {
+    function reinitialize1(address owner_, address agglayerBridge_) external locked reinitializer(1) nonReentrant {
         MigrationManagerStorage storage $ = _getMigrationManagerStorage();
 
         // Check the inputs.
@@ -134,7 +135,7 @@ contract MigrationManager is
 
     // @remind Document (the entire function).
     /// @param wrappedGasToken_ The address of the wrapped gas token (e.g., WETH, if the gas token is ETH). Must be the same as the underlying token of the corresponding vbToken (e.g., of vbETH, if the gas token is ETH).
-    function reinitialize2(address wrappedGasToken_) external reinitializer(2) nonReentrant {
+    function reinitialize2(address wrappedGasToken_) external locked reinitializer(2) nonReentrant {
         MigrationManagerStorage storage $ = _getMigrationManagerStorage();
 
         _incrementGlobalInitializationCounter(1);
@@ -149,6 +150,7 @@ contract MigrationManager is
     /// @dev How to add a new reinitializer:
     function reinitialize3()
         external
+        locked
         reinitializer(_incrementGlobalInitializationCounter(3))
         nonReentrant
     {}
