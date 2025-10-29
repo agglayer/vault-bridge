@@ -12,6 +12,11 @@ contract MockInitializationCounterUpgradeable is InitializationCounterUpgradeabl
         _incrementGlobalInitializationCounter(1);
     }
 
+    // @notice Function to simulate reinitialize2
+    function reinitialize2() external locked {
+        _incrementGlobalInitializationCounter(2);
+    }
+
     /// @notice Expose the private _localInitializationCounter for testing
     function localInitializationCounter() external view returns (uint64) {
         InitializationCounterUpgradeableStorage storage $;
