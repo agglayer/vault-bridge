@@ -38,6 +38,32 @@ contract InitializationCounterUpgradeableTest is InitializationCounterTestBase {
         assertEq(initCounter.getStorageSlot(), expectedSlot);
     }
 
+    function test_reinitializersLocked() public {
+        // Deploy a new proxy with the mock implementation
+        MockInitializationCounterUpgradeable newInitCounter =
+            MockInitializationCounterUpgradeable(address(_proxify(address(initCounter), address(this), bytes(""))));
+        // Attempting to call reinitialize1 should revert as it is only supposed to be called by the reinitialize function
+        vm.expectRevert(InitializationCounterUpgradeable.ReinitializersLocked.selector);
+        newInitCounter.reinitialize1();
+
+        // Should be able to call reinitialize1 from reinitialize function
+        bytes4[] memory selectors = new bytes4[](1);
+        selectors[0] = MockInitializationCounterUpgradeable.reinitialize1.selector;
+
+        bytes[] memory reinitData = new bytes[](1);
+        reinitData[0] = abi.encodeWithSelector(MockInitializationCounterUpgradeable.reinitialize1.selector, "");
+        newInitCounter.reinitialize(selectors, reinitData);
+        assertEq(newInitCounter.globalInitializationCounter(), FIRST_INCREMENT);
+
+        // Trying to call reinitialize1 again should revert with ReinitializersLocked
+        vm.expectRevert(InitializationCounterUpgradeable.ReinitializersLocked.selector);
+        newInitCounter.reinitialize1();
+
+        // Trying to reinitialize again should revert with AlreadyReinitialized
+        vm.expectRevert(InitializationCounterUpgradeable.AlreadyReinitialized.selector);
+        newInitCounter.reinitialize(selectors, reinitData);
+    }
+
     // ========= LOCAL INITIALIZATION COUNTER TESTS =========
 
     function test_incrementLocalInitializationCounter_success() public {
