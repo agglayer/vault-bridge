@@ -57,13 +57,12 @@ abstract contract WethWormholeTestBase is SecondaryChainBase {
             )
         );
 
+        bytes memory wethWormholeInitData = abi.encodeCall(WethWormhole.reinitialize, (reinitializeCallData));
+
         existingWethWormholeProxy =
-            TransparentUpgradeableProxy(payable(_proxify(wethWormholeImpl, proxyAdmin, bytes(""))));
+            TransparentUpgradeableProxy(payable(_proxify(wethWormholeImpl, proxyAdmin, wethWormholeInitData)));
 
         wethWormhole = WethWormhole(payable(address(existingWethWormholeProxy)));
-
-        vm.prank(address(wethWormhole));
-        wethWormhole.reinitialize(reinitializeCallData);
     }
 
     /// @notice Setup debugging labels

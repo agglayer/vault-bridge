@@ -19,26 +19,34 @@ contract MigrationManagerTest is MigrationManagerTestBase {
         deployMigrationManagerInfrastructure();
     }
 
-    function test_reinitialize1() public {
+    function test_reinitialize() public {
         vm.revertToState(stateBeforeInitialize);
 
+        bytes[] memory reinitializeCallData = new bytes[](2);
+
         // Test reinitialize1 with invalid owner
-        bytes memory migrationManagerInitData =
-            abi.encodeCall(MigrationManager.reinitialize1, (address(0), address(agglayerBridge)));
         vm.expectRevert(MigrationManager.InvalidOwner.selector);
-        _proxify(migrationManagerImpl, address(this), migrationManagerInitData);
+        reinitializeCallData[0] = abi.encodeCall(MigrationManager.reinitialize1, (address(0), address(agglayerBridge)));
+        reinitializeCallData[1] = abi.encodeCall(MigrationManager.reinitialize2, (address(wrappedGasToken)));
+
+        _proxify(
+            migrationManagerImpl, address(this), abi.encodeCall(MigrationManager.reinitialize, (reinitializeCallData))
+        );
 
         // Test reinitialize1 with invalid agglayer bridge
-        migrationManagerInitData = abi.encodeCall(MigrationManager.reinitialize1, (owner, address(0)));
         vm.expectRevert(MigrationManager.InvalidAgglayerBridge.selector);
-        _proxify(migrationManagerImpl, address(this), migrationManagerInitData);
+        reinitializeCallData[0] = abi.encodeCall(MigrationManager.reinitialize1, (owner, address(0)));
+        _proxify(
+            migrationManagerImpl, address(this), abi.encodeCall(MigrationManager.reinitialize, (reinitializeCallData))
+        );
 
         // Test reinitialize2 with invalid wrapped gas token
-        migrationManagerInitData = abi.encodeCall(MigrationManager.reinitialize1, (owner, address(agglayerBridge)));
-        MigrationManager testManager =
-            MigrationManager(payable(_proxify(migrationManagerImpl, address(this), migrationManagerInitData)));
         vm.expectRevert(MigrationManager.InvalidWrappedGasToken.selector);
-        testManager.reinitialize2(address(0));
+        reinitializeCallData[0] = abi.encodeCall(MigrationManager.reinitialize1, (owner, address(agglayerBridge)));
+        reinitializeCallData[1] = abi.encodeCall(MigrationManager.reinitialize2, (address(0)));
+        _proxify(
+            migrationManagerImpl, address(this), abi.encodeCall(MigrationManager.reinitialize, (reinitializeCallData))
+        );
     }
 
     function test_configureNativeConverters_reverts() public {
@@ -172,7 +180,7 @@ contract MigrationManagerTest is MigrationManagerTestBase {
         _testPauseUnpause(owner, address(migrationManager), callData);
 
         // test only callable by the agglayer bridge
-        vm.expectRevert(InitializationCounterUpgradeable.Unauthorized.selector);
+        vm.expectRevert(MigrationManager.Unauthorized.selector);
         migrationManager.onMessageReceived(nativeConverter, NETWORK_ID_L2, bytes(""));
 
         bytes memory data = abi.encode(
@@ -180,7 +188,7 @@ contract MigrationManagerTest is MigrationManagerTestBase {
         );
 
         // test unset vbToken
-        vm.expectRevert(InitializationCounterUpgradeable.Unauthorized.selector);
+        vm.expectRevert(MigrationManager.Unauthorized.selector);
         vm.prank(address(agglayerBridge));
         migrationManager.onMessageReceived(nativeConverter, NETWORK_ID_L2, data);
 

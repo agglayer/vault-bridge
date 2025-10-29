@@ -36,15 +36,13 @@ contract GenericCustomTokenWormholeTest is GenericCustomTokenWormholeTestBase {
             (owner_, name_, symbol_, originalUnderlyingTokenDecimals_, nttManager_)
         );
 
-        genericCustomTokenWormhole = GenericCustomTokenWormhole(
-            address(
-                TransparentUpgradeableProxy(payable(_proxify(genericCustomTokenWormholeImpl, proxyAdmin, bytes(""))))
-            )
-        );
+        bytes memory genericCustomTokenWormholeInitData =
+            abi.encodeCall(GenericCustomTokenWormhole.reinitialize, (reinitializeCallData));
 
         vm.expectRevert(expectedError);
-        vm.prank(address(genericCustomTokenWormhole));
-        genericCustomTokenWormhole.reinitialize(reinitializeCallData);
+        TransparentUpgradeableProxy(
+            payable(_proxify(genericCustomTokenWormholeImpl, proxyAdmin, genericCustomTokenWormholeInitData))
+        );
     }
 
     function test_initialize_revert_zeroOwner() public {
@@ -106,7 +104,7 @@ contract GenericCustomTokenWormholeTest is GenericCustomTokenWormholeTestBase {
         uint256 amount = 1000e18;
 
         vm.prank(sender);
-        vm.expectRevert(abi.encodeWithSelector(InitializationCounterUpgradeable.Unauthorized.selector));
+        vm.expectRevert(abi.encodeWithSelector(CustomToken.Unauthorized.selector));
         genericCustomTokenWormhole.mint(sender, amount);
     }
 
@@ -134,7 +132,7 @@ contract GenericCustomTokenWormholeTest is GenericCustomTokenWormholeTestBase {
 
         // Try to burn from sender (should fail)
         vm.prank(sender);
-        vm.expectRevert(abi.encodeWithSelector(InitializationCounterUpgradeable.Unauthorized.selector));
+        vm.expectRevert(abi.encodeWithSelector(CustomToken.Unauthorized.selector));
         genericCustomTokenWormhole.burn(amount);
     }
 

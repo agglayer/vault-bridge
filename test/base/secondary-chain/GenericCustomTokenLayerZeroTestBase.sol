@@ -48,15 +48,16 @@ abstract contract GenericCustomTokenLayerZeroTestBase is SecondaryChainBase {
             (owner, customTokenName, customTokenSymbol, originalUnderlyingTokenDecimals, oftAdapter)
         );
 
-        existingGenericCustomTokenLayerZeroProxy =
-            TransparentUpgradeableProxy(payable(_proxify(genericCustomTokenLayerZeroImpl, proxyAdmin, bytes(""))));
-
-        genericCustomTokenLayerZero = GenericCustomTokenLayerZero(address(existingGenericCustomTokenLayerZeroProxy));
-
         stateBeforeInitialize = vm.snapshotState();
 
-        vm.prank(address(genericCustomTokenLayerZero));
-        genericCustomTokenLayerZero.reinitialize(reinitializeCallData);
+        bytes memory genericCustomTokenLayerZeroInitData =
+            abi.encodeCall(GenericCustomTokenLayerZero.reinitialize, (reinitializeCallData));
+
+        existingGenericCustomTokenLayerZeroProxy = TransparentUpgradeableProxy(
+            payable(_proxify(genericCustomTokenLayerZeroImpl, proxyAdmin, genericCustomTokenLayerZeroInitData))
+        );
+
+        genericCustomTokenLayerZero = GenericCustomTokenLayerZero(address(existingGenericCustomTokenLayerZeroProxy));
     }
 
     /// @notice Setup debugging labels

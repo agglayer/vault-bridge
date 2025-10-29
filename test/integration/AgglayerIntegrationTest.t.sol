@@ -194,14 +194,13 @@ contract AgglayerIntegrationTest is TestConstants, ZkEVMCommon {
             GenericCustomToken.reinitialize2, (owner, CUSTOM_TOKEN_DECIMALS, LXLY_BRIDGE_Y, nativeConverterAddr)
         );
         initData[2] = abi.encodeCall(GenericCustomToken.reinitialize3, ());
-        bytes memory upgradeData =
-            abi.encodeCall(ITransparentUpgradeableProxy.upgradeToAndCall, (address(genericCustomTokenImpl), bytes("")));
+        bytes memory upgradeData = abi.encodeCall(
+            ITransparentUpgradeableProxy.upgradeToAndCall,
+            (address(genericCustomTokenImpl), abi.encodeCall(GenericCustomToken.reinitialize, (initData)))
+        );
         vm.prank(_getAdmin(address(customTokenProxy)));
         (address(customTokenProxy).call(upgradeData));
         customToken = GenericCustomToken(address(customTokenProxy));
-
-        vm.prank(address(customToken));
-        customToken.reinitialize(initData);
 
         // calculate bridge wrapped vbToken address
         bwVbToken = MockLxlyBridgeWrappedToken(
@@ -240,11 +239,14 @@ contract AgglayerIntegrationTest is TestConstants, ZkEVMCommon {
             )
         );
         nativeConverterInitData[1] = abi.encodeCall(GenericNativeConverter(nativeConverter).reinitialize2, ());
-        nativeConverter = GenericNativeConverter(_proxify(address(nativeConverter), address(this), bytes("")));
+        nativeConverter = GenericNativeConverter(
+            _proxify(
+                address(nativeConverter),
+                address(this),
+                abi.encodeCall(GenericNativeConverter.reinitialize, (nativeConverterInitData))
+            )
+        );
         assertEq(nativeConverterAddr, address(nativeConverter));
-
-        vm.prank(address(nativeConverter));
-        nativeConverter.reinitialize(nativeConverterInitData);
 
         //////////////////////////////////////////////////////////////
         // Primary Chain

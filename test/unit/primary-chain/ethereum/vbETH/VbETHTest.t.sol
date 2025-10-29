@@ -160,7 +160,7 @@ contract VbETHTest is VbETHTestBase {
         // For VbEth, deal WETH tokens instead of ETH
         _dealWETH(address(vbETH), assets);
 
-        vm.expectRevert(InitializationCounterUpgradeable.Unauthorized.selector);
+        vm.expectRevert(VaultBridgeToken.Unauthorized.selector);
         vbETHPart2.completeMigration(NETWORK_ID_L2, shares, assets);
 
         vm.startPrank(migrationManagerAddr);
