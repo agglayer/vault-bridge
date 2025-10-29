@@ -35,7 +35,7 @@ contract NonDefaultOftAdapter is
 
     function reinitialize1(address _owner, address _delegate)
         external
-        onlySelf
+        locked
         reinitializer(_incrementGlobalInitializationCounter(1))
         nonReentrant
     {
@@ -48,7 +48,7 @@ contract NonDefaultOftAdapter is
     /// @dev How to add a new reinitializer:
     function reinitialize2()
         external
-        onlySelf
+        locked
         reinitializer(_incrementGlobalInitializationCounter(2))
         nonReentrant
     {}

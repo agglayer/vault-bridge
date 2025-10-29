@@ -20,7 +20,7 @@ contract WethAgglayer is CustomTokenAgglayer, CustomTokenWethExtension {
     }
 
     // @remind Document.
-    function reinitialize1() external onlySelf {
+    function reinitialize1() external locked nonReentrant {
         _incrementGlobalInitializationCounter(1);
     }
 
@@ -32,7 +32,7 @@ contract WethAgglayer is CustomTokenAgglayer, CustomTokenWethExtension {
         uint8 originalUnderlyingTokenDecimals_,
         address agglayerBridge_,
         address nativeConverter_
-    ) external onlySelf reinitializer(_incrementGlobalInitializationCounter(2)) nonReentrant {
+    ) external locked reinitializer(_incrementGlobalInitializationCounter(2)) nonReentrant {
         // Preserve the `name` and `symbol` of the bridged vbToken.
         string memory name_ = ERC20Upgradeable.name();
         string memory symbol_ = ERC20Upgradeable.symbol();
@@ -46,7 +46,7 @@ contract WethAgglayer is CustomTokenAgglayer, CustomTokenWethExtension {
 
     function reinitialize3(bool wethFunctionalityEnabled_)
         external
-        onlySelf
+        locked
         reinitializer(_incrementGlobalInitializationCounter(3))
         nonReentrant
     {
@@ -68,7 +68,7 @@ contract WethAgglayer is CustomTokenAgglayer, CustomTokenWethExtension {
     /// @dev How to add a new reinitializer:
     function reinitialize4()
         external
-        onlySelf
+        locked
         reinitializer(_incrementGlobalInitializationCounter(4))
         nonReentrant
     {}

@@ -52,7 +52,7 @@ contract WethNativeConverterAgglayer is NativeConverterAgglayer {
         uint256 nonMigratableBackingPercentage_,
         address migrationManager_,
         uint256 nonMigratableGasBackingPercentage_
-    ) external onlySelf reinitializer(_incrementGlobalInitializationCounter(1)) nonReentrant {
+    ) external locked reinitializer(_incrementGlobalInitializationCounter(1)) nonReentrant {
         WETHNativeConverterStorage storage $ = _getWethNativeConverterAgglayerStorage();
 
         // Initialize the base implementation.
@@ -73,7 +73,7 @@ contract WethNativeConverterAgglayer is NativeConverterAgglayer {
         $.nonMigratableGasBackingPercentage = nonMigratableGasBackingPercentage_;
     }
 
-    function reinitialize2() external onlySelf reinitializer(_incrementGlobalInitializationCounter(2)) nonReentrant {
+    function reinitialize2() external locked reinitializer(_incrementGlobalInitializationCounter(2)) nonReentrant {
         __NativeConverter_init2();
     }
 
@@ -81,7 +81,7 @@ contract WethNativeConverterAgglayer is NativeConverterAgglayer {
     /// @dev How to add a new reinitializer:
     function reinitialize3()
         external
-        onlySelf
+        locked
         reinitializer(_incrementGlobalInitializationCounter(3))
         nonReentrant
     {}

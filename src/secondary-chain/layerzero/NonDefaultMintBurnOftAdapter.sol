@@ -76,7 +76,7 @@ contract NonDefaultMintBurnOftAdapter is
 
     function reinitialize1(address _token, bool _approvalRequired, address _owner, address _delegate)
         external
-        onlySelf
+        locked
         reinitializer(_incrementGlobalInitializationCounter(1))
         nonReentrant
     {
@@ -98,7 +98,7 @@ contract NonDefaultMintBurnOftAdapter is
     /// @dev How to add a new reinitializer:
     function reinitialize2()
         external
-        onlySelf
+        locked
         reinitializer(_incrementGlobalInitializationCounter(2))
         nonReentrant
     {}

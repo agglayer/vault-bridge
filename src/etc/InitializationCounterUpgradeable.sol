@@ -17,6 +17,7 @@ abstract contract InitializationCounterUpgradeable {
         uint64 _localInitializationCounter;
         mapping(Extension => uint64) _extensionInitializationCounter;
         uint64 globalInitializationCounter;
+        bool _unlocked;
     }
 
     /// @dev The storage slot at which Initialization Counter storage starts, following the EIP-7201 standard.
@@ -25,7 +26,7 @@ abstract contract InitializationCounterUpgradeable {
         hex"8d679e361eeeac0b879fa197c8b3bda76a3db4f57c9f89335c04a065390bbb00";
 
     // Errors.
-    error Unauthorized();
+    error ReinitializersLocked();
     error IncorrectInitializationOrder(
         uint64 expectedGlobalInitializationCounterValue, uint64 actualGlobalInitializationCounterValue
     );
@@ -92,9 +93,10 @@ abstract contract InitializationCounterUpgradeable {
         return expectedNewGlobalInitializationCounterValue;
     }
 
-    /// @dev Checks if the sender is the contract itself.
-    modifier onlySelf() {
-        require(msg.sender == address(this), Unauthorized());
+    // @remind Document (the entire modifier).
+    modifier locked() {
+        InitializationCounterUpgradeableStorage storage $ = _getInitializationCounterUpgradeableStorage();
+        require($._unlocked, ReinitializersLocked());
         _;
     }
 
@@ -161,7 +163,11 @@ abstract contract InitializationCounterUpgradeable {
 
             assert(selector != bytes4(0));
 
+            $._unlocked = true;
+
             (bool ok, bytes memory data) = implementation.delegatecall(reinitializeData[i]);
+
+            $._unlocked = false;
 
             if (!ok) {
                 assembly {
