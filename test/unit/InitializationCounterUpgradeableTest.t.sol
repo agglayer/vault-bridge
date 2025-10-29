@@ -59,9 +59,20 @@ contract InitializationCounterUpgradeableTest is InitializationCounterTestBase {
         vm.expectRevert(InitializationCounterUpgradeable.ReinitializersLocked.selector);
         newInitCounter.reinitialize1();
 
-        // Trying to reinitialize again should revert with AlreadyReinitialized
+        // Trying to reinitialize again with same selectors should revert with AlreadyReinitialized
         vm.expectRevert(InitializationCounterUpgradeable.AlreadyReinitialized.selector);
         newInitCounter.reinitialize(selectors, reinitData);
+
+        // Should be able to call reinitialize2 from reinitialize function
+        // Need to include BOTH reinitialize1 and reinitialize2 in selectors array
+        bytes4[] memory selectors2 = new bytes4[](2);
+        selectors2[0] = MockInitializationCounterUpgradeable.reinitialize1.selector;
+        selectors2[1] = MockInitializationCounterUpgradeable.reinitialize2.selector;
+        // Only provide data for reinitialize2 (the new one at index 1)
+        bytes[] memory reinitData2 = new bytes[](1);
+        reinitData2[0] = abi.encodeWithSelector(MockInitializationCounterUpgradeable.reinitialize2.selector, "");
+        newInitCounter.reinitialize(selectors2, reinitData2);
+        assertEq(newInitCounter.globalInitializationCounter(), SECOND_INCREMENT);
     }
 
     // ========= LOCAL INITIALIZATION COUNTER TESTS =========
