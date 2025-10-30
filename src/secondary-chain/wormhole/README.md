@@ -13,7 +13,7 @@
 - Supported chains: [List ↗](https://wormhole.com/docs/products/reference/supported-networks/#ntt)
 - Custom Token: Available (NTT Token)
 - Native Converter: TBD
-- WETH functionality: Available
+- WETH functionality: TBD
 - Bridged USDC Standard: TBD
 - Wrapped Token: N/A
 - Manual Converter: Coming soon
