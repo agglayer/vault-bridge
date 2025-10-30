@@ -24,8 +24,7 @@ contract WethWormholeTest is WethWormholeTestBase {
         string memory symbol_,
         uint8 originalUnderlyingTokenDecimals_,
         address nttManager_,
-        bool gasTokenIsEth_,
-        bool wethFunctionalityEnabled_
+        bool gasTokenIsEth_
     ) internal returns (address) {
         if (expectedError != bytes4(0)) {
             vm.expectRevert(expectedError);
@@ -38,15 +37,7 @@ contract WethWormholeTest is WethWormholeTestBase {
                     proxyAdmin,
                     abi.encodeCall(
                         WethWormhole.reinitialize1,
-                        (
-                            owner_,
-                            name_,
-                            symbol_,
-                            originalUnderlyingTokenDecimals_,
-                            nttManager_,
-                            gasTokenIsEth_,
-                            wethFunctionalityEnabled_
-                        )
+                        (owner_, name_, symbol_, originalUnderlyingTokenDecimals_, nttManager_, gasTokenIsEth_)
                     )
                 )
             )
@@ -62,8 +53,7 @@ contract WethWormholeTest is WethWormholeTestBase {
             customTokenSymbol,
             originalUnderlyingTokenDecimals,
             nttManager,
-            gasTokenIsEth,
-            wethFunctionalityEnabled
+            gasTokenIsEth
         );
     }
 
@@ -75,8 +65,7 @@ contract WethWormholeTest is WethWormholeTestBase {
             customTokenSymbol,
             originalUnderlyingTokenDecimals,
             nttManager,
-            gasTokenIsEth,
-            wethFunctionalityEnabled
+            gasTokenIsEth
         );
     }
 
@@ -88,8 +77,7 @@ contract WethWormholeTest is WethWormholeTestBase {
             "",
             originalUnderlyingTokenDecimals,
             nttManager,
-            gasTokenIsEth,
-            wethFunctionalityEnabled
+            gasTokenIsEth
         );
     }
 
@@ -101,8 +89,7 @@ contract WethWormholeTest is WethWormholeTestBase {
             customTokenSymbol,
             0,
             nttManager,
-            gasTokenIsEth,
-            wethFunctionalityEnabled
+            gasTokenIsEth
         );
     }
 
@@ -114,8 +101,7 @@ contract WethWormholeTest is WethWormholeTestBase {
             customTokenSymbol,
             originalUnderlyingTokenDecimals,
             address(0),
-            gasTokenIsEth,
-            wethFunctionalityEnabled
+            gasTokenIsEth
         );
     }
 
@@ -127,8 +113,7 @@ contract WethWormholeTest is WethWormholeTestBase {
             "tWETH",
             18,
             nttManager,
-            false, // gasTokenIsEth = false,
-            wethFunctionalityEnabled
+            false // gasTokenIsEth = false,
         );
         WethWormhole testWeth = WethWormhole(payable(testWethWormholeProxy));
 
@@ -138,56 +123,33 @@ contract WethWormholeTest is WethWormholeTestBase {
         vm.expectRevert(CustomTokenWethExtension.FunctionNotSupportedOnThisChain.selector);
         testWeth.deposit{value: depositAmount}();
 
-        testWethWormholeProxy = _testInitializationRevert(
-            bytes4(0),
-            owner,
-            "Test WETH",
-            "tWETH",
-            18,
-            nttManager,
-            true, // gasTokenIsEth = true,
-            wethFunctionalityEnabled
-        );
-        testWeth = WethWormhole(payable(testWethWormholeProxy));
+        // @todo Fix depending on decision about default state of wethFunctionalityEnabled
+        // testWethWormholeProxy = _testInitializationRevert(
+        //     bytes4(0),
+        //     owner,
+        //     "Test WETH",
+        //     "tWETH",
+        //     18,
+        //     nttManager,
+        //     true // gasTokenIsEth = true,
+        // );
+        // testWeth = WethWormhole(payable(testWethWormholeProxy));
 
-        testWeth.deposit{value: depositAmount}();
-        assertEq(testWeth.balanceOf(address(this)), depositAmount);
+        // testWeth.deposit{value: depositAmount}();
+        // assertEq(testWeth.balanceOf(address(this)), depositAmount);
     }
 
     function test_init_wethFunctionalityEnabled() public {
-        address testWethWormholeProxy = _testInitializationRevert(
-            bytes4(0),
-            owner,
-            "Test WETH",
-            "tWETH",
-            18,
-            nttManager,
-            gasTokenIsEth,
-            false // wethFunctionalityEnabled = false
-        );
+        address testWethWormholeProxy =
+            _testInitializationRevert(bytes4(0), owner, "Test WETH", "tWETH", 18, nttManager, gasTokenIsEth);
         WethWormhole testWeth = WethWormhole(payable(testWethWormholeProxy));
 
         uint256 depositAmount = 1 ether;
         deal(address(this), depositAmount);
 
+        // weth functionality should be disabled by default
         assertFalse(testWeth.wethFunctionalityEnabled());
         vm.expectRevert(CustomTokenWethExtension.FunctionNotEnabledOnThisChain.selector);
         testWeth.deposit{value: depositAmount}();
-
-        testWethWormholeProxy = _testInitializationRevert(
-            bytes4(0),
-            owner,
-            "Test WETH",
-            "tWETH",
-            18,
-            nttManager,
-            gasTokenIsEth,
-            true // wethFunctionalityEnabled = true
-        );
-        testWeth = WethWormhole(payable(testWethWormholeProxy));
-        assertTrue(testWeth.wethFunctionalityEnabled());
-
-        testWeth.deposit{value: depositAmount}();
-        assertEq(testWeth.balanceOf(address(this)), depositAmount);
     }
 }
