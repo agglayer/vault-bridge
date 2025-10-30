@@ -56,6 +56,7 @@ abstract contract CustomToken is
     error InvalidBridge();
     error BridgeAlreadySet();
     error NativeConverterAlreadySet();
+    error FunctionNotSupportedWithThisBridgeProvider();
 
     // -----================= ::: SETUP ::: =================-----
 
@@ -188,7 +189,7 @@ abstract contract CustomToken is
     }
 
     // @remind Document (the entire function).
-    function setNativeConverter(address nativeConverter_) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setNativeConverter(address nativeConverter_) external virtual onlyRole(DEFAULT_ADMIN_ROLE) {
         CustomTokenStorage storage $ = _getCustomTokenStorage();
 
         require($.nativeConverter == address(0), NativeConverterAlreadySet());
