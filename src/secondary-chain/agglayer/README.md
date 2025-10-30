@@ -12,6 +12,7 @@
 - Supported chains: Katana, Forknet
 - Custom Token: Available (Upgradeable Wrapped Token)
 - Native Converter: Available
+- WETH functionality: Available
 - Bridged USDC Standard: Available
 - Wrapped Token: Available (Upgradeable Wrapped Token)
 - Manual Converter: Coming soon
@@ -22,6 +23,7 @@
 - Supported chains: All Agglayer chains, except Katana, Forknet
 - Custom Token: N/A
 - Native Converter: N/A
+- WETH functionality: N/A
 - Bridged USDC Standard: N/A
 - Wrapped Token: Available (Wrapped Token)
 - Manual Converter: Coming soon
@@ -46,7 +48,7 @@ No action required.
 
 ### Agglayer Sovereign with Pessimistic Proof
 
-- "Local balance tree" in Agglayer Bridge contract prevents bridging out more tokens from a chain that have been bridged in to the chain by reverting onchain immediately.
+- "Local balance tree" in Agglayer Bridge contract prevents bridging out more tokens from a chain than have been bridged in to the chain by reverting onchain immediately.
 
 ### Agglayer without Pessimistic Proof
 

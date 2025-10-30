@@ -43,7 +43,6 @@ contract DeployCustomTokensWormhole is Script {
 
     // Reinitialization parameters.
     bool public gasTokenIsEth;
-    bool public wethFunctionalityEnabled;
 
     /// @notice Setup.
     /// @dev You can customize the setup here.
@@ -54,7 +53,6 @@ contract DeployCustomTokensWormhole is Script {
         nttManagerAddress = 0x0000000000000000000000000000000000000000;
         ownerAddress = 0x0000000000000000000000000000000000000000;
         gasTokenIsEth = false;
-        wethFunctionalityEnabled = false;
 
         // Check the inputs.
         require(bytes(secondaryChainName).length != 0, "Aborted: `secondaryChainName` not set");
@@ -81,15 +79,7 @@ contract DeployCustomTokensWormhole is Script {
 
             reinitializeData[0] = abi.encodeCall(
                 WethWormhole.reinitialize1,
-                (
-                    ownerAddress,
-                    "Vault Bridge ETH",
-                    "vbETH",
-                    18,
-                    nttManagerAddress,
-                    gasTokenIsEth,
-                    wethFunctionalityEnabled
-                )
+                (ownerAddress, "Vault Bridge ETH", "vbETH", 18, nttManagerAddress, gasTokenIsEth)
             );
 
             vbEth = _proxifyAndInitializeWethWormhole(
