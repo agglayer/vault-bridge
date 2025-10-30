@@ -36,6 +36,10 @@ import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transpa
 ///      2. Transfer ownership of bridged token proxies to enable Custom Token upgrade
 ///      3. Execute upgradeToAndCall() on each bridged token proxy with printed calldata
 contract DeployCustomTokensAgglayer is Script {
+    // ============ Constants ============
+    /// @notice Zero address constant for initialization checks
+    address private constant ADDRESS_ZERO = address(0);
+
     // ============ Chain Configuration ============
     /// @notice Name of the primary chain (L1) for RPC connection (e.g., "sepolia", "mainnet")
     string public primaryChainName;
@@ -130,6 +134,8 @@ contract DeployCustomTokensAgglayer is Script {
     /// @notice Use VbUsdcNativeConverterAgglayerBridgedUsdcStandard for vbUSDC
     /// @dev Set to true for chains with native Circle-controlled USDC (e.g., Polygon, Arbitrum, Base)
     bool public nativeUSDC;
+    /// @notice Bridged native USDC address on L2 (only for nativeUSDC=true)
+    address public bridgedNativeUSDCAddress;
 
     /// @notice Configures all parameters before script execution.
     /// @dev Customize these values for your specific deployment:
@@ -144,28 +150,28 @@ contract DeployCustomTokensAgglayer is Script {
         secondaryChainName = ""; // L2 chain name (must match foundry.toml RPC alias)
 
         // ============ Address Configuration ============
-        deployerAddress = 0x0000000000000000000000000000000000000000; // Deployer that pays gas
-        ownerAddress = 0x0000000000000000000000000000000000000000; // Protocol admin (DEFAULT_ADMIN_ROLE)
-        proxyOwnerAddress = 0x0000000000000000000000000000000000000000; // ProxyAdmin owner (controls upgrades)
-        agglayerBridgeAddress = 0x0000000000000000000000000000000000000000; // Agglayer Bridge on L2
-        migrationManagerAddress = 0x0000000000000000000000000000000000000000; // Migration Manager on L1
+        deployerAddress = ADDRESS_ZERO; // Deployer that pays gas
+        ownerAddress = ADDRESS_ZERO; // Protocol admin (DEFAULT_ADMIN_ROLE)
+        proxyOwnerAddress = ADDRESS_ZERO; // ProxyAdmin owner (controls upgrades)
+        agglayerBridgeAddress = ADDRESS_ZERO; // Agglayer Bridge on L2
+        migrationManagerAddress = ADDRESS_ZERO; // Migration Manager on L1
 
         // ============ Network ID ============
         l1NetworkId = 0; // Primary chain network ID in Agglayer (Sepolia = 0, Ethereum mainnet = 0)
 
         // ============ L1 vbToken Addresses ============
-        vbEthL1 = 0x0000000000000000000000000000000000000000; // Vault token for ETH
-        vbUsdcL1 = 0x0000000000000000000000000000000000000000; // Vault token for USDC
-        vbUsdtL1 = 0x0000000000000000000000000000000000000000; // Vault token for USDT
-        vbUsdsL1 = 0x0000000000000000000000000000000000000000; // Vault token for USDS
-        vbWbtcL1 = 0x0000000000000000000000000000000000000000; // Vault token for WBTC
+        vbEthL1 = ADDRESS_ZERO; // Vault token for ETH
+        vbUsdcL1 = ADDRESS_ZERO; // Vault token for USDC
+        vbUsdtL1 = ADDRESS_ZERO; // Vault token for USDT
+        vbUsdsL1 = ADDRESS_ZERO; // Vault token for USDS
+        vbWbtcL1 = ADDRESS_ZERO; // Vault token for WBTC
 
         // ============ L1 Underlying Token Addresses ============
-        wethL1 = 0x0000000000000000000000000000000000000000; // Wrapped Ether
-        usdcL1 = 0x0000000000000000000000000000000000000000; // USD Coin
-        usdtL1 = 0x0000000000000000000000000000000000000000; // Tether USD
-        usdsL1 = 0x0000000000000000000000000000000000000000; // USDS Stablecoin
-        wbtcL1 = 0x0000000000000000000000000000000000000000; // Wrapped Bitcoin
+        wethL1 = ADDRESS_ZERO; // Wrapped Ether
+        usdcL1 = ADDRESS_ZERO; // USD Coin
+        usdtL1 = ADDRESS_ZERO; // Tether USD
+        usdsL1 = ADDRESS_ZERO; // USDS Stablecoin
+        wbtcL1 = ADDRESS_ZERO; // Wrapped Bitcoin
 
         // ============ Native Converter Parameters ============
         // Percentage of backing that must stay on L2 (1e18 = 100%, 0 = fully migratable)
@@ -175,10 +181,18 @@ contract DeployCustomTokensAgglayer is Script {
 
         // ============ Custom Token Configuration ============
         // Enable WETH deposit/withdraw functionality on vbETH (typically false for L2)
+        // Only set to true if the chain wants to enable native USDC in the future
         wethFunctionalityEnabled = false; // false = vbETH is ERC-20 only (no direct ETH deposit/withdraw)
         // Use specialized Native Converter for chains with Circle-controlled USDC
-        nativeUSDC = false; // true = use VbUsdcNativeConverterAgglayerBridgedUsdcStandard (Polygon, Arbitrum, Base)
+        nativeUSDC = false; // true = use VbUsdcNativeConverterAgglayerBridgedUsdcStandard
+        bridgedNativeUSDCAddress = ADDRESS_ZERO; // Bridged native USDC on L2 (only for nativeUSDC=true)
 
+        if (nativeUSDC) {
+            require(
+                bridgedNativeUSDCAddress != ADDRESS_ZERO,
+                "Aborted: `bridgedNativeUSDCAddress` not set for nativeUSDC chain"
+            );
+        }
         // Check the inputs.
         require(
             bytes(primaryChainName).length != 0,
@@ -189,36 +203,39 @@ contract DeployCustomTokensAgglayer is Script {
             "Aborted: `secondaryChainName` not set"
         );
         require(
-            deployerAddress != address(0),
+            deployerAddress != ADDRESS_ZERO,
             "Aborted: `deployerAddress` not set"
         );
         require(
-            agglayerBridgeAddress != address(0),
+            agglayerBridgeAddress != ADDRESS_ZERO,
             "Aborted: `agglayerBridgeAddress` not set"
         );
         require(
-            migrationManagerAddress != address(0),
+            migrationManagerAddress != ADDRESS_ZERO,
             "Aborted: `migrationManagerAddress` not set"
         );
-        require(ownerAddress != address(0), "Aborted: `ownerAddress` not set");
         require(
-            proxyOwnerAddress != address(0),
+            ownerAddress != ADDRESS_ZERO,
+            "Aborted: `ownerAddress` not set"
+        );
+        require(
+            proxyOwnerAddress != ADDRESS_ZERO,
             "Aborted: `proxyOwnerAddress` not set"
         );
         require(
             proxyOwnerAddress != ownerAddress,
             "Aborted: `proxyOwnerAddress` must differ from `ownerAddress`"
         );
-        require(vbEthL1 != address(0), "Aborted: `vbEthL1` not set");
-        require(vbUsdcL1 != address(0), "Aborted: `vbUsdcL1` not set");
-        require(vbUsdtL1 != address(0), "Aborted: `vbUsdtL1` not set");
-        require(vbUsdsL1 != address(0), "Aborted: `vbUsdsL1` not set");
-        require(vbWbtcL1 != address(0), "Aborted: `vbWbtcL1` not set");
-        require(wethL1 != address(0), "Aborted: `wethL1` not set");
-        require(usdcL1 != address(0), "Aborted: `usdcL1` not set");
-        require(usdtL1 != address(0), "Aborted: `usdtL1` not set");
-        require(usdsL1 != address(0), "Aborted: `usdsL1` not set");
-        require(wbtcL1 != address(0), "Aborted: `wbtcL1` not set");
+        require(vbEthL1 != ADDRESS_ZERO, "Aborted: `vbEthL1` not set");
+        require(vbUsdcL1 != ADDRESS_ZERO, "Aborted: `vbUsdcL1` not set");
+        require(vbUsdtL1 != ADDRESS_ZERO, "Aborted: `vbUsdtL1` not set");
+        require(vbUsdsL1 != ADDRESS_ZERO, "Aborted: `vbUsdsL1` not set");
+        require(vbWbtcL1 != ADDRESS_ZERO, "Aborted: `vbWbtcL1` not set");
+        require(wethL1 != ADDRESS_ZERO, "Aborted: `wethL1` not set");
+        require(usdcL1 != ADDRESS_ZERO, "Aborted: `usdcL1` not set");
+        require(usdtL1 != ADDRESS_ZERO, "Aborted: `usdtL1` not set");
+        require(usdsL1 != ADDRESS_ZERO, "Aborted: `usdsL1` not set");
+        require(wbtcL1 != ADDRESS_ZERO, "Aborted: `wbtcL1` not set");
     }
 
     /// @notice Main execution function - deploys all contracts and prints upgrade data.
@@ -581,7 +598,7 @@ contract DeployCustomTokensAgglayer is Script {
     {
         // Compute bridged addresses.
         address bridgedVbUsdc = _computeBridgedAddress(vbUsdcL1);
-        address bridgedUsdc = _computeBridgedAddress(usdcL1);
+        address bridgedUsdc = bridgedNativeUSDCAddress;
 
         // Fetch decimals from L1.
         uint8 decimals = _fetchDecimalsFromL1(usdcL1);
