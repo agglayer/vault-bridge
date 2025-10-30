@@ -9,6 +9,9 @@ import {WethWormhole} from "src/secondary-chain/wormhole/vbETH/WethWormhole.sol"
 import {CustomToken} from "src/secondary-chain/CustomToken.sol";
 import {CustomTokenWethExtension} from "src/secondary-chain/CustomTokenWethExtension.sol";
 
+// OpenZeppelin
+import {IAccessControl} from "@openzeppelin-contracts/access/IAccessControl.sol";
+
 /// @dev WethWormhole tests
 /// @notice Comprehensive tests for WethWormhole which covers both CustomTokenWormhole and CustomTokenWethExtension functionality
 contract WethWormholeTest is WethWormholeTestBase {
@@ -151,5 +154,35 @@ contract WethWormholeTest is WethWormholeTestBase {
         assertFalse(testWeth.wethFunctionalityEnabled());
         vm.expectRevert(CustomTokenWethExtension.FunctionNotEnabledOnThisChain.selector);
         testWeth.deposit{value: depositAmount}();
+    }
+
+    function test_setNativeConverter_revert() public {
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessControl.AccessControlUnauthorizedAccount.selector,
+                address(this),
+                wethWormhole.DEFAULT_ADMIN_ROLE()
+            )
+        );
+        wethWormhole.setNativeConverter(address(1));
+
+        vm.prank(owner);
+        vm.expectRevert(CustomToken.FunctionNotSupportedWithThisBridgeProvider.selector);
+        wethWormhole.setNativeConverter(address(1));
+    }
+
+    function test_setWethFunctionalityEnabled_revert() public {
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessControl.AccessControlUnauthorizedAccount.selector,
+                address(this),
+                wethWormhole.DEFAULT_ADMIN_ROLE()
+            )
+        );
+        wethWormhole.setWethFunctionalityEnabled(true);
+
+        vm.prank(owner);
+        vm.expectRevert(CustomToken.FunctionNotSupportedWithThisBridgeProvider.selector);
+        wethWormhole.setWethFunctionalityEnabled(true);
     }
 }
