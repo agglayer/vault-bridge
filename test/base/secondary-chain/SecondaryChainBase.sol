@@ -177,7 +177,6 @@ abstract contract SecondaryChainBase is TestConstants {
     uint32 internal primaryChainAgglayerId;
     uint8 internal customTokenDecimals;
     uint8 internal underlyingTokenDecimals;
-    bool internal wethFunctionalityEnabled;
 
     // ========= MOCK CONTRACTS =========
     MockAgglayerBridge internal mockAgglayerBridge;
