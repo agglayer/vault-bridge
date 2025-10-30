@@ -208,4 +208,33 @@ contract CustomTokenTest is CustomTokenTestBase {
         assertEq(customTokenHarness.allowance(sender, recipient), value);
         assertEq(customTokenHarness.nonces(sender), nonce + 1);
     }
+
+    function test_setNativeConverter_revertsWhenAlreadySet() public {
+        vm.prank(owner);
+        vm.expectRevert(CustomToken.NativeConverterAlreadySet.selector);
+        customTokenHarness.setNativeConverter(address(0x5678));
+    }
+
+    function test_setNativeConverter_success() public {
+        // Deploy a new CustomToken instance for this test
+        vm.revertToState(stateBeforeInitialize);
+
+        address newCustomTokenImpl = address(new TestHarnessCustomToken());
+        bytes memory customTokenInitData = abi.encodeCall(
+            TestHarnessCustomToken.reinitialize2, (owner, customTokenDecimals, address(mockAgglayerBridge), address(0))
+        );
+        bytes memory customTokenUpgradeData =
+            abi.encodeCall(ITransparentUpgradeableProxy.upgradeToAndCall, (newCustomTokenImpl, customTokenInitData));
+        vm.prank(_getProxyAdmin(address(existingCustomTokenProxy)));
+        (address(existingCustomTokenProxy).call(customTokenUpgradeData));
+
+        TestHarnessCustomToken customTokenInstance = TestHarnessCustomToken(address(existingCustomTokenProxy));
+
+        // Set native converter
+        address newNativeConverter = address(0x5678);
+        vm.prank(owner);
+        customTokenInstance.setNativeConverter(newNativeConverter);
+
+        assertEq(customTokenInstance.nativeConverter(), newNativeConverter);
+    }
 }

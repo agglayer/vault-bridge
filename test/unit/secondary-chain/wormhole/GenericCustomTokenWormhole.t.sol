@@ -11,8 +11,10 @@ import {
 // Core contracts
 import {GenericCustomTokenWormhole} from "src/secondary-chain/wormhole/GenericCustomTokenWormhole.sol";
 import {CustomToken} from "src/secondary-chain/CustomToken.sol";
-
 import {InitializationCounterUpgradeable} from "src/etc/InitializationCounterUpgradeable.sol";
+
+// OpenZeppelin
+import {IAccessControl} from "@openzeppelin-contracts/access/IAccessControl.sol";
 
 /// @dev GenericCustomTokenWormhole tests
 /// @notice Comprehensive tests for GenericCustomTokenWormhole which also cover CustomTokenWormhole functionality
@@ -164,5 +166,20 @@ contract GenericCustomTokenWormholeTest is GenericCustomTokenWormholeTestBase {
         assertEq(genericCustomTokenWormhole.balanceOf(user2), 0);
         assertEq(genericCustomTokenWormhole.balanceOf(nttManager), 0);
         assertEq(genericCustomTokenWormhole.totalSupply(), amount1);
+    }
+
+    function test_setNativeConverter_revert() public {
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessControl.AccessControlUnauthorizedAccount.selector,
+                address(this),
+                genericCustomTokenWormhole.DEFAULT_ADMIN_ROLE()
+            )
+        );
+        genericCustomTokenWormhole.setNativeConverter(address(1));
+
+        vm.prank(owner);
+        vm.expectRevert(CustomToken.FunctionNotSupportedWithThisBridgeProvider.selector);
+        genericCustomTokenWormhole.setNativeConverter(address(1));
     }
 }
