@@ -135,20 +135,19 @@ contract WethWormholeTest is WethWormholeTestBase {
         vm.expectRevert(CustomTokenWethExtension.FunctionNotSupportedOnThisChain.selector);
         testWeth.deposit{value: depositAmount}();
 
-        // @todo Fix depending on decision about default state of wethFunctionalityEnabled
-        // testWethWormholeProxy = _testInitializationRevert(
-        //     bytes4(0),
-        //     owner,
-        //     "Test WETH",
-        //     "tWETH",
-        //     18,
-        //     nttManager,
-        //     true // gasTokenIsEth = true,
-        // );
-        // testWeth = WethWormhole(payable(testWethWormholeProxy));
+        testWethWormholeProxy = _testInitializationRevert(
+            bytes4(0),
+            owner,
+            "Test WETH",
+            "tWETH",
+            18,
+            nttManager,
+            true // gasTokenIsEth = true,
+        );
+        testWeth = WethWormhole(payable(testWethWormholeProxy));
 
-        // testWeth.deposit{value: depositAmount}();
-        // assertEq(testWeth.balanceOf(address(this)), depositAmount);
+        vm.expectRevert(CustomTokenWethExtension.FunctionNotEnabledOnThisChain.selector);
+        testWeth.deposit{value: depositAmount}();
     }
 
     function test_init_wethFunctionalityEnabled() public {
