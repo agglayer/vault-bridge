@@ -8,7 +8,6 @@ pragma solidity 0.8.29;
 import {CustomTokenLayerZero} from "../CustomTokenLayerZero.sol";
 import {CustomTokenWethExtension} from "../../CustomTokenWethExtension.sol";
 import {CustomToken} from "../../CustomToken.sol";
-import {ERC20Upgradeable} from "@openzeppelin-contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
 
 /// @title WETH (LayerZero)
 /// @author See https://github.com/agglayer/vault-bridge
