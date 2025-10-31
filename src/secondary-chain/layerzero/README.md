@@ -60,6 +60,7 @@
 
 ## Reference
 
+- GitHub: [OFT Adapter example](https://github.com/LayerZero-Labs/devtools/tree/main/examples/oft-adapter)
 - GitHub: [OFT Upgradeable example](https://github.com/LayerZero-Labs/devtools/tree/main/examples/oft-upgradeable)
 - GitHub: [OVault EVM example](https://github.com/LayerZero-Labs/devtools/tree/main/examples/ovault-evm)
 - Explorer: [LayerZero Message Explorer](https://layerzeroscan.com/)
