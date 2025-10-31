@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: LicenseRef-PolygonLabs-Source-Available
-// Vault Bridge (last updated v1.0.0) (secondary-chain/agglayer/vbETH/WethAgglayer.sol)
+// Vault Bridge (last updated v1.1.0) (secondary-chain/agglayer/vbETH/WethAgglayer.sol)
 
 pragma solidity 0.8.29;
 

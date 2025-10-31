@@ -50,4 +50,8 @@ abstract contract CustomTokenLayerZero is CustomToken {
 
     /// @inheritdoc CustomToken
     function _CUSTOM_TOKEN_IS_MINTABLE_BURNABLE() internal override {}
+
+    function setNativeConverter(address) external view virtual override onlyRole(DEFAULT_ADMIN_ROLE) {
+        revert FunctionNotSupportedWithThisBridgeProvider();
+    }
 }

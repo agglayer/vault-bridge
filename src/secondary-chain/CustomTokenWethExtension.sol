@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: LicenseRef-PolygonLabs-Source-Available
-// Vault Bridge (last updated v1.0.0) (secondary-chain/CustomTokenWethExtension.sol)
+// Vault Bridge (last updated v1.1.0) (secondary-chain/CustomTokenWethExtension.sol)
 
 pragma solidity 0.8.29;
 
@@ -64,23 +64,6 @@ abstract contract CustomTokenWethExtension is CustomToken {
         CustomTokenWethExtensionStorage storage $ = _getCustomTokenWethExtensionStorage();
 
         $._gasTokenIsEth = gasTokenIsEth_;
-
-        // @note CAUTION! ALL WETH NATIVE CONVERTER MIGRATIONS THAT ARE IN PROGRESS MUST BE COMPLETED FIRST!
-        // @todo THIS LOGIC WILL BE REMOVED ONCE VBETH ON KATANA/BOKUTO HAS BEEN UPGRADED TO VAULT BRIDGE V1.0.0 AND VAULT BRIDGE V0.5.0 HAS BEEN DEPRECATED.
-        if (block.chainid == 747474 || block.chainid == 737373) {
-            uint256 wethBridgedSupply = IAgglayerBridge(bridge()).localBalanceTree(
-                block.chainid == 747474
-                    ? bytes32(0x56c62e67b0be3f302f4835a408fa9ba657546fd11907c2c30306d84790975467)
-                    : bytes32(0x0b13348aaf539fc7929ee5a1b19220fdcf7c38ae12b877539fe54abaf7a6d0dd)
-            );
-            uint256 wethTotalSupply = totalSupply();
-            uint256 wethBackingOnSecondaryChain = NativeConverter(payable(nativeConverter())).backingOnSecondaryChain();
-
-            $.gasBackingOnSecondaryChain = wethTotalSupply - wethBridgedSupply - wethBackingOnSecondaryChain;
-
-            assert($.gasBackingOnSecondaryChain <= address(this).balance);
-        }
-
         $.wethFunctionalityEnabled = wethFunctionalityEnabled_;
     }
 
