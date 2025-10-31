@@ -42,7 +42,6 @@ contract GenericCustomTokenAgglayerTest is GenericCustomTokenAgglayerTestBase {
         assertEq(genericCustomTokenAgglayer.totalSupply(), amount);
     }
 
-    // @todo Update.
     function test_mint_success_toAddressZero_emitsTransfer() public {
         uint256 amount = 1000e18;
 
