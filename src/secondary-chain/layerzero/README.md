@@ -35,7 +35,7 @@
 
 ### Non-Default Upgradeable Omnichain Fungible Token
 
-1. FIRST TIME ONLY: Deploy Non-Default OFT Adapter implementation and proxy on Primary Chain, and initialize it.
+1. FIRST TIME ONLY: Deploy Non-Default Upgradeable OFT Adapter* implementation and proxy on Primary Chain, and initialize it. *Non-Default Upgradeable Omnichain Fungible Token and Default Non-Upgradeable Omnichain Fungible Token on Secondary Chains share the same Non-Default Upgradeable OFT Adapter on Primary Chain.
 2. Deploy Custom Token implementation and proxy to Secondary Chain, and initialize it. You will need to set `oftAdapter_` to Reverting Contract. Please refer to [`DeployRevertingContract.s.sol`](../../../script/etc/DeployRevertingContract.s.sol) for more information.
 3. Deploy Non-Default Mint-Burn OFT Adapter implementation and proxy on Secondary Chain, and initialize it.
 4. Execute `setBridge(address)` in Custom Token with address of Non-Default Mint-Burn OFT Adapter.
@@ -43,16 +43,15 @@
 
 ### Default Non-Upgradeable Omnichain Fungible Token
 
-1. FIRST TIME ONLY: Deploy Non-Default OFT Adapter implementation and proxy on Primary Chain, and initialize it.
-2. Deploy Custom Token implementation and proxy to Secondary Chain, and initialize it. You will need to set `oftAdapter_` to Reverting Contract. Please refer to [`DeployRevertingContract.s.sol`](../../../script/etc/DeployRevertingContract.s.sol) for more information.
-3. Deploy Default Non-Upgradeable OFT implementation and proxy on Secondary Chain, and initialize it, using LayerZero CLI.
-5. Update wiring for Non-Default OFT Adapter on Primary Chain and Non-Default Mint-Burn OFT Adapter / Default Non-Upgradeable OFT on all LayerZero Secondary Chains using LayerZero CLI.
+1. FIRST TIME ONLY: Deploy Non-Default Upgradeable OFT Adapter* implementation and proxy on Primary Chain, and initialize it. *Non-Default Upgradeable Omnichain Fungible Token and Default Non-Upgradeable Omnichain Fungible Token on Secondary Chains share the same Non-Default Upgradeable OFT Adapter on Primary Chain.
+2. Deploy Default Non-Upgradeable OFT implementation and proxy to Secondary Chain, and initialize it, using LayerZero CLI.
+3. Update wiring for Non-Default Upgradeable OFT Adapter on Primary Chain and Non-Default Mint-Burn OFT Adapter / Default Non-Upgradeable OFT on all LayerZero Secondary Chains using LayerZero CLI.
 
 ## Protection
 
 ### Non-Default Upgradeable Omnichain Fungible Token
 
-- "Local Chain Balance" in Non-Default Mint-Burn OFT Adapter contract prevents bridging out more tokens from a chain than have been bridged in to the chain by reverting onchain immediately.
+- Local Chain Balance in Non-Default Mint-Burn OFT Adapter contract prevents bridging out more tokens from a chain than have been bridged in to the chain by reverting onchain immediately.
 
 ### Default Non-Upgradeable Omnichain Fungible Token
 
