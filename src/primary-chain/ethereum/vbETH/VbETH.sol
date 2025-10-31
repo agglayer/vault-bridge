@@ -23,7 +23,6 @@ contract VbEth is VaultBridgeToken {
 
     function reinitialize1(address initializer_, VaultBridgeToken.InitializationParameters calldata initParams)
         external
-        locked
         reinitializer(1)
         nonReentrant
     {
@@ -37,7 +36,7 @@ contract VbEth is VaultBridgeToken {
         );
     }
 
-    function reinitialize2() external locked reinitializer(2) nonReentrant {
+    function reinitialize2() external reinitializer(2) nonReentrant {
         _incrementGlobalInitializationCounter(1);
         _incrementGlobalInitializationCounter(2);
 
@@ -48,7 +47,6 @@ contract VbEth is VaultBridgeToken {
     /// @dev How to add a new reinitializer:
     function reinitialize3()
         external
-        locked
         reinitializer(_incrementGlobalInitializationCounter(3))
         nonReentrant
     {}
