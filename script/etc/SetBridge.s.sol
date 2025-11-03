@@ -43,7 +43,7 @@ contract SetBridge is Script {
         executorAddress = ADDRESS_ZERO;
 
         updateVbEth = false;
-        updateVbUsdc = true;
+        updateVbUsdc = false;
         updateVbUsdt = false;
         updateVbUsds = false;
         updateVbWbtc = false;
