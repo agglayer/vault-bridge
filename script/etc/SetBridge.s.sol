@@ -10,7 +10,7 @@ import "forge-std/Script.sol";
 /// @author See https://github.com/agglayer/vault-bridge
 /// @notice Updates the bridge address for multiple Custom Tokens on L2.
 /// @dev Calls setBridge() on each configured token to update from the temporary
-///      reverting contract to the real bridge adapter address.
+///      reverting contract to the real bridge address.
 contract SetBridge is Script {
     address private constant ADDRESS_ZERO = address(0);
 
@@ -31,12 +31,12 @@ contract SetBridge is Script {
     address public vbUsdsTokenL2;
     address public vbWbtcTokenL2;
 
-    // L2 Bridge Adapter addresses
-    address public vbEthAdapterL2;
-    address public vbUsdcAdapterL2;
-    address public vbUsdtAdapterL2;
-    address public vbUsdsAdapterL2;
-    address public vbWbtcAdapterL2;
+    // L2 Bridge addresses
+    address public vbEthBridge;
+    address public vbUsdcBridge;
+    address public vbUsdtBridge;
+    address public vbUsdsBridge;
+    address public vbWbtcBridge;
 
     function setUp() public {
         chainName = "";
@@ -54,11 +54,11 @@ contract SetBridge is Script {
         vbUsdsTokenL2 = ADDRESS_ZERO;
         vbWbtcTokenL2 = ADDRESS_ZERO;
 
-        vbEthAdapterL2 = ADDRESS_ZERO;
-        vbUsdcAdapterL2 = ADDRESS_ZERO;
-        vbUsdtAdapterL2 = ADDRESS_ZERO;
-        vbUsdsAdapterL2 = ADDRESS_ZERO;
-        vbWbtcAdapterL2 = ADDRESS_ZERO;
+        vbEthBridge = ADDRESS_ZERO;
+        vbUsdcBridge = ADDRESS_ZERO;
+        vbUsdtBridge = ADDRESS_ZERO;
+        vbUsdsBridge = ADDRESS_ZERO;
+        vbWbtcBridge = ADDRESS_ZERO;
         require(bytes(chainName).length != 0, "Aborted: `chainName` not set");
         require(
             executorAddress != ADDRESS_ZERO,
@@ -78,8 +78,8 @@ contract SetBridge is Script {
                 "Aborted: `vbEthTokenL2` not set"
             );
             require(
-                vbEthAdapterL2 != ADDRESS_ZERO,
-                "Aborted: `vbEthAdapterL2` not set"
+                vbEthBridge != ADDRESS_ZERO,
+                "Aborted: `vbEthBridge` not set"
             );
         }
         if (updateVbUsdc) {
@@ -88,8 +88,8 @@ contract SetBridge is Script {
                 "Aborted: `vbUsdcTokenL2` not set"
             );
             require(
-                vbUsdcAdapterL2 != ADDRESS_ZERO,
-                "Aborted: `vbUsdcAdapterL2` not set"
+                vbUsdcBridge != ADDRESS_ZERO,
+                "Aborted: `vbUsdcBridge` not set"
             );
         }
         if (updateVbUsdt) {
@@ -98,8 +98,8 @@ contract SetBridge is Script {
                 "Aborted: `vbUsdtTokenL2` not set"
             );
             require(
-                vbUsdtAdapterL2 != ADDRESS_ZERO,
-                "Aborted: `vbUsdtAdapterL2` not set"
+                vbUsdtBridge != ADDRESS_ZERO,
+                "Aborted: `vbUsdtBridge` not set"
             );
         }
         if (updateVbUsds) {
@@ -108,8 +108,8 @@ contract SetBridge is Script {
                 "Aborted: `vbUsdsTokenL2` not set"
             );
             require(
-                vbUsdsAdapterL2 != ADDRESS_ZERO,
-                "Aborted: `vbUsdsAdapterL2` not set"
+                vbUsdsBridge != ADDRESS_ZERO,
+                "Aborted: `vbUsdsBridge` not set"
             );
         }
         if (updateVbWbtc) {
@@ -118,8 +118,8 @@ contract SetBridge is Script {
                 "Aborted: `vbWbtcTokenL2` not set"
             );
             require(
-                vbWbtcAdapterL2 != ADDRESS_ZERO,
-                "Aborted: `vbWbtcAdapterL2` not set"
+                vbWbtcBridge != ADDRESS_ZERO,
+                "Aborted: `vbWbtcBridge` not set"
             );
         }
     }
@@ -134,19 +134,19 @@ contract SetBridge is Script {
         console.log("UPDATING BRIDGE ADDRESSES");
         console.log("========================================");
         if (updateVbEth) {
-            _setBridge("vbETH", vbEthTokenL2, vbEthAdapterL2);
+            _setBridge("vbETH", vbEthTokenL2, vbEthBridge);
         }
         if (updateVbUsdc) {
-            _setBridge("vbUSDC", vbUsdcTokenL2, vbUsdcAdapterL2);
+            _setBridge("vbUSDC", vbUsdcTokenL2, vbUsdcBridge);
         }
         if (updateVbUsdt) {
-            _setBridge("vbUSDT", vbUsdtTokenL2, vbUsdtAdapterL2);
+            _setBridge("vbUSDT", vbUsdtTokenL2, vbUsdtBridge);
         }
         if (updateVbUsds) {
-            _setBridge("vbUSDS", vbUsdsTokenL2, vbUsdsAdapterL2);
+            _setBridge("vbUSDS", vbUsdsTokenL2, vbUsdsBridge);
         }
         if (updateVbWbtc) {
-            _setBridge("vbWBTC", vbWbtcTokenL2, vbWbtcAdapterL2);
+            _setBridge("vbWBTC", vbWbtcTokenL2, vbWbtcBridge);
         }
 
         console.log("\nFinished running `SetBridge` script");
@@ -155,17 +155,17 @@ contract SetBridge is Script {
     function _setBridge(
         string memory tokenSymbol,
         address customTokenAddress,
-        address adapterAddress
+        address bridgeAddress
     ) internal {
         console.log(
             string.concat("\nUpdating bridge for ", tokenSymbol, "...")
         );
         console.log("  Token:", customTokenAddress);
-        console.log("  New Adapter:", adapterAddress);
+        console.log("  New Bridge address:", bridgeAddress);
 
         bytes memory callData = abi.encodeWithSignature(
             "setBridge(address)",
-            adapterAddress
+            bridgeAddress
         );
         _startBroadcast();
         (bool success, bytes memory returnData) = customTokenAddress.call(
