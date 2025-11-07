@@ -7,6 +7,6 @@ pragma solidity 0.8.29;
 abstract contract Versioned {
     /// @notice The version of the contract.
     function VAULT_BRIDGE_PROTOCOL() public pure returns (string memory) {
-        return "1.1.0";
+        return "1.2.0";
     }
 }
