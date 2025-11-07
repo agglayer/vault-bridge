@@ -49,6 +49,7 @@ No action required.
 ### Native Token Transfers
 
 - NTT Global Accountant prevents bridging out more tokens from a chain that have been bridged in to the chain by blocking the transfer offchain later. This can result in irreversible loss of tokens.
+- Local Chain Balance in NTT Manager modified contract prevents bridging out more tokens from a chain than have been bridged in to the chain by reverting onchain immediately.
 
 ### Wrapped Token Transfers
 
