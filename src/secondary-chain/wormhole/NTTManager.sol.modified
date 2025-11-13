@@ -47,7 +47,7 @@ contract NttManager is INttManager, RateLimiter, ManagerBase {
     /// @dev It's implemented on a custom ERC-7201 namespace to reduce the risk of storage collisions when using with upgradeable contracts.
     /// @custom:storage-location erc7201:agglayer.vb-weth-env.NttManagerVaultBridge.storage
     struct NttManagerVaultBridgeStorage {
-        uint256 localChainBalance;
+        uint256 secondaryChainBalance;
     }
 
     /// @dev The storage slot at which NTT Manager Vault Bridge storage starts, following the EIP-7201 standard.
@@ -55,9 +55,9 @@ contract NttManager is INttManager, RateLimiter, ManagerBase {
     bytes32 private constant _NTT_MANAGER_VAULT_BRIDGE_STORAGE =
         hex"c7205cbb17a39afca7aab1e4e4d0b939bded49eebe1b57771b40f9af2bd96600";
 
-    function localChainBalance() public view returns (uint256) {
+    function secondaryChainBalance() public view returns (uint256) {
         NttManagerVaultBridgeStorage storage $ = _getNttManagerVaultBridgeStorage();
-        return $.localChainBalance;
+        return $.secondaryChainBalance;
     }
 
     /// @dev Returns a pointer to the ERC-7201 storage namespace.
@@ -453,7 +453,7 @@ contract NttManager is INttManager, RateLimiter, ManagerBase {
                     // Since there is no standard way to query for burn fee amounts with burnable tokens,
                     // and NTT would be used on a per-token basis, implementing this functionality
                     // is left to integrating projects who may need to account for burn fees on their tokens.
-                    $.localChainBalance -= amount;
+                    $.secondaryChainBalance -= amount;
                     ERC20Burnable(token).burn(amount);
 
                     // tokens held by the contract after the operation should be the same as before
@@ -664,14 +664,18 @@ contract NttManager is INttManager, RateLimiter, ManagerBase {
 
         if (mode == Mode.LOCKING) {
             // unlock tokens to the specified recipient
-            IERC20(token).safeTransfer(recipient, untrimmedAmount);
+            _unlockTokens(recipient, untrimmedAmount);
         } else if (mode == Mode.BURNING) {
             // mint tokens to the specified recipient
             INttToken(token).mint(recipient, untrimmedAmount);
-            $.localChainBalance += untrimmedAmount;
+            $.secondaryChainBalance += untrimmedAmount;
         } else {
             revert InvalidMode(uint8(mode));
         }
+    }
+
+    function _unlockTokens(address recipient, uint256 untrimmedAmount) internal virtual {
+        IERC20(token).safeTransfer(recipient, untrimmedAmount);
     }
 
     function tokenDecimals() public view override(INttManager, RateLimiter) returns (uint8) {
