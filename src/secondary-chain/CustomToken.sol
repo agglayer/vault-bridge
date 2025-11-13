@@ -4,8 +4,9 @@
 pragma solidity 0.8.29;
 
 // Main functionality.
-import {ERC20PermitUpgradeable} from
-    "@openzeppelin-contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
+import {
+    ERC20PermitUpgradeable
+} from "@openzeppelin-contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
 
 // Other functionality.
 import {Initializable} from "@openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
@@ -36,6 +37,7 @@ abstract contract CustomToken is
         uint8 decimals;
         address bridge;
         address nativeConverter;
+        uint256 _secondaryChainBalance;
     }
 
     /// @dev The storage slot at which Custom Token storage starts, following the EIP-7201 standard.
@@ -174,6 +176,18 @@ abstract contract CustomToken is
     }
 
     // -----================= ::: CUSTOM TOKEN ::: =================-----
+
+    modifier bridgeInController(uint256 value) {
+        CustomTokenStorage storage $ = _getCustomTokenStorage();
+        _;
+        if (msg.sender == $.bridge) $._secondaryChainBalance += value;
+    }
+
+    modifier bridgeOutController(uint256 value) {
+        CustomTokenStorage storage $ = _getCustomTokenStorage();
+        if (msg.sender == $.bridge) $._secondaryChainBalance -= value;
+        _;
+    }
 
     // @remind Document.
     function _CUSTOM_TOKEN_IS_MINTABLE_BURNABLE() internal virtual;

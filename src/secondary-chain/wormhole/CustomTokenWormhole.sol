@@ -22,12 +22,18 @@ abstract contract CustomTokenWormhole is CustomToken {
     // -----================= ::: CUSTOM TOKEN ::: =================-----
 
     // @remind Document (the entire function).
-    function mint(address account, uint256 value) external whenNotPaused onlyNttManager nonReentrant {
+    function mint(address account, uint256 value)
+        external
+        whenNotPaused
+        onlyNttManager
+        nonReentrant
+        bridgeInController(value)
+    {
         _mint(account, value);
     }
 
     // @remind Document (the entire function).
-    function burn(uint256 value) external whenNotPaused onlyNttManager nonReentrant {
+    function burn(uint256 value) external whenNotPaused onlyNttManager nonReentrant bridgeOutController(value) {
         _burn(msg.sender, value);
     }
 

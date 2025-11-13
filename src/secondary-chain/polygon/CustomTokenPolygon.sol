@@ -22,13 +22,19 @@ abstract contract CustomTokenPolygon is CustomToken {
     // -----================= ::: CUSTOM TOKEN ::: =================-----
 
     // @remind Document (the entire function).
-    function deposit(address account, bytes calldata data) external whenNotPaused onlyChildChainManager nonReentrant {
+    function deposit(address account, bytes calldata data)
+        external
+        whenNotPaused
+        onlyChildChainManager
+        nonReentrant
+        bridgeInController(abi.decode(data, (uint256)))
+    {
         uint256 value = abi.decode(data, (uint256));
         _mint(account, value);
     }
 
     // @remind Document (the entire function).
-    function withdraw(uint256 value) external whenNotPaused nonReentrant {
+    function withdraw(uint256 value) external whenNotPaused nonReentrant bridgeOutController(value) {
         _burn(msg.sender, value);
     }
 
