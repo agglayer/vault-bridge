@@ -29,6 +29,7 @@ abstract contract CustomTokenLayerZero is CustomToken {
         whenNotPaused
         onlyOftAdapter
         nonReentrant
+        bridgeInController(amount)
         returns (bool success)
     {
         _mint(_to, amount);
@@ -42,6 +43,7 @@ abstract contract CustomTokenLayerZero is CustomToken {
         whenNotPaused
         onlyOftAdapter
         nonReentrant
+        bridgeOutController(_amount)
         returns (bool success)
     {
         _burn(_from, _amount);
