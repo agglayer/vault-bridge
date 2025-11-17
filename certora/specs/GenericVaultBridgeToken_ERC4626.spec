@@ -15,7 +15,16 @@ hook CALL(uint g, address addr, uint value, uint argsOffset, uint argsLength, ui
 }
 
 hook DELEGATECALL(uint g, address addr, uint argsOffset, uint argsLength, uint retOffset, uint retLength) uint rc {
+<<<<<<< HEAD
     delegatecallMade = true;
+=======
+    if (
+        addr != currentContract &&
+        addr != VBTpart2) 
+    {
+        delegatecallMade = true;
+    }
+>>>>>>> origin/git/feat/v1.0.0
 }
 
 // There are no dynamic calls to untrusted contracts.

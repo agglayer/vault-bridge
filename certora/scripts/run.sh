@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+git apply ./certora/patches/VaultBridgeToken.patch
+>>>>>>> origin/git/feat/v1.0.0
 certoraRun certora/confs/GenericVaultBridgeToken.conf --msg erc4626
 certoraRun certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GenericVaultBridgeToken_invariants.spec --rule netCollectedYieldAccounted --rule netCollectedYieldLimited --msg netCollectedYield
 certoraRun certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GenericVaultBridgeToken_invariants.spec --rule reserveBacked --msg reserveBacked
@@ -10,4 +14,9 @@ certoraRun certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridg
 certoraRun certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/GVBTBalances.spec --msg GVBTBalances
 certoraRun certora/confs/GenericVaultBridgeToken.conf --verify GenericVaultBridgeToken:certora/specs/tokenMockBalances.spec --msg tokenMockBalances
 certoraRun certora/confs/GenericNativeConverter.conf --msg converter
+<<<<<<< HEAD
 certoraRun certora/confs/MigrationManager-generic.conf --rule onMsgReceived_doesntAlwaysRevert --msg onMsgReceived_doesntAlwaysRevert
+=======
+certoraRun certora/confs/base/MigrationManager.conf --rule onMsgReceived_doesntAlwaysRevert --msg onMsgReceived_doesntAlwaysRevert
+git apply -R ./certora/patches/VaultBridgeToken.patch
+>>>>>>> origin/git/feat/v1.0.0

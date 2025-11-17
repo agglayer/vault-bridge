@@ -1,6 +1,10 @@
 using TokenMock as ERC20a; 
 using GenericVaultBridgeToken as GenericVaultBridgeToken;
 using ILxLyBridgeMock as ILxLyBridgeMock;
+<<<<<<< HEAD
+=======
+using VaultBridgeTokenPart2 as VBTpart2;
+>>>>>>> origin/git/feat/v1.0.0
 
 /*
     Declaration of methods that are used in the rules. envfree indicate that

@@ -1,0 +1,25 @@
+// SPDX-License-Identifier: LicenseRef-PolygonLabs-Source-Available
+pragma solidity 0.8.29;
+
+import {IAgglayerBridge as _IAgglayerBridge} from "src/etc/IAgglayerBridge.sol";
+
+interface IAgglayerBridge is _IAgglayerBridge {
+    function depositCount() external view returns (uint32);
+    function computeTokenProxyAddress(uint32 originNetwork, address originTokenAddress)
+        external
+        view
+        returns (address);
+    function getLeafValue(
+        uint8 leafType,
+        uint32 originNetwork,
+        address originAddress,
+        uint32 destinationNetwork,
+        address destinationAddress,
+        uint256 amount,
+        bytes32 metadataHash
+    ) external pure returns (bytes32);
+    function verifyMerkleProof(bytes32 leafHash, bytes32[32] calldata smtProof, uint32 index, bytes32 root)
+        external
+        pure
+        returns (bool);
+}

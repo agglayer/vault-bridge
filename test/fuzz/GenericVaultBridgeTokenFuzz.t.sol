@@ -1,22 +1,17 @@
 // SPDX-License-Identifier: LicenseRef-PolygonLabs-Source-Available
 pragma solidity ^0.8.29;
 
-import "forge-std/Test.sol";
+// Test base
+import "test/base/primary-chain/VaultBridgeTokenTestBase.sol";
 
-import {GenericVaultBridgeToken} from "src/vault-bridge-tokens/GenericVaultBridgeToken.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
-import {VaultBridgeToken, PausableUpgradeable, Initializable} from "src/VaultBridgeToken.sol";
-import {VaultBridgeTokenPart2} from "src/VaultBridgeTokenPart2.sol";
-import {VaultBridgeTokenInitializer} from "src/VaultBridgeTokenInitializer.sol";
-
+// OpenZeppelin
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {TestVault} from "test/etc/TestVault.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-contract GenericVaultBridgeTokenHarness is GenericVaultBridgeToken {
-    constructor() GenericVaultBridgeToken() {}
+// Core contracts
+import {VaultBridgeToken} from "src/primary-chain/VaultBridgeToken.sol";
 
+contract VaultBridgeTokenHarness is TestHarnessVaultBridgeToken {
     function internal_withdrawFromYieldVault(
         uint256 assets,
         bool exact,
@@ -30,86 +25,171 @@ contract GenericVaultBridgeTokenHarness is GenericVaultBridgeToken {
         );
     }
 
-    function internal_depositIntoYieldVault(uint256 assets, bool exact) internal returns (uint256 nonDepositedAssets) {
+    function internal_depositIntoYieldVault(uint256 assets, bool exact) public returns (uint256 nonDepositedAssets) {
         nonDepositedAssets = _depositIntoYieldVault(assets, exact);
     }
 }
 
-contract GenericVaultBridgeTokenFuzzTest is Test {
+contract GenericVaultBridgeTokenFuzzTest is VaultBridgeTokenTestBase {
     using SafeERC20 for IERC20;
-    using SafeERC20 for GenericVaultBridgeTokenHarness;
+    using SafeERC20 for VaultBridgeTokenHarness;
 
-    // constants
-    address constant LXLY_BRIDGE = 0x2a3DD3EB832aF982ec71669E178424b10Dca2EDe;
-    address internal constant TEST_TOKEN = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
-    uint256 internal constant MAX_DEPOSIT = 10e18;
-    uint256 internal constant MAX_WITHDRAW = 10e18;
-    uint256 internal constant MINIMUM_YIELD_VAULT_DEPOSIT = 1e12;
-    uint256 internal constant YIELD_VAULT_ALLOWED_SLIPPAGE = 1e16; // 1%
-
-    address asset;
-    address vbTokenImplementation;
-    GenericVaultBridgeTokenHarness vbToken;
-    VaultBridgeTokenPart2 vbTokenPart2;
-    TestVault vbTokenVault;
-    uint256 mainnetFork;
-
-    address migrationManager = makeAddr("migrationManager");
-    address owner = makeAddr("owner");
-    address sender = vm.addr(0xBEEF);
-    address yieldRecipient = makeAddr("yieldRecipient");
+    // Override the vbToken with our harness version for internal function testing
+    VaultBridgeTokenHarness internal vbTokenHarness;
 
     function setUp() public virtual {
-        mainnetFork = vm.createSelectFork("mainnet");
+        deployVaultBridgeTokenInfrastructure();
 
-        asset = TEST_TOKEN;
-        vbTokenVault = new TestVault(asset);
-        vbTokenVault.setMaxDeposit(MAX_DEPOSIT);
-        vbTokenVault.setMaxWithdraw(MAX_WITHDRAW);
-
-        vbToken = new GenericVaultBridgeTokenHarness();
-        vbTokenImplementation = address(vbToken);
-
-        vbTokenPart2 = new VaultBridgeTokenPart2();
+        // Deploy harness version for testing internal functions
+        address harnessImplementation = address(new VaultBridgeTokenHarness());
 
         VaultBridgeToken.InitializationParameters memory initParams = VaultBridgeToken.InitializationParameters({
             owner: owner,
-            name: "Vault Bridge USDC",
-            symbol: "vbUSDC",
-            underlyingToken: asset,
-            minimumReservePercentage: 1e17,
-            yieldVault: address(vbTokenVault),
+            name: tokenName,
+            symbol: tokenSymbol,
+            underlyingToken: underlyingToken,
+            minimumReservePercentage: minimumReservePercentage,
+            yieldVault: address(yieldVault),
             yieldRecipient: yieldRecipient,
-            lxlyBridge: LXLY_BRIDGE,
+            agglayerBridge: agglayerBridge,
             minimumYieldVaultDeposit: MINIMUM_YIELD_VAULT_DEPOSIT,
-            migrationManager: migrationManager,
+            migrationManager: migrationManagerAddr,
             yieldVaultMaximumSlippagePercentage: YIELD_VAULT_ALLOWED_SLIPPAGE,
-            vaultBridgeTokenPart2: address(vbTokenPart2)
+            vaultBridgeTokenPart2: address(vbTokenPart2Implementation)
         });
-        bytes memory initData =
-            abi.encodeCall(vbToken.initialize, (address(new VaultBridgeTokenInitializer()), initParams));
-        vbToken =
-            GenericVaultBridgeTokenHarness(payable(_proxify(address(vbTokenImplementation), address(this), initData)));
-        vbTokenPart2 = VaultBridgeTokenPart2(payable(address(vbToken)));
 
-        deal(asset, migrationManager, 10000000 ether);
-        vm.prank(migrationManager);
-        IERC20(asset).forceApprove(address(vbToken), 10000000 ether);
+        bytes[] memory reinitializeCallData = new bytes[](2);
+        reinitializeCallData[0] = abi.encodeCall(
+            VaultBridgeTokenHarness(harnessImplementation).reinitialize1, (address(initializer), initParams)
+        );
+        reinitializeCallData[1] = abi.encodeCall(VaultBridgeTokenHarness(harnessImplementation).reinitialize2, ());
 
-        vm.label(address(vbTokenVault), "vbToken Vault");
-        vm.label(address(vbToken), "vbToken");
-        vm.label(address(vbTokenImplementation), "vbToken Implementation");
-        vm.label(asset, "Underlying Asset");
-        vm.label(migrationManager, "Migration Manager");
-        vm.label(owner, "Owner");
-        vm.label(sender, "Sender");
-        vm.label(yieldRecipient, "Yield Recipient");
-        vm.label(LXLY_BRIDGE, "Lxly Bridge");
-        vm.label(address(vbTokenPart2), "vbToken Part 2");
+        bytes memory vaultBridgeTokenInitData =
+            abi.encodeCall(VaultBridgeTokenHarness(harnessImplementation).reinitialize, (reinitializeCallData));
+
+        address harnessProxy = _proxify(harnessImplementation, address(this), vaultBridgeTokenInitData);
+        vbTokenHarness = VaultBridgeTokenHarness(payable(harnessProxy));
+
+        vm.label(address(vbTokenHarness), "VaultBridgeToken Harness");
     }
 
-    // @todo add fuzz tests for the following functions:
-    // - _depositIntoYieldVault
+    function testFuzz_depositIntoYieldVault_minimumDepositNotMet_revert(uint256 assets) public {
+        assets = bound(assets, 1, MINIMUM_YIELD_VAULT_DEPOSIT - 1);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                VaultBridgeToken.MinimumYieldVaultDepositNotMet.selector, assets, MINIMUM_YIELD_VAULT_DEPOSIT
+            )
+        );
+        vbTokenHarness.internal_depositIntoYieldVault(assets, true);
+    }
+
+    function testFuzz_depositIntoYieldVault_minimumDepositNotMet_nonExact(uint256 assets) public {
+        assets = bound(assets, 1, MINIMUM_YIELD_VAULT_DEPOSIT - 1);
+
+        uint256 nonDepositedAssets = vbTokenHarness.internal_depositIntoYieldVault(assets, false);
+        assertEq(nonDepositedAssets, assets);
+    }
+
+    function testFuzz_depositIntoYieldVault_exceedsMaxDeposit_revert(uint256 assets) public {
+        assets = bound(assets, MAX_DEPOSIT + 1, type(uint128).max);
+
+        vm.expectRevert(abi.encodeWithSelector(VaultBridgeToken.YieldVaultDepositFailed.selector, assets, MAX_DEPOSIT));
+        vbTokenHarness.internal_depositIntoYieldVault(assets, true);
+    }
+
+    function testFuzz_depositIntoYieldVault_exceedsMaxDeposit_nonExact(uint256 assets) public {
+        assets = bound(assets, MAX_DEPOSIT + 1, type(uint128).max);
+
+        // Provide the contract with enough tokens to handle the deposit
+        deal(underlyingToken, address(vbTokenHarness), MAX_DEPOSIT);
+
+        uint256 nonDepositedAssets = vbTokenHarness.internal_depositIntoYieldVault(assets, false);
+        assertEq(nonDepositedAssets, assets - MAX_DEPOSIT);
+    }
+
+    function testFuzz_depositIntoYieldVault_slippageFailure_revert(uint256 assets, uint256 slippageAmount) public {
+        assets = bound(assets, MINIMUM_YIELD_VAULT_DEPOSIT, MAX_DEPOSIT);
+
+        // Calculate minimum expected shares for 1% slippage tolerance
+        uint256 minimumExpectedShares = Math.mulDiv(assets, 1e18 - YIELD_VAULT_ALLOWED_SLIPPAGE, 1e18);
+
+        // Bound slippage to be large enough to cause solvency failure
+        // The actual shares after slippage will be (assets - slippageAmount)
+        // We need this to be less than minimumExpectedShares
+        uint256 maxAllowedSlippage = assets - minimumExpectedShares;
+        slippageAmount = bound(slippageAmount, maxAllowedSlippage + 1, assets - 1);
+
+        // Setup vault to have slippage that exceeds the allowed threshold
+        deal(underlyingToken, address(vbTokenHarness), assets);
+        yieldVault.setSlippage(true, slippageAmount);
+
+        // Calculate the actual shares minted after slippage
+        uint256 actualMintedShares = assets - slippageAmount;
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                VaultBridgeToken.InsufficientYieldVaultSharesMinted.selector, assets, actualMintedShares
+            )
+        );
+        vbTokenHarness.internal_depositIntoYieldVault(assets, true);
+    }
+
+    function testFuzz_depositIntoYieldVault_slippageFailure_nonExact(uint256 assets, uint256 slippageAmount) public {
+        assets = bound(assets, MINIMUM_YIELD_VAULT_DEPOSIT, MAX_DEPOSIT);
+
+        // Calculate minimum expected shares for 1% slippage tolerance
+        uint256 minimumExpectedShares = Math.mulDiv(assets, 1e18 - YIELD_VAULT_ALLOWED_SLIPPAGE, 1e18);
+
+        // Bound slippage to be large enough to cause solvency failure
+        // The actual shares after slippage will be (assets - slippageAmount)
+        // We need this to be less than minimumExpectedShares
+        uint256 maxAllowedSlippage = assets - minimumExpectedShares;
+        slippageAmount = bound(slippageAmount, maxAllowedSlippage + 1, assets - 1);
+
+        // Setup vault to have slippage that exceeds the allowed threshold
+        deal(underlyingToken, address(vbTokenHarness), assets);
+        yieldVault.setSlippage(true, slippageAmount);
+
+        uint256 nonDepositedAssets = vbTokenHarness.internal_depositIntoYieldVault(assets, false);
+        assertEq(nonDepositedAssets, assets);
+    }
+
+    function testFuzz_depositIntoYieldVault_success(uint256 assets, uint256 slippageAmount) public {
+        assets = bound(assets, MINIMUM_YIELD_VAULT_DEPOSIT, MAX_DEPOSIT);
+
+        // Calculate minimum expected shares for 1% slippage tolerance
+        uint256 minimumExpectedShares = Math.mulDiv(assets, 1e18 - YIELD_VAULT_ALLOWED_SLIPPAGE, 1e18);
+
+        // Bound slippage to be within allowed threshold
+        // The actual shares after slippage will be (assets - slippageAmount)
+        // We need this to be >= minimumExpectedShares
+        uint256 maxAllowedSlippage = assets - minimumExpectedShares;
+        slippageAmount = bound(slippageAmount, 0, maxAllowedSlippage);
+
+        // Calculate expected minted shares after slippage
+        uint256 expectedMintedShares = assets - slippageAmount;
+
+        // Setup vault with acceptable slippage
+        deal(underlyingToken, address(vbTokenHarness), assets);
+        yieldVault.setSlippage(true, slippageAmount);
+
+        uint256 nonDepositedAssets = vbTokenHarness.internal_depositIntoYieldVault(assets, false);
+        assertEq(nonDepositedAssets, 0);
+        assertEq(yieldVault.balanceOf(address(vbTokenHarness)), expectedMintedShares);
+    }
+
+    function testFuzz_depositIntoYieldVault_successNoSlippage(uint256 assets) public {
+        assets = bound(assets, MINIMUM_YIELD_VAULT_DEPOSIT, MAX_DEPOSIT);
+
+        // Setup vault without slippage
+        deal(underlyingToken, address(vbTokenHarness), assets);
+        yieldVault.setSlippage(false, 0);
+
+        uint256 nonDepositedAssets = vbTokenHarness.internal_depositIntoYieldVault(assets, true);
+        assertEq(nonDepositedAssets, 0);
+        assertEq(yieldVault.balanceOf(address(vbTokenHarness)), assets);
+    }
 
     function testFuzz_withdrawFromYieldVault_revert(uint256 assets, uint256 originalTotalSupply, uint256 slippageAmount)
         public
@@ -118,16 +198,16 @@ contract GenericVaultBridgeTokenFuzzTest is Test {
         vm.assume(originalTotalSupply >= assets);
         vm.assume(slippageAmount > Math.mulDiv(assets, 0.01e18, 1e18) && slippageAmount < assets);
 
-        deal(TEST_TOKEN, address(vbTokenVault), assets);
-        vbTokenVault.setBalance(address(vbToken), assets);
-        vbTokenVault.setSlippage(true, slippageAmount);
+        deal(underlyingToken, address(yieldVault), assets);
+        yieldVault.setBalance(address(vbTokenHarness), assets);
+        yieldVault.setSlippage(true, slippageAmount);
 
         vm.expectRevert(
             abi.encodeWithSelector(
                 VaultBridgeToken.ExcessiveYieldVaultSharesBurned.selector, assets + slippageAmount, assets
             )
         );
-        vbToken.internal_withdrawFromYieldVault(
+        vbTokenHarness.internal_withdrawFromYieldVault(
             assets, false, sender, originalTotalSupply, 0, originalTotalSupply - assets
         );
     }
@@ -139,14 +219,14 @@ contract GenericVaultBridgeTokenFuzzTest is Test {
         vm.assume(originalTotalSupply >= assets);
         vm.assume(slippageAmount <= Math.mulDiv(assets, 0.01e18, 1e18) && slippageAmount < assets);
 
-        deal(TEST_TOKEN, address(vbTokenVault), assets);
-        vbTokenVault.setBalance(address(vbToken), assets);
-        vbTokenVault.setSlippage(true, slippageAmount);
+        deal(underlyingToken, address(yieldVault), assets);
+        yieldVault.setBalance(address(vbTokenHarness), assets);
+        yieldVault.setSlippage(true, slippageAmount);
 
-        vbToken.internal_withdrawFromYieldVault(
+        vbTokenHarness.internal_withdrawFromYieldVault(
             assets, false, sender, originalTotalSupply, 0, originalTotalSupply - assets
         );
-        assertEq(IERC20(asset).balanceOf(sender), assets);
+        assertEq(IERC20(underlyingToken).balanceOf(sender), assets);
     }
 
     function testFuzz_setMinimumReservePercentage(uint256 percentage) public {
@@ -154,9 +234,5 @@ contract GenericVaultBridgeTokenFuzzTest is Test {
         vm.prank(owner);
         vbTokenPart2.setMinimumReservePercentage(percentage);
         assertEq(vbToken.minimumReservePercentage(), percentage);
-    }
-
-    function _proxify(address logic, address admin, bytes memory initData) internal returns (address proxy) {
-        proxy = address(new TransparentUpgradeableProxy(logic, admin, initData));
     }
 }

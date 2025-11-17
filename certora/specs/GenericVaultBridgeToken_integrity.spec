@@ -1,6 +1,7 @@
 import "GenericVaultBridgeToken_ERC4626.spec";
 
 // Only allowed methods may be called when paused
+<<<<<<< HEAD
 rule noActivityWhenPaused(method f, env e)
     filtered {f -> !excludedMethod(f) }
 {
@@ -11,6 +12,18 @@ rule noActivityWhenPaused(method f, env e)
     bool reverted = lastReverted;
     assert paused => (reverted || isPrivilegedSender(e) || canBeCalledWhenPaused(f));
 }
+=======
+// rule noActivityWhenPaused(method f, env e)
+//     filtered {f -> !excludedMethod(f) }
+// {
+//     requireLinking();
+//     bool paused = paused();
+//     calldataarg args;
+//     f@withrevert(e, args);
+//     bool reverted = lastReverted;
+//     assert paused => (reverted || isPrivilegedSender(e) || canBeCalledWhenPaused(f));
+// }
+>>>>>>> origin/git/feat/v1.0.0
 
 //_simulateWithdraw(x, true) == x or revert 
 rule integrityOf_simulateWithdraw_force(env e)

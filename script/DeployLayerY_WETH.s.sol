@@ -2,8 +2,8 @@
 pragma solidity ^0.8.29;
 
 import "forge-std/Script.sol";
-import "../src/custom-tokens/WETH/WETH.sol";
-import "../src/custom-tokens/WETH/WETHNativeConverter.sol";
+import "../src/secondary-chain/agglayer/vbETH/WethAgglayer.sol";
+import "../src/secondary-chain/agglayer/vbETH/WethNativeConverterAgglayer.sol";
 import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import {ERC1967Proxy, ERC1967Utils} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
@@ -33,19 +33,16 @@ contract DeployLayerY_WETH is Script {
 
         address vbWETH = input.readAddress(string.concat(vbETHSlug, ".customToken"));
         address wETH = input.readAddress(string.concat(vbETHSlug, ".underlyingToken"));
-        string memory name = input.readString(string.concat(vbETHSlug, ".name"));
-        string memory symbol = input.readString(string.concat(vbETHSlug, ".symbol"));
         uint8 decimals = uint8(input.readUint(string.concat(vbETHSlug, ".decimals")));
         uint256 nonMigratableGasBackingPercentage =
             input.readUint(string.concat(vbETHSlug, ".nonMigratableGasBackingPercentage"));
 
-        WETHNativeConverter nativeConverterImpl = new WETHNativeConverter();
+        WethNativeConverterAgglayer nativeConverterImpl = new WethNativeConverterAgglayer();
 
         bytes memory initNativeConverter = abi.encodeCall(
-            WETHNativeConverter.initialize,
+            WethNativeConverterAgglayer.reinitialize1,
             (
                 polygonEngineeringMultisig,
-                decimals,
                 vbWETH,
                 wETH,
                 lxlyBridge,
@@ -58,16 +55,20 @@ contract DeployLayerY_WETH is Script {
         address wethNativeConverter =
             _proxify(address(nativeConverterImpl), polygonEngineeringMultisig, initNativeConverter);
 
+        WethNativeConverterAgglayer(payable(wethNativeConverter)).reinitialize2();
+
         // deploy vbWETH impl
-        WETH wethImpl = new WETH();
+        WethAgglayer wethImpl = new WethAgglayer();
 
         // update vbWETH
         bytes memory data = abi.encodeCall(
-            WETH.reinitialize, (polygonEngineeringMultisig, name, symbol, decimals, lxlyBridge, wethNativeConverter)
+            WethAgglayer.reinitialize2, (polygonEngineeringMultisig, decimals, lxlyBridge, wethNativeConverter)
         );
 
         IERC1967Proxy vbWethProxy = IERC1967Proxy(payable(vbWETH));
         bytes memory payload = abi.encodeCall(vbWethProxy.upgradeToAndCall, (address(wethImpl), data));
+
+        // TODO: call other reinitialization functions?
 
         console.log("Payload for upgrading vbWETH", "use this multisig: ", polygonEngineeringMultisig);
         console.logBytes(payload);
