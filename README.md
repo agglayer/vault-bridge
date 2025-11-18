@@ -9,8 +9,6 @@
 
 </div>
 
-<br>
-
 ## Contents
 
 - [Contents](#contents)
@@ -26,9 +24,10 @@
 - [Usage](#usage)
 - [License](#license)
 
-<br>
-
 ## Overview
+
+> [!NOTE]
+> This section should be updated, as Vault Bridge has evolved into a larger protocol.
 
 Vault Bridge enables chains and apps to generate native yield on TVL by putting bridged assets to work.
 
@@ -85,7 +84,7 @@ Native Converter can be deployed on Secondary Chain to enable minting of vbToken
 ## Get Started
 
 > [!NOTE]
-> This section needs to be updated.
+> This section needs to be updated, as the official support for several third-party bridges has been added!
 
 Getting started should be easy as Vault Bridge Token contracts follow the ERC-4626 interface. Variants of the standard ERC-4626 functions include `depositAndBridge` and `claimAndRedeem`. Please see [Documentation](#documentation) for more information.
 
@@ -98,12 +97,14 @@ Full support for non-Agglayer chains, third-party bridges, as well as non-EVM ch
 ## Documentation
 
 > [!NOTE]
-> This section needs to be updated.
+> This section needs to be updated, as some NatSpec is outdated and/or missing.
 
 - [General Documentation](https://docs.agglayer.dev/vault-bridge/get-started/overview/)
-- [Technical Reference](https://agglayer.github.io/vault-bridge/)
-- [Source Code](./src/): In addition to General Documentation and Technical Reference, the Source Code is 100% documented and you are encouraged to take a look.
-  - Pay attention to the following bookmarks: `@note CAUTION!`, `@note IMPORTANT:`, `@note (ATTENTION)`.
+- [Source Code](./src/): The Source Code is 100% documented and you are encouraged to take a reference it.
+  - Pay attention to the following bookmarks:
+    - `@note CAUTION!`
+    - `@note IMPORTANT:`
+    - `@note (ATTENTION)`
 
 ## Deployments
 
