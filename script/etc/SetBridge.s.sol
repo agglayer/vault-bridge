@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: LicenseRef-PolygonLabs-Source-Available
-// Vault Bridge (last updated v1.1.0) (script/etc/SetBridge.s.sol)
+// Vault Bridge (last updated v1.0.0) (script/etc/SetBridge.s.sol)
 
 pragma solidity ^0.8.29;
 
@@ -60,67 +60,30 @@ contract SetBridge is Script {
         vbUsdsBridge = ADDRESS_ZERO;
         vbWbtcBridge = ADDRESS_ZERO;
         require(bytes(chainName).length != 0, "Aborted: `chainName` not set");
+        require(executorAddress != ADDRESS_ZERO, "Aborted: `executorAddress` not set");
         require(
-            executorAddress != ADDRESS_ZERO,
-            "Aborted: `executorAddress` not set"
-        );
-        require(
-            updateVbEth ||
-                updateVbUsdc ||
-                updateVbUsdt ||
-                updateVbUsds ||
-                updateVbWbtc,
+            updateVbEth || updateVbUsdc || updateVbUsdt || updateVbUsds || updateVbWbtc,
             "Aborted: At least one token must be updated"
         );
         if (updateVbEth) {
-            require(
-                vbEthTokenL2 != ADDRESS_ZERO,
-                "Aborted: `vbEthTokenL2` not set"
-            );
-            require(
-                vbEthBridge != ADDRESS_ZERO,
-                "Aborted: `vbEthBridge` not set"
-            );
+            require(vbEthTokenL2 != ADDRESS_ZERO, "Aborted: `vbEthTokenL2` not set");
+            require(vbEthBridge != ADDRESS_ZERO, "Aborted: `vbEthBridge` not set");
         }
         if (updateVbUsdc) {
-            require(
-                vbUsdcTokenL2 != ADDRESS_ZERO,
-                "Aborted: `vbUsdcTokenL2` not set"
-            );
-            require(
-                vbUsdcBridge != ADDRESS_ZERO,
-                "Aborted: `vbUsdcBridge` not set"
-            );
+            require(vbUsdcTokenL2 != ADDRESS_ZERO, "Aborted: `vbUsdcTokenL2` not set");
+            require(vbUsdcBridge != ADDRESS_ZERO, "Aborted: `vbUsdcBridge` not set");
         }
         if (updateVbUsdt) {
-            require(
-                vbUsdtTokenL2 != ADDRESS_ZERO,
-                "Aborted: `vbUsdtTokenL2` not set"
-            );
-            require(
-                vbUsdtBridge != ADDRESS_ZERO,
-                "Aborted: `vbUsdtBridge` not set"
-            );
+            require(vbUsdtTokenL2 != ADDRESS_ZERO, "Aborted: `vbUsdtTokenL2` not set");
+            require(vbUsdtBridge != ADDRESS_ZERO, "Aborted: `vbUsdtBridge` not set");
         }
         if (updateVbUsds) {
-            require(
-                vbUsdsTokenL2 != ADDRESS_ZERO,
-                "Aborted: `vbUsdsTokenL2` not set"
-            );
-            require(
-                vbUsdsBridge != ADDRESS_ZERO,
-                "Aborted: `vbUsdsBridge` not set"
-            );
+            require(vbUsdsTokenL2 != ADDRESS_ZERO, "Aborted: `vbUsdsTokenL2` not set");
+            require(vbUsdsBridge != ADDRESS_ZERO, "Aborted: `vbUsdsBridge` not set");
         }
         if (updateVbWbtc) {
-            require(
-                vbWbtcTokenL2 != ADDRESS_ZERO,
-                "Aborted: `vbWbtcTokenL2` not set"
-            );
-            require(
-                vbWbtcBridge != ADDRESS_ZERO,
-                "Aborted: `vbWbtcBridge` not set"
-            );
+            require(vbWbtcTokenL2 != ADDRESS_ZERO, "Aborted: `vbWbtcTokenL2` not set");
+            require(vbWbtcBridge != ADDRESS_ZERO, "Aborted: `vbWbtcBridge` not set");
         }
     }
 
@@ -152,25 +115,14 @@ contract SetBridge is Script {
         console.log("\nFinished running `SetBridge` script");
     }
 
-    function _setBridge(
-        string memory tokenSymbol,
-        address customTokenAddress,
-        address bridgeAddress
-    ) internal {
-        console.log(
-            string.concat("\nUpdating bridge for ", tokenSymbol, "...")
-        );
+    function _setBridge(string memory tokenSymbol, address customTokenAddress, address bridgeAddress) internal {
+        console.log(string.concat("\nUpdating bridge for ", tokenSymbol, "..."));
         console.log("  Token:", customTokenAddress);
         console.log("  New Bridge address:", bridgeAddress);
 
-        bytes memory callData = abi.encodeWithSignature(
-            "setBridge(address)",
-            bridgeAddress
-        );
+        bytes memory callData = abi.encodeWithSignature("setBridge(address)", bridgeAddress);
         _startBroadcast();
-        (bool success, bytes memory returnData) = customTokenAddress.call(
-            callData
-        );
+        (bool success, bytes memory returnData) = customTokenAddress.call(callData);
         _stopBroadcast();
 
         if (!success) {
@@ -182,9 +134,7 @@ contract SetBridge is Script {
             revert(string.concat("setBridge failed for ", tokenSymbol));
         }
 
-        console.log(
-            string.concat("Bridge updated successfully for ", tokenSymbol)
-        );
+        console.log(string.concat("Bridge updated successfully for ", tokenSymbol));
     }
 
     function _startBroadcast() internal {

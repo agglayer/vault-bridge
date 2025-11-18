@@ -118,9 +118,6 @@ abstract contract InitializationCounterUpgradeable {
         $._extensionInitializationCounter[extension]++;
     }
 
-    // @todo Uncomment later (requires modifications of contracts and tests).
-    // function reinitialize(bytes[] calldata reinitializeData) external virtual;
-
     // @remind Document (the entire function).
     function _reinitialize(bytes4[] memory reinitializeSelectors, bytes[] calldata reinitializeData) internal {
         InitializationCounterUpgradeableStorage storage $ = _getInitializationCounterUpgradeableStorage();

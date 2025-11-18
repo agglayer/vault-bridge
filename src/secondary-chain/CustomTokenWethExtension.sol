@@ -68,11 +68,12 @@ abstract contract CustomTokenWethExtension is CustomToken {
         // @note CAUTION! ALL WETH NATIVE CONVERTER MIGRATIONS THAT ARE IN PROGRESS MUST BE COMPLETED FIRST!
         // @todo THIS LOGIC WILL BE REMOVED ONCE VBETH ON KATANA/BOKUTO HAS BEEN UPGRADED TO VAULT BRIDGE V1.0.0 AND VAULT BRIDGE V0.5.0 HAS BEEN DEPRECATED.
         if (block.chainid == 747474 || block.chainid == 737373) {
-            uint256 wethBridgedSupply = IAgglayerBridge(bridge()).localBalanceTree(
-                block.chainid == 747474
-                    ? bytes32(0x56c62e67b0be3f302f4835a408fa9ba657546fd11907c2c30306d84790975467)
-                    : bytes32(0x0b13348aaf539fc7929ee5a1b19220fdcf7c38ae12b877539fe54abaf7a6d0dd)
-            );
+            uint256 wethBridgedSupply = IAgglayerBridge(bridge())
+                .localBalanceTree(
+                    block.chainid == 747474
+                        ? bytes32(0x56c62e67b0be3f302f4835a408fa9ba657546fd11907c2c30306d84790975467)
+                        : bytes32(0x0b13348aaf539fc7929ee5a1b19220fdcf7c38ae12b877539fe54abaf7a6d0dd)
+                );
             uint256 wethTotalSupply = totalSupply();
             uint256 wethBackingOnSecondaryChain = NativeConverter(payable(nativeConverter())).backingOnSecondaryChain();
 
@@ -145,11 +146,7 @@ abstract contract CustomTokenWethExtension is CustomToken {
         require(ok);
     }
 
-    function setWethFunctionalityEnabled(bool wethFunctionalityEnabled_)
-        external
-        virtual
-        onlyRole(DEFAULT_ADMIN_ROLE)
-    {
+    function setWethFunctionalityEnabled(bool wethFunctionalityEnabled_) external virtual onlyRole(DEFAULT_ADMIN_ROLE) {
         CustomTokenWethExtensionStorage storage $ = _getCustomTokenWethExtensionStorage();
         if (wethFunctionalityEnabled_) require($._gasTokenIsEth, WethFunctionalityCannotBeEnabledIfGasTokenIsNotEth());
         $.wethFunctionalityEnabled = wethFunctionalityEnabled_;
