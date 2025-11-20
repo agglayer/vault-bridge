@@ -1071,8 +1071,9 @@ abstract contract VaultBridgeToken is
     /// @notice This function can be called by the owner only.
     /// @dev Delegates the call to `VaultBridgeTokenPart2`.
     /// @dev @note (ATTENTION) The `virtual` modifier allows `VaultBridgeTokenPart2` to override this function. Do not override the function yourself.
-    function setYieldRecipient(address yieldRecipient_) external virtual delegatedToPart2 {
+    function setYieldRecipient(bool precollectYield, address yieldRecipient_) external virtual delegatedToPart2 {
         // Silence the Solidity compiler.
+        precollectYield;
         yieldRecipient_;
     }
 

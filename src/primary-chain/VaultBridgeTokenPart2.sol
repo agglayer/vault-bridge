@@ -200,7 +200,7 @@ contract VaultBridgeTokenPart2 is VaultBridgeToken {
     }
 
     /// @inheritdoc VaultBridgeToken
-    function setYieldRecipient(address yieldRecipient_)
+    function setYieldRecipient(bool precollectYield, address yieldRecipient_)
         external
         override
         whenNotPaused
@@ -212,8 +212,10 @@ contract VaultBridgeTokenPart2 is VaultBridgeToken {
         // Check the input.
         require(yieldRecipient_ != address(0), InvalidYieldRecipient());
 
-        // Try to collect yield.
-        _collectYield(false);
+        if (precollectYield) {
+            // Try to collect yield.
+            _collectYield(false);
+        }
 
         // Set the yield recipient.
         $.yieldRecipient = yieldRecipient_;
