@@ -46,11 +46,11 @@ No action required.
 
 ## Protection
 
-### Agglayer Sovereign with Pessimistic Proof
+### Agglayer Sovereign
 
 - "Local balance tree" in Agglayer Bridge contract prevents bridging out more tokens from a chain than have been bridged in to the chain by reverting onchain immediately.
 
-### Agglayer without Pessimistic Proof
+### Agglayer Classic
 
 - Tokens are not upgreadeable.
 
