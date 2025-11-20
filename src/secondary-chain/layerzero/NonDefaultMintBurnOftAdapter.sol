@@ -9,8 +9,7 @@ pragma solidity 0.8.29;
 import {OFTCoreUpgradeable} from "@layerzerolabs-oft-evm-upgradeable/contracts/oft/OFTCoreUpgradeable.sol";
 
 // Other functionality.
-import {ReentrancyGuardTransientUpgradeable} from
-    "@openzeppelin-contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import {InitializationCounterUpgradeable} from "../../etc/InitializationCounterUpgradeable.sol";
 
 // Libraries.
@@ -25,7 +24,7 @@ import {IFiatTokenV2_2} from "../../etc/IFiatTokenV2_2.sol";
 /// @author See https://github.com/agglayer/vault-bridge
 contract NonDefaultMintBurnOftAdapter is
     OFTCoreUpgradeable,
-    ReentrancyGuardTransientUpgradeable,
+    ReentrancyGuardUpgradeable,
     InitializationCounterUpgradeable
 {
     // Libraries.
@@ -88,7 +87,7 @@ contract NonDefaultMintBurnOftAdapter is
 
         __Ownable_init(_owner);
         __OFTCore_init(_delegate);
-        __ReentrancyGuardTransient_init();
+        __ReentrancyGuard_init();
 
         $.token = IERC20(_token);
         $.approvalRequired = _approvalRequired;
@@ -202,7 +201,11 @@ contract NonDefaultMintBurnOftAdapter is
      *      If the 'innerToken' applies something like a transfer fee, the default will NOT work.
      *      A pre/post balance check will need to be done to calculate the amountReceivedLD.
      */
-    function _credit(address _to, uint256 _amountLD, uint32 /* _srcEid */ )
+    function _credit(
+        address _to,
+        uint256 _amountLD,
+        uint32 /* _srcEid */
+    )
         internal
         virtual
         override
