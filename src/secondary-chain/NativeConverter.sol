@@ -89,6 +89,7 @@ abstract contract NativeConverter is
     error InvalidDestinationNetworkId();
     error CannotSetCustomTokenIfBackingOnSecondaryChainIsNotZero();
     error CannotSetCustomTokenIfGasBackingOnSecondaryChainIsNotZero();
+    error CannotSetCustomTokenIfMigrationsInProgressCountIsNotZero();
 
     // Events.
     event MigrationStarted(uint256 indexed mintedCustomToken, uint256 indexed migratedBacking);
@@ -569,6 +570,7 @@ abstract contract NativeConverter is
         require(customToken_ != address(0), InvalidCustomToken());
 
         require($.backingOnSecondaryChain == 0, CannotSetCustomTokenIfBackingOnSecondaryChainIsNotZero());
+        require($._migrationsInProgressCount == 0, CannotSetCustomTokenIfMigrationsInProgressCountIsNotZero());
 
         try CustomTokenWethExtension(payable(address($.customToken))).gasBackingOnSecondaryChain() returns (
             uint256 gasBackingOnSecondaryChain
