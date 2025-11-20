@@ -457,7 +457,7 @@ abstract contract VaultBridgeToken is
         // Try to deposit into the yield vault.
         if (assetsToDeposit > 0) {
             // Deposit, and update the amount to reserve if necessary.
-            assetsToReserve += _depositIntoYieldVault(assetsToDeposit, false);
+            assetsToReserve += _depositIntoYieldVault(assetsToDeposit, false, false);
         }
 
         // Update the reserve.
@@ -954,7 +954,7 @@ abstract contract VaultBridgeToken is
             uint256 excess = originalReservedAssets - minimumReserve;
 
             // Try to deposit into the yield vault.
-            uint256 nonDepositedAssets = _depositIntoYieldVault(excess, false);
+            uint256 nonDepositedAssets = _depositIntoYieldVault(excess, false, true);
 
             // Revert if the the reserve could not be rebalanced and `force` is set to `true`.
             if (force && nonDepositedAssets == excess) revert CannotRebalanceReserve();
@@ -1128,11 +1128,14 @@ abstract contract VaultBridgeToken is
     /// @param assets The amount of the underlying token to deposit into the yield vault.
     /// @param exact Whether to revert if the exact amount of the underlying token could not be deposited into the yield vault.
     /// @return nonDepositedAssets The amount of the underlying token that could not be deposited into the yield vault. The value will be `0` if `exact` is set to `true`.
-    function _depositIntoYieldVault(uint256 assets, bool exact) internal returns (uint256 nonDepositedAssets) {
+    function _depositIntoYieldVault(uint256 assets, bool exact, bool ignoreMinimumYieldVaultDepost)
+        internal
+        returns (uint256 nonDepositedAssets)
+    {
         VaultBridgeTokenStorage storage $ = _getVaultBridgeTokenStorage();
 
         // Check whether to skip depositing into the yield vault.
-        if (assets < $.minimumYieldVaultDeposit) {
+        if (assets < $.minimumYieldVaultDeposit && !ignoreMinimumYieldVaultDepost) {
             if (exact) revert MinimumYieldVaultDepositNotMet(assets, $.minimumYieldVaultDeposit);
             return assets;
         }
