@@ -324,6 +324,18 @@ contract VaultBridgeTokenPart2 is VaultBridgeToken {
         emit YieldVaultSet(yieldVault_);
     }
 
+    function revokeYieldVaultApproval() external override onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant {
+        VaultBridgeTokenStorage storage $ = __getVaultBridgeTokenStorage();
+
+        $.underlyingToken.forceApprove(address($.yieldVault), 0);
+    }
+
+    function restoreYieldVaultApproval() external override onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant {
+        VaultBridgeTokenStorage storage $ = __getVaultBridgeTokenStorage();
+
+        $.underlyingToken.forceApprove(address($.yieldVault), type(uint256).max);
+    }
+
     /// @inheritdoc VaultBridgeToken
     function setMinimumYieldVaultDeposit(uint256 minimumYieldVaultDeposit_)
         external
