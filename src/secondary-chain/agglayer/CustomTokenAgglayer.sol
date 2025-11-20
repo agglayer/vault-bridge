@@ -12,6 +12,9 @@ import {NativeConverter} from "../NativeConverter.sol";
 // @remind Document.
 /// @author See https://github.com/agglayer/vault-bridge
 abstract contract CustomTokenAgglayer is CustomToken {
+    // Events.
+    event AlreadyMinted(uint256 indexed value);
+
     // -----================= ::: MODIFIERS ::: =================-----
 
     /// @dev Checks if the sender is Agglayer Bridge or Native Converter.
@@ -32,7 +35,7 @@ abstract contract CustomTokenAgglayer is CustomToken {
         if (account == address(0)) {
             NativeConverter(nativeConverter()).removeMigrationInProgress(value);
 
-            emit Transfer(address(0), address(0), value);
+            emit AlreadyMinted(value);
 
             return;
         }
