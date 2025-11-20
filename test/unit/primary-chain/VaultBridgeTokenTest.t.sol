@@ -648,18 +648,18 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
     function test_setYieldRecipient_no_yield() public {
         address newRecipient = makeAddr("newRecipient");
         vm.expectRevert(); // only owner can claim yield
-        vbTokenPart2.setYieldRecipient(newRecipient);
+        vbTokenPart2.setYieldRecipient(true, newRecipient);
 
         vm.expectRevert(VaultBridgeToken.InvalidYieldRecipient.selector);
         vm.prank(owner);
-        vbTokenPart2.setYieldRecipient(address(0));
+        vbTokenPart2.setYieldRecipient(true, address(0));
 
         assertEq(vbToken.yieldRecipient(), yieldRecipient);
 
         vm.expectEmit();
         emit VaultBridgeToken.YieldRecipientSet(newRecipient);
         vm.prank(owner);
-        vbTokenPart2.setYieldRecipient(newRecipient);
+        vbTokenPart2.setYieldRecipient(true, newRecipient);
         assertEq(vbToken.yieldRecipient(), newRecipient);
     }
 
@@ -686,7 +686,7 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
         vm.expectEmit();
         emit VaultBridgeToken.YieldCollected(yieldRecipient, expectedYieldAssets);
         vm.prank(owner);
-        vbTokenPart2.setYieldRecipient(newRecipient);
+        vbTokenPart2.setYieldRecipient(true, newRecipient);
         assertEq(vbToken.balanceOf(yieldRecipient), expectedYieldAssets); // yield collected to the old recipient
         assertEq(vbToken.yieldRecipient(), newRecipient);
     }
