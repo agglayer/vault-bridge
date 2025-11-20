@@ -49,6 +49,7 @@ contract NonDefaultMintBurnOftAdapter is
     // Errors.
     error InvalidOriginalUnderlyingTokenDecimals();
     error InvalidLzEndpoint();
+    error CannotCreditAddressZero();
     error CannotSetTokenIfSecondaryChainBalanceIsNotZero();
     error InvalidToken();
     error InvalidTokenDecimals();
@@ -212,7 +213,7 @@ contract NonDefaultMintBurnOftAdapter is
         returns (uint256 amountReceivedLD)
     {
         NonDefaultMintBurnOftAdapterStorage storage $ = _getNonDefaultMintBurnOftAdapterStorage();
-        if (_to == address(0x0)) _to = address(0xdead); // _mint(...) does not support address(0x0)
+        require(_to != address(0), CannotCreditAddressZero());
         // Mints the tokens and transfers to the recipient.
         CustomTokenLayerZero(address($.token)).mint(_to, _amountLD);
         $.secondaryChainBalance += _amountLD;
