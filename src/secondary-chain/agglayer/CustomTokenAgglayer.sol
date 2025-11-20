@@ -32,7 +32,7 @@ abstract contract CustomTokenAgglayer is CustomToken {
     /// @notice This function can be called by Agglayer Bridge and Native Converter only.
     /// @param account @note CAUTION! Minting to `address(0)` will result in no tokens minted! This is to enable vbToken on Primary Chain to bridge tokens to address zero on Secondary Chain at the end of the process of migrating backing from Native Converter to Primary Chain. Please refer to `NativeConverter.sol` for more information.
     function mint(address account, uint256 value) external onlyAgglayerBridgeAndNativeConverter nonReentrant {
-        if (account == address(0)) {
+        if (msg.sender == bridge() && account == address(0)) {
             NativeConverter(nativeConverter()).removeMigrationInProgress(value);
 
             emit AlreadyMinted(value);
