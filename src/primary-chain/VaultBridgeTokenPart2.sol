@@ -164,7 +164,7 @@ contract VaultBridgeTokenPart2 is VaultBridgeToken {
         // Try to deposit into the yield vault.
         if (assetsToDeposit > 0) {
             // Deposit, and update the amount to reserve if necessary.
-            assetsToReserve += _depositIntoYieldVault(assetsToDeposit, false);
+            assetsToReserve += _depositIntoYieldVault(assetsToDeposit, false, false);
         }
 
         // Update the reserve.
