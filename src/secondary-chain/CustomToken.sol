@@ -1,17 +1,19 @@
 // SPDX-License-Identifier: LicenseRef-PolygonLabs-Source-Available
-// Vault Bridge (last updated v1.0.0) (CustomToken.sol)
+// Vault Bridge (last updated v1.1.0) (secondary-chain/CustomToken.sol)
 
 pragma solidity 0.8.29;
 
 // Main functionality.
-import {ERC20PermitUpgradeable} from
-    "@openzeppelin-contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
+import {
+    ERC20PermitUpgradeable
+} from "@openzeppelin-contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
 
 // Other functionality.
 import {Initializable} from "@openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
 import {AccessControlUpgradeable} from "@openzeppelin-contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import {PausableUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/PausableUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import {InitializationCounterUpgradeable} from "../etc/InitializationCounterUpgradeable.sol";
 import {Versioned} from "../etc/Versioned.sol";
 
 /// @title Custom Token
@@ -25,15 +27,17 @@ abstract contract CustomToken is
     PausableUpgradeable,
     ReentrancyGuardUpgradeable,
     ERC20PermitUpgradeable,
-    IVersioned
+    InitializationCounterUpgradeable,
+    Versioned
 {
     /// @dev Storage of Custom Token contract.
     /// @dev It's implemented on a custom ERC-7201 namespace to reduce the risk of storage collisions when using with upgradeable contracts.
     /// @custom:storage-location erc7201:agglayer.vault-bridge.CustomToken.storage
     struct CustomTokenStorage {
         uint8 decimals;
-        address agglayerBridge;
+        address bridge;
         address nativeConverter;
+        uint256 _secondaryChainBalance;
     }
 
     /// @dev The storage slot at which Custom Token storage starts, following the EIP-7201 standard.
@@ -42,31 +46,19 @@ abstract contract CustomToken is
         hex"0300d81ec8b5c42d6bd2cedd81ce26f1003c52753656b7512a8eef168b702500";
 
     // Basic roles.
+    // @remind Document.
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
 
     // Errors.
     error Unauthorized();
     error InvalidOwner();
+    error InvalidName();
+    error InvalidSymbol();
     error InvalidOriginalUnderlyingTokenDecimals();
     error InvalidBridge();
     error BridgeAlreadySet();
     error NativeConverterAlreadySet();
-
-    // Events.
-    event NotMinted(uint256 indexed value);
-
-    // -----================= ::: MODIFIERS ::: =================-----
-
-    /// @dev Checks if the sender is Agglayer Bridge or Native Converter.
-    /// @dev This modifier is used to restrict the minting and burning of Custom Token.
-    modifier onlyAgglayerBridgeAndNativeConverter() {
-        CustomTokenStorage storage $ = _getCustomTokenStorage();
-
-        // Only Agglayer Bridge and Native Converter can mint and burn Custom Token.
-        require(msg.sender == $.agglayerBridge || msg.sender == $.nativeConverter, Unauthorized());
-
-        _;
-    }
+    error FunctionNotSupportedWithThisBridgeProvider();
 
     // -----================= ::: SETUP ::: =================-----
 
@@ -75,26 +67,20 @@ abstract contract CustomToken is
     /// @param nativeConverter_ The address of Native Converter for this Custom Token.
     function __CustomToken_init1(
         address owner_,
+        string memory name_,
+        string memory symbol_,
         uint8 originalUnderlyingTokenDecimals_,
-        address agglayerBridge_,
+        address bridge_,
         address nativeConverter_
-    ) internal onlyInitializing {
+    ) internal onlyInitializing incrementsLocalInitializationCounter(1) {
         CustomTokenStorage storage $ = _getCustomTokenStorage();
 
         // Check the inputs.
         require(owner_ != address(0), InvalidOwner());
+        require(bytes(name_).length > 0, InvalidName());
+        require(bytes(symbol_).length > 0, InvalidSymbol());
         require(originalUnderlyingTokenDecimals_ > 0, InvalidOriginalUnderlyingTokenDecimals());
-        require(agglayerBridge_ != address(0), InvalidAgglayerBridge());
-        require(nativeConverter_ != address(0), InvalidNativeConverter());
-
-        // Preserve the `name` and `symbol` of the bridged vbToken.
-        string memory name_ = name();
-        string memory symbol_ = symbol();
-
-        // Prevent mistakes while initializing.
-        assert(bytes(name_).length > 0);
-        assert(bytes(symbol_).length > 0);
-        assert(super.decimals() == originalUnderlyingTokenDecimals_);
+        require(bridge_ != address(0), InvalidBridge());
 
         // Initialize the inherited contracts.
         __ERC20_init(name_, symbol_);
@@ -112,9 +98,22 @@ abstract contract CustomToken is
 
         // Initialize the storage.
         $.decimals = originalUnderlyingTokenDecimals_;
-        $.agglayerBridge = agglayerBridge_;
+        $.bridge = bridge_;
         $.nativeConverter = nativeConverter_;
     }
+
+    // @remind Document (the entire function).
+    function __CustomToken_init2() internal onlyInitializing incrementsLocalInitializationCounter(2) {
+        // Empty function body.
+    }
+
+    /*
+    /// @dev How to add a new init step:
+    function __CustomToken_init3() internal onlyInitializing incrementsLocalInitializationCounter(3) {}
+    */
+
+    // @remind Document.
+    function _CUSTOM_TOKEN_INIT_2_COMPATIBLE() internal pure virtual;
 
     // -----================= ::: STORAGE ::: =================-----
 
@@ -125,13 +124,14 @@ abstract contract CustomToken is
         return $.decimals;
     }
 
-    /// @notice Agglayer Bridge, which connects AggLayer networks.
-    function agglayerBridge() public view returns (address) {
+    /// @notice The contract that connects Custom Token to Primary Chain.
+    function bridge() public view returns (address) {
         CustomTokenStorage storage $ = _getCustomTokenStorage();
-        return $.agglayerBridge;
+        return $.bridge;
     }
 
     /// @notice The address of Native Converter for this Custom Token.
+    /// @return Returns `address(0)` if Native Converter is not connected.
     function nativeConverter() public view returns (address) {
         CustomTokenStorage storage $ = _getCustomTokenStorage();
         return $.nativeConverter;
@@ -172,20 +172,20 @@ abstract contract CustomToken is
 
     // -----================= ::: CUSTOM TOKEN ::: =================-----
 
-    /// @notice Mints Custom Tokens to the recipient.
-    /// @notice This function can be called by Agglayer Bridge and Native Converter only.
-    /// @param account @note CAUTION! Minting to `address(0)` will result in no tokens minted! This is to enable vbToken on Primary Chain to bridge tokens to address zero on Secondary Chain at the end of the process of migrating backing from Native Converter to Primary Chain. Please refer to `NativeConverter.sol` for more information.
-    function mint(address account, uint256 value)
-        external
-        whenNotPaused
-        onlyAgglayerBridgeAndNativeConverter
-        nonReentrant
-    {
-        // Do not mint if `account` is `address(0)`.
-        if (account == address(0)) {
-            emit NotMinted(value);
-            return;
-        }
+    modifier bridgeInController(uint256 value) {
+        CustomTokenStorage storage $ = _getCustomTokenStorage();
+        _;
+        if (msg.sender == $.bridge) $._secondaryChainBalance += value;
+    }
+
+    modifier bridgeOutController(uint256 value) {
+        CustomTokenStorage storage $ = _getCustomTokenStorage();
+        if (msg.sender == $.bridge) $._secondaryChainBalance -= value;
+        _;
+    }
+
+    // @remind Document.
+    function _CUSTOM_TOKEN_IS_MINTABLE_BURNABLE() internal virtual;
 
     // @remind Document (the entire function).
     function setBridge(address bridge_) external onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -198,7 +198,7 @@ abstract contract CustomToken is
     }
 
     // @remind Document (the entire function).
-    function setNativeConverter(address nativeConverter_) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setNativeConverter(address nativeConverter_) external virtual onlyRole(DEFAULT_ADMIN_ROLE) {
         CustomTokenStorage storage $ = _getCustomTokenStorage();
 
         require($.nativeConverter == address(0), NativeConverterAlreadySet());
