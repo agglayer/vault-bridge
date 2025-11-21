@@ -5,18 +5,16 @@ pragma solidity 0.8.29;
 
 // Main functionality.
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
-import {
-    ERC20PermitUpgradeable
-} from "@openzeppelin-contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
+import {ERC20PermitUpgradeable} from
+    "@openzeppelin-contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
 import {IVaultBridgeTokenInitializer} from "../etc/IVaultBridgeTokenInitializer.sol";
 
 // Other functionality.
 import {Initializable} from "@openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
 import {AccessControlUpgradeable} from "@openzeppelin-contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import {PausableUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/PausableUpgradeable.sol";
-import {
-    ReentrancyGuardTransientUpgradeable
-} from "@openzeppelin-contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
+import {ReentrancyGuardTransientUpgradeable} from
+    "@openzeppelin-contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
 import {ERC20PermitUser} from "../etc/ERC20PermitUser.sol";
 import {InitializationCounterUpgradeable} from "../etc/InitializationCounterUpgradeable.sol";
 import {Versioned} from "../etc/Versioned.sol";
@@ -469,8 +467,9 @@ abstract contract VaultBridgeToken is
             _mint(address(this), shares);
 
             //  Bridge to the receiver.
-            $.agglayerBridge
-                .bridgeAsset(destinationNetworkId, receiver, shares, address(this), forceUpdateGlobalExitRoot, "");
+            $.agglayerBridge.bridgeAsset(
+                destinationNetworkId, receiver, shares, address(this), forceUpdateGlobalExitRoot, ""
+            );
 
             // Update the receiver.
             receiver = address(this);
@@ -800,20 +799,19 @@ abstract contract VaultBridgeToken is
         VaultBridgeTokenStorage storage $ = _getVaultBridgeTokenStorage();
 
         // Claim vbToken from Agglayer Bridge.
-        $.agglayerBridge
-            .claimAsset(
-                smtProofLocalExitRoot,
-                smtProofRollupExitRoot,
-                globalIndex,
-                mainnetExitRoot,
-                rollupExitRoot,
-                $.agglayerId,
-                address(this),
-                $.agglayerId,
-                destinationAddress,
-                amount,
-                metadata
-            );
+        $.agglayerBridge.claimAsset(
+            smtProofLocalExitRoot,
+            smtProofRollupExitRoot,
+            globalIndex,
+            mainnetExitRoot,
+            rollupExitRoot,
+            $.agglayerId,
+            address(this),
+            $.agglayerId,
+            destinationAddress,
+            amount,
+            metadata
+        );
 
         // Set the return value.
         assets = convertToAssets(amount);
@@ -1021,7 +1019,11 @@ abstract contract VaultBridgeToken is
     /// @param originNetwork The Agglayer ID of Secondary Chain the backing is being migrated from.
     /// @param shares The amount of vbToken required to mint and lock up in Agglayer Bridge. Assets from a dedicated migration fees fund may be used to offset any fees incurred on Secondary Chain during the process. If a migration cannot be completed due to insufficient assets, anyone can donate the underlying token to the migration fees fund. Please refer to `donateForCompletingMigration` for more information.
     /// @param assets The amount of the underlying token migrated from Secondary Chain (after any fees on Secondary Chain).
-    function completeMigration(uint32 originNetwork, uint256 shares, uint256 assets) external virtual delegatedToPart2 {
+    function completeMigration(uint32 originNetwork, uint256 shares, uint256 assets)
+        external
+        virtual
+        delegatedToPart2
+    {
         // Silence the Solidity compiler.
         originNetwork;
         shares;
@@ -1160,9 +1162,8 @@ abstract contract VaultBridgeToken is
 
         // Try to deposit into the yield vault.
         try this.performReversibleYieldVaultDeposit(assets) {}
-
-            // If the deposit failed, decode the revert data.
-            catch (bytes memory data) {
+        // If the deposit failed, decode the revert data.
+        catch (bytes memory data) {
             (bool depositSucceeded, bytes memory depositData, bool solvencyCheckPassed) =
                 abi.decode(data, (bool, bytes, bool));
 
