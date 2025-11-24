@@ -631,6 +631,48 @@ contract NativeConverterTest is NativeConverterTestBase {
         nativeConverter.setCustomToken(newCustomToken);
     }
 
+    function test_Revert_setCustomToken_MigrationInProgress() public {
+        uint256 amount = 100;
+
+        vm.revertToState(stateBeforeInitialize);
+
+        bytes memory initData;
+        initData = abi.encodeCall(
+            nativeConverter.reinitialize1,
+            (
+                owner,
+                address(customToken),
+                address(underlyingToken),
+                address(mockAgglayerBridge),
+                primaryChainAgglayerId,
+                0,
+                migrationManager
+            )
+        );
+        nativeConverter = TestHarnessNativeConverter(_proxify(nativeConverterImpl, address(this), initData));
+
+        // Create backing on Secondary Chain
+        deal(address(underlyingToken), owner, amount);
+        vm.startPrank(owner);
+        underlyingToken.approve(address(nativeConverter), amount);
+        nativeConverter.convert(amount, recipient);
+        vm.stopPrank();
+
+        // approve the native converter to migrate
+        vm.prank(address(nativeConverter));
+        underlyingToken.approve(address(mockAgglayerBridge), type(uint256).max);
+
+        // Start a migration in progress
+        vm.prank(owner);
+        nativeConverter.migrateBackingToPrimaryChain(amount);
+
+        // Try to set custom token when migration is in progress
+        address newCustomToken = address(new MockERC20Upgradeable());
+        vm.prank(owner);
+        vm.expectRevert(NativeConverter.CannotSetCustomTokenIfMigrationsInProgressCountIsNotZero.selector);
+        nativeConverter.setCustomToken(newCustomToken);
+    }
+
     function test_Revert_setCustomToken_GasBackingNotZero() public {
         // This test verifies that if the current custom token has non-zero gas backing,
         // we cannot change it. We need to mock this since our test setup doesn't use
