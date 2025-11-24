@@ -50,4 +50,8 @@ interface IAgglayerBridge {
     ) external payable;
     function wrappedAddressIsNotMintable(address wrappedAddress) external view returns (bool isNotMintable);
     function localBalanceTree(bytes32 tokenInfoHash) external view returns (uint256);
+    function computeTokenProxyAddress(
+        uint32 originNetwork,
+        address originTokenAddress
+    ) external view returns (address);
 }
