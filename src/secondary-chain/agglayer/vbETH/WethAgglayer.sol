@@ -38,7 +38,12 @@ contract WethAgglayer is CustomTokenAgglayer, CustomTokenWethExtension {
         string memory symbol_ = ERC20Upgradeable.symbol();
 
         // Prevent a mistake while initializing.
-        assert(ERC20Upgradeable.decimals() == originalUnderlyingTokenDecimals_);
+        uint8 previousDecimals;
+        assembly {
+            let word := sload(0x863b064fe9383d75d38f584f64f1aaba4520e9ebc98515fa15bdeae8c4274d00)
+            previousDecimals := and(word, 0xff)
+        }
+        require(originalUnderlyingTokenDecimals_ == previousDecimals, InvalidOriginalUnderlyingTokenDecimals());
 
         // Initialize the base implementation.
         __CustomToken_init1(owner_, name_, symbol_, originalUnderlyingTokenDecimals_, agglayerBridge_, nativeConverter_);
