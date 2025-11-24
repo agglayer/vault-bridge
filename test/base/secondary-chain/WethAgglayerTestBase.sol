@@ -2,7 +2,11 @@
 pragma solidity ^0.8.29;
 
 // Test infrastructure
-import {MockERC20Upgradeable, SecondaryChainBase} from "test/base/secondary-chain/SecondaryChainBase.sol";
+import {
+    MockERC20Upgradeable,
+    MockTokenWrappedBridgeUpgradeable,
+    SecondaryChainBase
+} from "test/base/secondary-chain/SecondaryChainBase.sol";
 
 // Core contracts
 import {WethAgglayer} from "src/secondary-chain/agglayer/vbETH/WethAgglayer.sol";
@@ -36,13 +40,16 @@ abstract contract WethAgglayerTestBase is SecondaryChainBase {
     /// @dev This includes deploying the Custom Token and initializing both contracts
 
     function deployWethAgglayer(bool wethFunctionalityEnabled_) internal {
-        MockERC20Upgradeable existingWethAgglayerImpl = new MockERC20Upgradeable();
+        MockTokenWrappedBridgeUpgradeable existingWethAgglayerImpl = new MockTokenWrappedBridgeUpgradeable();
         TransparentUpgradeableProxy existingWethAgglayerProxy = TransparentUpgradeableProxy(
             payable(
                 _proxify(
                     address(existingWethAgglayerImpl),
                     address(this),
-                    abi.encodeCall(MockERC20Upgradeable.initialize, (customTokenName, customTokenSymbol))
+                    abi.encodeCall(
+                        MockTokenWrappedBridgeUpgradeable.initialize,
+                        (customTokenName, customTokenSymbol, customTokenDecimals, address(mockAgglayerBridge))
+                    )
                 )
             )
         );
@@ -62,7 +69,13 @@ abstract contract WethAgglayerTestBase is SecondaryChainBase {
             ITransparentUpgradeableProxy.upgradeToAndCall.selector, wethAgglayerImplAddr, wethAgglayerInitData
         );
         vm.prank(_getProxyAdmin(address(existingWethAgglayerProxy)));
-        (address(existingWethAgglayerProxy).call(upgradeData));
+        (bool success, bytes memory returndata) = address(existingWethAgglayerProxy).call(upgradeData);
+        if (!success) {
+            assembly {
+                revert(add(returndata, 32), mload(returndata))
+            }
+        }
+
         wethAgglayer = WethAgglayer(payable(address(existingWethAgglayerProxy)));
     }
 
