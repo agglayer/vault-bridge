@@ -203,7 +203,6 @@ contract VaultBridgeTokenPart2 is VaultBridgeToken {
     function setYieldRecipient(bool precollectYield, address yieldRecipient_)
         external
         override
-        whenNotPaused
         onlyRole(DEFAULT_ADMIN_ROLE)
         nonReentrant
     {
