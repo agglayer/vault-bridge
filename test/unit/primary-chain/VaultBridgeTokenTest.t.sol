@@ -245,7 +245,6 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
         uint256 amount = MINIMUM_YIELD_VAULT_DEPOSIT - 1;
 
         _dealAndApprove(underlyingToken, sender, amount, address(vbToken));
-
         vm.startPrank(sender);
 
         uint256 sharesToBeMinted = vbToken.previewDeposit(amount);
@@ -255,8 +254,10 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
 
         vm.stopPrank();
 
-        assertEq(IERC20(underlyingToken).balanceOf(address(vbToken)), amount); // All assets are reserved and non are deposited in the vault
-        assertEq(yieldVault.balanceOf(address(vbToken)), 0); // No assets deposited in the vault
+        uint256 assetsToReserve = calculateReserveAssetsLtMinimumDeposit(amount, MINIMUM_RESERVE_PERCENTAGE);
+
+        assertEq(IERC20(underlyingToken).balanceOf(address(vbToken)), assetsToReserve); // Minimum reserve percentage kept in reserve after rebalance
+        assertEq(yieldVault.balanceOf(address(vbToken)), amount - assetsToReserve); // Rest is deposited into the vault
         assertEq(vbToken.balanceOf(recipient), sharesToBeMinted); // shares minted to the recipient
     }
 

@@ -292,16 +292,10 @@ contract NonDefaultMintBurnOftAdapterTest is NonDefaultMintBurnOftAdapterTestBas
 
     // ===== _credit tests =====
 
-    function test_credit_success_redirectsTo0xdead() public {
+    function test_credit_revert_addressZero() public {
         uint256 creditAmount = 1000e18;
-
-        uint256 initialBalance = nonDefaultMintBurnOftAdapter.secondaryChainBalance();
-
-        uint256 amountReceivedLD = nonDefaultMintBurnOftAdapter.exposed_credit(address(0), creditAmount, 0);
-
-        assertEq(amountReceivedLD, creditAmount);
-        assertEq(customTokenLayerZero.balanceOf(address(0xdead)), creditAmount);
-        assertEq(nonDefaultMintBurnOftAdapter.secondaryChainBalance(), initialBalance + creditAmount);
+        vm.expectRevert(NonDefaultMintBurnOftAdapter.CannotCreditAddressZero.selector);
+        nonDefaultMintBurnOftAdapter.exposed_credit(address(0), creditAmount, 0);
     }
 
     function test_credit_success() public {

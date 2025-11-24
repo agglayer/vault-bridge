@@ -11,6 +11,7 @@ import {CustomToken} from "src/secondary-chain/CustomToken.sol";
 // Mock contracts
 import {MockAgglayerBridge} from "test/utils/mocks/MockAgglayerBridge.sol";
 import {MockERC20Upgradeable} from "test/utils/mocks/MockERC20Upgradeable.sol";
+import {MockTokenWrappedBridgeUpgradeable} from "test/utils/mocks/MockTokenWrappedBridgeUpgradeable.sol";
 import {MockGlobalExitRootManager} from "test/utils/mocks/MockGlobalExitRootManager.sol";
 
 // OpenZeppelin
@@ -109,11 +110,11 @@ contract TestHarnessNativeConverter is NativeConverter {
     function _NATIVE_CONVERTER_INIT_2_COMPATIBLE() internal pure override {}
 
     function _mintCustomToken(address to, uint256 amount) internal override {
-        MockERC20Upgradeable(address(customToken())).mint(to, amount);
+        MockTokenWrappedBridgeUpgradeable(address(customToken())).mint(to, amount);
     }
 
     function _burnCustomToken(address from, uint256 amount) internal override {
-        MockERC20Upgradeable(address(customToken())).burn(from, amount);
+        MockTokenWrappedBridgeUpgradeable(address(customToken())).burn(from, amount);
     }
 
     // Test helper functions to expose internal state
@@ -180,7 +181,7 @@ abstract contract SecondaryChainBase is TestConstants {
 
     // ========= MOCK CONTRACTS =========
     MockAgglayerBridge internal mockAgglayerBridge;
-    MockERC20Upgradeable internal customToken;
+    MockTokenWrappedBridgeUpgradeable internal customToken;
     MockERC20Upgradeable internal underlyingToken;
 
     /// @notice Configure Secondary Chain infrastructure

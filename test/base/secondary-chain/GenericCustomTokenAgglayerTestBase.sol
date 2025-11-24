@@ -2,7 +2,11 @@
 pragma solidity ^0.8.29;
 
 // Test infrastructure
-import {MockERC20Upgradeable, SecondaryChainBase} from "test/base/secondary-chain/SecondaryChainBase.sol";
+import {
+    MockERC20Upgradeable,
+    MockTokenWrappedBridgeUpgradeable,
+    SecondaryChainBase
+} from "test/base/secondary-chain/SecondaryChainBase.sol";
 
 // Core contracts
 import {GenericCustomTokenAgglayer} from "src/secondary-chain/agglayer/GenericCustomTokenAgglayer.sol";
@@ -44,13 +48,17 @@ abstract contract GenericCustomTokenAgglayerTestBase is SecondaryChainBase {
     function deployGenericCustomTokenAgglayer() internal {
         mockNativeConverter = new MockNativeConverter();
 
-        MockERC20Upgradeable existingGenericCustomTokenAgglayerImpl = new MockERC20Upgradeable();
+        MockTokenWrappedBridgeUpgradeable existingGenericCustomTokenAgglayerImpl =
+            new MockTokenWrappedBridgeUpgradeable();
         existingGenericCustomTokenAgglayerProxy = TransparentUpgradeableProxy(
             payable(
                 _proxify(
                     address(existingGenericCustomTokenAgglayerImpl),
                     proxyAdmin,
-                    abi.encodeCall(MockERC20Upgradeable.initialize, (customTokenName, customTokenSymbol))
+                    abi.encodeCall(
+                        MockTokenWrappedBridgeUpgradeable.initialize,
+                        (customTokenName, customTokenSymbol, customTokenDecimals, address(mockAgglayerBridge))
+                    )
                 )
             )
         );
@@ -75,7 +83,13 @@ abstract contract GenericCustomTokenAgglayerTestBase is SecondaryChainBase {
         );
 
         vm.prank(_getProxyAdmin(address(existingGenericCustomTokenAgglayerProxy)));
-        (address(existingGenericCustomTokenAgglayerProxy).call(genericCustomTokenAgglayerUpgradeData));
+        (bool success, bytes memory returndata) =
+            address(existingGenericCustomTokenAgglayerProxy).call(genericCustomTokenAgglayerUpgradeData);
+        if (!success) {
+            assembly {
+                revert(add(returndata, 32), mload(returndata))
+            }
+        }
 
         genericCustomTokenAgglayer = GenericCustomTokenAgglayer(address(existingGenericCustomTokenAgglayerProxy));
     }

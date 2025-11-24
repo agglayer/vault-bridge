@@ -25,8 +25,11 @@ contract VaultBridgeTokenHarness is TestHarnessVaultBridgeToken {
         );
     }
 
-    function internal_depositIntoYieldVault(uint256 assets, bool exact) public returns (uint256 nonDepositedAssets) {
-        nonDepositedAssets = _depositIntoYieldVault(assets, exact);
+    function internal_depositIntoYieldVault(uint256 assets, bool exact, bool ignoreMinimumYieldVaultDeposit)
+        public
+        returns (uint256 nonDepositedAssets)
+    {
+        nonDepositedAssets = _depositIntoYieldVault(assets, exact, ignoreMinimumYieldVaultDeposit);
     }
 }
 
@@ -73,7 +76,9 @@ contract GenericVaultBridgeTokenFuzzTest is VaultBridgeTokenTestBase {
         vm.label(address(vbTokenHarness), "VaultBridgeToken Harness");
     }
 
-    function testFuzz_depositIntoYieldVault_minimumDepositNotMet_revert(uint256 assets) public {
+    function testFuzz_depositIntoYieldVault_minimumDepositNotMetAndDoNotIgnoreMinimumDeposit_revert(uint256 assets)
+        public
+    {
         assets = bound(assets, 1, MINIMUM_YIELD_VAULT_DEPOSIT - 1);
 
         vm.expectRevert(
@@ -81,13 +86,13 @@ contract GenericVaultBridgeTokenFuzzTest is VaultBridgeTokenTestBase {
                 VaultBridgeToken.MinimumYieldVaultDepositNotMet.selector, assets, MINIMUM_YIELD_VAULT_DEPOSIT
             )
         );
-        vbTokenHarness.internal_depositIntoYieldVault(assets, true);
+        vbTokenHarness.internal_depositIntoYieldVault(assets, true, false);
     }
 
     function testFuzz_depositIntoYieldVault_minimumDepositNotMet_nonExact(uint256 assets) public {
         assets = bound(assets, 1, MINIMUM_YIELD_VAULT_DEPOSIT - 1);
 
-        uint256 nonDepositedAssets = vbTokenHarness.internal_depositIntoYieldVault(assets, false);
+        uint256 nonDepositedAssets = vbTokenHarness.internal_depositIntoYieldVault(assets, false, true);
         assertEq(nonDepositedAssets, assets);
     }
 
@@ -95,7 +100,7 @@ contract GenericVaultBridgeTokenFuzzTest is VaultBridgeTokenTestBase {
         assets = bound(assets, MAX_DEPOSIT + 1, type(uint128).max);
 
         vm.expectRevert(abi.encodeWithSelector(VaultBridgeToken.YieldVaultDepositFailed.selector, assets, MAX_DEPOSIT));
-        vbTokenHarness.internal_depositIntoYieldVault(assets, true);
+        vbTokenHarness.internal_depositIntoYieldVault(assets, true, true);
     }
 
     function testFuzz_depositIntoYieldVault_exceedsMaxDeposit_nonExact(uint256 assets) public {
@@ -104,7 +109,7 @@ contract GenericVaultBridgeTokenFuzzTest is VaultBridgeTokenTestBase {
         // Provide the contract with enough tokens to handle the deposit
         deal(underlyingToken, address(vbTokenHarness), MAX_DEPOSIT);
 
-        uint256 nonDepositedAssets = vbTokenHarness.internal_depositIntoYieldVault(assets, false);
+        uint256 nonDepositedAssets = vbTokenHarness.internal_depositIntoYieldVault(assets, false, true);
         assertEq(nonDepositedAssets, assets - MAX_DEPOSIT);
     }
 
@@ -132,7 +137,7 @@ contract GenericVaultBridgeTokenFuzzTest is VaultBridgeTokenTestBase {
                 VaultBridgeToken.InsufficientYieldVaultSharesMinted.selector, assets, actualMintedShares
             )
         );
-        vbTokenHarness.internal_depositIntoYieldVault(assets, true);
+        vbTokenHarness.internal_depositIntoYieldVault(assets, true, true);
     }
 
     function testFuzz_depositIntoYieldVault_slippageFailure_nonExact(uint256 assets, uint256 slippageAmount) public {
@@ -151,7 +156,7 @@ contract GenericVaultBridgeTokenFuzzTest is VaultBridgeTokenTestBase {
         deal(underlyingToken, address(vbTokenHarness), assets);
         yieldVault.setSlippage(true, slippageAmount);
 
-        uint256 nonDepositedAssets = vbTokenHarness.internal_depositIntoYieldVault(assets, false);
+        uint256 nonDepositedAssets = vbTokenHarness.internal_depositIntoYieldVault(assets, false, true);
         assertEq(nonDepositedAssets, assets);
     }
 
@@ -174,7 +179,7 @@ contract GenericVaultBridgeTokenFuzzTest is VaultBridgeTokenTestBase {
         deal(underlyingToken, address(vbTokenHarness), assets);
         yieldVault.setSlippage(true, slippageAmount);
 
-        uint256 nonDepositedAssets = vbTokenHarness.internal_depositIntoYieldVault(assets, false);
+        uint256 nonDepositedAssets = vbTokenHarness.internal_depositIntoYieldVault(assets, false, true);
         assertEq(nonDepositedAssets, 0);
         assertEq(yieldVault.balanceOf(address(vbTokenHarness)), expectedMintedShares);
     }
@@ -186,7 +191,7 @@ contract GenericVaultBridgeTokenFuzzTest is VaultBridgeTokenTestBase {
         deal(underlyingToken, address(vbTokenHarness), assets);
         yieldVault.setSlippage(false, 0);
 
-        uint256 nonDepositedAssets = vbTokenHarness.internal_depositIntoYieldVault(assets, true);
+        uint256 nonDepositedAssets = vbTokenHarness.internal_depositIntoYieldVault(assets, true, true);
         assertEq(nonDepositedAssets, 0);
         assertEq(yieldVault.balanceOf(address(vbTokenHarness)), assets);
     }

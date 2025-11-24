@@ -33,7 +33,7 @@ contract VbUsdcNativeConverterAgglayerBridgedUsdcStandardTest is
             VbUsdcNativeConverterAgglayerBridgedUsdcStandard(payable(address(0))).reinitialize1,
             (
                 address(0),
-                address(customToken),
+                address(vbUsdcToken),
                 address(underlyingToken),
                 address(mockAgglayerBridge),
                 primaryChainAgglayerId,
@@ -81,7 +81,7 @@ contract VbUsdcNativeConverterAgglayerBridgedUsdcStandardTest is
             VbUsdcNativeConverterAgglayerBridgedUsdcStandard(payable(address(0))).reinitialize1,
             (
                 owner,
-                address(customToken),
+                address(vbUsdcToken),
                 address(0),
                 address(mockAgglayerBridge),
                 primaryChainAgglayerId,
@@ -104,7 +104,7 @@ contract VbUsdcNativeConverterAgglayerBridgedUsdcStandardTest is
             VbUsdcNativeConverterAgglayerBridgedUsdcStandard(payable(address(0))).reinitialize1,
             (
                 owner,
-                address(customToken),
+                address(vbUsdcToken),
                 address(underlyingToken),
                 address(0), // invalid agglayer bridge
                 primaryChainAgglayerId,
@@ -127,7 +127,7 @@ contract VbUsdcNativeConverterAgglayerBridgedUsdcStandardTest is
             VbUsdcNativeConverterAgglayerBridgedUsdcStandard(payable(address(0))).reinitialize1,
             (
                 owner,
-                address(customToken),
+                address(vbUsdcToken),
                 address(underlyingToken),
                 address(mockAgglayerBridge),
                 NETWORK_ID_L2, // invalid primary chain agglayer ID
@@ -150,7 +150,7 @@ contract VbUsdcNativeConverterAgglayerBridgedUsdcStandardTest is
             VbUsdcNativeConverterAgglayerBridgedUsdcStandard(payable(address(0))).reinitialize1,
             (
                 owner,
-                address(customToken),
+                address(vbUsdcToken),
                 address(underlyingToken),
                 address(mockAgglayerBridge),
                 primaryChainAgglayerId,
@@ -173,7 +173,7 @@ contract VbUsdcNativeConverterAgglayerBridgedUsdcStandardTest is
             VbUsdcNativeConverterAgglayerBridgedUsdcStandard(payable(address(0))).reinitialize1,
             (
                 owner,
-                address(customToken),
+                address(vbUsdcToken),
                 address(underlyingToken),
                 address(mockAgglayerBridge),
                 primaryChainAgglayerId,

@@ -76,8 +76,6 @@ abstract contract VbUsdcNativeConverterAgglayerBridgedUsdcStandardTestBase is Se
         // For vbUSDC, we use the MockFiatTokenV2_2 directly as the custom token
         // The bridge will mint this token directly
         vbUsdcToken = MockFiatTokenV2_2(address(existingCustomTokenProxy));
-        customToken = MockERC20Upgradeable(address(existingCustomTokenProxy));
-
         nativeConverterImpl = address(new VbUsdcNativeConverterAgglayerBridgedUsdcStandard());
 
         bytes[] memory reinitializeCallData = new bytes[](2);
@@ -85,7 +83,7 @@ abstract contract VbUsdcNativeConverterAgglayerBridgedUsdcStandardTestBase is Se
             VbUsdcNativeConverterAgglayerBridgedUsdcStandard(payable(address(0))).reinitialize1,
             (
                 owner,
-                address(customToken),
+                address(vbUsdcToken),
                 address(underlyingToken),
                 address(mockAgglayerBridge),
                 primaryChainAgglayerId,
@@ -119,7 +117,7 @@ abstract contract VbUsdcNativeConverterAgglayerBridgedUsdcStandardTestBase is Se
     /// @notice Helper to verify basic vbUSDC NativeConverter setup
     function verifyVbUsdcNativeConverterAgglayerBridgedUsdcStandardSetup() internal view {
         assertEq(address(nativeConverter.bridge()), address(mockAgglayerBridge));
-        assertEq(address(nativeConverter.customToken()), address(customToken));
+        assertEq(address(nativeConverter.customToken()), address(vbUsdcToken));
         assertEq(address(nativeConverter.migrationManager()), migrationManager);
         assertEq(address(nativeConverter.underlyingToken()), address(underlyingToken));
         assertEq(nativeConverter.agglayerId(), NETWORK_ID_L2);

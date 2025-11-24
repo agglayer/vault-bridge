@@ -182,4 +182,18 @@ abstract contract PrimaryChainBase is TestConstants {
         uint256 assetsToDepositMax = (assetsToDeposit > _vaultMaxDeposit) ? _vaultMaxDeposit : assetsToDeposit;
         return _amount - assetsToDepositMax;
     }
+
+    /// @notice Calculate reserve assets when deposit amount is less than minimum required and reserve is rebalanced
+    /// @param _amount The total amount being deposited
+    /// @param _minimumReservePercentage The minimum reserve percentage required
+    /// @return The amount that will be kept in reserve
+    function calculateReserveAssetsLtMinimumDeposit(uint256 _amount, uint256 _minimumReservePercentage)
+        internal
+        pure
+        returns (uint256)
+    {
+        uint256 amountToDeposit =
+            (_amount * (MAX_RESERVE_PERCENTAGE - _minimumReservePercentage)) / MAX_RESERVE_PERCENTAGE;
+        return _amount - amountToDeposit;
+    }
 }

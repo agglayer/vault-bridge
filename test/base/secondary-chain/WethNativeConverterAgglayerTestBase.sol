@@ -2,7 +2,11 @@
 pragma solidity ^0.8.29;
 
 // Test infrastructure
-import {MockERC20Upgradeable, SecondaryChainBase} from "test/base/secondary-chain/SecondaryChainBase.sol";
+import {
+    MockERC20Upgradeable,
+    MockTokenWrappedBridgeUpgradeable,
+    SecondaryChainBase
+} from "test/base/secondary-chain/SecondaryChainBase.sol";
 
 // Core contracts
 import {WethNativeConverterAgglayer} from "src/secondary-chain/agglayer/vbETH/WethNativeConverterAgglayer.sol";
@@ -48,13 +52,16 @@ abstract contract WethNativeConverterAgglayerTestBase is SecondaryChainBase {
         underlyingToken.initialize(underlyingTokenName, underlyingTokenSymbol);
         underlyingTokenMetadata = abi.encode(underlyingTokenName, underlyingTokenSymbol, underlyingTokenDecimals);
 
-        MockERC20Upgradeable existingCustomTokenImpl = new MockERC20Upgradeable();
+        MockTokenWrappedBridgeUpgradeable existingCustomTokenImpl = new MockTokenWrappedBridgeUpgradeable();
         TransparentUpgradeableProxy existingCustomTokenProxy = TransparentUpgradeableProxy(
             payable(
                 _proxify(
                     address(existingCustomTokenImpl),
                     proxyAdmin,
-                    abi.encodeCall(MockERC20Upgradeable.initialize, (customTokenName, customTokenSymbol))
+                    abi.encodeCall(
+                        MockTokenWrappedBridgeUpgradeable.initialize,
+                        (customTokenName, customTokenSymbol, customTokenDecimals, address(mockAgglayerBridge))
+                    )
                 )
             )
         );
@@ -80,7 +87,7 @@ abstract contract WethNativeConverterAgglayerTestBase is SecondaryChainBase {
         require(success, "Failed to upgrade to WethAgglayer");
 
         // assign variables for generic testing
-        customToken = MockERC20Upgradeable(address(existingCustomTokenProxy));
+        customToken = MockTokenWrappedBridgeUpgradeable(address(existingCustomTokenProxy));
 
         nativeConverterImpl = address(new WethNativeConverterAgglayer());
 
