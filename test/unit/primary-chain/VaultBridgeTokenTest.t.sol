@@ -1175,6 +1175,39 @@ contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
         assertEq(IERC20(underlyingToken).allowance(address(vbToken), oldVault), 0);
     }
 
+    function test_revokeYieldVaultApproval() public {
+        vm.expectRevert();
+        vbTokenPart2.revokeYieldVaultApproval();
+
+        uint256 allowanceBefore = IERC20(underlyingToken).allowance(address(vbToken), address(yieldVault));
+
+        vm.prank(owner);
+        vm.expectEmit();
+        emit IERC20.Approval(address(vbToken), address(yieldVault), 0);
+        vbTokenPart2.revokeYieldVaultApproval();
+
+        assertNotEq(IERC20(underlyingToken).allowance(address(vbToken), address(yieldVault)), allowanceBefore);
+    }
+
+    function test_restoreYieldVaultApproval() public {
+        vm.expectRevert();
+        vbTokenPart2.restoreYieldVaultApproval();
+
+        // First, revoke the approval
+        vm.prank(owner);
+        vbTokenPart2.revokeYieldVaultApproval();
+
+        uint256 allowanceBefore = IERC20(underlyingToken).allowance(address(vbToken), address(yieldVault));
+        assertEq(allowanceBefore, 0);
+
+        vm.prank(owner);
+        vm.expectEmit();
+        emit IERC20.Approval(address(vbToken), address(yieldVault), type(uint256).max);
+        vbTokenPart2.restoreYieldVaultApproval();
+
+        assertNotEq(IERC20(underlyingToken).allowance(address(vbToken), address(yieldVault)), allowanceBefore);
+    }
+
     function test_setMinimumYieldVaultDeposit_revert() public {
         uint256 newDeposit = 5e12;
 
