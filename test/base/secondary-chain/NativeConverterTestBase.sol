@@ -4,6 +4,7 @@ pragma solidity ^0.8.29;
 // Test infrastructure
 import {
     MockERC20Upgradeable,
+    MockTokenWrappedBridgeUpgradeable,
     SecondaryChainBase,
     TestHarnessNativeConverter,
     TestHarnessCustomToken
@@ -51,13 +52,16 @@ abstract contract NativeConverterTestBase is SecondaryChainBase {
         underlyingToken.initialize(underlyingTokenName, underlyingTokenSymbol);
         underlyingTokenMetadata = abi.encode(underlyingTokenName, underlyingTokenSymbol, underlyingTokenDecimals);
 
-        MockERC20Upgradeable existingCustomTokenImpl = new MockERC20Upgradeable();
+        MockTokenWrappedBridgeUpgradeable existingCustomTokenImpl = new MockTokenWrappedBridgeUpgradeable();
         TransparentUpgradeableProxy existingCustomTokenProxy = TransparentUpgradeableProxy(
             payable(
                 _proxify(
                     address(existingCustomTokenImpl),
                     proxyAdmin,
-                    abi.encodeCall(MockERC20Upgradeable.initialize, (customTokenName, customTokenSymbol))
+                    abi.encodeCall(
+                        MockTokenWrappedBridgeUpgradeable.initialize,
+                        (customTokenName, customTokenSymbol, customTokenDecimals, address(mockAgglayerBridge))
+                    )
                 )
             )
         );
@@ -82,7 +86,7 @@ abstract contract NativeConverterTestBase is SecondaryChainBase {
         (address(existingCustomTokenProxy).call(customTokenUpgradeData));
 
         // assign variables for generic testing
-        customToken = MockERC20Upgradeable(address(existingCustomTokenProxy));
+        customToken = MockTokenWrappedBridgeUpgradeable(address(existingCustomTokenProxy));
 
         nativeConverterImpl = address(new TestHarnessNativeConverter());
 

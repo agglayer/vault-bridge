@@ -5,12 +5,14 @@ pragma solidity ^0.8.29;
 import {
     GenericCustomTokenAgglayerTestBase,
     TransparentUpgradeableProxy,
-    ITransparentUpgradeableProxy,
-    MockERC20Upgradeable
+    ITransparentUpgradeableProxy
 } from "test/base/secondary-chain/GenericCustomTokenAgglayerTestBase.sol";
 
 // Core contracts
-import {GenericCustomTokenAgglayer} from "src/secondary-chain/agglayer/GenericCustomTokenAgglayer.sol";
+import {
+    GenericCustomTokenAgglayer,
+    CustomTokenAgglayer
+} from "src/secondary-chain/agglayer/GenericCustomTokenAgglayer.sol";
 import {CustomToken} from "src/secondary-chain/CustomToken.sol";
 import {NativeConverter} from "src/secondary-chain/NativeConverter.sol";
 
@@ -48,7 +50,7 @@ contract GenericCustomTokenAgglayerTest is GenericCustomTokenAgglayerTestBase {
         uint256 amount = 1000e18;
 
         vm.expectEmit(true, true, true, true);
-        emit IERC20.Transfer(address(0), address(0), amount);
+        emit CustomTokenAgglayer.AlreadyMinted(amount);
 
         vm.prank(address(mockAgglayerBridge));
         genericCustomTokenAgglayer.mint(address(0), amount);
