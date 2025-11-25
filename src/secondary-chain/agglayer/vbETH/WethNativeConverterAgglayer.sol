@@ -156,15 +156,16 @@ contract WethNativeConverterAgglayer is NativeConverterAgglayer {
         );
 
         // Bridge a message to Migration Manager on Primary Chain to complete the migration.
-        bridge().bridgeMessage(
-            primaryChainAgglayerId(),
-            address(migrationManager()),
-            true,
-            abi.encode(
-                MigrationManager.CrossChainInstruction._1_WRAP_GAS_TOKEN_AND_COMPLETE_MIGRATION,
-                abi.encode(amountOfCustomToken, amount)
-            )
-        );
+        bridge()
+            .bridgeMessage(
+                primaryChainAgglayerId(),
+                address(migrationManager()),
+                true,
+                abi.encode(
+                    MigrationManager.CrossChainInstruction._1_WRAP_GAS_TOKEN_AND_COMPLETE_MIGRATION,
+                    abi.encode(amountOfCustomToken, amount)
+                )
+            );
 
         // Emit the event.
         emit MigrationStarted(amountOfCustomToken, amount);

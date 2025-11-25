@@ -412,9 +412,10 @@ abstract contract NativeConverter is
             _sendUnderlyingToken(receiver, assets);
         } else {
             // Bridge to the receiver.
-            $.bridge.bridgeAsset(
-                destinationNetworkId, receiver, assets, address($.underlyingToken), forceUpdateGlobalExitRoot, ""
-            );
+            $.bridge
+                .bridgeAsset(
+                    destinationNetworkId, receiver, assets, address($.underlyingToken), forceUpdateGlobalExitRoot, ""
+                );
         }
     }
 
@@ -484,9 +485,8 @@ abstract contract NativeConverter is
 
             // Bridge.
             // @note IMPORTANT: Make sure the underlying token you are integrating does not enable reentrancy on `transferFrom`.
-            $.bridge.bridgeAsset(
-                $.primaryChainAgglayerId, $.migrationManager, assets, address($.underlyingToken), true, ""
-            );
+            $.bridge
+                .bridgeAsset($.primaryChainAgglayerId, $.migrationManager, assets, address($.underlyingToken), true, "");
 
             uint256 originalAssets = assets;
 
@@ -498,18 +498,18 @@ abstract contract NativeConverter is
         }
         /* If the underlying token is mintable by Agglayer Bridge, it will be burned (not transferred). */
         else {
-            $.bridge.bridgeAsset(
-                $.primaryChainAgglayerId, $.migrationManager, assets, address($.underlyingToken), true, ""
-            );
+            $.bridge
+                .bridgeAsset($.primaryChainAgglayerId, $.migrationManager, assets, address($.underlyingToken), true, "");
         }
 
         // Bridge a message to Migration Manager on Primary Chain to complete the migration.
-        $.bridge.bridgeMessage(
-            $.primaryChainAgglayerId,
-            $.migrationManager,
-            true,
-            abi.encode(MigrationManager.CrossChainInstruction._0_COMPLETE_MIGRATION, abi.encode(shares, assets))
-        );
+        $.bridge
+            .bridgeMessage(
+                $.primaryChainAgglayerId,
+                $.migrationManager,
+                true,
+                abi.encode(MigrationManager.CrossChainInstruction._0_COMPLETE_MIGRATION, abi.encode(shares, assets))
+            );
 
         // Emit the event.
         emit MigrationStarted(shares, assets);

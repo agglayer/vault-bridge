@@ -10,8 +10,9 @@ import {IBridgeMessageReceiver} from "../etc/IBridgeMessageReceiver.sol";
 import {Initializable} from "@openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
 import {AccessControlUpgradeable} from "@openzeppelin-contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import {PausableUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/PausableUpgradeable.sol";
-import {ReentrancyGuardTransientUpgradeable} from
-    "@openzeppelin-contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
+import {
+    ReentrancyGuardTransientUpgradeable
+} from "@openzeppelin-contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
 import {InitializationCounterUpgradeable} from "../etc/InitializationCounterUpgradeable.sol";
 import {Versioned} from "../etc/Versioned.sol";
 

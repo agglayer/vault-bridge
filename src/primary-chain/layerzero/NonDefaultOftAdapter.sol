@@ -9,8 +9,9 @@ pragma solidity 0.8.29;
 import {OFTAdapterUpgradeable} from "@layerzerolabs-oft-evm-upgradeable/contracts/oft/OFTAdapterUpgradeable.sol";
 
 // Other functionality.
-import {ReentrancyGuardTransientUpgradeable} from
-    "@openzeppelin-contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
+import {
+    ReentrancyGuardTransientUpgradeable
+} from "@openzeppelin-contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
 import {InitializationCounterUpgradeable} from "../../etc/InitializationCounterUpgradeable.sol";
 
 /// @title Non-Default OFT Adapter

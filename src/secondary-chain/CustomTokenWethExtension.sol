@@ -128,11 +128,7 @@ abstract contract CustomTokenWethExtension is CustomToken {
         require(ok);
     }
 
-    function setWethFunctionalityEnabled(bool wethFunctionalityEnabled_)
-        external
-        virtual
-        onlyRole(DEFAULT_ADMIN_ROLE)
-    {
+    function setWethFunctionalityEnabled(bool wethFunctionalityEnabled_) external virtual onlyRole(DEFAULT_ADMIN_ROLE) {
         CustomTokenWethExtensionStorage storage $ = _getCustomTokenWethExtensionStorage();
         if (wethFunctionalityEnabled_) require($._gasTokenIsEth, WethFunctionalityCannotBeEnabledIfGasTokenIsNotEth());
         $.wethFunctionalityEnabled = wethFunctionalityEnabled_;
