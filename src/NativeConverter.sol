@@ -49,6 +49,10 @@ abstract contract NativeConverter is
         uint32 layerXLxlyId;
         uint256 nonMigratableBackingPercentage;
         address migrationManager;
+        bool __RESERVED___underlyingTokenIsNotMintable; // Introduced in v1.0.0.
+        mapping(uint256 migratedBacking => uint256 times) _migrationsInProgress;
+        uint256 _migrationsInProgressCount;
+        uint256 _totalMigratedBackingInProgress;
     }
 
     /// @dev The storage slot at which Native Converter storage starts, following the EIP-7201 standard.
@@ -61,6 +65,7 @@ abstract contract NativeConverter is
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
 
     // Errors.
+    error Unauthorized();
     error InvalidOwner();
     error InvalidCustomToken();
     error InvalidUnderlyingToken();
@@ -81,6 +86,17 @@ abstract contract NativeConverter is
     // Events.
     event MigrationStarted(uint256 indexed mintedCustomToken, uint256 indexed migratedBacking);
     event NonMigratableBackingPercentageSet(uint256 nonMigratableBackingPercentage);
+    event MigrationInProgressAdded(uint256 indexed migratedBacking);
+    event MigrationInProgressRemoved(uint256 indexed mintedCustomToken);
+
+    // -----================= ::: MODIFIERS ::: =================-----
+
+    /// @dev Checks if the sender is the yield recipient.
+    modifier onlyCustomToken() {
+        NativeConverterStorage storage $ = _getNativeConverterStorage();
+        require(msg.sender == address($.customToken), Unauthorized());
+        _;
+    }
 
     // -----================= ::: SETUP ::: =================-----
 
@@ -374,9 +390,10 @@ abstract contract NativeConverter is
             _sendUnderlyingToken(receiver, assets);
         } else {
             // Bridge to the receiver.
-            $.lxlyBridge.bridgeAsset(
-                destinationNetworkId, receiver, assets, address($.underlyingToken), forceUpdateGlobalExitRoot, ""
-            );
+            $.lxlyBridge
+                .bridgeAsset(
+                    destinationNetworkId, receiver, assets, address($.underlyingToken), forceUpdateGlobalExitRoot, ""
+                );
         }
     }
 
@@ -438,12 +455,13 @@ abstract contract NativeConverter is
         $.lxlyBridge.bridgeAsset($.layerXLxlyId, $.migrationManager, assets, address($.underlyingToken), true, "");
 
         // Bridge a message to Migration Manager on Layer X to complete the migration.
-        $.lxlyBridge.bridgeMessage(
-            $.layerXLxlyId,
-            $.migrationManager,
-            true,
-            abi.encode(MigrationManager.CrossNetworkInstruction.COMPLETE_MIGRATION, abi.encode(shares, assets))
-        );
+        $.lxlyBridge
+            .bridgeMessage(
+                $.layerXLxlyId,
+                $.migrationManager,
+                true,
+                abi.encode(MigrationManager.CrossNetworkInstruction.COMPLETE_MIGRATION, abi.encode(shares, assets))
+            );
 
         // Emit the event.
         emit MigrationStarted(shares, assets);
@@ -468,6 +486,33 @@ abstract contract NativeConverter is
 
         // Emit the event.
         emit NonMigratableBackingPercentageSet(nonMigratableBackingPercentage_);
+    }
+
+    // @remind Document (the entire function).
+    function removeMigrationInProgress(uint256 mintedCustomToken) external onlyCustomToken nonReentrant {
+        _removeMigrationInProgress(mintedCustomToken);
+    }
+
+    // @remind Document (the entire function).
+    function _addMigrationInProgress(uint256 migratedBacking) internal {
+        NativeConverterStorage storage $ = _getNativeConverterStorage();
+
+        $._migrationsInProgress[migratedBacking]++;
+        $._migrationsInProgressCount++;
+        $._totalMigratedBackingInProgress += migratedBacking;
+
+        emit MigrationInProgressAdded(migratedBacking);
+    }
+
+    // @remind Document (the entire function).
+    function _removeMigrationInProgress(uint256 mintedCustomToken) private {
+        NativeConverterStorage storage $ = _getNativeConverterStorage();
+
+        $._migrationsInProgress[mintedCustomToken]--;
+        $._migrationsInProgressCount--;
+        $._totalMigratedBackingInProgress -= mintedCustomToken;
+
+        emit MigrationInProgressRemoved(mintedCustomToken);
     }
 
     // -----================= ::: UNDERLYING TOKEN ::: =================-----

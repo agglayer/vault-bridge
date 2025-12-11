@@ -5,16 +5,18 @@ pragma solidity 0.8.29;
 
 // Main functionality.
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
-import {ERC20PermitUpgradeable} from
-    "@openzeppelin-contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
+import {
+    ERC20PermitUpgradeable
+} from "@openzeppelin-contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
 import {IVaultBridgeTokenInitializer} from "./etc/IVaultBridgeTokenInitializer.sol";
 
 // Other functionality.
 import {Initializable} from "@openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
 import {AccessControlUpgradeable} from "@openzeppelin-contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import {PausableUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/PausableUpgradeable.sol";
-import {ReentrancyGuardTransientUpgradeable} from
-    "@openzeppelin-contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
+import {
+    ReentrancyGuardTransientUpgradeable
+} from "@openzeppelin-contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
 import {ERC20PermitUser} from "./etc/ERC20PermitUser.sol";
 import {IVersioned} from "./etc/IVersioned.sol";
 
@@ -69,7 +71,7 @@ abstract contract VaultBridgeToken is
         address _vaultBridgeTokenPart2;
     }
 
-    /// @remind Document.
+    // @remind Document.
     /// @dev Used for initializing the contract.
     /// @dev @note (ATTENTION) `decimals` will match the underlying token. Defaults to 18 decimals if the underlying token reverts.
     /// @param minimumReservePercentage_ 1e18 is 100%.
@@ -458,9 +460,8 @@ abstract contract VaultBridgeToken is
             _mint(address(this), shares);
 
             //  Bridge to the receiver.
-            $.lxlyBridge.bridgeAsset(
-                destinationNetworkId, receiver, shares, address(this), forceUpdateGlobalExitRoot, ""
-            );
+            $.lxlyBridge
+                .bridgeAsset(destinationNetworkId, receiver, shares, address(this), forceUpdateGlobalExitRoot, "");
 
             // Update the receiver.
             receiver = address(this);
@@ -782,19 +783,20 @@ abstract contract VaultBridgeToken is
         VaultBridgeTokenStorage storage $ = _getVaultBridgeTokenStorage();
 
         // Claim vbToken from LxLy Bridge.
-        $.lxlyBridge.claimAsset(
-            smtProofLocalExitRoot,
-            smtProofRollupExitRoot,
-            globalIndex,
-            mainnetExitRoot,
-            rollupExitRoot,
-            $.lxlyId,
-            address(this),
-            $.lxlyId,
-            destinationAddress,
-            amount,
-            metadata
-        );
+        $.lxlyBridge
+            .claimAsset(
+                smtProofLocalExitRoot,
+                smtProofRollupExitRoot,
+                globalIndex,
+                mainnetExitRoot,
+                rollupExitRoot,
+                $.lxlyId,
+                address(this),
+                $.lxlyId,
+                destinationAddress,
+                amount,
+                metadata
+            );
 
         // Set the return value.
         assets = convertToAssets(amount);

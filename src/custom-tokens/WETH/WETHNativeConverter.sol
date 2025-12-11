@@ -117,6 +117,8 @@ contract WETHNativeConverter is NativeConverter {
         require(amount > 0, InvalidAssets());
         require(amount <= migratableGasBacking_, AssetsTooLarge(migratableGasBacking_, amount));
 
+        _addMigrationInProgress(amount);
+
         // Precalculate the amount of Custom Token for which backing is being migrated.
         uint256 amountOfCustomToken = _convertToShares(amount);
 
@@ -127,15 +129,16 @@ contract WETHNativeConverter is NativeConverter {
         );
 
         // Bridge a message to Migration Manager on Layer X to complete the migration.
-        lxlyBridge().bridgeMessage(
-            layerXLxlyId(),
-            address(migrationManager()),
-            true,
-            abi.encode(
-                MigrationManager.CrossNetworkInstruction.WRAP_GAS_TOKEN_AND_COMPLETE_MIGRATION,
-                abi.encode(amountOfCustomToken, amount)
-            )
-        );
+        lxlyBridge()
+            .bridgeMessage(
+                layerXLxlyId(),
+                address(migrationManager()),
+                true,
+                abi.encode(
+                    MigrationManager.CrossNetworkInstruction.WRAP_GAS_TOKEN_AND_COMPLETE_MIGRATION,
+                    abi.encode(amountOfCustomToken, amount)
+                )
+            );
 
         // Emit the event.
         emit MigrationStarted(amountOfCustomToken, amount);

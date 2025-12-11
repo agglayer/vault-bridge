@@ -2,8 +2,9 @@
 pragma solidity 0.8.29;
 
 // Main functionality.
-import {ERC20PermitUpgradeable} from
-    "@openzeppelin-contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
+import {
+    ERC20PermitUpgradeable
+} from "@openzeppelin-contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
 
 // Other functionality.
 import {Initializable} from "@openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
@@ -11,6 +12,9 @@ import {AccessControlUpgradeable} from "@openzeppelin-contracts-upgradeable/acce
 import {PausableUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/PausableUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin-contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import {IVersioned} from "./etc/IVersioned.sol";
+
+// External contracts.
+import {NativeConverter} from "./NativeConverter.sol";
 
 /// @title Custom Token
 /// @author See https://github.com/agglayer/vault-bridge
@@ -32,6 +36,8 @@ abstract contract CustomToken is
         uint8 decimals;
         address lxlyBridge;
         address nativeConverter;
+        uint256 __RESERVED____secondaryChainBalance; // Introduced in v1.0.0.
+        mapping(address => uint256) _netMintedByAdditionalMintersBurners; // Introduced in v0.5.1.
     }
 
     /// @dev The storage slot at which Custom Token storage starts, following the EIP-7201 standard.
@@ -41,6 +47,12 @@ abstract contract CustomToken is
 
     // Basic roles.
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
+
+    // New roles (v0.5.1).
+    bytes32 public constant MINTER_BURNER_ROLE = keccak256("MINTER_BURNER_ROLE");
+
+    // Events.
+    event AlreadyMinted(uint256 indexed value);
 
     // Errors.
     error Unauthorized();
@@ -53,13 +65,39 @@ abstract contract CustomToken is
 
     // -----================= ::: MODIFIERS ::: =================-----
 
-    /// @dev Checks if the sender is LxLy Bridge or Native Converter.
-    /// @dev This modifier is used to restrict the minting and burning of Custom Token.
-    modifier onlyLxlyBridgeAndNativeConverter() {
+    /// @dev Checks if the sender is LxLy Bridge or Native Converter or an additional minter-burner.
+    /// @dev This modifier is used to restrict the minting of Custom Token.
+    modifier mintController(address account, uint256 value) {
         CustomTokenStorage storage $ = _getCustomTokenStorage();
 
-        // Only LxLy Bridge and Native Converter can mint and burn Custom Token.
-        require(msg.sender == $.lxlyBridge || msg.sender == $.nativeConverter, Unauthorized());
+        bool senderIsLxlyBridgeOrNativeConverter = msg.sender == $.lxlyBridge || msg.sender == $.nativeConverter;
+        bool senderIsAdditionalMinterBurner = hasRole(MINTER_BURNER_ROLE, msg.sender);
+
+        // Only LxLy Bridge and Native Converter and additional minter-burners can mint Custom Token.
+        require(senderIsLxlyBridgeOrNativeConverter || senderIsAdditionalMinterBurner, Unauthorized());
+
+        _;
+
+        // If `account` is address zero, that means special logic will (or will not) be executed in the `mint` function.
+        if (account != address(0) && senderIsAdditionalMinterBurner && !senderIsLxlyBridgeOrNativeConverter) {
+            $._netMintedByAdditionalMintersBurners[msg.sender] += value;
+        }
+    }
+
+    /// @dev Checks if the sender is LxLy Bridge or Native Converter or an additional minter-burner.
+    /// @dev This modifier is used to restrict the burning of Custom Token.
+    modifier burnController(uint256 value) {
+        CustomTokenStorage storage $ = _getCustomTokenStorage();
+
+        bool senderIsLxlyBridgeOrNativeConverter = msg.sender == $.lxlyBridge || msg.sender == $.nativeConverter;
+        bool senderIsAdditionalBurner = hasRole(MINTER_BURNER_ROLE, msg.sender);
+
+        // Only LxLy Bridge and Native Converter and additional burners can burn Custom Token.
+        require(senderIsLxlyBridgeOrNativeConverter || senderIsAdditionalBurner, Unauthorized());
+
+        if (senderIsAdditionalBurner && !senderIsLxlyBridgeOrNativeConverter) {
+            $._netMintedByAdditionalMintersBurners[msg.sender] -= value;
+        }
 
         _;
     }
@@ -171,27 +209,25 @@ abstract contract CustomToken is
 
     /// @notice Mints Custom Tokens to the recipient.
     /// @notice This function can be called by LxLy Bridge and Native Converter only.
-    function mint(address account, uint256 value)
-        external
-        whenNotPaused
-        onlyLxlyBridgeAndNativeConverter
-        nonReentrant
-    {
+    function mint(address account, uint256 value) external whenNotPaused mintController(account, value) nonReentrant {
+        CustomTokenStorage storage $ = _getCustomTokenStorage();
+
         // When we migrate backing to Lx, we end up sending tokens to address(0) here.
         // These need to be claimable so the bridge accounting is correct and we allow it here by not reverting.
-        if (account == address(0)) return;
+        if (msg.sender == lxlyBridge() && account == address(0)) {
+            NativeConverter($.nativeConverter).removeMigrationInProgress(value);
+
+            emit AlreadyMinted(value);
+
+            return;
+        }
 
         _mint(account, value);
     }
 
     /// @notice Burns Custom Tokens from a holder.
     /// @notice This function can be called by LxLy Bridge and Native Converter only.
-    function burn(address account, uint256 value)
-        external
-        whenNotPaused
-        onlyLxlyBridgeAndNativeConverter
-        nonReentrant
-    {
+    function burn(address account, uint256 value) external whenNotPaused burnController(value) nonReentrant {
         _burn(account, value);
     }
 

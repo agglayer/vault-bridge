@@ -42,4 +42,7 @@ remappings_generate = true
 remappings_version = false
 remappings_location = "config"
 
+[lint]
+lint_on_build = false
+
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
