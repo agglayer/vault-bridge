@@ -448,6 +448,8 @@ abstract contract NativeConverter is
         // Update the backing data.
         $.backingOnLayerY -= assets;
 
+        _addMigrationInProgress(assets);
+
         // Calculate the amount of Custom Token for which backing is being migrated.
         uint256 shares = _convertToShares(assets);
 
