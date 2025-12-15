@@ -33,7 +33,7 @@ contract GenericNativeConverterTest is Test {
     uint8 internal constant LEAF_TYPE_ASSET = 0;
     uint8 internal constant LEAF_TYPE_MESSAGE = 1;
     address internal constant LXLY_BRIDGE = 0x2a3DD3EB832aF982ec71669E178424b10Dca2EDe;
-    string internal constant NATIVE_CONVERTER_VERSION = "0.5.0";
+    string internal constant NATIVE_CONVERTER_VERSION = "0.5.1";
     uint32 internal constant NETWORK_ID_L1 = 0;
     uint32 internal constant NETWORK_ID_L2 = 1;
     uint8 internal constant ORIGINAL_UNDERLYING_TOKEN_DECIMALS = 18;
@@ -338,8 +338,9 @@ contract GenericNativeConverterTest is Test {
                 )
             )
         );
-        bytes memory permitData =
-            abi.encodeWithSelector(PERMIT_SIGNATURE, sender, address(nativeConverter), amount, block.timestamp, v, r, s);
+        bytes memory permitData = abi.encodeWithSelector(
+            PERMIT_SIGNATURE, sender, address(nativeConverter), amount, block.timestamp, v, r, s
+        );
 
         vm.startPrank(sender);
 
@@ -571,9 +572,10 @@ contract GenericNativeConverterTest is Test {
         address bridgeManager = abi.decode(data, (address));
 
         vm.prank(bridgeManager);
-        IBridgeL2SovereignChain(LXLY_BRIDGE).setMultipleSovereignTokenAddress(
-            originNetworks, originTokenAddresses, sovereignTokenAddresses, isNotMintable
-        );
+        IBridgeL2SovereignChain(LXLY_BRIDGE)
+            .setMultipleSovereignTokenAddress(
+                originNetworks, originTokenAddresses, sovereignTokenAddresses, isNotMintable
+            );
     }
 
     function _proxify(address logic, address admin, bytes memory initData) internal returns (address proxy) {
