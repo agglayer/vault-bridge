@@ -12,156 +12,185 @@ import {NonDefaultOftAdapter} from "src/primary-chain/layerzero/NonDefaultOftAda
 // Other functionality.
 import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
-/// @title Deploy NonDefault OFT Adapters (Primary Chain)
-/// @notice Deploys LayerZero NonDefaultOftAdapter proxies for Vault Bridge tokens on the primary chain (L1).
-/// @dev INTERNAL script. Run against the primary chain RPC.
+/// @title Deploy Non-Default Upgradeable OFT Adapters (Primary Chain)
+/// @notice Creates singleton `NonDefaultOftAdapter` implementation and a `TransparentUpgradeableProxy` for each Non-Default OFT Adapter, points the proxies to the implementation, and initializes them.
+/// @dev Each Non-Default Upgradeable OFT Adapter needs to be configured in VB-LZ-ENV. Please refer to `src/secondary-chain/layerzero/README.md` for more information.
 contract DeployNonDefaultOFTAdapters is Script {
     // ============ Constants ============
     address private constant ADDRESS_ZERO = address(0);
 
-    // ============ Optional label (for logs only) ============
+    // ============ Primary Chain Name ============
     string public primaryChainName;
 
-    // ============ Deployer / Ownership ============
+    // ============ Accounts ============
     address public deployerAddress;
     address public ownerAddress;
     address public delegateAddress;
-    address public proxyOwnerAddress;
+    address public proxyAdminOwnerAddress;
 
     // ============ LayerZero ============
-    address public lzEndpointL1;
+    address public lzEndpoint;
 
-    // ============ Token Deployment Flags ============
-    bool public deployVbEth;
-    bool public deployVbUsdc;
-    bool public deployVbUsdt;
-    bool public deployVbUsds;
-    bool public deployVbWbtc;
+    // ============ Deployment Flags ============
+    bool public deployForVbEth;
+    bool public deployForVbUsdc;
+    bool public deployForVbUsdt;
+    bool public deployForVbUsds;
+    bool public deployForVbWbtc;
 
-    // ============ L1 Token Addresses (Vault Tokens) ============
-    address public vbEthL1;
-    address public vbUsdcL1;
-    address public vbUsdtL1;
-    address public vbUsdsL1;
-    address public vbWbtcL1;
+    // ============ vbToken Addresses ============
+    address public vbEth;
+    address public vbUsdc;
+    address public vbUsdt;
+    address public vbUsds;
+    address public vbWbtc;
 
-    // ============ Deployed Adapter Proxies ============
-    NonDefaultOftAdapter public vbEthAdapterL1;
-    NonDefaultOftAdapter public vbUsdcAdapterL1;
-    NonDefaultOftAdapter public vbUsdtAdapterL1;
-    NonDefaultOftAdapter public vbUsdsAdapterL1;
-    NonDefaultOftAdapter public vbWbtcAdapterL1;
+    // ============ Non-Default OFT Adapter Implementations ============
+    address public vbEthOftAdapterImplementation;
+    address public vbUsdcOftAdapterImplementation;
+    address public vbUsdtOftAdapterImplementation;
+    address public vbUsdsOftAdapterImplementation;
+    address public vbWbtcOftAdapterImplementation;
 
-    /// @notice Configure parameters before execution.
+    // ============ Non-Default OFT Adapter Proxies ============
+    NonDefaultOftAdapter public vbEthOftAdapter;
+    NonDefaultOftAdapter public vbUsdcOftAdapter;
+    NonDefaultOftAdapter public vbUsdtOftAdapter;
+    NonDefaultOftAdapter public vbUsdsOftAdapter;
+    NonDefaultOftAdapter public vbWbtcOftAdapter;
+
+    /// @notice Setup.
+    /// @dev You can customize the setup here.
     function setUp() public {
-        // ============ Chain Label ============
-        primaryChainName = "sepolia"; // for logging only
+        // ============ Primary Chain Name ============
+        primaryChainName = "mainnet";
 
-        // ============ Address Configuration ============
+        // ============ Accounts ============
         deployerAddress = ADDRESS_ZERO;
         ownerAddress = ADDRESS_ZERO;
         delegateAddress = ADDRESS_ZERO;
-        proxyOwnerAddress = ADDRESS_ZERO;
+        proxyAdminOwnerAddress = ADDRESS_ZERO;
 
         // ============ LayerZero ============
-        lzEndpointL1 = ADDRESS_ZERO;
+        lzEndpoint = ADDRESS_ZERO;
 
-        // ============ Token Flags ============
-        deployVbEth = false;
-        deployVbUsdc = false;
-        deployVbUsdt = false;
-        deployVbUsds = false;
-        deployVbWbtc = false;
+        // ============ Deployment Flags ============
+        deployForVbEth = false;
+        deployForVbUsdc = false;
+        deployForVbUsdt = false;
+        deployForVbUsds = false;
+        deployForVbWbtc = false;
 
-        // ============ L1 Token Addresses ============
-        vbEthL1 = ADDRESS_ZERO;
-        vbUsdcL1 = ADDRESS_ZERO;
-        vbUsdtL1 = ADDRESS_ZERO;
-        vbUsdsL1 = ADDRESS_ZERO;
-        vbWbtcL1 = ADDRESS_ZERO;
+        // ============ vbToken Addresses ============
+        vbEth = ADDRESS_ZERO;
+        vbUsdc = ADDRESS_ZERO;
+        vbUsdt = ADDRESS_ZERO;
+        vbUsds = ADDRESS_ZERO;
+        vbWbtc = ADDRESS_ZERO;
 
         // ============ Validation ============
         require(bytes(primaryChainName).length != 0, "Aborted: `primaryChainName` not set");
         require(deployerAddress != ADDRESS_ZERO, "Aborted: `deployerAddress` not set");
         require(ownerAddress != ADDRESS_ZERO, "Aborted: `ownerAddress` not set");
         require(delegateAddress != ADDRESS_ZERO, "Aborted: `delegateAddress` not set");
-        require(proxyOwnerAddress != ADDRESS_ZERO, "Aborted: `proxyOwnerAddress` not set");
-        require(lzEndpointL1 != ADDRESS_ZERO, "Aborted: `lzEndpointL1` not set");
+        require(proxyAdminOwnerAddress != ADDRESS_ZERO, "Aborted: `proxyAdminOwnerAddress` not set");
+        require(lzEndpoint != ADDRESS_ZERO, "Aborted: `lzEndpoint` not set");
 
         require(
-            deployVbEth || deployVbUsdc || deployVbUsdt || deployVbUsds || deployVbWbtc,
-            "Aborted: At least one token must be deployed"
+            deployForVbEth || deployForVbUsdc || deployForVbUsdt || deployForVbUsds || deployForVbWbtc,
+            "Aborted: Nothing to deploy"
         );
 
-        if (deployVbEth) require(vbEthL1 != ADDRESS_ZERO, "Aborted: `vbEthL1` not set");
-        if (deployVbUsdc) require(vbUsdcL1 != ADDRESS_ZERO, "Aborted: `vbUsdcL1` not set");
-        if (deployVbUsdt) require(vbUsdtL1 != ADDRESS_ZERO, "Aborted: `vbUsdtL1` not set");
-        if (deployVbUsds) require(vbUsdsL1 != ADDRESS_ZERO, "Aborted: `vbUsdsL1` not set");
-        if (deployVbWbtc) require(vbWbtcL1 != ADDRESS_ZERO, "Aborted: `vbWbtcL1` not set");
+        if (deployForVbEth) require(vbEth != ADDRESS_ZERO, "Aborted: `vbEth` not set");
+        if (deployForVbUsdc) require(vbUsdc != ADDRESS_ZERO, "Aborted: `vbUsdc` not set");
+        if (deployForVbUsdt) require(vbUsdt != ADDRESS_ZERO, "Aborted: `vbUsdt` not set");
+        if (deployForVbUsds) require(vbUsds != ADDRESS_ZERO, "Aborted: `vbUsds` not set");
+        if (deployForVbWbtc) require(vbWbtc != ADDRESS_ZERO, "Aborted: `vbWbtc` not set");
     }
 
-    /// @notice Main execution function - deploys L1 OFT adapters for configured tokens.
-    /// @dev Run with the primary chain rpc-url (or foundry.toml alias).
+    /// @notice Run.
+    /// @dev You can customize the run here.
     function run() public {
-        console.log("Running `DeployNonDefaultOFTAdapters` on", primaryChainName);
+        console.log("Running `DeployNonDefaultOFTAdapters` script...");
 
-        if (deployVbEth) vbEthAdapterL1 = _deployL1OftAdapter("vbETH", vbEthL1);
-        if (deployVbUsdc) vbUsdcAdapterL1 = _deployL1OftAdapter("vbUSDC", vbUsdcL1);
-        if (deployVbUsdt) vbUsdtAdapterL1 = _deployL1OftAdapter("vbUSDT", vbUsdtL1);
-        if (deployVbUsds) vbUsdsAdapterL1 = _deployL1OftAdapter("vbUSDS", vbUsdsL1);
-        if (deployVbWbtc) vbWbtcAdapterL1 = _deployL1OftAdapter("vbWBTC", vbWbtcL1);
+        _createSelectFork(primaryChainName);
 
-        _printDeploymentSummary();
+        bytes[] memory reinitialize1Data = new bytes[](1);
+        reinitialize1Data[0] = abi.encodeCall(NonDefaultOftAdapter.reinitialize1, (ownerAddress, delegateAddress));
+        bytes memory reinitializeData = abi.encodeCall(NonDefaultOftAdapter.reinitialize, (reinitialize1Data));
 
-        console.log("Finished running `DeployNonDefaultOFTAdapters`");
+        if (deployForVbEth) {
+            vbEthOftAdapterImplementation = _createNonDefaultOftAdapterImplementation("vbETH", vbEth);
+            vbEthOftAdapter =
+                _proxifyAndInitializeNonDefaultOftAdapter("vbETH", vbEthOftAdapterImplementation, reinitializeData);
+        }
+        if (deployForVbUsdc) {
+            vbUsdcOftAdapterImplementation = _createNonDefaultOftAdapterImplementation("vbUSDC", vbUsdc);
+            vbUsdcOftAdapter =
+                _proxifyAndInitializeNonDefaultOftAdapter("vbUSDC", vbUsdcOftAdapterImplementation, reinitializeData);
+        }
+        if (deployForVbUsdt) {
+            vbUsdtOftAdapterImplementation = _createNonDefaultOftAdapterImplementation("vbUSDT", vbUsdt);
+            vbUsdtOftAdapter =
+                _proxifyAndInitializeNonDefaultOftAdapter("vbUSDT", vbUsdtOftAdapterImplementation, reinitializeData);
+        }
+        if (deployForVbUsds) {
+            vbUsdsOftAdapterImplementation = _createNonDefaultOftAdapterImplementation("vbUSDS", vbUsds);
+            vbUsdsOftAdapter =
+                _proxifyAndInitializeNonDefaultOftAdapter("vbUSDS", vbUsdsOftAdapterImplementation, reinitializeData);
+        }
+        if (deployForVbWbtc) {
+            vbWbtcOftAdapterImplementation = _createNonDefaultOftAdapterImplementation("vbWBTC", vbWbtc);
+            vbWbtcOftAdapter =
+                _proxifyAndInitializeNonDefaultOftAdapter("vbWBTC", vbWbtcOftAdapterImplementation, reinitializeData);
+        }
+
+        console.log("Finished running `DeployNonDefaultOFTAdapters` script");
     }
 
-    function _deployProxy(address implementation, bytes memory initData) internal returns (address) {
-        _startBroadcast();
-        TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(implementation, proxyOwnerAddress, initData);
-        _stopBroadcast();
-        return address(proxy);
-    }
-
-    function _deployL1OftAdapter(string memory tokenSymbol, address vbTokenAddress)
+    function _createNonDefaultOftAdapterImplementation(string memory label, address vbTokenAddress)
         internal
-        returns (NonDefaultOftAdapter)
+        returns (address)
     {
-        console.log(string.concat("\nDeploying L1 OFT Adapter for ", tokenSymbol, "..."));
+        console.log("Deploying", label, "Non-Default OFT Adapter implementation...");
 
-        // Deploy implementation
         _startBroadcast();
-        NonDefaultOftAdapter implementation = new NonDefaultOftAdapter(vbTokenAddress, lzEndpointL1);
+
+        NonDefaultOftAdapter implementation = new NonDefaultOftAdapter(vbTokenAddress, lzEndpoint);
+
         _stopBroadcast();
 
-        console.log(string.concat(tokenSymbol, " L1 adapter implementation deployed:"), address(implementation));
+        console.log("Non-Default OFT Adapter implementation deployed:", address(implementation));
 
-        // Prepare initialization data (atomic via proxy constructor)
-        bytes[] memory reinitializeData = new bytes[](1);
-        reinitializeData[0] = abi.encodeCall(NonDefaultOftAdapter.reinitialize1, (ownerAddress, delegateAddress));
-
-        bytes memory initData = abi.encodeCall(NonDefaultOftAdapter.reinitialize, (reinitializeData));
-
-        // Deploy proxy
-        address proxyAddress = _deployProxy(address(implementation), initData);
-
-        console.log(string.concat(tokenSymbol, " L1 adapter proxy deployed:"), proxyAddress);
-
-        return NonDefaultOftAdapter(proxyAddress);
+        return address(implementation);
     }
 
-    function _printDeploymentSummary() internal view {
-        console.log("\n========================================");
-        console.log("L1 DEPLOYMENT SUMMARY");
-        console.log("========================================");
+    function _proxifyAndInitializeNonDefaultOftAdapter(
+        string memory label,
+        address oftAdapterImplementation,
+        bytes memory initializationData
+    ) internal returns (NonDefaultOftAdapter) {
+        console.log(
+            string.concat("Proxifying and initializing Non-Default OFT Adapter for ", string.concat(label, "..."))
+        );
 
-        if (deployVbEth) console.log("vbETH  L1 Adapter:", address(vbEthAdapterL1));
-        if (deployVbUsdc) console.log("vbUSDC L1 Adapter:", address(vbUsdcAdapterL1));
-        if (deployVbUsdt) console.log("vbUSDT L1 Adapter:", address(vbUsdtAdapterL1));
-        if (deployVbUsds) console.log("vbUSDS L1 Adapter:", address(vbUsdsAdapterL1));
-        if (deployVbWbtc) console.log("vbWBTC L1 Adapter:", address(vbWbtcAdapterL1));
+        require(oftAdapterImplementation != ADDRESS_ZERO, "Aborted: `oftAdapterImplementation` not set");
 
-        console.log("\n========================================");
+        _startBroadcast();
+
+        TransparentUpgradeableProxy proxy =
+            new TransparentUpgradeableProxy(oftAdapterImplementation, ownerAddress, initializationData);
+
+        _stopBroadcast();
+
+        console.log(label, "Non-Default OFT Adapter proxified and initialized:", address(proxy));
+
+        return NonDefaultOftAdapter(address(proxy));
+    }
+
+    function _createSelectFork(string memory chainName_) internal {
+        vm.createSelectFork(vm.rpcUrl(chainName_));
+        console.log("Switched to", chainName_, "chain");
     }
 
     function _startBroadcast() internal {
