@@ -26,12 +26,13 @@ contract UpgradeKatana is Script {
     // Deployer address.
     address public deployerAddress;
 
-    // `GenericCustomToken`, GenericNativeConverter`, and `WETHNativeConverter` implementations.
+    // `WETH`, `GenericCustomToken`, `GenericNativeConverter`, and `WETHNativeConverter` implementations.
+    address public WETHImplementation;
     address public genericCustomTokenImplementation;
     address public genericNativeConverterImplementation;
-    address public wETHNativeConverterImplementation;
+    address public WETHNativeConverterImplementation;
 
-    // `GenericCustomToken`, GenericNativeConverter`, and `WETHNativeConverter` proxies.
+    // `WETH`, `GenericCustomToken`, GenericNativeConverter`, and `WETHNativeConverter` proxies.
     address public vbEth;
     address public vbUsdc;
     address public vbUsdt;
@@ -47,18 +48,19 @@ contract UpgradeKatana is Script {
     /// @dev You can customize the setup here.
     function setUp() public {
         // Set the inputs.
-        secondaryChainName = "";
-        deployerAddress = 0x0000000000000000000000000000000000000000;
-        vbEth = 0x0000000000000000000000000000000000000000;
-        vbUsdc = 0x0000000000000000000000000000000000000000;
-        vbUsdt = 0x0000000000000000000000000000000000000000;
-        vbUsds = 0x0000000000000000000000000000000000000000;
-        vbWbtc = 0x0000000000000000000000000000000000000000;
-        vbEthNativeConverter = 0x0000000000000000000000000000000000000000;
-        vbUsdcNativeConverter = 0x0000000000000000000000000000000000000000;
-        vbUsdtNativeConverter = 0x0000000000000000000000000000000000000000;
-        vbUsdsNativeConverter = 0x0000000000000000000000000000000000000000;
-        vbWbtcNativeConverter = 0x0000000000000000000000000000000000000000;
+        secondaryChainName = "katana";
+        deployerAddress = 0xF3378FEf290Cf389418b4Ac5Ae00ccA099Ac672F;
+        vbEth = 0xEE7D8BCFb72bC1880D0Cf19822eB0A2e6577aB62;
+        vbUsdc = 0x203A662b0BD271A6ed5a60EdFbd04bFce608FD36;
+        vbUsdt = 0x2DCa96907fde857dd3D816880A0df407eeB2D2F2;
+        vbUsds = 0x62D6A123E8D19d06d68cf0d2294F9A3A0362c6b3;
+        vbWbtc = 0x0913DA6Da4b42f538B445599b46Bb4622342Cf52;
+
+        vbEthNativeConverter = 0xa6B0DB1293144Ebe9478B6a84F75dd651E45914a;
+        vbUsdcNativeConverter = 0x97a3500083348A147F419b8a65717909762c389f;
+        vbUsdtNativeConverter = 0x053FA9b934b83E1E0ffc7e98a41aAdc3640bB462;
+        vbUsdsNativeConverter = 0x639f13D5f30B47c792b6851238c05D0b623C77DE;
+        vbWbtcNativeConverter = 0xb00aa68b87256E2F22058fB2Ba3246EEc54A44fc;
 
         // Check the inputs.
         require(bytes(secondaryChainName).length != 0, "Aborted: `secondaryChainName` not set");
@@ -83,56 +85,39 @@ contract UpgradeKatana is Script {
         // Switch to the Secondary Chain.
         _createSelectFork(secondaryChainName);
 
-        // Create singleton `GenericCustomToken`, `GenericNativeConverter`, and `WETHNativeConverter` implementations.
+        // Create singleton `WETH`, `GenericCustomToken`, `WETHNativeConverter`, and `GenericNativeConverter` implementations.
+        WETHImplementation = _createWETHImplementation();
         genericCustomTokenImplementation = _createGenericCustomTokenImplementation();
+        WETHNativeConverterImplementation = _createWETHNativeConverterImplementation();
         genericNativeConverterImplementation = _createGenericNativeConverterImplementation();
-        wETHNativeConverterImplementation = _createWETHNativeConverterImplementation();
 
-        // Print upgrade data for `GenericCustomToken`, GenericNativeConverter`, and `WETHNativeConverter` proxies.
+        // Print upgrade data for `WETH`, `GenericCustomToken`, `GenericNativeConverter`, and `WETHNativeConverter` proxies.
         {
-
-            _printProxyUpgradeData("vbUSDC GenericCustomToken", address(vbUsdc), genericCustomTokenImplementation, "");
-
-            _printProxyUpgradeData("vbUSDT GenericCustomToken", address(vbUsdt), genericCustomTokenImplementation, "");
-
-            _printProxyUpgradeData("vbUSDS GenericCustomToken", address(vbUsds), genericCustomTokenImplementation, "");
-
-            _printProxyUpgradeData("vbWBTC GenericCustomToken", address(vbWbtc), genericCustomTokenImplementation, "");
+            _printProxyUpgradeData("vbETH", vbEth, WETHImplementation, "");
+            _printProxyUpgradeData("vbUSDC", vbUsdc, genericCustomTokenImplementation, "");
+            _printProxyUpgradeData("vbUSDT", vbUsdt, genericCustomTokenImplementation, "");
+            _printProxyUpgradeData("vbUSDS", vbUsds, genericCustomTokenImplementation, "");
+            _printProxyUpgradeData("vbWBTC", vbWbtc, genericCustomTokenImplementation, "");
 
             _printProxyUpgradeData(
-                "vbETH WETHNativeConverter", address(vbEthNativeConverter), wETHNativeConverterImplementation, ""
+                "vbETH Native Converter", vbEthNativeConverter, WETHNativeConverterImplementation, ""
             );
-
             _printProxyUpgradeData(
-                "vbUSDC GenericNativeConverter",
-                address(vbUsdcNativeConverter),
-                genericNativeConverterImplementation,
-                ""
+                "vbUSDC Native Converter", vbUsdcNativeConverter, genericNativeConverterImplementation, ""
             );
-
             _printProxyUpgradeData(
-                "vbUSDT GenericNativeConverter",
-                address(vbUsdtNativeConverter),
-                genericNativeConverterImplementation,
-                ""
+                "vbUSDT Native Converter", vbUsdtNativeConverter, genericNativeConverterImplementation, ""
             );
-
             _printProxyUpgradeData(
-                "vbUSDS GenericNativeConverter",
-                address(vbUsdsNativeConverter),
-                genericNativeConverterImplementation,
-                ""
+                "vbUSDS Native Converter", vbUsdsNativeConverter, genericNativeConverterImplementation, ""
             );
-
             _printProxyUpgradeData(
-                "vbWBTC GenericNativeConverter",
-                address(vbWbtcNativeConverter),
-                genericNativeConverterImplementation,
-                ""
+                "vbWBTC Native Converter", vbWbtcNativeConverter, genericNativeConverterImplementation, ""
             );
         }
 
-        console.log("Finished running `DeployCustomTokensWormhole` script");
+        console.log();
+        console.log("Finished running `UpgradeKatana` script");
     }
 
     /// @notice Creates a singleton `WETH` implementation.
@@ -142,7 +127,6 @@ contract UpgradeKatana is Script {
         _startBroadcast();
 
         // Create `WETH` implementation.
-
         WETH implementation = new WETH();
 
         _stopBroadcast();
@@ -160,29 +144,11 @@ contract UpgradeKatana is Script {
         _startBroadcast();
 
         // Create `GenericCustomToken` implementation.
-
         GenericCustomToken implementation = new GenericCustomToken();
 
         _stopBroadcast();
 
         console.log("`GenericCustomToken` implementation created:", address(implementation));
-
-        // Return the address of the implementation.
-        return address(implementation);
-    }
-
-    /// @notice Creates a singleton `GenericNativeConverter` implementation.
-    function _createGenericNativeConverterImplementation() internal returns (address) {
-        console.log("Creating `GenericNativeConverter` implementation...");
-
-        _startBroadcast();
-
-        // Create `GenericNativeConverter` implementation.
-        GenericNativeConverter implementation = new GenericNativeConverter();
-
-        _stopBroadcast();
-
-        console.log("`GenericNativeConverter` implementation created:", address(implementation));
 
         // Return the address of the implementation.
         return address(implementation);
@@ -205,6 +171,23 @@ contract UpgradeKatana is Script {
         return address(implementation);
     }
 
+    /// @notice Creates a singleton `GenericNativeConverter` implementation.
+    function _createGenericNativeConverterImplementation() internal returns (address) {
+        console.log("Creating `GenericNativeConverter` implementation...");
+
+        _startBroadcast();
+
+        // Create `GenericNativeConverter` implementation.
+        GenericNativeConverter implementation = new GenericNativeConverter();
+
+        _stopBroadcast();
+
+        console.log("`GenericNativeConverter` implementation created:", address(implementation));
+
+        // Return the address of the implementation.
+        return address(implementation);
+    }
+
     /// @notice Prints all data for upgrading a proxy.
     function _printProxyUpgradeData(
         string memory label,
@@ -212,6 +195,9 @@ contract UpgradeKatana is Script {
         address implementation,
         bytes memory upgradeData
     ) internal view {
+        console.log("\n==========================");
+
+        console.log();
         console.log("Printing proxy upgrade data for", string.concat(label, "..."));
 
         address proxyAdmin = address(
@@ -220,15 +206,16 @@ contract UpgradeKatana is Script {
 
         require(proxyAdmin != address(0), "Aborted: EIP-1967 not detected");
 
+        console.log();
         console.log("Proxy:", proxy);
         console.log("New implementation:", implementation);
-        console.log("Proxy Admin (EIP-1967):", proxyAdmin);
+        console.log("Proxy admin (EIP-1967):", proxyAdmin);
 
         if (proxyAdmin.code.length > 0) {
             try ProxyAdmin(proxyAdmin).owner() returns (address owner_) {
-                console.log("Proxy Admin owner:", owner_);
+                console.log("ProxyAdmin owner:", owner_);
             } catch {
-                console.log("Non-Default Proxy Admin detected");
+                console.log("Non-default proxy admin detected");
             }
         }
 
@@ -238,13 +225,18 @@ contract UpgradeKatana is Script {
         bytes memory directCallData =
             abi.encodeWithSelector(ITransparentUpgradeableProxy.upgradeToAndCall.selector, implementation, upgradeData);
 
+        console.log();
         console.log("ProxyAdmin.upgradeAndCall calldata:");
+        console.log();
         console.logBytes(defaultCalldata);
 
+        console.log();
         console.log("TransparentUpgradeableProxy.upgradeToAndCall calldata:");
+        console.log();
         console.logBytes(directCallData);
 
-        console.log("Proxy upgrade data for", label, "printed.");
+        console.log();
+        console.log("Proxy upgrade data for", label, "printed");
     }
 
     function _createSelectFork(string memory chainName_) internal {
