@@ -63,7 +63,7 @@ contract DeployNonDefaultOFTAdapters is Script {
     /// @dev You can customize the setup here.
     function setUp() public {
         // ============ Primary Chain Name ============
-        primaryChainName = "mainnet";
+        primaryChainName = "";
 
         // ============ Accounts ============
         deployerAddress = ADDRESS_ZERO;
