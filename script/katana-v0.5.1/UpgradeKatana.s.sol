@@ -17,7 +17,7 @@ import {ProxyAdmin} from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.s
 /// @title Upgrade Vault Bridge (Agglayer) on Katana v0.5.1.
 /// @author See https://github.com/agglayer/vault-bridge
 /// @notice Creates singleton `GenericCustomToken`, `GenericNativeConverter`, and `WETHNativeConverter` implementations.
-/// @dev The existing proxies of vbETH, vbUSDC, vbUSDT, vbUSDS, and vbWBTC need to be upgraded to point to the new `GenericCustomToken` implementation using Tthe Safe Batch Transaction Builder afterward.
+/// @dev The existing proxies of vbETH, vbUSDC, vbUSDT, vbUSDS, and vbWBTC need to be upgraded to point to the new `WETH` and `GenericCustomToken` implementations using the Safe Batch Transaction Builder afterward.
 /// @dev The existing proxy of WETH Native Converter need to be upgraded to point to the new `WETHNativeConverter` implementation using the Safe Batch Transaction Builder afterward.
 contract UpgradeKatana is Script {
     // Secondary Chain name.
@@ -48,19 +48,18 @@ contract UpgradeKatana is Script {
     /// @dev You can customize the setup here.
     function setUp() public {
         // Set the inputs.
-        secondaryChainName = "katana";
-        deployerAddress = 0xF3378FEf290Cf389418b4Ac5Ae00ccA099Ac672F;
-        vbEth = 0xEE7D8BCFb72bC1880D0Cf19822eB0A2e6577aB62;
-        vbUsdc = 0x203A662b0BD271A6ed5a60EdFbd04bFce608FD36;
-        vbUsdt = 0x2DCa96907fde857dd3D816880A0df407eeB2D2F2;
-        vbUsds = 0x62D6A123E8D19d06d68cf0d2294F9A3A0362c6b3;
-        vbWbtc = 0x0913DA6Da4b42f538B445599b46Bb4622342Cf52;
-
-        vbEthNativeConverter = 0xa6B0DB1293144Ebe9478B6a84F75dd651E45914a;
-        vbUsdcNativeConverter = 0x97a3500083348A147F419b8a65717909762c389f;
-        vbUsdtNativeConverter = 0x053FA9b934b83E1E0ffc7e98a41aAdc3640bB462;
-        vbUsdsNativeConverter = 0x639f13D5f30B47c792b6851238c05D0b623C77DE;
-        vbWbtcNativeConverter = 0xb00aa68b87256E2F22058fB2Ba3246EEc54A44fc;
+        secondaryChainName = "";
+        deployerAddress = 0x0000000000000000000000000000000000000000;
+        vbEth = 0x0000000000000000000000000000000000000000;
+        vbUsdc = 0x0000000000000000000000000000000000000000;
+        vbUsdt = 0x0000000000000000000000000000000000000000;
+        vbUsds = 0x0000000000000000000000000000000000000000;
+        vbWbtc = 0x0000000000000000000000000000000000000000;
+        vbEthNativeConverter = 0x0000000000000000000000000000000000000000;
+        vbUsdcNativeConverter = 0x0000000000000000000000000000000000000000;
+        vbUsdtNativeConverter = 0x0000000000000000000000000000000000000000;
+        vbUsdsNativeConverter = 0x0000000000000000000000000000000000000000;
+        vbWbtcNativeConverter = 0x0000000000000000000000000000000000000000;
 
         // Check the inputs.
         require(bytes(secondaryChainName).length != 0, "Aborted: `secondaryChainName` not set");
