@@ -13,7 +13,7 @@ import {NonDefaultOftAdapter} from "src/primary-chain/layerzero/NonDefaultOftAda
 import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
 /// @title Deploy Non-Default Upgradeable OFT Adapters (Primary Chain)
-/// @notice Creates singleton `NonDefaultOftAdapter` implementation and a `TransparentUpgradeableProxy` for each Non-Default OFT Adapter, points the proxies to the implementation, and initializes them.
+/// @notice Creates singleton `NonDefaultOftAdapter` implementation and a `TransparentUpgradeableProxy` for each Non-Default Upgradeable OFT Adapter, points the proxies to the implementation, and initializes them.
 /// @dev Each Non-Default Upgradeable OFT Adapter needs to be configured in VB-LZ-ENV. Please refer to `src/secondary-chain/layerzero/README.md` for more information.
 contract DeployNonDefaultOFTAdapters is Script {
     // ============ Constants ============
@@ -45,14 +45,14 @@ contract DeployNonDefaultOFTAdapters is Script {
     address public vbUsds;
     address public vbWbtc;
 
-    // ============ Non-Default OFT Adapter Implementations ============
+    // ============ Non-Default Upgradeable OFT Adapter Implementations ============
     address public vbEthOftAdapterImplementation;
     address public vbUsdcOftAdapterImplementation;
     address public vbUsdtOftAdapterImplementation;
     address public vbUsdsOftAdapterImplementation;
     address public vbWbtcOftAdapterImplementation;
 
-    // ============ Non-Default OFT Adapter Proxies ============
+    // ============ Non-Default Upgradeable OFT Adapter Proxies ============
     NonDefaultOftAdapter public vbEthOftAdapter;
     NonDefaultOftAdapter public vbUsdcOftAdapter;
     NonDefaultOftAdapter public vbUsdtOftAdapter;
@@ -152,7 +152,7 @@ contract DeployNonDefaultOFTAdapters is Script {
         internal
         returns (address)
     {
-        console.log("Deploying", label, "Non-Default OFT Adapter implementation...");
+        console.log("Deploying", label, "Non-Default Upgradeable OFT Adapter implementation...");
 
         _startBroadcast();
 
@@ -160,7 +160,7 @@ contract DeployNonDefaultOFTAdapters is Script {
 
         _stopBroadcast();
 
-        console.log("Non-Default OFT Adapter implementation deployed:", address(implementation));
+        console.log("Non-Default Upgradeable OFT Adapter implementation created:", address(implementation));
 
         return address(implementation);
     }
@@ -170,20 +170,18 @@ contract DeployNonDefaultOFTAdapters is Script {
         address oftAdapterImplementation,
         bytes memory initializationData
     ) internal returns (NonDefaultOftAdapter) {
-        console.log(
-            string.concat("Proxifying and initializing Non-Default OFT Adapter for ", string.concat(label, "..."))
-        );
+        console.log("Proxifying and initializing", label, "Non-Default Upgradeable OFT Adapter...");
 
         require(oftAdapterImplementation != ADDRESS_ZERO, "Aborted: `oftAdapterImplementation` not set");
 
         _startBroadcast();
 
         TransparentUpgradeableProxy proxy =
-            new TransparentUpgradeableProxy(oftAdapterImplementation, ownerAddress, initializationData);
+            new TransparentUpgradeableProxy(oftAdapterImplementation, proxyAdminOwnerAddress, initializationData);
 
         _stopBroadcast();
 
-        console.log(label, "Non-Default OFT Adapter proxified and initialized:", address(proxy));
+        console.log(label, "Non-Default Upgradeable OFT Adapter proxified and initialized:", address(proxy));
 
         return NonDefaultOftAdapter(address(proxy));
     }

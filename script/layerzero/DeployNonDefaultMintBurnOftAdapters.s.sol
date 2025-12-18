@@ -9,200 +9,207 @@ import "forge-std/Script.sol";
 // Main functionality.
 import {NonDefaultMintBurnOftAdapter} from "src/secondary-chain/layerzero/NonDefaultMintBurnOftAdapter.sol";
 
-// Interfaces.
+// External contracts.
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 // Other functionality.
 import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
-/// @title Deploy NonDefault Mint/Burn OFT Adapters (Secondary Chain)
-/// @notice Deploys LayerZero NonDefaultMintBurnOftAdapter proxies for Vault Bridge custom tokens on the secondary chain (L2).
-/// @dev INTERNAL script. Run against the secondary chain RPC.
+/// @title Deploy Non-Default Upgradeable Mint-Burn OFT Adapters (Secondary Chain)
+/// @notice Creates a `NonDefaultMintBurnOftAdapter` implementation and a `TransparentUpgradeableProxy` for each Non-Default Upgradeable Mint-Burn OFT Adapter, points the proxies to the implementation, and initializes them.
+/// @dev Each Non-Default Upgradeable Mint-Burn OFT Adapter needs to be configured in VB-LZ-ENV. Please refer to `src/secondary-chain/layerzero/README.md` for more information.
 contract DeployNonDefaultMintBurnOFTAdapters is Script {
     // ============ Constants ============
     address private constant ADDRESS_ZERO = address(0);
 
-    // ============ Optional label (for logs only) ============
+    // ============ Secondary Chain Name ============
     string public secondaryChainName;
 
-    // ============ Deployer / Ownership ============
+    // ============ Accounts ============
     address public deployerAddress;
     address public ownerAddress;
     address public delegateAddress;
-    address public proxyOwnerAddress;
+    address public proxyAdminOwnerAddress;
 
     // ============ LayerZero ============
-    address public lzEndpointL2;
+    address public lzEndpoint;
 
-    // ============ Adapter Configuration (shared) ============
+    // ============ OFT Adapter Configuration ============
     bool public customTokenApprovalRequired;
 
-    // ============ Token Deployment Flags ============
-    bool public deployVbEth;
-    bool public deployVbUsdc;
-    bool public deployVbUsdt;
-    bool public deployVbUsds;
-    bool public deployVbWbtc;
+    // ============ Deployment Flags ============
+    bool public deployForVbEth;
+    bool public deployForVbUsdc;
+    bool public deployForVbUsdt;
+    bool public deployForVbUsds;
+    bool public deployForVbWbtc;
 
-    // ============ L2 Token Addresses (Custom Tokens) ============
-    address public vbEthTokenL2;
-    address public vbUsdcTokenL2;
-    address public vbUsdtTokenL2;
-    address public vbUsdsTokenL2;
-    address public vbWbtcTokenL2;
+    // ============ Custom Token Addresses ============
+    address public vbEth;
+    address public vbUsdc;
+    address public vbUsdt;
+    address public vbUsds;
+    address public vbWbtc;
 
-    // ============ Deployed Adapter Proxies ============
-    NonDefaultMintBurnOftAdapter public vbEthAdapterL2;
-    NonDefaultMintBurnOftAdapter public vbUsdcAdapterL2;
-    NonDefaultMintBurnOftAdapter public vbUsdtAdapterL2;
-    NonDefaultMintBurnOftAdapter public vbUsdsAdapterL2;
-    NonDefaultMintBurnOftAdapter public vbWbtcAdapterL2;
+    // ============ Non-Default Upgradeable Mint-Burn OFT Adapter Implementations ============
+    address public vbEthOftAdapterImplementation;
+    address public vbUsdcOftAdapterImplementation;
+    address public vbUsdtOftAdapterImplementation;
+    address public vbUsdsOftAdapterImplementation;
+    address public vbWbtcOftAdapterImplementation;
 
-    /// @notice Configure parameters before execution.
+    // ============ Non-Default Upgradeable Mint-Burn OFT Adapter Proxies ============
+    NonDefaultMintBurnOftAdapter public vbEthOftAdapter;
+    NonDefaultMintBurnOftAdapter public vbUsdcOftAdapter;
+    NonDefaultMintBurnOftAdapter public vbUsdtOftAdapter;
+    NonDefaultMintBurnOftAdapter public vbUsdsOftAdapter;
+    NonDefaultMintBurnOftAdapter public vbWbtcOftAdapter;
+
+    /// @notice Setup.
+    /// @dev You can customize the setup here.
     function setUp() public {
-        // ============ Chain Label ============
-        secondaryChainName = "optimism_sepolia"; // for logging only
+        // ============ Secondary Chain Name ============
+        secondaryChainName = "";
 
-        // ============ Address Configuration ============
+        // ============ Accounts ============
         deployerAddress = ADDRESS_ZERO;
         ownerAddress = ADDRESS_ZERO;
         delegateAddress = ADDRESS_ZERO;
-        proxyOwnerAddress = ADDRESS_ZERO;
+        proxyAdminOwnerAddress = ADDRESS_ZERO;
 
         // ============ LayerZero ============
-        lzEndpointL2 = ADDRESS_ZERO;
+        lzEndpoint = ADDRESS_ZERO;
 
         // ============ Adapter Configuration ============
-        customTokenApprovalRequired = true;
+        customTokenApprovalRequired = false;
 
-        // ============ Token Flags ============
-        deployVbEth = false;
-        deployVbUsdc = false;
-        deployVbUsdt = false;
-        deployVbUsds = false;
-        deployVbWbtc = false;
+        // ============ Deployment Flags ============
+        deployForVbEth = false;
+        deployForVbUsdc = false;
+        deployForVbUsdt = false;
+        deployForVbUsds = false;
+        deployForVbWbtc = false;
 
-        // ============ L2 Token Addresses ============
-        vbEthTokenL2 = ADDRESS_ZERO;
-        vbUsdcTokenL2 = ADDRESS_ZERO;
-        vbUsdtTokenL2 = ADDRESS_ZERO;
-        vbUsdsTokenL2 = ADDRESS_ZERO;
-        vbWbtcTokenL2 = ADDRESS_ZERO;
+        // ============ Custom Token Addresses ============
+        vbEth = ADDRESS_ZERO;
+        vbUsdc = ADDRESS_ZERO;
+        vbUsdt = ADDRESS_ZERO;
+        vbUsds = ADDRESS_ZERO;
+        vbWbtc = ADDRESS_ZERO;
 
         // ============ Validation ============
         require(bytes(secondaryChainName).length != 0, "Aborted: `secondaryChainName` not set");
         require(deployerAddress != ADDRESS_ZERO, "Aborted: `deployerAddress` not set");
         require(ownerAddress != ADDRESS_ZERO, "Aborted: `ownerAddress` not set");
         require(delegateAddress != ADDRESS_ZERO, "Aborted: `delegateAddress` not set");
-        require(proxyOwnerAddress != ADDRESS_ZERO, "Aborted: `proxyOwnerAddress` not set");
-        require(lzEndpointL2 != ADDRESS_ZERO, "Aborted: `lzEndpointL2` not set");
+        require(proxyAdminOwnerAddress != ADDRESS_ZERO, "Aborted: `proxyAdminOwnerAddress` not set");
+        require(lzEndpoint != ADDRESS_ZERO, "Aborted: `lzEndpoint` not set");
 
         require(
-            deployVbEth || deployVbUsdc || deployVbUsdt || deployVbUsds || deployVbWbtc,
-            "Aborted: At least one token must be deployed"
+            deployForVbEth || deployForVbUsdc || deployForVbUsdt || deployForVbUsds || deployForVbWbtc,
+            "Aborted: Nothing to deploy"
         );
 
-        if (deployVbEth) require(vbEthTokenL2 != ADDRESS_ZERO, "Aborted: `vbEthTokenL2` not set");
-        if (deployVbUsdc) require(vbUsdcTokenL2 != ADDRESS_ZERO, "Aborted: `vbUsdcTokenL2` not set");
-        if (deployVbUsdt) require(vbUsdtTokenL2 != ADDRESS_ZERO, "Aborted: `vbUsdtTokenL2` not set");
-        if (deployVbUsds) require(vbUsdsTokenL2 != ADDRESS_ZERO, "Aborted: `vbUsdsTokenL2` not set");
-        if (deployVbWbtc) require(vbWbtcTokenL2 != ADDRESS_ZERO, "Aborted: `vbWbtcTokenL2` not set");
+        if (deployForVbEth) require(vbEth != ADDRESS_ZERO, "Aborted: `vbEth` not set");
+        if (deployForVbUsdc) require(vbUsdc != ADDRESS_ZERO, "Aborted: `vbUsdc` not set");
+        if (deployForVbUsdt) require(vbUsdt != ADDRESS_ZERO, "Aborted: `vbUsdt` not set");
+        if (deployForVbUsds) require(vbUsds != ADDRESS_ZERO, "Aborted: `vbUsds` not set");
+        if (deployForVbWbtc) require(vbWbtc != ADDRESS_ZERO, "Aborted: `vbWbtc` not set");
     }
 
-    /// @notice Main execution function - deploys L2 OFT adapters for configured tokens.
-    /// @dev Run with the secondary chain rpc-url (or foundry.toml alias).
+    /// @notice Run.
+    /// @dev You can customize the run here.
     function run() public {
-        console.log("Running `DeployNonDefaultMintBurnOFTAdapters` on", secondaryChainName);
+        console.log("Running `DeployNonDefaultMintBurnOFTAdapters` script...");
 
-        if (deployVbEth) vbEthAdapterL2 = _deployL2OftAdapter("vbETH", vbEthTokenL2);
-        if (deployVbUsdc) vbUsdcAdapterL2 = _deployL2OftAdapter("vbUSDC", vbUsdcTokenL2);
-        if (deployVbUsdt) vbUsdtAdapterL2 = _deployL2OftAdapter("vbUSDT", vbUsdtTokenL2);
-        if (deployVbUsds) vbUsdsAdapterL2 = _deployL2OftAdapter("vbUSDS", vbUsdsTokenL2);
-        if (deployVbWbtc) vbWbtcAdapterL2 = _deployL2OftAdapter("vbWBTC", vbWbtcTokenL2);
+        _createSelectFork(secondaryChainName);
 
-        _printDeploymentSummary();
+        if (deployForVbEth) {
+            vbEthOftAdapterImplementation = _createNonDefaultMintBurnOftAdapterImplementation("vbETH", vbEth);
+            vbEthOftAdapter =
+                _proxifyAndInitializeNonDefaultMintBurnOftAdapter("vbETH", vbEthOftAdapterImplementation, vbEth);
+        }
+        if (deployForVbUsdc) {
+            vbUsdcOftAdapterImplementation = _createNonDefaultMintBurnOftAdapterImplementation("vbUSDC", vbUsdc);
+            vbUsdcOftAdapter =
+                _proxifyAndInitializeNonDefaultMintBurnOftAdapter("vbUSDC", vbUsdcOftAdapterImplementation, vbUsdc);
+        }
+        if (deployForVbUsdt) {
+            vbUsdtOftAdapterImplementation = _createNonDefaultMintBurnOftAdapterImplementation("vbUSDT", vbUsdt);
+            vbUsdtOftAdapter =
+                _proxifyAndInitializeNonDefaultMintBurnOftAdapter("vbUSDT", vbUsdtOftAdapterImplementation, vbUsdt);
+        }
+        if (deployForVbUsds) {
+            vbUsdsOftAdapterImplementation = _createNonDefaultMintBurnOftAdapterImplementation("vbUSDS", vbUsds);
+            vbUsdsOftAdapter =
+                _proxifyAndInitializeNonDefaultMintBurnOftAdapter("vbUSDS", vbUsdsOftAdapterImplementation, vbUsds);
+        }
+        if (deployForVbWbtc) {
+            vbWbtcOftAdapterImplementation = _createNonDefaultMintBurnOftAdapterImplementation("vbWBTC", vbWbtc);
+            vbWbtcOftAdapter =
+                _proxifyAndInitializeNonDefaultMintBurnOftAdapter("vbWBTC", vbWbtcOftAdapterImplementation, vbWbtc);
+        }
 
-        console.log("Finished running `DeployNonDefaultMintBurnOFTAdapters`");
+        console.log("Finished running `DeployNonDefaultMintBurnOFTAdapters` script");
     }
 
-    function _deployProxy(address implementation, bytes memory initData) internal returns (address) {
-        _startBroadcast();
-        TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(implementation, proxyOwnerAddress, initData);
-        _stopBroadcast();
-        return address(proxy);
-    }
-
-    function _deployL2OftAdapter(string memory tokenSymbol, address customTokenAddress)
+    function _createNonDefaultMintBurnOftAdapterImplementation(string memory label, address customTokenAddress)
         internal
-        returns (NonDefaultMintBurnOftAdapter)
+        returns (address)
     {
-        console.log(string.concat("\nDeploying L2 OFT Adapter for ", tokenSymbol, "..."));
+        console.log("Deploying", label, "Non-Default Upgradeable Mint-Burn OFT Adapter implementation...");
 
-        // Read token decimals
+        require(customTokenAddress != ADDRESS_ZERO, "Aborted: `customTokenAddress` not set");
+
         uint8 customTokenDecimals = IERC20Metadata(customTokenAddress).decimals();
-        console.log(string.concat(tokenSymbol, " decimals:"), customTokenDecimals);
 
-        // Deploy implementation
         _startBroadcast();
-        NonDefaultMintBurnOftAdapter implementation =
-            new NonDefaultMintBurnOftAdapter(customTokenDecimals, lzEndpointL2);
+
+        NonDefaultMintBurnOftAdapter implementation = new NonDefaultMintBurnOftAdapter(customTokenDecimals, lzEndpoint);
+
         _stopBroadcast();
 
-        console.log(string.concat(tokenSymbol, " L2 adapter implementation deployed:"), address(implementation));
+        console.log(
+            label, "Non-Default Upgradeable Mint-Burn OFT Adapter implementation created:", address(implementation)
+        );
 
-        // Prepare initialization data (atomic via proxy constructor)
-        bytes[] memory reinitializeData = new bytes[](1);
-        reinitializeData[0] = abi.encodeCall(
+        return address(implementation);
+    }
+
+    function _proxifyAndInitializeNonDefaultMintBurnOftAdapter(
+        string memory label,
+        address oftAdapterImplementation,
+        address customTokenAddress
+    ) internal returns (NonDefaultMintBurnOftAdapter) {
+        console.log("Proxifying and initializing", label, "Non-Default Upgradeable Mint-Burn OFT Adapter...");
+
+        require(oftAdapterImplementation != ADDRESS_ZERO, "Aborted: `oftAdapterImplementation` not set");
+        require(customTokenAddress != ADDRESS_ZERO, "Aborted: `customTokenAddress` not set");
+
+        bytes[] memory reinitialize1Data = new bytes[](1);
+
+        reinitialize1Data[0] = abi.encodeCall(
             NonDefaultMintBurnOftAdapter.reinitialize1,
             (customTokenAddress, customTokenApprovalRequired, ownerAddress, delegateAddress)
         );
 
-        bytes memory initData = abi.encodeCall(NonDefaultMintBurnOftAdapter.reinitialize, (reinitializeData));
+        bytes memory reinitializeData = abi.encodeCall(NonDefaultMintBurnOftAdapter.reinitialize, (reinitialize1Data));
 
-        // Deploy proxy
-        address proxyAddress = _deployProxy(address(implementation), initData);
+        _startBroadcast();
 
-        console.log(string.concat(tokenSymbol, " L2 adapter proxy deployed:"), proxyAddress);
+        TransparentUpgradeableProxy proxy =
+            new TransparentUpgradeableProxy(oftAdapterImplementation, proxyAdminOwnerAddress, reinitializeData);
 
-        return NonDefaultMintBurnOftAdapter(proxyAddress);
+        _stopBroadcast();
+
+        console.log(label, "Non-Default Upgradeable Mint-Burn OFT Adapter proxified and initialized:", address(proxy));
+
+        return NonDefaultMintBurnOftAdapter(address(proxy));
     }
 
-    function _printDeploymentSummary() internal view {
-        console.log("\n========================================");
-        console.log("L2 DEPLOYMENT SUMMARY");
-        console.log("========================================");
-
-        if (deployVbEth) _logTokenDeployment("vbETH", address(vbEthAdapterL2), vbEthTokenL2);
-        if (deployVbUsdc) _logTokenDeployment("vbUSDC", address(vbUsdcAdapterL2), vbUsdcTokenL2);
-        if (deployVbUsdt) _logTokenDeployment("vbUSDT", address(vbUsdtAdapterL2), vbUsdtTokenL2);
-        if (deployVbUsds) _logTokenDeployment("vbUSDS", address(vbUsdsAdapterL2), vbUsdsTokenL2);
-        if (deployVbWbtc) _logTokenDeployment("vbWBTC", address(vbWbtcAdapterL2), vbWbtcTokenL2);
-
-        console.log("\n========================================");
-        console.log("NEXT STEPS");
-        console.log("========================================");
-        console.log("1. Configure LayerZero peer connections between L1 and L2 -> Wire contracts");
-        console.log("2. Call setBridge() on each custom token with the corresponding L2 adapter address");
-        console.log("\n========================================");
-    }
-
-    function _logTokenDeployment(string memory tokenSymbol, address l2AdapterAddress, address l2TokenAddress)
-        internal
-        pure
-    {
-        console.log(string.concat("\n", tokenSymbol, ":"));
-        console.log("  L2 Adapter:", l2AdapterAddress);
-        console.log("  L2 Token:", l2TokenAddress);
-        console.log("  setBridge command:");
-        console.log(
-            string.concat(
-                "    forge script script/layerzero/DeployCustomTokensLayerzero.s.sol --sig 'setBridge(address,address)' ",
-                vm.toString(l2TokenAddress),
-                " ",
-                vm.toString(l2AdapterAddress),
-                " --broadcast"
-            )
-        );
+    function _createSelectFork(string memory chainName_) internal {
+        vm.createSelectFork(vm.rpcUrl(chainName_));
+        console.log("Switched to", chainName_, "chain");
     }
 
     function _startBroadcast() internal {
