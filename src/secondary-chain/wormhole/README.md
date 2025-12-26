@@ -16,7 +16,7 @@
 - WETH functionality: TBD
 - Bridged USDC Standard: TBD
 - Wrapped Token: N/A
-- Manual Converter: Coming soon
+- Canonical Token: TBD
 
 ### Wrapped Token Transfers
 
@@ -27,7 +27,7 @@
 - WETH functionality: TBD
 - Bridged USDC Standard: N/A
 - Wrapped Token: Available (WTT Token)
-- Manual Converter: Coming soon (EVM), Possible (non-EVM)
+- Canonical Token: TBD
 
 ## Process
 
@@ -53,6 +53,7 @@ No action required.
 ### Wrapped Token Transfers
 
 - Tokens are upgreadeable, but controlled by Wormhole Guardians.
+- Unknown if there is offchain protection.
 
 ## Reference
 

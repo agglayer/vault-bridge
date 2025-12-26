@@ -16,7 +16,7 @@
 - WETH functionality: Coming soon
 - Bridged USDC Standard: Available
 - Wrapped Token: N/A
-- Manual Converter: Coming soon
+- Canonical Token: TBD
 - OVault: Available
 
 ### Default Non-Upgradeable Omnichain Fungible Token
@@ -28,7 +28,7 @@
 - WETH functionality: N/A
 - Bridged USDC Standard: N/A
 - Wrapped Token: Available (OFT Token)
-- Manual Converter: Coming soon (EVM chains), Possible (non-EVM chains)
+- Canonical Token: N/A
 - OVault: Available (EVM chains), N/A (non-EVM chains)
 
 ## Process
@@ -52,11 +52,13 @@
 ### Non-Default Upgradeable Omnichain Fungible Token
 
 - Local Chain Balance in Non-Default Mint-Burn OFT Adapter contract prevents bridging out more tokens from a chain than have been bridged in to the chain by reverting onchain immediately.
+- Requires Vault Bridge Offchain Ledger and Vault Bridge DVN to prevent bridging out more tokens from a chain than have been bridged in to the chain, offchain.
 
 ### Default Non-Upgradeable Omnichain Fungible Token
 
 - Does not prevent bridging out more tokens from a chain that have been bridged in to the chain. OFT Adapter will unlock tokens as long as it has sufficient balance.
 - Tokens are not upgradeable.
+- Requires Vault Bridge Offchain Ledger and Vault Bridge DVN to prevent bridging out more tokens from a chain than have been bridged in to the chain, offchain.
 
 ## Reference
 

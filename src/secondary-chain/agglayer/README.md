@@ -9,24 +9,24 @@
 ### Agglayer Sovereign
 
 - Supported VMs: EVM
-- Supported chains: Katana, Forknet
+- Supported chains: Agglayer Sovereign chains
 - Custom Token: Available (Upgradeable Wrapped Token)
 - Native Converter: Available
 - WETH functionality: Available
 - Bridged USDC Standard: Available
 - Wrapped Token: Available (Upgradeable Wrapped Token)
-- Manual Converter: Coming soon
+- Canonical Token: Available with Vault Bridge LayerZero
 
 ### Agglayer Classic
 
 - Supported VMs: EVM
-- Supported chains: All Agglayer chains, except Katana, Forknet
+- Supported chains: Agglayer Classic chains
 - Custom Token: N/A
 - Native Converter: N/A
 - WETH functionality: N/A
 - Bridged USDC Standard: N/A
 - Wrapped Token: Available (Wrapped Token)
-- Manual Converter: Coming soon
+- Canonical Token: N/A
 
 ## Process
 
@@ -48,11 +48,13 @@ No action required.
 
 ### Agglayer Sovereign
 
-- "Local balance tree" in Agglayer Bridge contract prevents bridging out more tokens from a chain than have been bridged in to the chain by reverting onchain immediately.
+- "Local Balance Tree" in Agglayer Bridge contract prevents bridging out more tokens from a chain than have been bridged in to the chain by reverting onchain immediately.
+- Agglayer Pessimistic Proofs prevent bridging out more tokens from a chain that have been bridged in to the chain offchain by not generating proofs for invalid state updates.
 
 ### Agglayer Classic
 
-- Tokens are not upgreadeable.
+- Tokens are not upgradeable.
+- Hermez Proofs prevent bridging out more tokens from a chain that have been bridged in to the chain offchain by not generating proofs for invalid state updates.
 
 ## Reference
 

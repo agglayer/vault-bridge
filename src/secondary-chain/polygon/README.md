@@ -13,7 +13,7 @@
 - WETH functionality: TBD
 - Bridged USDC Standard: Not required
 - Wrapped Token: N/A
-- Manual Converter: Coming soon
+- Canonical Token: Not required
 
 ## Process
 
@@ -22,7 +22,7 @@
 
 ## Protection
 
-- Bidirectional, lock/mint bridge.
+- Bidirectional, lock-mint bridge.
 
 ## Reference
 
