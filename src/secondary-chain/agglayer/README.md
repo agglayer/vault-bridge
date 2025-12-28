@@ -13,7 +13,7 @@
 - Custom Token: Available (Upgradeable Wrapped Token)
 - Native Converter: Available
 - WETH functionality: Available
-- Bridged USDC Standard: Available
+- Bridged USDC Standard: Coming soon
 - Wrapped Token: Available (Upgradeable Wrapped Token)
 - Canonical Token: Available with Vault Bridge LayerZero
 
