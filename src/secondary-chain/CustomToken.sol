@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: LicenseRef-PolygonLabs-Source-Available
-// Vault Bridge (last updated v1.0.0) (secondary-chain/CustomToken.sol)
+// Vault Bridge (last updated v1.0.1) (secondary-chain/CustomToken.sol)
 
 pragma solidity 0.8.29;
 
@@ -38,6 +38,7 @@ abstract contract CustomToken is
         address bridge;
         address nativeConverter;
         uint256 _secondaryChainBalance;
+        mapping(address => uint256) _netMintedByAdditionalMintersBurners;
     }
 
     /// @dev The storage slot at which Custom Token storage starts, following the EIP-7201 standard.
@@ -48,6 +49,10 @@ abstract contract CustomToken is
     // Basic roles.
     // @remind Document.
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
+    bytes32 public constant MINTER_BURNER_ROLE = keccak256("MINTER_BURNER_ROLE");
+
+    // Events.
+    event AlreadyMinted(uint256 indexed value);
 
     // Errors.
     error Unauthorized();
@@ -59,6 +64,45 @@ abstract contract CustomToken is
     error BridgeAlreadySet();
     error NativeConverterAlreadySet();
     error FunctionNotSupportedWithThisBridgeProvider();
+
+    // -----================= ::: MODIFIERS ::: =================-----
+
+    /// @dev Checks if the sender is The Bridge or Native Converter or an additional minter-burner.
+    /// @dev This modifier is used to restrict the minting of Custom Token.
+    modifier mintController(address account, uint256 value) {
+        CustomTokenStorage storage $ = _getCustomTokenStorage();
+
+        bool senderIsBridgeOrNativeConverter = msg.sender == $.bridge || msg.sender == $.nativeConverter;
+        bool senderIsAdditionalMinterBurner = hasRole(MINTER_BURNER_ROLE, msg.sender);
+
+        // Only The Bridge and Native Converter and additional minter-burners can mint Custom Token.
+        require(senderIsBridgeOrNativeConverter || senderIsAdditionalMinterBurner, Unauthorized());
+
+        _;
+
+        // If `account` is address zero, that means special logic will (or will not) be executed in the `mint` function.
+        if (account != address(0) && senderIsAdditionalMinterBurner && !senderIsBridgeOrNativeConverter) {
+            $._netMintedByAdditionalMintersBurners[msg.sender] += value;
+        }
+    }
+
+    /// @dev Checks if the sender is The Bridge or Native Converter or an additional minter-burner.
+    /// @dev This modifier is used to restrict the burning of Custom Token.
+    modifier burnController(uint256 value) {
+        CustomTokenStorage storage $ = _getCustomTokenStorage();
+
+        bool senderIsBridgeOrNativeConverter = msg.sender == $.bridge || msg.sender == $.nativeConverter;
+        bool senderIsAdditionalBurner = hasRole(MINTER_BURNER_ROLE, msg.sender);
+
+        // Only The Bridge and Native Converter and additional burners can burn Custom Token.
+        require(senderIsBridgeOrNativeConverter || senderIsAdditionalBurner, Unauthorized());
+
+        if (senderIsAdditionalBurner && !senderIsBridgeOrNativeConverter) {
+            $._netMintedByAdditionalMintersBurners[msg.sender] -= value;
+        }
+
+        _;
+    }
 
     // -----================= ::: SETUP ::: =================-----
 
