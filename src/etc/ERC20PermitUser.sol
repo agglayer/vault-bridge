@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: LicenseRef-PolygonLabs-Source-Available
+// Vault Bridge (last updated v0.5.0) (etc/ERC20PermitUser.sol)
+
 pragma solidity 0.8.29;
 
 /// @title ERC-20 Permit User
 /// @author See https://github.com/agglayer/vault-bridge
-/// @dev Mimics the behavior of LxLy Bridge for validating and using ERC-20 permits.
+/// @dev Mimics the behavior of Agglayer Bridge for validating and using ERC-20 permits.
 abstract contract ERC20PermitUser {
     /// @dev Calculated as `bytes4(keccak256(bytes("permit(address,address,uint256,uint256,uint8,bytes32,bytes32)")))`.
     bytes4 private constant _PERMIT_SELECTOR_ERC_2612 = hex"d505accf";
