@@ -39,6 +39,7 @@ abstract contract CustomToken is
         address nativeConverter;
         uint256 _secondaryChainBalance;
         mapping(address => uint256) _netMintedByAdditionalMintersBurners;
+        uint256 totalNetMintedByAdditionalMintersBurners;
     }
 
     /// @dev The storage slot at which Custom Token storage starts, following the EIP-7201 standard.
@@ -83,6 +84,7 @@ abstract contract CustomToken is
         // If `account` is address zero, that means special logic will (or will not) be executed in the `mint` function.
         if (account != address(0) && senderIsAdditionalMinterBurner && !senderIsBridgeOrNativeConverter) {
             $._netMintedByAdditionalMintersBurners[msg.sender] += value;
+            $.totalNetMintedByAdditionalMintersBurners += value;
         }
     }
 
@@ -99,6 +101,7 @@ abstract contract CustomToken is
 
         if (senderIsAdditionalBurner && !senderIsBridgeOrNativeConverter) {
             $._netMintedByAdditionalMintersBurners[msg.sender] -= value;
+            $.totalNetMintedByAdditionalMintersBurners -= value;
         }
 
         _;
@@ -184,6 +187,12 @@ abstract contract CustomToken is
     function nativeConverter() public view returns (address) {
         CustomTokenStorage storage $ = _getCustomTokenStorage();
         return $.nativeConverter;
+    }
+
+    /// @notice The total net amount minted by additional minters/burners.
+    function totalNetMintedByAdditionalMintersBurners() public view returns (uint256) {
+        CustomTokenStorage storage $ = _getCustomTokenStorage();
+        return $.totalNetMintedByAdditionalMintersBurners;
     }
 
     /// @dev Returns a pointer to the ERC-7201 storage namespace.
