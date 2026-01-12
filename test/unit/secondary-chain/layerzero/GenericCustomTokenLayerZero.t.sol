@@ -96,9 +96,8 @@ contract GenericCustomTokenLayerZeroTest is GenericCustomTokenLayerZeroTestBase 
         uint256 amount = 1000e18;
 
         vm.prank(oftAdapter);
-        bool success = genericCustomTokenLayerZero.mint(sender, amount);
+        genericCustomTokenLayerZero.mint(sender, amount);
 
-        assertTrue(success);
         assertEq(genericCustomTokenLayerZero.balanceOf(sender), amount);
         assertEq(genericCustomTokenLayerZero.totalSupply(), amount);
     }
@@ -120,9 +119,8 @@ contract GenericCustomTokenLayerZeroTest is GenericCustomTokenLayerZeroTestBase 
 
         // Then burn them
         vm.prank(oftAdapter);
-        bool success = genericCustomTokenLayerZero.burn(sender, amount);
+        genericCustomTokenLayerZero.burn(sender, amount);
 
-        assertTrue(success);
         assertEq(genericCustomTokenLayerZero.balanceOf(sender), 0);
         assertEq(genericCustomTokenLayerZero.totalSupply(), 0);
     }

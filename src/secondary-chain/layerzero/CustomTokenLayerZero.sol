@@ -30,10 +30,8 @@ abstract contract CustomTokenLayerZero is CustomToken {
         onlyOftAdapter
         nonReentrant
         bridgeInController(amount)
-        returns (bool success)
     {
         _mint(_to, amount);
-        return true;
     }
 
     /// @notice Burns Custom Tokens from a holder.
@@ -44,10 +42,8 @@ abstract contract CustomTokenLayerZero is CustomToken {
         onlyOftAdapter
         nonReentrant
         bridgeOutController(_amount)
-        returns (bool success)
     {
         _burn(_from, _amount);
-        return true;
     }
 
     /// @inheritdoc CustomToken
