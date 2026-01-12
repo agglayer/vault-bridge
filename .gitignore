@@ -27,3 +27,5 @@ lcov.info
 .certora_internal/
 zkevm-contracts/
 emv-*/*
+
+.claude/
