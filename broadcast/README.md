@@ -22,7 +22,7 @@
   - AL: Agglayer
   - WH: Wormhole
   - LZ: LayerZero
-    - OA: OFTAdapter
+    - OA: OFT Adapter
     - OV: OVault
 
 ## Mainnet
