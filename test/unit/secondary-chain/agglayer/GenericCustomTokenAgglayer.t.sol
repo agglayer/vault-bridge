@@ -50,7 +50,7 @@ contract GenericCustomTokenAgglayerTest is GenericCustomTokenAgglayerTestBase {
         uint256 amount = 1000e18;
 
         vm.expectEmit(true, true, true, true);
-        emit CustomTokenAgglayer.AlreadyMinted(amount);
+        emit CustomToken.AlreadyMinted(amount);
 
         vm.prank(address(mockAgglayerBridge));
         genericCustomTokenAgglayer.mint(address(0), amount);
